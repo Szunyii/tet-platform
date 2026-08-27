@@ -16,7 +16,7 @@ Ezután nyisd meg: http://localhost:3000
 
 | Útvonal | Képernyő |
 | --- | --- |
-| `/` | Áttekintés (admin és attasé nézet, a fejlécben váltható) |
+| `/` | Átirányítás az Országprofil (`/terkep`) képernyőre |
 | `/terkep` | Térkép és országprofil (d3-geo világtérkép, kattintható posztok) |
 | `/riportok` | Riportlista + aggregált kimutatás |
 | `/uj-riport` | Új riport kitöltése (7 blokkos varázsló, nem perzisztens) |
