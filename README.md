@@ -21,11 +21,13 @@ Ezután nyisd meg: http://localhost:3000
 | `/riportok` | Riportlista + aggregált kimutatás |
 | `/uj-riport` | Új riport kitöltése (7 blokkos varázsló, nem perzisztens) |
 | `/kommunikacio` | Ticketek és üzenetszálak |
+| `/tudastar` | Tudástár – Magyarországról ajánlható programok, partnerek, együttműködési formák |
 | `/monitoring` | Hálózati rangsor + 14 szempontos részletes értékelés |
 
 ## Felépítés
 
 - `lib/data.ts` – demóadatok: 14 poszt, 3 kategória, 14 értékelési szempont, 7 riportblokk, ticketek
+- `lib/knowledge.ts` – tudástár demóadatok: 6 program, 6 ökoszisztéma-elem, 5 együttműködési forma
 - `lib/score.ts` – determinisztikus dummy pontszámok és státuszok (a doksi logikája szerint)
 - `components/AppShell.tsx` – sidebar, fejléc, szerepkör- és ciklusváltó (React context)
 - `public/tet-world-map.js` – `<tet-world-map>` webkomponens (d3 + world-atlas, CDN-ről töltődik)

@@ -1,5 +1,5 @@
 /* <tet-world-map> — TéT posztok világtérképe. d3-geo + world-atlas TopoJSON.
-   Attribútumok: data (JSON tömb), metric ("focus"|"activity"|"score"), field (szűrő), selected (ország neve) */
+   Attribútumok: data (JSON tömb), metric ("focus"|"risk"|"open"), field (szűrő), selected (ország neve) */
 (function () {
   var worldPromise = null;
   function loadWorld() {
@@ -30,6 +30,8 @@
     'Mobilitás és autonóm rendszerek': '#9a3412'
   };
   var SEQ = ['#e6ecf5', '#c3d3e9', '#96b3d8', '#5f87bd', '#2f5d9e', '#1b3a6b'];
+  var RISK_COLORS = { 'Alacsony': '#0f7a68', 'Közepes': '#a86a00', 'Magas': '#b3261e' };
+  var RISK_ORDER = ['Alacsony', 'Közepes', 'Magas'];
 
   var W = 960, H = 505;
 
@@ -114,7 +116,8 @@
       if (!r) return '#eceff3';
       if (this._dim(r)) return '#e3e7ec';
       if (this._metric === 'focus') return FIELD_COLORS[r.fokusz[0]] || '#1f4e9c';
-      var v = this._metric === 'score' ? (r.atlag - 2) / 3 : Math.min(1, r.riportok / 26);
+      if (this._metric === 'risk') return RISK_COLORS[r.kockazat] || '#eceff3';
+      var v = Math.max(0, Math.min(1, ((r.nyitottsag || 0) - 1) / 4));
       return SEQ[Math.max(0, Math.min(SEQ.length - 1, Math.round(v * (SEQ.length - 1))))];
     }
     _hover(ev, name) {
@@ -126,7 +129,8 @@
       if (!r) { this._tip.innerHTML = '<b>' + name + '</b><span>Nincs kihelyezett TéT attasé</span>'; return; }
       this._tip.innerHTML = '<b>' + r.orszag + '</b><span>' + r.attase + ' · ' + r.varos + '</span>' +
         '<span>Fókusz: ' + r.fokusz.join(', ') + '</span>' +
-        '<span>' + r.riportok + ' riport · átlag ' + r.atlag.toFixed(1) + '/5</span>';
+        '<span>' + r.ciklus + ' országjelentés · ' + r.utolso + '</span>' +
+        '<span>Szabályozási kockázat: ' + r.kockazat + ' · nyitottság ' + (r.nyitottsag || 0).toFixed(1) + '/5</span>';
     }
     _pick(name) {
       var r = this._rec(name);
@@ -163,12 +167,12 @@
         this._data.forEach(function (r) { if (used.indexOf(r.fokusz[0]) === -1) used.push(r.fokusz[0]); });
         used.sort();
         for (i = 0; i < used.length; i++) html += '<div><i style="background:' + (FIELD_COLORS[used[i]] || '#1f4e9c') + '"></i>' + used[i] + '</div>';
+      } else if (this._metric === 'risk') {
+        for (i = 0; i < RISK_ORDER.length; i++) html += '<div><i style="background:' + RISK_COLORS[RISK_ORDER[i]] + '"></i>' + RISK_ORDER[i] + ' kockázat</div>';
       } else {
-        var lo = this._metric === 'score' ? 'alacsony (2,0)' : 'kevés riport';
-        var hi = this._metric === 'score' ? 'magas (5,0)' : '25+ riport';
-        html += '<div style="color:#6b7684">' + lo + '</div>';
+        html += '<div style="color:#6b7684">zárkózott (1/5)</div>';
         for (i = 0; i < SEQ.length; i++) html += '<div><i style="background:' + SEQ[i] + '"></i></div>';
-        html += '<div style="color:#6b7684">' + hi + '</div>';
+        html += '<div style="color:#6b7684">nyitott (5/5)</div>';
       }
       html += '<div style="margin-left:auto"><i style="background:#eceff3;border:1px solid #dde1e7"></i>nincs poszt</div>';
       this._legend.innerHTML = html;

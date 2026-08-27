@@ -61,15 +61,16 @@ export interface Politika { irany: string; kockazat: string; megj: string }
 
 export interface Post {
   id: number; attase: string; orszag: string; geo: string; varos: string; regio: string;
-  lonlat: [number, number]; base: number; riportok: number; nyitott: number; utolso: string;
-  fokusz: string[]; kf: string; intezmenyek: Intezmeny[]; palyazatok: Palyazat[];
+  lonlat: [number, number]; base: number; utolso: string; ciklus: string;
+  fokusz: string[]; megallapitas: string; kf: string; intezmenyek: Intezmeny[]; palyazatok: Palyazat[];
   esemenyek: Esemeny[]; politika: Politika; tanulsag: string;
 }
 
 export const POSTS: Post[] = [
   {
-    id: 1, attase: 'Kovács Dániel', orszag: 'Amerikai Egyesült Államok', geo: 'United States of America', varos: 'Washington D.C.', regio: 'Észak-Amerika', lonlat: [-77.03, 38.9], base: 4.5, riportok: 24, nyitott: 2, utolso: '2026-06-14',
+    id: 1, attase: 'Kovács Dániel', orszag: 'Amerikai Egyesült Államok', geo: 'United States of America', varos: 'Washington D.C.', regio: 'Észak-Amerika', lonlat: [-77.03, 38.9], base: 4.5, utolso: '2026-06-14', ciklus: '2026 Q2',
     fokusz: ['Mesterséges intelligencia', 'Félvezetők és mikroelektronika', 'Biotechnológia és élettudomány'],
+    megallapitas: 'Az AI- és félvezető-konzorciumok nyitottak külső partnerre, de csak intézményi belépőn át; az exportkontroll minden eszközkiviteli tételt érint.',
     kf: 'Rekordszintű szövetségi K+F költés az AI és a félvezetőgyártás körül; a CHIPS-programhoz kötődő egyetemi konzorciumok nyitottak külső partnerekre.',
     intezmenyek: [{ n: 'NIST', t: 'Állami kutatóintézet', ter: 'Mérésügy, AI-biztonság', ny: 4 }, { n: 'Georgia Tech IEN', t: 'Egyetemi labor', ter: 'Mikroelektronika', ny: 3 }],
     palyazatok: [{ ki: 'NSF', pr: 'Global Centers', keret: '2,5 M USD', hat: '2026-10-15', rel: 'Magas' }],
@@ -78,8 +79,9 @@ export const POSTS: Post[] = [
     tanulsag: 'Amerikai konzorciumba csak intézményi partnerrel érdemes belépni; egyéni vállalati jelentkezés rendre elakad.',
   },
   {
-    id: 2, attase: 'Halász Réka', orszag: 'Németország', geo: 'Germany', varos: 'Berlin', regio: 'Nyugat-Európa', lonlat: [13.4, 52.52], base: 4.2, riportok: 21, nyitott: 1, utolso: '2026-06-09',
+    id: 2, attase: 'Halász Réka', orszag: 'Németország', geo: 'Germany', varos: 'Berlin', regio: 'Nyugat-Európa', lonlat: [13.4, 52.52], base: 4.2, utolso: '2026-06-09', ciklus: '2026 Q2',
     fokusz: ['Mobilitás és autonóm rendszerek', 'Anyagtudomány', 'Energetika és fenntarthatóság'],
+    megallapitas: 'Az állami K+F súlypontja az akkumulátor- és hidrogéntechnológiára tolódott – a 2+2 kiírás konkrét, rövid távú magyar belépési pont.',
     kf: 'Az ipari K+F lassul, az állami programok viszont az akkumulátor- és hidrogéntechnológia felé tolódnak.',
     intezmenyek: [{ n: 'Fraunhofer IZM', t: 'Alkalmazott kutatóintézet', ter: 'Elektronikai csomagolás', ny: 5 }, { n: 'RWTH Aachen', t: 'Egyetem', ter: 'Járműtechnika', ny: 4 }],
     palyazatok: [{ ki: 'BMBF', pr: '2+2 magyar–német call', keret: '1,5 M €', hat: '2026-09-30', rel: 'Magas' }],
@@ -88,8 +90,9 @@ export const POSTS: Post[] = [
     tanulsag: 'A 2+2 formátum (2 vállalat + 2 kutatóhely) a legjobb belépő – érdemes előre magyar párokat összeállítani.',
   },
   {
-    id: 3, attase: 'Szabó Márton', orszag: 'Kína', geo: 'China', varos: 'Peking', regio: 'Kelet-Ázsia', lonlat: [116.4, 39.9], base: 3.4, riportok: 18, nyitott: 3, utolso: '2026-05-28',
+    id: 3, attase: 'Szabó Márton', orszag: 'Kína', geo: 'China', varos: 'Peking', regio: 'Kelet-Ázsia', lonlat: [116.4, 39.9], base: 3.4, utolso: '2026-05-28', ciklus: '2026 Q2',
     fokusz: ['Energetika és fenntarthatóság', 'Mesterséges intelligencia'],
+    megallapitas: 'Az energiatárolási kutatás világelső, a nemzetközi együttműködést viszont adatkiviteli és kutatásbiztonsági szabályok fékezik.',
     kf: 'Az akkumulátor- és napelemipari kutatás továbbra is dominál; a nemzetközi együttműködés adminisztratív úton lassul.',
     intezmenyek: [{ n: 'Tsinghua University', t: 'Egyetem', ter: 'Energiatárolás', ny: 3 }],
     palyazatok: [{ ki: 'MOST', pr: 'Bilaterális TéT alap', keret: '0,8 M USD', hat: '2026-11-20', rel: 'Közepes' }],
@@ -98,8 +101,9 @@ export const POSTS: Post[] = [
     tanulsag: 'A hivatalos kormányzati csatorna nélkül induló kapcsolat nem tartható fenn; a személyes jelenlét pótolhatatlan.',
   },
   {
-    id: 4, attase: 'Tóth Bence', orszag: 'Japán', geo: 'Japan', varos: 'Tokió', regio: 'Kelet-Ázsia', lonlat: [139.69, 35.69], base: 4.0, riportok: 16, nyitott: 0, utolso: '2026-06-11',
+    id: 4, attase: 'Tóth Bence', orszag: 'Japán', geo: 'Japan', varos: 'Tokió', regio: 'Kelet-Ázsia', lonlat: [139.69, 35.69], base: 4.0, utolso: '2026-06-11', ciklus: '2026 Q2',
     fokusz: ['Anyagtudomány', 'Mobilitás és autonóm rendszerek'],
+    megallapitas: 'A JST programjai kifejezetten európai partnert keresnek; az anyagtudományi belépés reális, de hosszú előkészítést kíván.',
     kf: 'A vállalati alapkutatás erős, az egyetemi nyitás lassú, de a JST programjai kifejezetten keresik az európai partnereket.',
     intezmenyek: [{ n: 'NIMS', t: 'Állami kutatóintézet', ter: 'Anyagtudomány', ny: 4 }, { n: 'AIST', t: 'Állami kutatóintézet', ter: 'Ipari technológia', ny: 3 }],
     palyazatok: [{ ki: 'JST', pr: 'SICORP EU-Japán', keret: '40 M JPY', hat: '2026-12-05', rel: 'Magas' }],
@@ -108,8 +112,9 @@ export const POSTS: Post[] = [
     tanulsag: 'A japán partnerek a harmadik találkozó után döntenek – a tempót nem érdemes sürgetni.',
   },
   {
-    id: 5, attase: 'Farkas Judit', orszag: 'Koreai Köztársaság', geo: 'South Korea', varos: 'Szöul', regio: 'Kelet-Ázsia', lonlat: [126.98, 37.57], base: 3.8, riportok: 14, nyitott: 1, utolso: '2026-06-02',
+    id: 5, attase: 'Farkas Judit', orszag: 'Koreai Köztársaság', geo: 'South Korea', varos: 'Szöul', regio: 'Kelet-Ázsia', lonlat: [126.98, 37.57], base: 3.8, utolso: '2026-06-02', ciklus: '2026 Q2',
     fokusz: ['Félvezetők és mikroelektronika', 'Digitális egészségügy'],
+    megallapitas: 'A félvezető-beszállítói lánc diverzifikációjára külön állami keret nyílt a közép-európai partnerekre.',
     kf: 'A félvezetőipari beszállítói lánc bővül, a kormány külön keretet nyitott a közép-európai partnerségekre.',
     intezmenyek: [{ n: 'KIST', t: 'Állami kutatóintézet', ter: 'Elektronika, egészségtechnológia', ny: 4 }],
     palyazatok: [{ ki: 'NRF', pr: 'Korea–V4 Joint Research', keret: '1,0 M USD', hat: '2026-09-15', rel: 'Magas' }],
@@ -118,8 +123,9 @@ export const POSTS: Post[] = [
     tanulsag: 'A V4-es közös fellépés érezhetően több figyelmet kap, mint az önálló magyar megjelenés.',
   },
   {
-    id: 6, attase: 'Nagy Ádám', orszag: 'Izrael', geo: 'Israel', varos: 'Tel-Aviv', regio: 'Közel-Kelet', lonlat: [34.78, 32.08], base: 4.4, riportok: 22, nyitott: 1, utolso: '2026-06-16',
+    id: 6, attase: 'Nagy Ádám', orszag: 'Izrael', geo: 'Israel', varos: 'Tel-Aviv', regio: 'Közel-Kelet', lonlat: [34.78, 32.08], base: 4.4, utolso: '2026-06-16', ciklus: '2026 Q2',
     fokusz: ['Digitális egészségügy', 'Mesterséges intelligencia'],
+    megallapitas: 'A korai fázisú együttműködés gyors, és egyetemi transzferirodai szinten eldől – a döntési ablak nagyjából két hét.',
     kf: 'Sűrű startup-ökoszisztéma, a korai fázisú együttműködés gyors; az egyetemi transzferirodák döntési joga nagy.',
     intezmenyek: [{ n: 'Weizmann Institute', t: 'Kutatóintézet', ter: 'Élettudomány, AI', ny: 4 }, { n: 'Technion', t: 'Egyetem', ter: 'Mérnöki tudományok', ny: 5 }],
     palyazatok: [{ ki: 'Israel Innovation Authority', pr: 'Bilaterális ipari K+F', keret: '1,2 M USD', hat: '2026-08-31', rel: 'Magas' }],
@@ -128,8 +134,9 @@ export const POSTS: Post[] = [
     tanulsag: 'Itt a gyors döntés a belépő: kétheti válaszidő fölött a partner továbbáll.',
   },
   {
-    id: 7, attase: 'Molnár Eszter', orszag: 'India', geo: 'India', varos: 'Újdelhi', regio: 'Dél-Ázsia', lonlat: [77.21, 28.61], base: 3.1, riportok: 11, nyitott: 2, utolso: '2026-04-30',
+    id: 7, attase: 'Molnár Eszter', orszag: 'India', geo: 'India', varos: 'Újdelhi', regio: 'Dél-Ázsia', lonlat: [77.21, 28.61], base: 3.1, utolso: '2026-04-30', ciklus: '2026 Q2',
     fokusz: ['Agrár- és élelmiszertechnológia', 'Digitális egészségügy'],
+    megallapitas: 'Az agrártechnológia iránt konkrét kereslet van, de a célzást tartományi szintre kell bontani.',
     kf: 'Gyorsan bővülő állami kutatási keret, erősen árérzékeny piac; az agrártechnológia iránt konkrét érdeklődés van.',
     intezmenyek: [{ n: 'IIT Delhi', t: 'Egyetem', ter: 'Agrár- és vízgazdálkodás', ny: 3 }],
     palyazatok: [{ ki: 'DST', pr: 'India–Hungary TéT call', keret: '0,5 M USD', hat: '2026-10-31', rel: 'Közepes' }],
@@ -138,8 +145,9 @@ export const POSTS: Post[] = [
     tanulsag: 'Tartományi szintre kell lebontani a célzást – országos megközelítéssel nem jutunk döntéshozóhoz.',
   },
   {
-    id: 8, attase: 'Balogh Péter', orszag: 'Egyesült Királyság', geo: 'United Kingdom', varos: 'London', regio: 'Nyugat-Európa', lonlat: [-0.13, 51.51], base: 4.1, riportok: 19, nyitott: 0, utolso: '2026-06-12',
+    id: 8, attase: 'Balogh Péter', orszag: 'Egyesült Királyság', geo: 'United Kingdom', varos: 'London', regio: 'Nyugat-Európa', lonlat: [-0.13, 51.51], base: 4.1, utolso: '2026-06-12', ciklus: '2026 Q2',
     fokusz: ['Kvantumtechnológia', 'Biotechnológia és élettudomány'],
+    megallapitas: 'A nemzeti kvantumprogram második szakasza és a Horizon-visszatérés együtt nyit ablakot, brit vezető partner mellett.',
     kf: 'A nemzeti kvantumprogram második szakasza indul, a Horizon-visszatérés után újra nyitottak az EU-s konzorciumok.',
     intezmenyek: [{ n: 'NPL', t: 'Állami kutatóintézet', ter: 'Kvantummetrológia', ny: 4 }, { n: 'Francis Crick Institute', t: 'Kutatóintézet', ter: 'Élettudomány', ny: 3 }],
     palyazatok: [{ ki: 'UKRI', pr: 'International Science Partnerships', keret: '1,8 M GBP', hat: '2026-09-22', rel: 'Magas' }],
@@ -148,8 +156,9 @@ export const POSTS: Post[] = [
     tanulsag: 'A brit pályázatokhoz brit vezető partner kell; magyar koordinációval nagyon alacsony a nyerési arány.',
   },
   {
-    id: 9, attase: 'Varga Anna', orszag: 'Franciaország', geo: 'France', varos: 'Párizs', regio: 'Nyugat-Európa', lonlat: [2.35, 48.86], base: 3.6, riportok: 15, nyitott: 1, utolso: '2026-06-05',
+    id: 9, attase: 'Varga Anna', orszag: 'Franciaország', geo: 'France', varos: 'Párizs', regio: 'Nyugat-Európa', lonlat: [2.35, 48.86], base: 3.6, utolso: '2026-06-05', ciklus: '2026 Q2',
     fokusz: ['Űrtechnológia', 'Energetika és fenntarthatóság'],
+    megallapitas: 'Az űripari beszállítói program és a nukleáris kutatás viszi az állami forrást; francia nyelvű anyag nélkül nincs érdemi válasz.',
     kf: 'Az űripari beszállítói program és a nukleáris kutatás kapja a legnagyobb állami forrást.',
     intezmenyek: [{ n: 'CNES', t: 'Ügynökség / kutatóintézet', ter: 'Űrtechnológia', ny: 3 }, { n: 'CEA', t: 'Állami kutatóintézet', ter: 'Energetika', ny: 4 }],
     palyazatok: [{ ki: 'ANR', pr: 'PRCI nemzetközi projektek', keret: '0,9 M €', hat: '2026-10-08', rel: 'Közepes' }],
@@ -158,8 +167,9 @@ export const POSTS: Post[] = [
     tanulsag: 'Francia nyelvű anyag nélkül a megkeresések nagy része megválaszolatlan marad.',
   },
   {
-    id: 10, attase: 'Illés Gábor', orszag: 'Svájc', geo: 'Switzerland', varos: 'Bern', regio: 'Nyugat-Európa', lonlat: [7.45, 46.95], base: 4.3, riportok: 20, nyitott: 0, utolso: '2026-06-13',
+    id: 10, attase: 'Illés Gábor', orszag: 'Svájc', geo: 'Switzerland', varos: 'Bern', regio: 'Nyugat-Európa', lonlat: [7.45, 46.95], base: 4.3, utolso: '2026-06-13', ciklus: '2026 Q2',
     fokusz: ['Kvantumtechnológia', 'Anyagtudomány'],
+    megallapitas: 'Az ETH-domén strukturált intézményi partnerségre nyitott; az MoU aláírása után minden ügy érdemben gyorsul.',
     kf: 'Magas egy főre jutó K+F ráfordítás, az ETH-domén nyitott a strukturált intézményi partnerségre.',
     intezmenyek: [{ n: 'ETH Zürich', t: 'Egyetem', ter: 'Kvantumtechnológia', ny: 4 }, { n: 'EMPA', t: 'Kutatóintézet', ter: 'Anyagtudomány', ny: 5 }],
     palyazatok: [{ ki: 'SNSF', pr: 'Bilateral Programmes', keret: '0,7 M CHF', hat: '2026-12-01', rel: 'Közepes' }],
@@ -168,8 +178,9 @@ export const POSTS: Post[] = [
     tanulsag: 'Az intézményi MoU itt tényleg működik: az aláírás után érdemben gyorsul minden ügy.',
   },
   {
-    id: 11, attase: 'Kiss Zsófia', orszag: 'Szingapúr', geo: 'Singapore', varos: 'Szingapúr', regio: 'Délkelet-Ázsia', lonlat: [103.82, 1.35], base: 3.9, riportok: 13, nyitott: 1, utolso: '2026-06-07',
+    id: 11, attase: 'Kiss Zsófia', orszag: 'Szingapúr', geo: 'Singapore', varos: 'Szingapúr', regio: 'Délkelet-Ázsia', lonlat: [103.82, 1.35], base: 3.9, utolso: '2026-06-07', ciklus: '2026 Q2',
     fokusz: ['Digitális egészségügy', 'Mesterséges intelligencia'],
+    megallapitas: 'Regionális hub: egy szingapúri partneren át az egész ASEAN-piac elérhető, mérhető eredmény elvárása mellett.',
     kf: 'Központilag tervezett, ötéves kutatási ciklus; regionális belépési kapu az egész ASEAN-piacra.',
     intezmenyek: [{ n: 'A*STAR', t: 'Állami kutatóintézet', ter: 'Biomedika, AI', ny: 4 }],
     palyazatok: [{ ki: 'A*STAR', pr: 'International Joint Labs', keret: '1,1 M SGD', hat: '2026-09-05', rel: 'Magas' }],
@@ -178,8 +189,9 @@ export const POSTS: Post[] = [
     tanulsag: 'Regionális hubként érdemes kezelni: egy szingapúri partner négy-öt piacra nyit kaput.',
   },
   {
-    id: 12, attase: 'Pintér Levente', orszag: 'Egyesült Arab Emírségek', geo: 'United Arab Emirates', varos: 'Abu-Dzabi', regio: 'Közel-Kelet', lonlat: [54.37, 24.45], base: 3.3, riportok: 10, nyitott: 2, utolso: '2026-05-21',
+    id: 12, attase: 'Pintér Levente', orszag: 'Egyesült Arab Emírségek', geo: 'United Arab Emirates', varos: 'Abu-Dzabi', regio: 'Közel-Kelet', lonlat: [54.37, 24.45], base: 3.3, utolso: '2026-05-21', ciklus: '2026 Q2',
     fokusz: ['Energetika és fenntarthatóság', 'Űrtechnológia'],
+    megallapitas: 'Nagy állami energetikai és űripari beruházások, de minden ügy magas szintű személyes találkozóval indul.',
     kf: 'Nagy állami beruházások a megújuló energiába és az űrprogramba; a kutatói bázis még épül.',
     intezmenyek: [{ n: 'Khalifa University', t: 'Egyetem', ter: 'Energetika, űrtechnológia', ny: 4 }],
     palyazatok: [{ ki: 'ASPIRE', pr: 'Research Challenge', keret: '2,0 M AED', hat: '2026-11-10', rel: 'Közepes' }],
@@ -188,8 +200,9 @@ export const POSTS: Post[] = [
     tanulsag: 'Enélkül nem megy: minden ügyet magas szintű személyes találkozó nyit meg, e-mailben nem indul el semmi.',
   },
   {
-    id: 13, attase: 'Deák Orsolya', orszag: 'Törökország', geo: 'Turkey', varos: 'Ankara', regio: 'Közel-Kelet', lonlat: [32.86, 39.93], base: 2.9, riportok: 8, nyitott: 3, utolso: '2026-03-27',
+    id: 13, attase: 'Deák Orsolya', orszag: 'Törökország', geo: 'Turkey', varos: 'Ankara', regio: 'Közel-Kelet', lonlat: [32.86, 39.93], base: 2.9, utolso: '2026-03-27', ciklus: '2026 Q2',
     fokusz: ['Agrár- és élelmiszertechnológia', 'Mobilitás és autonóm rendszerek'],
+    megallapitas: 'Az ipari K+F a járműgyártás és az agrárfeldolgozás körül koncentrálódik; devizakockázat kezelése nélkül nem tervezhető projekt.',
     kf: 'Az ipari K+F a járműgyártás és az agrárfeldolgozás körül koncentrálódik, az egyetemi kapacitás egyenetlen.',
     intezmenyek: [{ n: 'TÜBITAK MAM', t: 'Állami kutatóintézet', ter: 'Élelmiszer- és anyagtechnológia', ny: 3 }],
     palyazatok: [{ ki: 'TÜBITAK', pr: '2509 bilaterális program', keret: '0,4 M USD', hat: '2026-10-20', rel: 'Közepes' }],
@@ -198,8 +211,9 @@ export const POSTS: Post[] = [
     tanulsag: 'Devizában rögzített költségvetés nélkül a közös projekt év közben ellenőrizhetetlenné válik.',
   },
   {
-    id: 14, attase: 'Fekete Tamás', orszag: 'Brazília', geo: 'Brazil', varos: 'São Paulo', regio: 'Latin-Amerika', lonlat: [-46.63, -23.55], base: 2.7, riportok: 7, nyitott: 1, utolso: '2026-03-12',
+    id: 14, attase: 'Fekete Tamás', orszag: 'Brazília', geo: 'Brazil', varos: 'São Paulo', regio: 'Latin-Amerika', lonlat: [-46.63, -23.55], base: 2.7, utolso: '2026-03-12', ciklus: '2026 Q2',
     fokusz: ['Agrár- és élelmiszertechnológia', 'Biotechnológia és élettudomány'],
+    megallapitas: 'Erős agrárkutatási bázis ciklikus finanszírozással – a tartományi ügynökségek gyorsabbak a szövetségi csatornánál.',
     kf: 'Erős agrárkutatási bázis (EMBRAPA), a finanszírozás viszont ciklikus és tartományonként eltérő.',
     intezmenyek: [{ n: 'EMBRAPA', t: 'Állami kutatóintézet', ter: 'Agrárkutatás', ny: 4 }],
     palyazatok: [{ ki: 'FAPESP', pr: 'SPRINT nemzetközi', keret: '0,3 M BRL', hat: '2026-09-26', rel: 'Alacsony' }],

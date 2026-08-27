@@ -3,13 +3,15 @@
 import Script from 'next/script';
 import { useEffect, useMemo, useRef } from 'react';
 import { POSTS, type Post } from '../lib/data';
-import { avg } from '../lib/score';
+import { nyitottsag } from '../lib/score';
 
 // A <tet-world-map> webkomponens (public/tet-world-map.js) d3-geo alapú;
 // a d3 és topojson CDN-ről töltődik, a komponens megvárja őket.
 
+export type MapMetric = 'focus' | 'risk' | 'open';
+
 interface Props {
-  metric: 'focus' | 'activity' | 'score';
+  metric: MapMetric;
   field: string;
   selected: string;
   onSelect: (p: Post) => void;
@@ -19,7 +21,9 @@ export default function WorldMap({ metric, field, selected, onSelect }: Props) {
   const ref = useRef<HTMLElement>(null);
 
   const dataJson = useMemo(
-    () => JSON.stringify(POSTS.map((p) => ({ ...p, atlag: avg(p), pin: true }))),
+    () => JSON.stringify(POSTS.map((p) => ({
+      ...p, kockazat: p.politika.kockazat, nyitottsag: nyitottsag(p), pin: true,
+    }))),
     [],
   );
 
