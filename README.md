@@ -1,16 +1,26 @@
 # NIÜ · TéT Platform – Next.js dummy demó
 
 Egyszerű Next.js (App Router, TypeScript) demóprojekt a „TéT Platform" design-doksi alapján.
-Minden adat statikus dummy adat (`lib/data.ts`), backend nincs.
+A képernyők adatai egyelőre statikus dummy adatok (`lib/data.ts`); az auth és az adatbázis-réteg már valódi (lásd lent).
 
 ## Indítás
 
 ```bash
 npm install
+cp .env.example .env.local   # majd állítsd be a BETTER_AUTH_SECRET és SEED_ADMIN_* értékeket
+npm run db:migrate           # létrehozza a data/tet.db-t a táblákkal
+npm run db:seed              # első admin felhasználó a .env.local alapján
 npm run dev
 ```
 
 Ezután nyisd meg: http://localhost:3000
+
+### Adatbázis és auth
+
+- Drizzle ORM + SQLite (`better-sqlite3`), DB fájl: `data/tet.db` (gitignore-olva)
+- Better Auth, Drizzle adapterrel; email + jelszó, nyilvános regisztráció tiltva; admin plugin (`role`: `admin` | `attase`)
+- Séma: `db/schema/`, migrációk: `drizzle/`, auth végpont: `/api/auth/*`
+- Scriptek: `db:generate` (migráció generálás séma-változás után), `db:migrate`, `db:studio`, `db:seed`, `auth:generate` (auth séma újragenerálás a Better Auth config változásakor)
 
 ## Képernyők
 
