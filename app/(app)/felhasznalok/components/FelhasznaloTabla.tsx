@@ -1,5 +1,3 @@
-'use client';
-
 import { Badge } from '../../../../components/ui/badge';
 import {
   Table,
@@ -21,7 +19,7 @@ export function FelhasznaloTabla({
   sajatId: string;
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-border bg-card">
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
       <Table>
         <TableHeader>
           <TableRow>
@@ -31,7 +29,7 @@ export function FelhasznaloTabla({
             <TableHead>Ország</TableHead>
             <TableHead>Állapot</TableHead>
             <TableHead>Létrehozva</TableHead>
-            <TableHead className="w-12" />
+            <TableHead className="w-12"><span className="sr-only">Műveletek</span></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
