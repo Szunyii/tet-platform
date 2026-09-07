@@ -1,3 +1,11 @@
+/**
+ * Tiszta validátorok az admin felhasználó-kezelő űrlapjaihoz (FormData → típusos input).
+ * Nincs React, nincs DB. Minden hibát egy menetben gyűjtünk (egy üres űrlap az összes
+ * mezőhibát visszaadja). A MezoHibak kulcsai a mezőnevek; a `form` kulcs a nem mezőhöz
+ * kötött hibáké (a server action-ök használják). Az e-mail trim + kisbetű (a Better Auth
+ * is kisbetűsít); a jelszót szándékosan nem trimmeljük.
+ */
+
 export const SZEREPKOROK = ['admin', 'attase'] as const;
 export type Szerepkor = (typeof SZEREPKOROK)[number];
 
@@ -6,6 +14,7 @@ export const SZEREPKOR_CIMKE: Record<Szerepkor, string> = {
   attase: 'TéT attasé',
 };
 
+/** Mezőnév → hibaüzenet. A `form` kulcs az űrlap-szintű hibáé. */
 export type MezoHibak = Record<string, string>;
 
 export interface UjFelhasznaloInput {
@@ -24,11 +33,24 @@ export interface SzerkesztesInput {
 
 export type ParseResult<T> = { ok: true; data: T } | { ok: false; errors: MezoHibak };
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Közel a Better Auth (zod) e-mail szabályához: nincs vezető/záró/dupla pont a helyi
+// részben, a domain végén legalább 2 betűs TLD. Ami itt átmegy, de a Better Auth elutasít
+// (pl. ékezetes cím), azt a server action INVALID_EMAIL hibaként az email mezőre teszi.
+const EMAIL_RE = /^(?!.*\.\.)[^\s@.](?:[^\s@]*[^\s@.])?@[^\s@]+\.[A-Za-z]{2,}$/;
 
+// Zéró szélességű karakterek (ZWSP, ZWNJ, ZWJ, BOM): a trim() nem szedi le, de láthatatlanok.
+const LATHATATLAN_RE = /[\u200B-\u200D\uFEFF]/g;
+
+/** Trimmelt szöveges mező; hiányzó vagy fájl érték → üres string. */
 function str(fd: FormData, key: string): string {
   const v = fd.get(key);
-  return typeof v === 'string' ? v.trim() : '';
+  return typeof v === 'string' ? v.replace(LATHATATLAN_RE, '').trim() : '';
+}
+
+/** Nyers érték trim nélkül: a jelszóban a szóköz is értékes karakter. */
+function raw(fd: FormData, key: string): string {
+  const v = fd.get(key);
+  return typeof v === 'string' ? v : '';
 }
 
 function validNev(nev: string, errors: MezoHibak) {
@@ -47,9 +69,9 @@ function validSzerepkor(raw: string, errors: MezoHibak): Szerepkor | null {
   return null;
 }
 
-/** Attasénál kötelező, adminnál eldobjuk. */
+/** Attasénál kötelező; adminnál (és érvénytelen szerepkörnél) eldobjuk, hiba nélkül. */
 function validOrszag(raw: string, szerepkor: Szerepkor | null, errors: MezoHibak): string | null {
-  if (szerepkor === 'admin') return null;
+  if (szerepkor !== 'attase') return null;
   if (!raw) {
     errors.orszag = 'TéT attasénál az ország kötelező.';
     return null;
@@ -65,7 +87,7 @@ export function parseUjFelhasznalo(fd: FormData): ParseResult<UjFelhasznaloInput
   const errors: MezoHibak = {};
   const nev = str(fd, 'nev');
   const email = str(fd, 'email').toLowerCase();
-  const jelszo = typeof fd.get('jelszo') === 'string' ? (fd.get('jelszo') as string) : '';
+  const jelszo = raw(fd, 'jelszo');
   validNev(nev, errors);
   if (!email) errors.email = 'Az e-mail cím kötelező.';
   else if (!EMAIL_RE.test(email)) errors.email = 'Érvénytelen e-mail cím.';
@@ -88,7 +110,7 @@ export function parseSzerkesztes(fd: FormData): ParseResult<SzerkesztesInput> {
 
 export function parseJelszo(fd: FormData): ParseResult<{ jelszo: string }> {
   const errors: MezoHibak = {};
-  const jelszo = typeof fd.get('jelszo') === 'string' ? (fd.get('jelszo') as string) : '';
+  const jelszo = raw(fd, 'jelszo');
   validJelszo(jelszo, errors);
   if (Object.keys(errors).length > 0) return { ok: false, errors };
   return { ok: true, data: { jelszo } };

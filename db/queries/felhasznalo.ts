@@ -1,4 +1,4 @@
-import { asc } from 'drizzle-orm';
+import 'server-only';
 import { db } from '../index';
 import { user } from '../schema';
 import type { Szerepkor } from '../../lib/felhasznalo-validacio';
@@ -13,8 +13,13 @@ export interface FelhasznaloSor {
   letrehozva: Date;
 }
 
-/** Minden felhasználó név szerint. Szinkron (better-sqlite3). */
+/**
+ * Minden felhasználó magyar név szerinti sorrendben. Szinkron (better-sqlite3).
+ * A rendezés JS-ben (localeCompare 'hu'): a SQLite BINARY collation az ékezetes neveket
+ * (Ács, Örkény, Ürmös) a lista végére tenné. Néhány tucat sorra ez elhanyagolható.
+ */
 export function listFelhasznalok(): FelhasznaloSor[] {
+  const now = Date.now();
   return db
     .select({
       id: user.id,
@@ -23,18 +28,20 @@ export function listFelhasznalok(): FelhasznaloSor[] {
       role: user.role,
       orszag: user.orszag,
       banned: user.banned,
+      banExpires: user.banExpires,
       createdAt: user.createdAt,
     })
     .from(user)
-    .orderBy(asc(user.name))
     .all()
     .map((r) => ({
       id: r.id,
       nev: r.nev,
       email: r.email,
-      szerepkor: r.role === 'admin' ? 'admin' : 'attase',
+      szerepkor: r.role === 'admin' ? ('admin' as const) : ('attase' as const),
       orszag: r.orszag ?? null,
-      tiltott: Boolean(r.banned),
+      // A Better Auth a lejárt banExpires-t nem tekinti tiltásnak.
+      tiltott: Boolean(r.banned) && (!r.banExpires || r.banExpires.getTime() > now),
       letrehozva: r.createdAt,
-    }));
+    }))
+    .sort((a, b) => a.nev.localeCompare(b.nev, 'hu'));
 }

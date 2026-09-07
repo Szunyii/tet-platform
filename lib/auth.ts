@@ -2,8 +2,16 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { nextCookies } from 'better-auth/next-js';
 import { admin } from 'better-auth/plugins';
+import { createAccessControl } from 'better-auth/plugins/access';
+import { adminAc, defaultStatements, userAc } from 'better-auth/plugins/admin/access';
 import { db } from '../db';
 import * as schema from '../db/schema';
+
+// Szerepkörök a Better Auth admin pluginhoz. A roles map nélkül a plugin 'admin' | 'user'
+// típust következtet, és az 'attase' nem fordulna le a createUser/setRole hívásokban.
+// admin: teljes felhasználó-kezelés; attase: nincs felhasználó-kezelési jog.
+const ac = createAccessControl(defaultStatements);
+const roles = { admin: adminAc, attase: userAc };
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: 'sqlite', schema }),
@@ -21,6 +29,8 @@ export const auth = betterAuth({
   },
   plugins: [
     admin({
+      ac,
+      roles,
       defaultRole: 'attase',
       adminRoles: ['admin'],
     }),
