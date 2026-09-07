@@ -4,7 +4,7 @@
 
 **Goal:** Valódi bejelentkezés (email + jelszó), session-alapú route-védelem, a `user` táblán `orszag` mező, és egy admin felhasználó-kezelő oldal (`/felhasznalok`) a Better Auth admin plugin API-jára építve.
 
-**Architecture:** A `lib/session.ts` három szerver-oldali helpert ad (`getSession`, `requireSession`, `requireAdmin`), ezekre épül minden page és action. A `proxy.ts` csak a session cookie meglétét nézi és `/login`-ra irányít; a bíró mindig a `requireSession()`. A `layout.tsx` szerveren kéri le a sessiont, és csak bejelentkezve rendereli az `AppShell`-t, aminek propként adja a usert. Az admin felhasználó-kezelő server action-ökön át hívja a Better Auth admin API-t (`auth.api.createUser` stb.) a kérés fejléceivel, így a plugin jogosultság-ellenőrzése is lefut.
+**Architecture:** A `lib/session.ts` három szerver-oldali helpert ad (`getSession`, `requireSession`, `requireAdmin`), ezekre épül minden page és action. A `proxy.ts` csak a session cookie meglétét nézi és `/login`-ra irányít; a bíró mindig a `requireSession()`. Az `app/(app)/layout.tsx` route-group layout `requireSession()`-nel kényszeríti ki a bejelentkezést minden védett oldalra, és az `AppShell`-nek propként adja a usert; a `/login` a gyökér layout alatt marad. Az admin felhasználó-kezelő server action-ökön át hívja a Better Auth admin API-t (`auth.api.createUser` stb.) a kérés fejléceivel, így a plugin jogosultság-ellenőrzése is lefut.
 
 **Tech Stack:** Next.js 16 (App Router, `proxy.ts`, Server Actions, `useActionState`), React 19, TypeScript 7, better-auth 1.7 (admin plugin, `better-auth/cookies`, `better-auth/api`), drizzle-orm 0.45 + better-sqlite3, shadcn/ui v4 (Base UI), Tailwind v4, lucide-react, sonner.
 
@@ -35,21 +35,23 @@
 | `proxy.ts` | létrehoz | cookie-alapú átirányítás |
 | `app/login/page.tsx` | létrehoz | login oldal (AppShell nélkül), `next` paraméter |
 | `app/login/components/LoginForm.tsx` | létrehoz | kliens űrlap, `signIn.email` |
-| `app/layout.tsx` | módosít | session lekérés, AppShell csak bejelentkezve, `Toaster` |
+| `app/layout.tsx` | módosít | gyökér layout: html/head/body, `Toaster`; AppShell nélkül |
+| `app/(app)/layout.tsx` | létrehoz | védett terület: `requireSession()` + `AppShell user={session}` |
+| `app/(app)/{terkep,riportok,uj-riport,kommunikacio,tudastar,monitoring}/` | `git mv` | a meglévő oldalak a route groupba (URL nem változik) |
 | `components/AppShell.tsx` | módosít | `user` prop, dummy szerep-kapcsoló ki, kijelentkezés, admin menü |
 | `components/ui/alert-dialog.tsx`, `components/ui/sonner.tsx` | shadcn CLI | megerősítő dialógus, toast |
 | `app/not-found.tsx` | létrehoz | magyar 404 (a `requireAdmin()` ide fut ki) |
 | `lib/felhasznalo-validacio.ts` | létrehoz | tiszta validátor az admin űrlapokhoz |
 | `db/queries/felhasznalo.ts` | létrehoz | `listFelhasznalok()` |
-| `app/felhasznalok/actions.ts` | létrehoz | server action-ök a Better Auth admin API-ra |
-| `app/felhasznalok/page.tsx` | létrehoz | `requireAdmin`, lista |
-| `app/felhasznalok/components/MezoHiba.tsx` | létrehoz | mezőhiba szöveg |
-| `app/felhasznalok/components/SzerepkorSelect.tsx` | létrehoz | szerepkör választó (shadcn Select, `name`) |
-| `app/felhasznalok/components/UjFelhasznaloDialog.tsx` | létrehoz | létrehozás |
-| `app/felhasznalok/components/SzerkesztesDialog.tsx` | létrehoz | név, ország, szerepkör |
-| `app/felhasznalok/components/JelszoDialog.tsx` | létrehoz | jelszó-visszaállítás |
-| `app/felhasznalok/components/FelhasznaloMuveletek.tsx` | létrehoz | sor-menü + tiltás/feloldás/törlés `AlertDialog` |
-| `app/felhasznalok/components/FelhasznaloTabla.tsx` | létrehoz | táblázat |
+| `app/(app)/felhasznalok/actions.ts` | létrehoz | server action-ök a Better Auth admin API-ra |
+| `app/(app)/felhasznalok/page.tsx` | létrehoz | `requireAdmin`, lista |
+| `app/(app)/felhasznalok/components/MezoHiba.tsx` | létrehoz | mezőhiba szöveg |
+| `app/(app)/felhasznalok/components/SzerepkorSelect.tsx` | létrehoz | szerepkör választó (shadcn Select, `name`) |
+| `app/(app)/felhasznalok/components/UjFelhasznaloDialog.tsx` | létrehoz | létrehozás |
+| `app/(app)/felhasznalok/components/SzerkesztesDialog.tsx` | létrehoz | név, ország, szerepkör |
+| `app/(app)/felhasznalok/components/JelszoDialog.tsx` | létrehoz | jelszó-visszaállítás |
+| `app/(app)/felhasznalok/components/FelhasznaloMuveletek.tsx` | létrehoz | sor-menü + tiltás/feloldás/törlés `AlertDialog` |
+| `app/(app)/felhasznalok/components/FelhasznaloTabla.tsx` | létrehoz | táblázat |
 | `README.md` | módosít | login és felhasználó-kezelés leírása |
 
 ---
@@ -287,14 +289,19 @@ git commit -m "feat(auth): proxy.ts – session cookie nélkül /login-ra irány
 
 ---
 
-### Task 4: Login oldal, és az AppShell csak bejelentkezve
+### Task 4: Login oldal, `(app)` route group `requireSession()`-nel, AppShell csak bejelentkezve
+
+**Miért route group:** a meglévő oldalak (`terkep`, `riportok`, `uj-riport`, `kommunikacio`, `tudastar`, `monitoring`) kliens-komponensek, nem hívnak `requireSession()`-t. Ha a gyökér layout csak „session ? AppShell : children" logikával dolgozna, egy elavult cookie-val (a proxy átengedi, a session viszont nincs) ezek az oldalak oldalsáv nélkül, de renderelődnének. Az `app/(app)/layout.tsx` `requireSession()`-je minden védett oldalra egyetlen helyen kényszeríti ki a bejelentkezést, a `/login` pedig a gyökér layout alatt marad. Az URL-ek nem változnak (a route group neve nem része az útvonalnak).
 
 **Files:**
 - Create: `app/login/page.tsx`
 - Create: `app/login/components/LoginForm.tsx`
-- Modify: `app/layout.tsx`
+- Create: `app/(app)/layout.tsx`
+- Move (`git mv`): `app/terkep`, `app/riportok`, `app/uj-riport`, `app/kommunikacio`, `app/tudastar`, `app/monitoring` → `app/(app)/…`; bennük a relatív importok egy szinttel mélyebbek
+- Modify: `app/layout.tsx` (gyökér: csak html/head/body, AppShell nélkül)
+- Marad a helyén: `app/page.tsx` (`/` → `/terkep` redirect), `app/api/`
 
-- [ ] **Step 1: `LoginForm.tsx`**
+- [ ] **Step 1: `app/login/components/LoginForm.tsx`**
 
 ```tsx
 'use client';
@@ -378,10 +385,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../..
 import { getSession } from '../../lib/session';
 import LoginForm from './components/LoginForm';
 
-// Csak relatív, egy perjellel kezdődő útvonalat fogadunk el (nyílt átirányítás ellen).
+// Csak relatív, egy perjellel kezdődő útvonalat fogadunk el (nyílt átirányítás ellen):
+// nem "//" és nem "/\" (a böngészők a backslash-t perjelre normalizálják), és nem a
+// /login maga (önhurok).
 function safeNext(raw: string | string[] | undefined): string {
   const v = Array.isArray(raw) ? raw[0] : raw;
-  if (v && v.startsWith('/') && !v.startsWith('//')) return v;
+  if (v && /^\/(?![/\\])/.test(v) && !v.startsWith('/login')) return v;
   return '/terkep';
 }
 
@@ -410,23 +419,20 @@ export default async function LoginPage({
 }
 ```
 
-- [ ] **Step 3: `app/layout.tsx` – AppShell csak sessionnel**
+- [ ] **Step 3: Gyökér `app/layout.tsx` – AppShell nélkül**
 
-Az `AppShell` most még nem fogad `user` propot; Task 5 adja hozzá. Hogy a build közben ne törjön, ebben a lépésben az AppShell-t ideiglenesen `user` nélkül hívjuk, és Task 5-ben cseréljük. Cseréld a fájl teljes tartalmát erre:
+Cseréld a fájl teljes tartalmát erre (a `description` már nem „dummy demó"):
 
 ```tsx
 import type { Metadata } from 'next';
 import './globals.css';
-import AppShell from '../components/AppShell';
-import { getSession } from '../lib/session';
 
 export const metadata: Metadata = {
   title: 'NIÜ · TéT Platform',
   description: 'TéT attasé hálózat belső munkakörnyezet',
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const session = await getSession();
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="hu">
       <head>
@@ -436,28 +442,72 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
         />
       </head>
-      <body>{session ? <AppShell>{children}</AppShell> : children}</body>
+      <body>{children}</body>
     </html>
   );
 }
 ```
 
-- [ ] **Step 4: Manuális ellenőrzés böngészőben**
+- [ ] **Step 4: `app/(app)/layout.tsx` – védett terület**
+
+Az `AppShell` most még nem fogad `user` propot; Task 5 adja hozzá. Ebben a lépésben `user` nélkül hívjuk, Task 5-ben `user={session}` lesz.
+
+```tsx
+import AppShell from '../../components/AppShell';
+import { requireSession } from '../../lib/session';
+
+// Minden védett oldal ebben a route groupban van. A requireSession() itt egy helyen
+// kényszeríti ki a bejelentkezést (elavult cookie esetén is: a proxy átengedi, ez
+// viszont /login-ra irányít). A /login a gyökér layout alatt marad.
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  await requireSession();
+  return <AppShell>{children}</AppShell>;
+}
+```
+
+- [ ] **Step 5: A meglévő oldalak átköltöztetése a route groupba**
+
+```bash
+mkdir -p "app/(app)"
+for d in terkep riportok uj-riport kommunikacio tudastar monitoring; do git mv "app/$d" "app/(app)/$d"; done
+ls "app/(app)"
+```
+Expected: a hat mappa a `app/(app)/` alatt, mindegyikben a `page.tsx`.
+
+A hat `page.tsx`-ben minden `'../../` kezdetű relatív import egy szinttel mélyebb lesz (`'../../../`). Pontosan ezek az importok érintettek (más `'../../` nincs bennük):
+
+```bash
+grep -rln "from '\.\./\.\./" "app/(app)" | xargs sed -i '' "s#from '\.\./\.\./#from '../../../#g"
+grep -rn "from '\.\./" "app/(app)"
+```
+Expected: minden találat `'../../../components/…'`, `'../../../lib/…'` alakú (2–3 import fájlonként, összesen 16). Az `app/page.tsx` (`/` → `/terkep` redirect) és az `app/api/` a helyén marad.
+
+Run: `npx tsc --noEmit`
+Expected: nincs hiba. Ha egy import nem oldódik fel, az adott fájlban a sed-et kézzel ellenőrizd.
+
+- [ ] **Step 6: Ellenőrzés**
+
+A dev szerver fut a 3000-en (ne indíts másikat). A böngészős lépések curl-lel is elvégezhetők; mindkettő leírva. Az admin adatai a `.env.local`-ban (`SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD`); a jelszót ne írd ki a reportba.
+
+curl (`C=/private/tmp/claude-501/tet-cookie.txt`):
+1. `curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" http://localhost:3000/riportok` → `307 http://localhost:3000/login?next=%2Friportok`
+2. `curl -s http://localhost:3000/login | grep -c "Bejelentkezés"` → legalább `1`; és `curl -s http://localhost:3000/login | grep -c "Aktív ciklus"` → `0` (nincs oldalsáv).
+3. Belépés: `curl -s -c $C -o /dev/null -w "%{http_code}\n" -X POST http://localhost:3000/api/auth/sign-in/email -H 'content-type: application/json' -d '{"email":"<SEED_ADMIN_EMAIL>","password":"<SEED_ADMIN_PASSWORD>"}'` → `200`. Rossz jelszóval → `401`.
+4. `curl -s -b $C http://localhost:3000/riportok | grep -c "Aktív ciklus"` → legalább `1` (oldalsáv van, az oldal renderelődött).
+5. `curl -s -b $C -o /dev/null -w "%{http_code} %{redirect_url}\n" http://localhost:3000/login` → `307 http://localhost:3000/terkep`; `…/login?next=%2Friportok` → `307 …/riportok`; `…/login?next=//evil.example` → `307 …/terkep`; `…/login?next=/login` → `307 …/terkep`.
+6. `curl -s -b $C -o /dev/null -w "%{http_code} %{redirect_url}\n" http://localhost:3000/` → `307 …/terkep` (a gyökér redirect működik).
+7. Elavult cookie: `node -e "const D=require('better-sqlite3');new D('data/tet.db').prepare('DELETE FROM session').run()"`, majd `curl -s -b $C -o /dev/null -w "%{http_code} %{redirect_url}\n" http://localhost:3000/terkep` → `307 http://localhost:3000/login` (a proxy átengedte, a `(app)` layout `requireSession()`-je irányított); `curl -s -b $C -o /dev/null -w "%{http_code}\n" http://localhost:3000/login` → `200` (nincs hurok). Ezután a 3. lépés belépése újra `200`.
+
+Böngésző (ha van rá mód, pl. `browse` skill; egyébként a curl elég): rossz jelszóval a form alatt „Hibás e-mail cím vagy jelszó."; jó jelszóval a `/riportok`-ra kerül oldalsávval.
 
 Run: `npx tsc --noEmit` → nincs hiba.
 
-Böngésző, dev szerver fut:
-1. `http://localhost:3000/riportok` → átirányít `/login?next=%2Friportok`-ra, a login kártya látszik, oldalsáv NINCS.
-2. Rossz jelszó → „Hibás e-mail cím vagy jelszó.”
-3. A seed admin adataival (`.env.local` `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`) → `/riportok` nyílik meg, oldalsávval.
-4. `http://localhost:3000/login` bejelentkezve → `/terkep` (a page `getSession()`-je irányít el, nem a proxy).
-5. Elavult cookie próba: jelentkezz be, majd töröld a session sort a DB-ből (`node -e "const D=require('better-sqlite3');new D('data/tet.db').prepare('DELETE FROM session').run()"`), és kérd le a `/terkep`-et → `/login` jelenik meg, NINCS redirect-hurok (`ERR_TOO_MANY_REDIRECTS` nélkül); belépés után újra működik.
-
-- [ ] **Step 5: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add app/login app/layout.tsx
-git commit -m "feat(auth): login oldal és AppShell csak bejelentkezve"
+git add app/login "app/(app)" app/layout.tsx
+git status --short   # a hat mappa "R" (rename) státusszal, plusz az új fájlok
+git commit -m "feat(auth): login oldal, (app) route group requireSession()-nel, AppShell csak bejelentkezve"
 ```
 
 ---
@@ -466,7 +516,7 @@ git commit -m "feat(auth): login oldal és AppShell csak bejelentkezve"
 
 **Files:**
 - Modify: `components/AppShell.tsx`
-- Modify: `app/layout.tsx` (a `user` prop átadása)
+- Modify: `app/(app)/layout.tsx` (a `user` prop átadása)
 
 - [ ] **Step 1: `AppShell.tsx` átírása**
 
@@ -632,30 +682,35 @@ export default function AppShell({ user, children }: { user: AppSession; childre
 
 Megjegyzés: a `.btn` a meglévő globális osztály (`app/globals.css`). A régi fejléc inline-style világát nem írjuk át ebben a lépésben (CLAUDE.md: csak az érintett részt), a kijelentkezés gomb ehhez illeszkedik.
 
-- [ ] **Step 2: `app/layout.tsx` – `user` prop átadása**
+- [ ] **Step 2: `app/(app)/layout.tsx` – `user` prop átadása**
 
-A `<body>` sort cseréld:
+Cseréld a layout törzsét erre (a session értékét most már felhasználjuk):
 
 ```tsx
-      <body>{session ? <AppShell user={session}>{children}</AppShell> : children}</body>
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const session = await requireSession();
+  return <AppShell user={session}>{children}</AppShell>;
+}
 ```
 
 - [ ] **Step 3: Típusellenőrzés és a `setRole` hivatkozások**
 
 Run: `npx tsc --noEmit`
-Expected: nincs hiba. (A `useApp()` hívók – `app/riportok/page.tsx`, `app/uj-riport/page.tsx`, `app/monitoring/page.tsx` – csak a `cycle`-t használják, ezek változatlanul fordulnak.)
+Expected: nincs hiba. (A `useApp()` hívók – `app/(app)/riportok/page.tsx`, `app/(app)/uj-riport/page.tsx`, `app/(app)/monitoring/page.tsx` – csak a `cycle`-t használják, ezek változatlanul fordulnak.)
 
 Run: `grep -rn "setRole" app components`
 Expected: nincs találat.
 
-- [ ] **Step 4: Manuális ellenőrzés**
+- [ ] **Step 4: Ellenőrzés**
 
-Böngésző: bejelentkezve az adminnal a fejlécben a seed admin neve és „NIÜ admin” látszik, a „Felhasználók” menüpont megjelenik (még 404-et ad, az oldal Task 9-ben jön). „Kijelentkezés” → `/login`, majd `/terkep` kérése újra `/login`-ra visz.
+curl (belépés a Task 4 Step 6/3 szerint, `C=/private/tmp/claude-501/tet-cookie.txt`): `curl -s -b $C http://localhost:3000/terkep` kimenetében szerepel a seed admin neve, az „NIÜ admin" felirat, a „Felhasználók" menüpont és a „Kijelentkezés" gomb; nem szerepel az „Admin (NIÜ)" / „TéT attasé" dummy kapcsoló. `curl -s -b $C -o /dev/null -w "%{http_code}\n" -X POST http://localhost:3000/api/auth/sign-out` → `200`, utána `curl -s -b $C -o /dev/null -w "%{http_code} %{redirect_url}\n" http://localhost:3000/terkep` → `307 …/login` (a cookie még ott van, de a session törölve: a `(app)` layout irányít).
+
+Böngésző (ha van rá mód): bejelentkezve az adminnal a fejlécben a seed admin neve és „NIÜ admin” látszik, a „Felhasználók” menüpont megjelenik (még 404-et ad, az oldal Task 9-ben jön). „Kijelentkezés” → `/login`, majd `/terkep` kérése újra `/login`-ra visz.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add components/AppShell.tsx app/layout.tsx
+git add components/AppShell.tsx "app/(app)/layout.tsx"
 git commit -m "feat(auth): AppShell valódi sessionből, kijelentkezés, admin menüpont"
 ```
 
@@ -678,7 +733,7 @@ Expected: `alert-dialog.tsx` exportálja legalább: `AlertDialog, AlertDialogCon
 
 Ha a `sonner.tsx` `next-themes`-t importál és az nem települt: `npm install next-themes`.
 
-- [ ] **Step 2: `Toaster` a `layout.tsx`-ben**
+- [ ] **Step 2: `Toaster` a gyökér `app/layout.tsx`-ben**
 
 Import hozzáadása:
 
@@ -690,14 +745,14 @@ A `<body>`:
 
 ```tsx
       <body>
-        {session ? <AppShell user={session}>{children}</AppShell> : children}
+        {children}
         <Toaster position="bottom-right" />
       </body>
 ```
 
 - [ ] **Step 3: `app/not-found.tsx` – magyar 404**
 
-A `requireAdmin()` `notFound()`-ja és minden ismeretlen útvonal ide fut ki. Bejelentkezve a root layout az AppShell-be ágyazza (session van), így az oldalsáv megmarad.
+A `requireAdmin()` `notFound()`-ja és minden ismeretlen útvonal ide fut ki. A gyökér layout alatt renderelődik (AppShell nélkül), ezért önálló, középre igazított oldal, mint a login.
 
 ```tsx
 import Link from 'next/link';
@@ -705,14 +760,14 @@ import { Button } from '../components/ui/button';
 
 export default function NotFound() {
   return (
-    <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-center">
+    <main className="flex min-h-screen flex-col items-center justify-center gap-3 p-6 text-center">
       <p className="font-mono text-sm text-muted-foreground">404</p>
       <h2 className="text-lg font-semibold">Az oldal nem található</h2>
       <p className="max-w-sm text-sm text-muted-foreground">
         A keresett oldal nem létezik, vagy nincs hozzá jogosultságod.
       </p>
       <Button render={<Link href="/terkep" />}>Vissza az Országprofilra</Button>
-    </div>
+    </main>
   );
 }
 ```
@@ -721,7 +776,7 @@ export default function NotFound() {
 
 Run: `npx tsc --noEmit` → nincs hiba.
 
-Böngésző bejelentkezve: `http://localhost:3000/nincs-ilyen` → a magyar 404 az oldalsávval; a gomb a `/terkep`-re visz.
+`curl -s -b $C http://localhost:3000/nincs-ilyen | grep -c "Az oldal nem található"` → legalább `1`, és a státusz `404`. Böngészőben a gomb a `/terkep`-re visz.
 
 ```bash
 git add components/ui/alert-dialog.tsx components/ui/sonner.tsx app/not-found.tsx app/layout.tsx package.json package-lock.json
@@ -934,10 +989,10 @@ git commit -m "feat(felhasznalok): validátor és listázó lekérdezés"
 
 ---
 
-### Task 8: Server action-ök (`app/felhasznalok/actions.ts`)
+### Task 8: Server action-ök (`app/(app)/felhasznalok/actions.ts`)
 
 **Files:**
-- Create: `app/felhasznalok/actions.ts`
+- Create: `app/(app)/felhasznalok/actions.ts`
 
 - [ ] **Step 1: Fájl létrehozása**
 
@@ -946,14 +1001,14 @@ git commit -m "feat(felhasznalok): validátor és listázó lekérdezés"
 
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
-import { auth } from '../../lib/auth';
+import { auth } from '../../../lib/auth';
 import {
   parseJelszo,
   parseSzerkesztes,
   parseUjFelhasznalo,
   type MezoHibak,
-} from '../../lib/felhasznalo-validacio';
-import { requireAdmin } from '../../lib/session';
+} from '../../../lib/felhasznalo-validacio';
+import { requireAdmin } from '../../../lib/session';
 
 export interface MuveletState {
   ok?: boolean;
@@ -1098,7 +1153,7 @@ Expected: nincs hiba. Ha a `role: szerepkor` típushibát ad (a plugin szűkebb 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add app/felhasznalok/actions.ts
+git add "app/(app)/felhasznalok/actions.ts"
 git commit -m "feat(felhasznalok): server action-ök a Better Auth admin API-ra"
 ```
 
@@ -1107,11 +1162,11 @@ git commit -m "feat(felhasznalok): server action-ök a Better Auth admin API-ra"
 ### Task 9: `/felhasznalok` oldal, táblázat, új felhasználó dialógus
 
 **Files:**
-- Create: `app/felhasznalok/components/MezoHiba.tsx`
-- Create: `app/felhasznalok/components/SzerepkorSelect.tsx`
-- Create: `app/felhasznalok/components/UjFelhasznaloDialog.tsx`
-- Create: `app/felhasznalok/components/FelhasznaloTabla.tsx`
-- Create: `app/felhasznalok/page.tsx`
+- Create: `app/(app)/felhasznalok/components/MezoHiba.tsx`
+- Create: `app/(app)/felhasznalok/components/SzerepkorSelect.tsx`
+- Create: `app/(app)/felhasznalok/components/UjFelhasznaloDialog.tsx`
+- Create: `app/(app)/felhasznalok/components/FelhasznaloTabla.tsx`
+- Create: `app/(app)/felhasznalok/page.tsx`
 
 - [ ] **Step 1: `MezoHiba.tsx`**
 
@@ -1139,8 +1194,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../../../components/ui/select';
-import { SZEREPKOR_CIMKE, SZEREPKOROK, type Szerepkor } from '../../../lib/felhasznalo-validacio';
+} from '../../../../components/ui/select';
+import { SZEREPKOR_CIMKE, SZEREPKOROK, type Szerepkor } from '../../../../lib/felhasznalo-validacio';
 
 export function SzerepkorSelect({
   value,
@@ -1180,7 +1235,7 @@ A form külön komponens a `DialogContent`-en belül: zárásnál unmountol, íg
 
 import { useActionState, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Button } from '../../../components/ui/button';
+import { Button } from '../../../../components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -1188,10 +1243,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../../../components/ui/dialog';
-import { Input } from '../../../components/ui/input';
-import { Label } from '../../../components/ui/label';
-import type { Szerepkor } from '../../../lib/felhasznalo-validacio';
+} from '../../../../components/ui/dialog';
+import { Input } from '../../../../components/ui/input';
+import { Label } from '../../../../components/ui/label';
+import type { Szerepkor } from '../../../../lib/felhasznalo-validacio';
 import { createFelhasznaloAction, type MuveletState } from '../actions';
 import { MezoHiba } from './MezoHiba';
 import { SzerepkorSelect } from './SzerepkorSelect';
@@ -1281,7 +1336,7 @@ A műveletek oszlop egyelőre üres helyőrző komponens nélkül; Task 10 teszi
 ```tsx
 'use client';
 
-import { Badge } from '../../../components/ui/badge';
+import { Badge } from '../../../../components/ui/badge';
 import {
   Table,
   TableBody,
@@ -1289,9 +1344,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../../../components/ui/table';
-import type { FelhasznaloSor } from '../../../db/queries/felhasznalo';
-import { SZEREPKOR_CIMKE } from '../../../lib/felhasznalo-validacio';
+} from '../../../../components/ui/table';
+import type { FelhasznaloSor } from '../../../../db/queries/felhasznalo';
+import { SZEREPKOR_CIMKE } from '../../../../lib/felhasznalo-validacio';
 
 function datum(d: Date): string {
   return d.toISOString().slice(0, 10);
@@ -1346,11 +1401,11 @@ export function FelhasznaloTabla({
 }
 ```
 
-- [ ] **Step 5: `app/felhasznalok/page.tsx`**
+- [ ] **Step 5: `app/(app)/felhasznalok/page.tsx`**
 
 ```tsx
-import { listFelhasznalok } from '../../db/queries/felhasznalo';
-import { requireAdmin } from '../../lib/session';
+import { listFelhasznalok } from '../../../db/queries/felhasznalo';
+import { requireAdmin } from '../../../lib/session';
 import { FelhasznaloTabla } from './components/FelhasznaloTabla';
 import { UjFelhasznaloDialog } from './components/UjFelhasznaloDialog';
 
@@ -1382,7 +1437,7 @@ Böngésző adminnal: `/felhasznalok` mutatja a seed admint „(te)” jelölés
 - [ ] **Step 7: Commit**
 
 ```bash
-git add app/felhasznalok
+git add "app/(app)/felhasznalok"
 git commit -m "feat(felhasznalok): admin lista és új felhasználó dialógus"
 ```
 
@@ -1391,10 +1446,10 @@ git commit -m "feat(felhasznalok): admin lista és új felhasználó dialógus"
 ### Task 10: Szerkesztés, jelszó, tiltás/feloldás, törlés
 
 **Files:**
-- Create: `app/felhasznalok/components/SzerkesztesDialog.tsx`
-- Create: `app/felhasznalok/components/JelszoDialog.tsx`
-- Create: `app/felhasznalok/components/FelhasznaloMuveletek.tsx`
-- Modify: `app/felhasznalok/components/FelhasznaloTabla.tsx`
+- Create: `app/(app)/felhasznalok/components/SzerkesztesDialog.tsx`
+- Create: `app/(app)/felhasznalok/components/JelszoDialog.tsx`
+- Create: `app/(app)/felhasznalok/components/FelhasznaloMuveletek.tsx`
+- Modify: `app/(app)/felhasznalok/components/FelhasznaloTabla.tsx`
 
 - [ ] **Step 1: `SzerkesztesDialog.tsx`**
 
@@ -1403,7 +1458,7 @@ git commit -m "feat(felhasznalok): admin lista és új felhasználó dialógus"
 
 import { useActionState, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Button } from '../../../components/ui/button';
+import { Button } from '../../../../components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -1411,11 +1466,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../../../components/ui/dialog';
-import { Input } from '../../../components/ui/input';
-import { Label } from '../../../components/ui/label';
-import type { FelhasznaloSor } from '../../../db/queries/felhasznalo';
-import type { Szerepkor } from '../../../lib/felhasznalo-validacio';
+} from '../../../../components/ui/dialog';
+import { Input } from '../../../../components/ui/input';
+import { Label } from '../../../../components/ui/label';
+import type { FelhasznaloSor } from '../../../../db/queries/felhasznalo';
+import type { Szerepkor } from '../../../../lib/felhasznalo-validacio';
 import { updateFelhasznaloAction, type MuveletState } from '../actions';
 import { MezoHiba } from './MezoHiba';
 import { SzerepkorSelect } from './SzerepkorSelect';
@@ -1495,7 +1550,7 @@ export function SzerkesztesDialog({
 
 import { useActionState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Button } from '../../../components/ui/button';
+import { Button } from '../../../../components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -1503,10 +1558,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../../../components/ui/dialog';
-import { Input } from '../../../components/ui/input';
-import { Label } from '../../../components/ui/label';
-import type { FelhasznaloSor } from '../../../db/queries/felhasznalo';
+} from '../../../../components/ui/dialog';
+import { Input } from '../../../../components/ui/input';
+import { Label } from '../../../../components/ui/label';
+import type { FelhasznaloSor } from '../../../../db/queries/felhasznalo';
 import { setJelszoAction, type MuveletState } from '../actions';
 import { MezoHiba } from './MezoHiba';
 
@@ -1586,16 +1641,16 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '../../../components/ui/alert-dialog';
-import { Button } from '../../../components/ui/button';
+} from '../../../../components/ui/alert-dialog';
+import { Button } from '../../../../components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '../../../components/ui/dropdown-menu';
-import type { FelhasznaloSor } from '../../../db/queries/felhasznalo';
+} from '../../../../components/ui/dropdown-menu';
+import type { FelhasznaloSor } from '../../../../db/queries/felhasznalo';
 import { banAction, removeFelhasznaloAction, unbanAction, type MuveletState } from '../actions';
 import { JelszoDialog } from './JelszoDialog';
 import { SzerkesztesDialog } from './SzerkesztesDialog';
@@ -1731,7 +1786,7 @@ Böngésző adminnal a `/felhasznalok`-on:
 - [ ] **Step 6: Commit**
 
 ```bash
-git add app/felhasznalok
+git add "app/(app)/felhasznalok"
 git commit -m "feat(felhasznalok): szerkesztés, jelszó-visszaállítás, tiltás, törlés"
 ```
 
