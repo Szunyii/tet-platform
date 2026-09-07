@@ -852,17 +852,30 @@ A `notFound()` a legközelebbi `not-found.tsx`-et rendereli, a saját szegmensé
 
 ```tsx
 import Link from 'next/link';
-import { Button } from './ui/button';
+import { HOME_ROUTE } from '../lib/routes';
+import { cn } from '../lib/utils';
+import { buttonVariants } from './ui/button';
 
-export function NotFoundContent() {
+// A gyökér 404-en ez az egyetlen címsor (h1), az AppShellen belül az h1 a fejléc, ezért h2.
+export function NotFoundContent({ heading = 'h2' }: { heading?: 'h1' | 'h2' }) {
+  const Heading = heading;
   return (
     <div className="flex flex-col items-center gap-3 text-center">
       <p className="font-mono text-sm text-muted-foreground">404</p>
-      <h2 className="text-lg font-semibold">Az oldal nem található</h2>
+      <Heading className="text-lg font-semibold">Az oldal nem található</Heading>
       <p className="max-w-sm text-sm text-muted-foreground">
         A keresett oldal nem létezik, vagy nincs hozzá jogosultságod.
       </p>
-      <Button render={<Link href="/terkep" />}>Vissza az Országprofilra</Button>
+      {/* Link + buttonVariants, nem <Button render={<Link/>}>: a Base UI Button natív
+          <button>-t vár, <a>-val hibát logol és type="button"-t tesz a linkre. */}
+      <Link
+        href={HOME_ROUTE}
+        // !text… és !no-underline: a régi globális `a { color }` / `a:hover` szabály
+        // (globals.css) rétegen kívüli, ezért csak az important utility nyer felette.
+        className={cn(buttonVariants(), '!text-primary-foreground hover:!no-underline')}
+      >
+        Vissza az Országprofilra
+      </Link>
     </div>
   );
 }
@@ -890,11 +903,18 @@ import { NotFoundContent } from '../components/NotFoundContent';
 export default function NotFound() {
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
-      <NotFoundContent />
+      <NotFoundContent heading="h1" />
     </main>
   );
 }
 ```
+
+- [ ] **Step 3b: Review utáni kiegészítések (a fájlok végleges tartalma a repóban)**
+
+- `components/ui/sonner.tsx`: `theme="light"` fixen (nincs ThemeProvider, az app light-only; a `system` téma sötét OS-en olvashatatlan toastot adna), `fontFamily: 'var(--font-sans)'` az inline `style`-ban (a sonner rétegen kívüli CSS-e felülírja a Tailwind utility-t), a `next-themes` függőség eltávolítva (`npm uninstall next-themes`).
+- `lib/routes.ts`: `HOME_ROUTE = '/terkep'`, `LOGIN_ROUTE = '/login'`; ezt használja az `app/page.tsx`, `app/login/page.tsx`, `app/(app)/actions.ts`, `lib/session.ts`. A `proxy.ts` és az AppShell `NAV` szándékosan nem.
+- `components/AppShell.tsx`: `titleFor(pathname, role)` admin-only útvonalnál nem admin usernek a generikus címet adja, hogy a `requireAdmin()` 404-e az AppShellben ne árulja el az oldal létét a fejlécben.
+- A 404 gomb-link: `<Link className={cn(buttonVariants(), '!text-primary-foreground hover:!no-underline')}>`, mert a régi globális `a { color }` szabály rétegen kívüli.
 
 - [ ] **Step 4: Ellenőrzés és commit**
 
