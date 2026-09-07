@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'NIÜ · TéT Platform',
+  title: { default: 'NIÜ · TéT Platform', template: '%s · NIÜ · TéT Platform' },
   description: 'TéT attasé hálózat belső munkakörnyezet',
 };
 
