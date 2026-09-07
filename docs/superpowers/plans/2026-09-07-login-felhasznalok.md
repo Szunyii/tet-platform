@@ -2264,12 +2264,12 @@ git commit -m "feat(felhasznalok): szerkesztés, jelszó-visszaállítás, tilt�
 ### Task 11: Build, curl-ellenőrzés, README
 
 **Files:**
-- Modify: `README.md`
+- Modify: `README.md`, `CLAUDE.md`
 
 - [ ] **Step 1: Production build**
 
 Run: `npm run build`
-Expected: sikeres build. Ha a `/login` oldalnál „useSearchParams … Suspense” hibát látsz, valaki `useSearchParams`-t használt a `LoginForm`-ban – a terv szerint a `next` a page `searchParams` propjából jön, ne a kliens hookból.
+Expected: sikeres build, a route-listában a `/login`, `/felhasznalok` és a hat `(app)` oldal, TypeScript hiba nélkül (a build újragenerálja a `.next/types/validator.ts`-t, így a dev szerver elavult `tsc` hibája is eltűnik). A Next 16 a dev kimenetet a `.next/dev/` alatt tartja, ezért a build a futó dev szerver mellett is futtatható. Ha a `/login` oldalnál „useSearchParams … Suspense” hibát látsz, valaki `useSearchParams`-t használt a `LoginForm`-ban – a terv szerint a `next` a page `searchParams` propjából jön, ne a kliens hookból.
 
 - [ ] **Step 2: curl a sign-in végpontra**
 
@@ -2282,9 +2282,9 @@ curl -s -o /dev/null -w "%{http_code}\n" -X POST http://localhost:3000/api/auth/
 Expected: `401`
 
 ```bash
-curl -s -c /tmp/tet-cookie.txt -o /dev/null -w "%{http_code}\n" -X POST http://localhost:3000/api/auth/sign-in/email \
-  -H 'content-type: application/json' -d '{"email":"admin@niu.hu","password":"<SEED_ADMIN_PASSWORD>"}'
-curl -s -b /tmp/tet-cookie.txt -o /dev/null -w "%{http_code}\n" http://localhost:3000/felhasznalok
+curl -s -c /private/tmp/claude-501/tet-cookie.txt -o /dev/null -w "%{http_code}\n" -X POST http://localhost:3000/api/auth/sign-in/email \
+  -H 'content-type: application/json' -H 'Origin: http://localhost:3000' -d '{"email":"admin@niu.hu","password":"<SEED_ADMIN_PASSWORD>"}'
+curl -s -b /private/tmp/claude-501/tet-cookie.txt -o /dev/null -w "%{http_code}\n" http://localhost:3000/felhasznalok
 ```
 Expected: `200`, majd `200` (cookie-val a védett oldal elérhető).
 
@@ -2307,11 +2307,25 @@ A „Képernyők” táblázatba két sor:
 | `/felhasznalok` | Felhasználó-kezelés (csak admin) |
 ```
 
+- [ ] **Step 3b: CLAUDE.md frissítése (a projekt-útmutató elavult részei)**
+
+A `CLAUDE.md`-ben pontosan ezeket cseréld:
+
+1. Az **Auth.** bekezdés végére fűzd hozzá (ugyanabban a bekezdésben): ` Session szerver oldalon: `lib/session.ts` (`getSession()` React.cache-ben, `requireSession()` → `/login`, `requireAdmin()` → 404); mindig `await`-eld, soha ne hívd `try/catch`-en belül. Route-védelem: `proxy.ts` (csak a cookie meglétét nézi, `/login` és `/api/auth` kivétel, nem GET kérést átenged) + `app/(app)/layout.tsx` `requireSession()`. A `user.orszag` mező (`additionalFields`, `input: false`) az attasé posztjának országa; az admin plugin `roles` mappel (`admin`, `attase`) fut. Kijelentkezés: `app/(app)/actions.ts` `logoutAction` (server action, `revalidatePath('/', 'layout')`). Felhasználó-kezelés: `/felhasznalok` (csak admin), `app/(app)/felhasznalok/`.`
+
+2. Az **UI shell.** bekezdést cseréld erre:
+
+`**UI shell.** A védett oldalak az `app/(app)/` route groupban vannak (`terkep`, `riportok`, `uj-riport`, `kommunikacio`, `tudastar`, `monitoring`, `felhasznalok`); az `app/(app)/layout.tsx` `requireSession()`-t hív és a `components/AppShell.tsx`-nek propként adja a usert (`user: AppSession`) és a `logoutAction`-t. A `/login` és a 404 a gyökér layout alatt, AppShell nélkül renderelődik. Az AppShell context-je (`useApp()`: `user`, `cycle`, `setCycle`) csak a provideren belül használható; a `cycle` váltó még kliens-oldali demó. A sidebar `NAV` (admin-only menüpont: `adminOnly`, csak megjelenítés) és a fejléc `TITLES` táblázata az AppShell-ben van; új oldalhoz mindkettőt bővíteni kell. Fix célpontok: `lib/routes.ts` (`HOME_ROUTE`, `LOGIN_ROUTE`); a `/` a `/terkep`-re irányít.`
+
+3. A projektstruktúra táblában a „Route belépési pont” sor útvonalát `app/<route>/page.tsx` → `app/(app)/<route>/page.tsx` (védett oldal; a `login` a gyökérben marad), a „Server function-ök” sorét `app/<route>/actions.ts` → `app/(app)/<route>/actions.ts`, a „Route-specifikus komponensek” sorét `app/<route>/components/` → `app/(app)/<route>/components/`.
+
+4. A „Parancsok” szakasz ellenőrzés-bekezdéséhez add hozzá: `Eldobható tsx script, ami `db/queries/*`-t vagy `lib/session.ts`-t importál: `NODE_OPTIONS="--conditions=react-server" npx tsx scripts/_x.ts` (a `server-only` guard miatt).` És: `Headless böngészős ellenőrzés: `~/.claude/skills/gstack/browse/dist/browse goto/fill/click/text/js` (gstack).`
+
 - [ ] **Step 4: Commit**
 
 ```bash
-git add README.md
-git commit -m "docs: login és felhasználó-kezelés a README-ben"
+git add README.md CLAUDE.md
+git commit -m "docs: login, session, felhasználó-kezelés a README-ben és a CLAUDE.md-ben"
 ```
 
 - [ ] **Step 5: Végső teljes manuális forgatókönyv (a spec „Ellenőrzés” szakasza)**
