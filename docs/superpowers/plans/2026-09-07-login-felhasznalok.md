@@ -1725,7 +1725,11 @@ import { SzerepkorSelect } from './SzerepkorSelect';
 function SzerkesztesForm({ felhasznalo, onKesz }: { felhasznalo: FelhasznaloSor; onKesz: () => void }) {
   const action = updateFelhasznaloAction.bind(null, felhasznalo.id);
   const [state, formAction, pending] = useActionState<MuveletState, FormData>(action, {});
+  // Vezérelt mezők: a React 19 a <form action> beküldése után (hibánál is) alaphelyzetbe
+  // állítja a nem vezérelt inputokat; a state megőrzi a beírt értékeket.
+  const [nev, setNev] = useState(felhasznalo.nev);
   const [szerepkor, setSzerepkor] = useState<Szerepkor>(felhasznalo.szerepkor);
+  const [orszag, setOrszag] = useState(felhasznalo.orszag ?? '');
   const errors = state.errors ?? {};
 
   useEffect(() => {
@@ -1739,7 +1743,15 @@ function SzerkesztesForm({ felhasznalo, onKesz }: { felhasznalo: FelhasznaloSor;
     <form action={formAction} className="flex flex-col gap-3" noValidate>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="nev">Név</Label>
-        <Input id="nev" name="nev" required maxLength={100} defaultValue={felhasznalo.nev} />
+        <Input
+          id="nev"
+          name="nev"
+          required
+          maxLength={100}
+          aria-invalid={errors.nev ? true : undefined}
+          value={nev}
+          onChange={(e) => setNev(e.target.value)}
+        />
         <MezoHiba uzenet={errors.nev} />
       </div>
       <div className="flex flex-col gap-1.5">
@@ -1750,7 +1762,15 @@ function SzerkesztesForm({ felhasznalo, onKesz }: { felhasznalo: FelhasznaloSor;
       {szerepkor === 'attase' && (
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="orszag">Ország (TéT poszt)</Label>
-          <Input id="orszag" name="orszag" required maxLength={100} defaultValue={felhasznalo.orszag ?? ''} />
+          <Input
+            id="orszag"
+            name="orszag"
+            required
+            maxLength={100}
+            aria-invalid={errors.orszag ? true : undefined}
+            value={orszag}
+            onChange={(e) => setOrszag(e.target.value)}
+          />
           <MezoHiba uzenet={errors.orszag} />
         </div>
       )}
@@ -1796,7 +1816,7 @@ export function SzerkesztesDialog({
 ```tsx
 'use client';
 
-import { useActionState, useCallback, useEffect } from 'react';
+import { useActionState, useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../components/ui/button';
 import {
@@ -1816,6 +1836,8 @@ import { MezoHiba } from './MezoHiba';
 function JelszoForm({ felhasznalo, onKesz }: { felhasznalo: FelhasznaloSor; onKesz: () => void }) {
   const action = setJelszoAction.bind(null, felhasznalo.id);
   const [state, formAction, pending] = useActionState<MuveletState, FormData>(action, {});
+  // Vezérelt mező, hogy hibánál ne ürüljön (React 19 a <form action> után resetel).
+  const [jelszo, setJelszo] = useState('');
   const errors = state.errors ?? {};
 
   useEffect(() => {
@@ -1829,7 +1851,17 @@ function JelszoForm({ felhasznalo, onKesz }: { felhasznalo: FelhasznaloSor; onKe
     <form action={formAction} className="flex flex-col gap-3" noValidate>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="jelszo">Új jelszó</Label>
-        <Input id="jelszo" name="jelszo" type="password" required minLength={8} autoComplete="new-password" />
+        <Input
+          id="jelszo"
+          name="jelszo"
+          type="password"
+          required
+          minLength={8}
+          autoComplete="new-password"
+          aria-invalid={errors.jelszo ? true : undefined}
+          value={jelszo}
+          onChange={(e) => setJelszo(e.target.value)}
+        />
         <MezoHiba uzenet={errors.jelszo} />
       </div>
       <MezoHiba uzenet={errors.form} />
