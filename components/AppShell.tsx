@@ -1,35 +1,40 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { createContext, useContext, useState, type ReactNode } from 'react';
-import { CYCLES, DEADLINE, DEFAULT_CYCLE, ME_ID, POSTS, TICKETS } from '../lib/data';
+import { CYCLES, DEADLINE, DEFAULT_CYCLE, TICKETS } from '../lib/data';
 import { ini } from '../lib/score';
+import { signOut } from '../lib/auth-client';
+import type { AppSession, AppRole } from '../lib/session';
 
-export type Role = 'admin' | 'attase';
+export type Role = AppRole;
 
 interface AppState {
   role: Role;
-  setRole: (r: Role) => void;
+  user: AppSession;
   cycle: string;
   setCycle: (c: string) => void;
 }
 
+const EMPTY_USER: AppSession = { userId: '', name: '', email: '', role: 'attase', orszag: null };
+
 const AppContext = createContext<AppState>({
-  role: 'admin', setRole: () => {}, cycle: DEFAULT_CYCLE, setCycle: () => {},
+  role: 'attase', user: EMPTY_USER, cycle: DEFAULT_CYCLE, setCycle: () => {},
 });
 
 export function useApp() {
   return useContext(AppContext);
 }
 
-const NAV = [
+const NAV: { href: string; icon: string; label: string; adminOnly?: boolean }[] = [
   { href: '/terkep', icon: '◍', label: 'Országprofil' },
   { href: '/riportok', icon: '▦', label: 'Riportok' },
   { href: '/uj-riport', icon: '✎', label: 'Új riport kitöltése' },
   { href: '/kommunikacio', icon: '✉', label: 'Kommunikáció' },
   { href: '/tudastar', icon: '◫', label: 'Tudástár' },
   { href: '/monitoring', icon: '◈', label: 'Monitoring és értékelés' },
+  { href: '/felhasznalok', icon: '☺', label: 'Felhasználók', adminOnly: true },
 ];
 
 const TITLES: Record<string, [string, string]> = {
@@ -39,20 +44,36 @@ const TITLES: Record<string, [string, string]> = {
   '/kommunikacio': ['Kommunikáció', 'Ticket + üzenetszál az adminok és a TéT attasék között'],
   '/tudastar': ['Tudástár', 'Magyarországról ajánlható programok, partnerek és együttműködési formák'],
   '/monitoring': ['Monitoring és értékelés', '3 kategória, 14 szempont, rögzített adatforrás-metaadatokkal'],
+  '/felhasznalok': ['Felhasználók', 'Admin és TéT attasé fiókok kezelése'],
 };
 
-export default function AppShell({ children }: { children: ReactNode }) {
-  const [role, setRole] = useState<Role>('admin');
+// Pontos egyezés, különben a leghosszabb prefix (pl. /riportok/abc → /riportok).
+function titleFor(pathname: string): [string, string] {
+  if (TITLES[pathname]) return TITLES[pathname];
+  const key = Object.keys(TITLES)
+    .filter((k) => pathname.startsWith(k + '/'))
+    .sort((a, b) => b.length - a.length)[0];
+  return key ? TITLES[key] : ['TéT Platform', ''];
+}
+
+export default function AppShell({ user, children }: { user: AppSession; children: ReactNode }) {
   const [cycle, setCycle] = useState(DEFAULT_CYCLE);
   const pathname = usePathname();
-  const [title, sub] = TITLES[pathname] || ['TéT Platform', ''];
+  const router = useRouter();
+  const [title, sub] = titleFor(pathname);
   const openTickets = TICKETS.filter((t) => t.statusz !== 'Lezárt').length;
-  const me = role === 'admin'
-    ? { name: 'Sipos Katalin', role: 'NIÜ admin · XPAND' }
-    : { name: POSTS.find((p) => p.id === ME_ID)!.attase, role: 'TéT attasé · Szöul' };
+  const roleLabel = user.role === 'admin'
+    ? 'NIÜ admin'
+    : `TéT attasé${user.orszag ? ' · ' + user.orszag : ''}`;
+
+  async function logout() {
+    await signOut();
+    router.push('/login');
+    router.refresh();
+  }
 
   return (
-    <AppContext.Provider value={{ role, setRole, cycle, setCycle }}>
+    <AppContext.Provider value={{ role: user.role, user, cycle, setCycle }}>
       <div style={{ display: 'flex', minHeight: '100vh' }}>
         <aside style={{
           width: 238, flex: '0 0 238px', background: '#131a24', color: '#e7ebf1',
@@ -63,8 +84,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
             <div style={{ fontSize: 11, color: '#8d97a5', marginTop: 3 }}>Belső munkakörnyezet</div>
           </div>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '12px 10px' }}>
-            {NAV.map((n) => {
-              const on = pathname === n.href;
+            {NAV.filter((n) => !n.adminOnly || user.role === 'admin').map((n) => {
+              const on = pathname === n.href || pathname.startsWith(n.href + '/');
               return (
                 <Link key={n.href} href={n.href} style={{
                   display: 'flex', alignItems: 'center', gap: 10, padding: '9px 11px',
@@ -111,28 +132,19 @@ export default function AppShell({ children }: { children: ReactNode }) {
                   {CYCLES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </label>
-              <div style={{ display: 'flex', background: '#f0f2f5', border: '1px solid #dde1e7', borderRadius: 6, padding: 2, gap: 2 }}>
-                {(['admin', 'attase'] as Role[]).map((r) => (
-                  <button key={r} onClick={() => setRole(r)} style={{
-                    border: 0, cursor: 'pointer', padding: '5px 11px', borderRadius: 4,
-                    fontSize: 11.5, fontWeight: 600,
-                    background: role === r ? '#1b3a6b' : 'transparent',
-                    color: role === r ? '#fff' : '#6b7684',
-                  }}>
-                    {r === 'admin' ? 'Admin (NIÜ)' : 'TéT attasé'}
-                  </button>
-                ))}
-              </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 14, borderLeft: '1px solid #dde1e7' }}>
                 <div style={{
                   width: 29, height: 29, borderRadius: '50%', background: '#1b3a6b', color: '#fff',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600,
-                }}>{ini(me.name)}</div>
+                }}>{ini(user.name)}</div>
                 <div style={{ lineHeight: 1.25 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600 }}>{me.name}</div>
-                  <div style={{ fontSize: 10.5, color: '#6b7684' }}>{me.role}</div>
+                  <div style={{ fontSize: 12, fontWeight: 600 }}>{user.name}</div>
+                  <div style={{ fontSize: 10.5, color: '#6b7684' }}>{roleLabel}</div>
                 </div>
               </div>
+              <button type="button" onClick={logout} className="btn" style={{ fontSize: 11.5 }}>
+                Kijelentkezés
+              </button>
             </div>
           </header>
           <main style={{ flex: 1, minWidth: 0, padding: '20px 26px 44px' }}>{children}</main>

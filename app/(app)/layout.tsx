@@ -10,6 +10,6 @@ import { requireSession } from '../../lib/session';
 // renderelnek layoutot. Minden szerver-oldali adatot olvasó page és minden action
 // maga hívja a requireSession()/requireAdmin()-t.
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  await requireSession();
-  return <AppShell>{children}</AppShell>;
+  const session = await requireSession();
+  return <AppShell user={session}>{children}</AppShell>;
 }
