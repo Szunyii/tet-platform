@@ -1849,6 +1849,7 @@ Sor-menü (`DropdownMenu`) + megerősítő `AlertDialog` a tiltás/feloldás/tö
 'use client';
 
 import { MoreHorizontalIcon } from 'lucide-react';
+import { unstable_rethrow } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { toast } from 'sonner';
 import {
@@ -1907,10 +1908,18 @@ export function FelhasznaloMuveletek({ felhasznalo, sajat }: { felhasznalo: Felh
     const fn: (id: string) => Promise<MuveletState> =
       kind === 'tilt' ? banAction : kind === 'felold' ? unbanAction : removeFelhasznaloAction;
     startTransition(async () => {
-      const res = await fn(felhasznalo.id);
-      if (res.ok) toast.success(MEGEROSITES_SZOVEG[kind].siker);
-      else toast.error(res.errors?.form ?? 'Művelet sikertelen.');
-      setMegerosites(null);
+      try {
+        const res = await fn(felhasznalo.id);
+        if (res.ok) toast.success(MEGEROSITES_SZOVEG[kind].siker);
+        else toast.error(res.errors?.form ?? 'Művelet sikertelen.');
+      } catch (err) {
+        // A server action dobhat (pl. notFound(), ha közben elveszett az admin jog): a Next
+        // control-flow hibáját tovább kell dobni, hogy a not-found boundary kezelje.
+        unstable_rethrow(err);
+        toast.error('Művelet sikertelen.');
+      } finally {
+        setMegerosites(null);
+      }
     });
   }
 
