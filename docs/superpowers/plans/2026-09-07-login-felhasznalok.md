@@ -1736,6 +1736,8 @@ git commit -m "feat(felhasznalok): admin lista és új felhasználó dialógus"
 
 ### Task 10: Szerkesztés, jelszó, tiltás/feloldás, törlés
 
+A Task 9 review után rögzített minta (ezt kövesd): a form dialógusok a `useMuveletForm` hookot használják (siker-toast + zárás az action wrapperben), vezérelt mezőkkel, `hibaAttr`/`MezoHiba` a11y-vel; beküldés közben a dialógus nem zárható (`details.cancel()`, `showCloseButton={!pending}`); a dialógus-komponens `key`-vel indul újra minden nyitáskor. A `FelhasznaloTabla` Server Component marad, a kliens határ a soronkénti `FelhasznaloMuveletek`.
+
 **Files:**
 - Create: `app/(app)/felhasznalok/components/SzerkesztesDialog.tsx`
 - Create: `app/(app)/felhasznalok/components/JelszoDialog.tsx`
@@ -1747,8 +1749,7 @@ git commit -m "feat(felhasznalok): admin lista és új felhasználó dialógus"
 ```tsx
 'use client';
 
-import { useActionState, useCallback, useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { useState } from 'react';
 import { Button } from '../../../../components/ui/button';
 import {
   Dialog,
@@ -1762,74 +1763,10 @@ import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
 import type { FelhasznaloSor } from '../../../../db/queries/felhasznalo';
 import type { Szerepkor } from '../../../../lib/felhasznalo-validacio';
-import { updateFelhasznaloAction, type MuveletState } from '../actions';
-import { MezoHiba } from './MezoHiba';
+import { updateFelhasznaloAction } from '../actions';
+import { hibaAttr, MezoHiba } from './MezoHiba';
 import { SzerepkorSelect } from './SzerepkorSelect';
-
-function SzerkesztesForm({ felhasznalo, onKesz }: { felhasznalo: FelhasznaloSor; onKesz: () => void }) {
-  const action = updateFelhasznaloAction.bind(null, felhasznalo.id);
-  const [state, formAction, pending] = useActionState<MuveletState, FormData>(action, {});
-  // Vezérelt mezők: a React 19 a <form action> beküldése után (hibánál is) alaphelyzetbe
-  // állítja a nem vezérelt inputokat; a state megőrzi a beírt értékeket.
-  const [nev, setNev] = useState(felhasznalo.nev);
-  const [szerepkor, setSzerepkor] = useState<Szerepkor>(felhasznalo.szerepkor);
-  const [orszag, setOrszag] = useState(felhasznalo.orszag ?? '');
-  const errors = state.errors ?? {};
-
-  useEffect(() => {
-    if (state.ok) {
-      toast.success('Felhasználó módosítva.');
-      onKesz();
-    }
-  }, [state.ok, onKesz]);
-
-  return (
-    <form action={formAction} className="flex flex-col gap-3" noValidate>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="nev">Név</Label>
-        <Input
-          id="nev"
-          name="nev"
-          required
-          maxLength={100}
-          aria-invalid={errors.nev ? true : undefined}
-          value={nev}
-          onChange={(e) => setNev(e.target.value)}
-        />
-        <MezoHiba uzenet={errors.nev} />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="szerepkor">Szerepkör</Label>
-        <SzerepkorSelect value={szerepkor} onChange={setSzerepkor} />
-        <MezoHiba uzenet={errors.szerepkor} />
-      </div>
-      {szerepkor === 'attase' && (
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="orszag">Ország (TéT poszt)</Label>
-          <Input
-            id="orszag"
-            name="orszag"
-            required
-            maxLength={100}
-            aria-invalid={errors.orszag ? true : undefined}
-            value={orszag}
-            onChange={(e) => setOrszag(e.target.value)}
-          />
-          <MezoHiba uzenet={errors.orszag} />
-        </div>
-      )}
-      <MezoHiba uzenet={errors.form} />
-      <DialogFooter>
-        <Button type="button" variant="outline" onClick={onKesz} disabled={pending}>
-          Mégse
-        </Button>
-        <Button type="submit" disabled={pending}>
-          {pending ? 'Mentés…' : 'Mentés'}
-        </Button>
-      </DialogFooter>
-    </form>
-  );
-}
+import { useMuveletForm } from './useMuveletForm';
 
 export function SzerkesztesDialog({
   felhasznalo,
@@ -1840,15 +1777,82 @@ export function SzerkesztesDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const kesz = useCallback(() => onOpenChange(false), [onOpenChange]);
+  const [state, formAction, pending] = useMuveletForm(
+    updateFelhasznaloAction.bind(null, felhasznalo.id),
+    'Felhasználó módosítva.',
+    () => onOpenChange(false),
+  );
+  // Vezérelt mezők: a React 19 a <form action> beküldése után (hibánál is) alaphelyzetbe
+  // állítja a nem vezérelt inputokat; a state megőrzi a beírt értékeket.
+  const [nev, setNev] = useState(felhasznalo.nev);
+  const [szerepkor, setSzerepkor] = useState<Szerepkor>(felhasznalo.szerepkor);
+  const [orszag, setOrszag] = useState(felhasznalo.orszag ?? '');
+  const errors = state.errors ?? {};
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog
+      open={open}
+      onOpenChange={(next, details) => {
+        // Beküldés közben nem zárható (Esc, háttér, X), különben az eredmény elveszne.
+        if (!next && pending) {
+          details.cancel();
+          return;
+        }
+        onOpenChange(next);
+      }}
+    >
+      <DialogContent showCloseButton={!pending}>
         <DialogHeader>
           <DialogTitle>Felhasználó szerkesztése</DialogTitle>
           <DialogDescription>{felhasznalo.email}</DialogDescription>
         </DialogHeader>
-        <SzerkesztesForm felhasznalo={felhasznalo} onKesz={kesz} />
+        <form action={formAction} className="flex flex-col gap-3" noValidate>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="nev">Név</Label>
+            <Input
+              id="nev"
+              name="nev"
+              required
+              maxLength={100}
+              value={nev}
+              onChange={(e) => setNev(e.target.value)}
+              {...hibaAttr(errors, 'nev')}
+            />
+            <MezoHiba id="nev-hiba" uzenet={errors.nev} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label id="szerepkor-label" htmlFor="szerepkor">Szerepkör</Label>
+            <SzerepkorSelect value={szerepkor} onChange={setSzerepkor} invalid={Boolean(errors.szerepkor)} />
+            <MezoHiba id="szerepkor-hiba" uzenet={errors.szerepkor} />
+            {szerepkor === 'admin' && felhasznalo.orszag && (
+              <p className="text-xs text-muted-foreground">Adminra váltva az ország törlődik.</p>
+            )}
+          </div>
+          {szerepkor === 'attase' && (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="orszag">Ország (TéT poszt)</Label>
+              <Input
+                id="orszag"
+                name="orszag"
+                required
+                maxLength={100}
+                value={orszag}
+                onChange={(e) => setOrszag(e.target.value)}
+                {...hibaAttr(errors, 'orszag')}
+              />
+              <MezoHiba id="orszag-hiba" uzenet={errors.orszag} />
+            </div>
+          )}
+          <MezoHiba id="form-hiba" uzenet={errors.form} alert />
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
+              Mégse
+            </Button>
+            <Button type="submit" disabled={pending}>
+              {pending ? 'Mentés…' : 'Mentés'}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
@@ -1860,8 +1864,7 @@ export function SzerkesztesDialog({
 ```tsx
 'use client';
 
-import { useActionState, useCallback, useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { useState } from 'react';
 import { Button } from '../../../../components/ui/button';
 import {
   Dialog,
@@ -1874,74 +1877,76 @@ import {
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
 import type { FelhasznaloSor } from '../../../../db/queries/felhasznalo';
-import { setJelszoAction, type MuveletState } from '../actions';
-import { MezoHiba } from './MezoHiba';
-
-function JelszoForm({ felhasznalo, onKesz }: { felhasznalo: FelhasznaloSor; onKesz: () => void }) {
-  const action = setJelszoAction.bind(null, felhasznalo.id);
-  const [state, formAction, pending] = useActionState<MuveletState, FormData>(action, {});
-  // Vezérelt mező, hogy hibánál ne ürüljön (React 19 a <form action> után resetel).
-  const [jelszo, setJelszo] = useState('');
-  const errors = state.errors ?? {};
-
-  useEffect(() => {
-    if (state.ok) {
-      toast.success('Jelszó beállítva.');
-      onKesz();
-    }
-  }, [state.ok, onKesz]);
-
-  return (
-    <form action={formAction} className="flex flex-col gap-3" noValidate>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="jelszo">Új jelszó</Label>
-        <Input
-          id="jelszo"
-          name="jelszo"
-          type="password"
-          required
-          minLength={8}
-          autoComplete="new-password"
-          aria-invalid={errors.jelszo ? true : undefined}
-          value={jelszo}
-          onChange={(e) => setJelszo(e.target.value)}
-        />
-        <MezoHiba uzenet={errors.jelszo} />
-      </div>
-      <MezoHiba uzenet={errors.form} />
-      <DialogFooter>
-        <Button type="button" variant="outline" onClick={onKesz} disabled={pending}>
-          Mégse
-        </Button>
-        <Button type="submit" disabled={pending}>
-          {pending ? 'Mentés…' : 'Jelszó beállítása'}
-        </Button>
-      </DialogFooter>
-    </form>
-  );
-}
+import { setJelszoAction } from '../actions';
+import { hibaAttr, MezoHiba } from './MezoHiba';
+import { useMuveletForm } from './useMuveletForm';
 
 export function JelszoDialog({
   felhasznalo,
+  sajat,
   open,
   onOpenChange,
 }: {
   felhasznalo: FelhasznaloSor;
+  sajat: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const kesz = useCallback(() => onOpenChange(false), [onOpenChange]);
+  const [state, formAction, pending] = useMuveletForm(
+    setJelszoAction.bind(null, felhasznalo.id),
+    'Jelszó beállítva.',
+    () => onOpenChange(false),
+  );
+  // Vezérelt mező, hogy hibánál ne ürüljön (React 19 a <form action> után resetel).
+  const [jelszo, setJelszo] = useState('');
+  const errors = state.errors ?? {};
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog
+      open={open}
+      onOpenChange={(next, details) => {
+        if (!next && pending) {
+          details.cancel();
+          return;
+        }
+        onOpenChange(next);
+      }}
+    >
+      <DialogContent showCloseButton={!pending}>
         <DialogHeader>
           <DialogTitle>Jelszó-visszaállítás</DialogTitle>
           <DialogDescription>
-            {felhasznalo.nev} új jelszót kap. E-mail nem megy ki, add át neki személyesen.
-            A régi bejelentkezései megszűnnek.
+            {sajat
+              ? 'Új jelszót állítasz be a saját fiókodhoz. A jelenlegi bejelentkezésed megmarad.'
+              : `${felhasznalo.nev} új jelszót kap. E-mail nem megy ki, add át neki személyesen. A régi bejelentkezései megszűnnek.`}
           </DialogDescription>
         </DialogHeader>
-        <JelszoForm felhasznalo={felhasznalo} onKesz={kesz} />
+        <form action={formAction} className="flex flex-col gap-3" noValidate>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="jelszo">Új jelszó</Label>
+            <Input
+              id="jelszo"
+              name="jelszo"
+              type="password"
+              required
+              minLength={8}
+              autoComplete="new-password"
+              value={jelszo}
+              onChange={(e) => setJelszo(e.target.value)}
+              {...hibaAttr(errors, 'jelszo')}
+            />
+            <MezoHiba id="jelszo-hiba" uzenet={errors.jelszo} />
+          </div>
+          <MezoHiba id="form-hiba" uzenet={errors.form} alert />
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
+              Mégse
+            </Button>
+            <Button type="submit" disabled={pending}>
+              {pending ? 'Mentés…' : 'Jelszó beállítása'}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
@@ -1950,7 +1955,7 @@ export function JelszoDialog({
 
 - [ ] **Step 3: `FelhasznaloMuveletek.tsx`**
 
-Sor-menü (`DropdownMenu`) + megerősítő `AlertDialog` a tiltás/feloldás/törlés műveletekhez. A pontos `AlertDialog*` exportneveket a Task 6 Step 1 `grep`-je mutatta; ha eltérnek (pl. `AlertDialogAction` helyett más), igazítsd.
+Sor-menü (`DropdownMenu`) + a két form-dialógus (`key`-vel újraindítva minden nyitáskor) + megerősítő `AlertDialog` a tiltás/feloldás/törlés műveletekhez. A base-nova `AlertDialogAction` sima `Button` (nem zár), a dialógus vezérelt; az `AlertDialogCancel` `Close`. A `DropdownMenuTrigger` a Base UI `render` propjával kapja a gombot; a `DropdownMenuItem` `variant="destructive"`-et támogat.
 
 ```tsx
 'use client';
@@ -2008,8 +2013,15 @@ const MEGEROSITES_SZOVEG: Record<Exclude<Megerosites, null>, { cim: string; leir
 export function FelhasznaloMuveletek({ felhasznalo, sajat }: { felhasznalo: FelhasznaloSor; sajat: boolean }) {
   const [szerkesztes, setSzerkesztes] = useState(false);
   const [jelszo, setJelszo] = useState(false);
+  // Minden dialógus-nyitás új key: a dialógus (és az űrlap állapota) tisztán újraindul.
+  const [nyitas, setNyitas] = useState(0);
   const [megerosites, setMegerosites] = useState<Megerosites>(null);
   const [pending, startTransition] = useTransition();
+
+  function nyit(setter: (v: boolean) => void) {
+    setNyitas((n) => n + 1);
+    setter(true);
+  }
 
   function futtat(kind: Exclude<Megerosites, null>) {
     const fn: (id: string) => Promise<MuveletState> =
@@ -2035,12 +2047,12 @@ export function FelhasznaloMuveletek({ felhasznalo, sajat }: { felhasznalo: Felh
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Műveletek" />}>
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label={`Műveletek: ${felhasznalo.nev}`} />}>
           <MoreHorizontalIcon />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setSzerkesztes(true)}>Szerkesztés</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setJelszo(true)}>Jelszó-visszaállítás</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => nyit(setSzerkesztes)}>Szerkesztés</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => nyit(setJelszo)}>Jelszó-visszaállítás</DropdownMenuItem>
           {!sajat && (
             <>
               <DropdownMenuSeparator />
@@ -2057,10 +2069,20 @@ export function FelhasznaloMuveletek({ felhasznalo, sajat }: { felhasznalo: Felh
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <SzerkesztesDialog felhasznalo={felhasznalo} open={szerkesztes} onOpenChange={setSzerkesztes} />
-      <JelszoDialog felhasznalo={felhasznalo} open={jelszo} onOpenChange={setJelszo} />
+      <SzerkesztesDialog key={`sz-${nyitas}`} felhasznalo={felhasznalo} open={szerkesztes} onOpenChange={setSzerkesztes} />
+      <JelszoDialog key={`j-${nyitas}`} felhasznalo={felhasznalo} sajat={sajat} open={jelszo} onOpenChange={setJelszo} />
 
-      <AlertDialog open={megerosites !== null} onOpenChange={(o) => !o && setMegerosites(null)}>
+      <AlertDialog
+        open={megerosites !== null}
+        onOpenChange={(next, details) => {
+          // Folyamatban lévő művelet alatt nem zárható.
+          if (!next && pending) {
+            details.cancel();
+            return;
+          }
+          if (!next) setMegerosites(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{szoveg?.cim}</AlertDialogTitle>
@@ -2071,6 +2093,7 @@ export function FelhasznaloMuveletek({ felhasznalo, sajat }: { felhasznalo: Felh
           <AlertDialogFooter>
             <AlertDialogCancel disabled={pending}>Mégse</AlertDialogCancel>
             <AlertDialogAction
+              variant={megerosites === 'torol' ? 'destructive' : 'default'}
               disabled={pending}
               onClick={() => {
                 if (megerosites) futtat(megerosites);
@@ -2086,13 +2109,9 @@ export function FelhasznaloMuveletek({ felhasznalo, sajat }: { felhasznalo: Felh
 }
 ```
 
-Megjegyzések:
-- A shadcn v4 `DropdownMenuTrigger` Base UI-s, a gombot a `render` proppal kapja (mint a `dialog.tsx` `DialogPrimitive.Close`-nál látható). Ha a `DropdownMenuItem` nem ismeri a `variant="destructive"` propot, nézd meg a `components/ui/dropdown-menu.tsx`-t; ha nincs, hagyd el a propot és adj `className="text-destructive"`-ot.
-- A base-nova `AlertDialogAction` sima `Button` (nem `Close`), nem zárja a dialógust; a dialógus vezérelt (`open={megerosites !== null}`), a `futtat` zárja a szerver válasza után. Az `AlertDialogCancel` viszont `Close`, az zár.
-
 - [ ] **Step 4: `FelhasznaloTabla.tsx` – műveletek oszlop**
 
-Import hozzáadása:
+Import hozzáadása (a tábla Server Component marad, a `FelhasznaloMuveletek` a kliens határ):
 
 ```tsx
 import { FelhasznaloMuveletek } from './FelhasznaloMuveletek';
@@ -2108,14 +2127,15 @@ Az üres `<TableCell />` cseréje a sorban:
 
 - [ ] **Step 5: Ellenőrzés**
 
-Run: `npx tsc --noEmit` → nincs hiba.
+Run: `npx tsc --noEmit` → nincs hiba (a `.next/` alatti ismert elavult hibán kívül).
 
-Böngésző adminnal a `/felhasznalok`-on:
-1. Attasé sor menü → Szerkesztés → ország módosítás → toast, a tábla frissül.
-2. Jelszó-visszaállítás → új jelszó; privát ablakban az attasé az új jelszóval belép, a régivel nem.
-3. Letiltás → megerősítés → „Tiltott” badge; privát ablakban belépés → „A fiók le van tiltva.” Feloldás → újra be tud lépni.
+Böngésző adminnal a `/felhasznalok`-on (a Task 9-ben létrehozott teszt attasékkal):
+1. Attasé sor menü → Szerkesztés → ország módosítás → toast, a tábla frissül; hibás beküldés (üres név) után a többi mező értéke megmarad.
+2. Jelszó-visszaállítás → új jelszó; külön cookie-jarral/tabbal az attasé az új jelszóval belép, a régivel nem; a régi sessionje (ha volt) `/terkep`-en `/login`-ra kerül.
+3. Letiltás → megerősítés → „Tiltott” badge; az attasé belépése → 403 `BANNED_USER` (böngészőben „A fiók le van tiltva.”). Feloldás → újra be tud lépni.
 4. Törlés → megerősítés → a sor eltűnik.
-5. Saját sor menüjében nincs Letiltás/Törlés; saját szerkesztésnél szerepkör attaséra váltás → „Saját admin szerepkörödet nem veheted el.”
+5. Saját sor menüjében nincs Letiltás/Törlés; saját szerkesztésnél szerepkör attaséra váltás → „Saját admin szerepkörödet nem veheted el.”; saját név módosítása után a fejléc (AppShell) is az új nevet mutatja.
+6. `console --errors`: nincs React/Base UI hiba.
 
 - [ ] **Step 6: Commit**
 
