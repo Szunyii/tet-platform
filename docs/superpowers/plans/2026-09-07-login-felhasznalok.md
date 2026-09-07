@@ -89,9 +89,24 @@ Expected: `git status --short` üres.
 
 - [ ] **Step 1: `additionalFields` a `lib/auth.ts`-ben**
 
-Cseréld a `betterAuth({...})` hívást erre:
+A fájl végleges tartalma (az `additionalFields.orszag` `input: false`-szal és az admin plugin `roles` mapje a review-k után került be; a `roles` nélkül a plugin `'admin' | 'user'` role-típust következtetne, és az `'attase'` nem fordulna le a Task 8 `createUser`/`setRole` hívásaiban):
 
 ```ts
+import { betterAuth } from 'better-auth';
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { nextCookies } from 'better-auth/next-js';
+import { admin } from 'better-auth/plugins';
+import { createAccessControl } from 'better-auth/plugins/access';
+import { adminAc, defaultStatements, userAc } from 'better-auth/plugins/admin/access';
+import { db } from '../db';
+import * as schema from '../db/schema';
+
+// Szerepkörök a Better Auth admin pluginhoz. A roles map nélkül a plugin 'admin' | 'user'
+// típust következtet, és az 'attase' nem fordulna le a createUser/setRole hívásokban.
+// admin: teljes felhasználó-kezelés; attase: nincs felhasználó-kezelési jog.
+const ac = createAccessControl(defaultStatements);
+const roles = { admin: adminAc, attase: userAc };
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: 'sqlite', schema }),
   emailAndPassword: {
@@ -101,12 +116,15 @@ export const auth = betterAuth({
   },
   user: {
     additionalFields: {
-      // TéT attasé posztjának országa. Adminnál üres. Az admin UI kényszeríti ki attasénál.
-      orszag: { type: 'string', required: false, input: true },
+      // TéT attasé posztjának országa. Adminnál üres. Csak az admin API írhatja (input: false),
+      // a felhasználó saját maga nem módosíthatja az /update-user végponton.
+      orszag: { type: 'string', required: false, input: false },
     },
   },
   plugins: [
     admin({
+      ac,
+      roles,
       defaultRole: 'attase',
       adminRoles: ['admin'],
     }),
@@ -114,6 +132,8 @@ export const auth = betterAuth({
     nextCookies(),
   ],
 });
+
+export type Session = typeof auth.$Infer.Session;
 ```
 
 - [ ] **Step 2: Séma regenerálása**
@@ -939,6 +959,14 @@ git commit -m "chore(ui): shadcn alert-dialog és sonner, Toaster a layoutban, m
 - [ ] **Step 1: `lib/felhasznalo-validacio.ts`**
 
 ```ts
+/**
+ * Tiszta validátorok az admin felhasználó-kezelő űrlapjaihoz (FormData → típusos input).
+ * Nincs React, nincs DB. Minden hibát egy menetben gyűjtünk (egy üres űrlap az összes
+ * mezőhibát visszaadja). A MezoHibak kulcsai a mezőnevek; a `form` kulcs a nem mezőhöz
+ * kötött hibáké (a server action-ök használják). Az e-mail trim + kisbetű (a Better Auth
+ * is kisbetűsít); a jelszót szándékosan nem trimmeljük.
+ */
+
 export const SZEREPKOROK = ['admin', 'attase'] as const;
 export type Szerepkor = (typeof SZEREPKOROK)[number];
 
@@ -947,6 +975,7 @@ export const SZEREPKOR_CIMKE: Record<Szerepkor, string> = {
   attase: 'TéT attasé',
 };
 
+/** Mezőnév → hibaüzenet. A `form` kulcs az űrlap-szintű hibáé. */
 export type MezoHibak = Record<string, string>;
 
 export interface UjFelhasznaloInput {
@@ -965,11 +994,24 @@ export interface SzerkesztesInput {
 
 export type ParseResult<T> = { ok: true; data: T } | { ok: false; errors: MezoHibak };
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Közel a Better Auth (zod) e-mail szabályához: nincs vezető/záró/dupla pont a helyi
+// részben, a domain végén legalább 2 betűs TLD. Ami itt átmegy, de a Better Auth elutasít
+// (pl. ékezetes cím), azt a server action INVALID_EMAIL hibaként az email mezőre teszi.
+const EMAIL_RE = /^(?!.*\.\.)[^\s@.](?:[^\s@]*[^\s@.])?@[^\s@]+\.[A-Za-z]{2,}$/;
 
+// Zéró szélességű karakterek (ZWSP, ZWNJ, ZWJ, BOM): a trim() nem szedi le, de láthatatlanok.
+const LATHATATLAN_RE = /[\u200B-\u200D\uFEFF]/g;
+
+/** Trimmelt szöveges mező; hiányzó vagy fájl érték → üres string. */
 function str(fd: FormData, key: string): string {
   const v = fd.get(key);
-  return typeof v === 'string' ? v.trim() : '';
+  return typeof v === 'string' ? v.replace(LATHATATLAN_RE, '').trim() : '';
+}
+
+/** Nyers érték trim nélkül: a jelszóban a szóköz is értékes karakter. */
+function raw(fd: FormData, key: string): string {
+  const v = fd.get(key);
+  return typeof v === 'string' ? v : '';
 }
 
 function validNev(nev: string, errors: MezoHibak) {
@@ -988,9 +1030,9 @@ function validSzerepkor(raw: string, errors: MezoHibak): Szerepkor | null {
   return null;
 }
 
-/** Attasénál kötelező, adminnál eldobjuk. */
+/** Attasénál kötelező; adminnál (és érvénytelen szerepkörnél) eldobjuk, hiba nélkül. */
 function validOrszag(raw: string, szerepkor: Szerepkor | null, errors: MezoHibak): string | null {
-  if (szerepkor === 'admin') return null;
+  if (szerepkor !== 'attase') return null;
   if (!raw) {
     errors.orszag = 'TéT attasénál az ország kötelező.';
     return null;
@@ -1006,7 +1048,7 @@ export function parseUjFelhasznalo(fd: FormData): ParseResult<UjFelhasznaloInput
   const errors: MezoHibak = {};
   const nev = str(fd, 'nev');
   const email = str(fd, 'email').toLowerCase();
-  const jelszo = typeof fd.get('jelszo') === 'string' ? (fd.get('jelszo') as string) : '';
+  const jelszo = raw(fd, 'jelszo');
   validNev(nev, errors);
   if (!email) errors.email = 'Az e-mail cím kötelező.';
   else if (!EMAIL_RE.test(email)) errors.email = 'Érvénytelen e-mail cím.';
@@ -1029,7 +1071,7 @@ export function parseSzerkesztes(fd: FormData): ParseResult<SzerkesztesInput> {
 
 export function parseJelszo(fd: FormData): ParseResult<{ jelszo: string }> {
   const errors: MezoHibak = {};
-  const jelszo = typeof fd.get('jelszo') === 'string' ? (fd.get('jelszo') as string) : '';
+  const jelszo = raw(fd, 'jelszo');
   validJelszo(jelszo, errors);
   if (Object.keys(errors).length > 0) return { ok: false, errors };
   return { ok: true, data: { jelszo } };
@@ -1076,12 +1118,14 @@ console.log('Minden ellenőrzés rendben.');
 Run: `npx tsx scripts/_check-validacio.ts`
 Expected: hat `ok:` sor és „Minden ellenőrzés rendben.”
 
+Megjegyzés: a `db/queries/*` modulok `import 'server-only'`-val kezdődnek, ezért egy őket importáló eldobható tsx scriptet így kell futtatni: `NODE_OPTIONS="--conditions=react-server" npx tsx scripts/_x.ts`.
+
 Run: `rm scripts/_check-validacio.ts`
 
 - [ ] **Step 3: `db/queries/felhasznalo.ts`**
 
 ```ts
-import { asc } from 'drizzle-orm';
+import 'server-only';
 import { db } from '../index';
 import { user } from '../schema';
 import type { Szerepkor } from '../../lib/felhasznalo-validacio';
@@ -1096,8 +1140,13 @@ export interface FelhasznaloSor {
   letrehozva: Date;
 }
 
-/** Minden felhasználó név szerint. Szinkron (better-sqlite3). */
+/**
+ * Minden felhasználó magyar név szerinti sorrendben. Szinkron (better-sqlite3).
+ * A rendezés JS-ben (localeCompare 'hu'): a SQLite BINARY collation az ékezetes neveket
+ * (Ács, Örkény, Ürmös) a lista végére tenné. Néhány tucat sorra ez elhanyagolható.
+ */
 export function listFelhasznalok(): FelhasznaloSor[] {
+  const now = Date.now();
   return db
     .select({
       id: user.id,
@@ -1106,20 +1155,22 @@ export function listFelhasznalok(): FelhasznaloSor[] {
       role: user.role,
       orszag: user.orszag,
       banned: user.banned,
+      banExpires: user.banExpires,
       createdAt: user.createdAt,
     })
     .from(user)
-    .orderBy(asc(user.name))
     .all()
     .map((r) => ({
       id: r.id,
       nev: r.nev,
       email: r.email,
-      szerepkor: r.role === 'admin' ? 'admin' : 'attase',
+      szerepkor: r.role === 'admin' ? ('admin' as const) : ('attase' as const),
       orszag: r.orszag ?? null,
-      tiltott: Boolean(r.banned),
+      // A Better Auth a lejárt banExpires-t nem tekinti tiltásnak.
+      tiltott: Boolean(r.banned) && (!r.banExpires || r.banExpires.getTime() > now),
       letrehozva: r.createdAt,
-    }));
+    }))
+    .sort((a, b) => a.nev.localeCompare(b.nev, 'hu'));
 }
 ```
 
