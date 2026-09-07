@@ -14,8 +14,9 @@ export const auth = betterAuth({
   },
   user: {
     additionalFields: {
-      // TéT attasé posztjának országa. Adminnál üres. Az admin UI kényszeríti ki attasénál.
-      orszag: { type: 'string', required: false, input: true },
+      // TéT attasé posztjának országa. Adminnál üres. Csak az admin API írhatja (input: false),
+      // a felhasználó saját maga nem módosíthatja az /update-user végponton.
+      orszag: { type: 'string', required: false, input: false },
     },
   },
   plugins: [
