@@ -1,0 +1,1755 @@
+# Login, session és admin felhasználó-kezelés – implementációs terv
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Valódi bejelentkezés (email + jelszó), session-alapú route-védelem, a `user` táblán `orszag` mező, és egy admin felhasználó-kezelő oldal (`/felhasznalok`) a Better Auth admin plugin API-jára építve.
+
+**Architecture:** A `lib/session.ts` három szerver-oldali helpert ad (`getSession`, `requireSession`, `requireAdmin`), ezekre épül minden page és action. A `proxy.ts` csak a session cookie meglétét nézi és `/login`-ra irányít; a bíró mindig a `requireSession()`. A `layout.tsx` szerveren kéri le a sessiont, és csak bejelentkezve rendereli az `AppShell`-t, aminek propként adja a usert. Az admin felhasználó-kezelő server action-ökön át hívja a Better Auth admin API-t (`auth.api.createUser` stb.) a kérés fejléceivel, így a plugin jogosultság-ellenőrzése is lefut.
+
+**Tech Stack:** Next.js 16 (App Router, `proxy.ts`, Server Actions, `useActionState`), React 19, TypeScript 7, better-auth 1.7 (admin plugin, `better-auth/cookies`, `better-auth/api`), drizzle-orm 0.45 + better-sqlite3, shadcn/ui v4 (Base UI), Tailwind v4, lucide-react, sonner.
+
+**Spec:** `docs/superpowers/specs/2026-09-07-login-felhasznalok-design.md`
+
+**Ellenőrzés:** Nincs tesztkeretrendszer a projektben, és nem vezetünk be. Minden task végén `npx tsc --noEmit`, és ahol értelme van, `npm run build`, curl vagy manuális böngészős ellenőrzés. A `lib/felhasznalo-validacio.ts` tiszta függvény, ezt egy eldobható `tsx` scripttel ellenőrizzük (Task 7).
+
+**Fontos API tények (ellenőrizve a node_modules-ban):**
+- `auth.api.getSession({ headers })` → `{ session, user } | null`. A `user`-en `role: string | null`, `banned`, és az `additionalFields`-ből `orszag`.
+- Admin plugin végpontok és body-k: `createUser({ body: { email, password, name, role?, data? } })`, `adminUpdateUser({ body: { userId, data } })`, `setRole({ body: { userId, role } })`, `setUserPassword({ body: { userId, newPassword } })`, `banUser({ body: { userId, banReason?, banExpiresIn? } })`, `unbanUser({ body: { userId } })`, `removeUser({ body: { userId } })`. Mindnek `headers` kell a szerver-oldali híváshoz.
+- Hibák: `APIError` (`better-auth/api`), mezők: `status`, `body?.code`, `body?.message`. Admin hibakódok: `USER_ALREADY_EXISTS`, `USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL`, `YOU_CANNOT_BAN_YOURSELF`, `YOU_CANNOT_REMOVE_YOURSELF`, `BANNED_USER`. Sign-in hiba: `INVALID_EMAIL_OR_PASSWORD` (401).
+- `getSessionCookie(request)` a `better-auth/cookies`-ból: `Request | Headers` → `string | null`.
+- Kliens: `signIn.email({ email, password })` → `{ data, error }`; `error` mezői: `code`, `message`, `status`. `signOut()`.
+- `user.additionalFields` konfig: `{ orszag: { type: 'string', required: false, input: true } }`. Utána `npm run auth:generate` újraírja a `db/schema/auth.ts`-t.
+- Next 16: a `middleware.ts` helyett `proxy.ts` (`export function proxy(request: NextRequest)`, `export const config = { matcher }`). `headers()`, `params`, `searchParams` mind `Promise`.
+- shadcn v4 Base UI-ra épül: `Dialog` `open`/`onOpenChange`; `Select` `value`/`onValueChange`/`name`/`items`; `SelectValue` `placeholder`. A `DialogContent` zárva unmountol, ezért az `useActionState`-et használó form belül lehet.
+
+---
+
+## Fájlstruktúra
+
+| Fájl | Művelet | Felelősség |
+| --- | --- | --- |
+| `lib/auth.ts` | módosít | `user.additionalFields.orszag` |
+| `db/schema/auth.ts` | regenerált | `user.orszag` oszlop |
+| `drizzle/0001_*.sql` | generált | migráció |
+| `lib/session.ts` | létrehoz | `AppSession`, `getSession`, `requireSession`, `requireAdmin` |
+| `proxy.ts` | létrehoz | cookie-alapú átirányítás |
+| `app/login/page.tsx` | létrehoz | login oldal (AppShell nélkül), `next` paraméter |
+| `app/login/components/LoginForm.tsx` | létrehoz | kliens űrlap, `signIn.email` |
+| `app/layout.tsx` | módosít | session lekérés, AppShell csak bejelentkezve, `Toaster` |
+| `components/AppShell.tsx` | módosít | `user` prop, dummy szerep-kapcsoló ki, kijelentkezés, admin menü |
+| `components/ui/alert-dialog.tsx`, `components/ui/sonner.tsx` | shadcn CLI | megerősítő dialógus, toast |
+| `lib/felhasznalo-validacio.ts` | létrehoz | tiszta validátor az admin űrlapokhoz |
+| `db/queries/felhasznalo.ts` | létrehoz | `listFelhasznalok()` |
+| `app/felhasznalok/actions.ts` | létrehoz | server action-ök a Better Auth admin API-ra |
+| `app/felhasznalok/page.tsx` | létrehoz | `requireAdmin`, lista |
+| `app/felhasznalok/components/MezoHiba.tsx` | létrehoz | mezőhiba szöveg |
+| `app/felhasznalok/components/SzerepkorSelect.tsx` | létrehoz | szerepkör választó (shadcn Select, `name`) |
+| `app/felhasznalok/components/UjFelhasznaloDialog.tsx` | létrehoz | létrehozás |
+| `app/felhasznalok/components/SzerkesztesDialog.tsx` | létrehoz | név, ország, szerepkör |
+| `app/felhasznalok/components/JelszoDialog.tsx` | létrehoz | jelszó-visszaállítás |
+| `app/felhasznalok/components/FelhasznaloMuveletek.tsx` | létrehoz | sor-menü + tiltás/feloldás/törlés `AlertDialog` |
+| `app/felhasznalok/components/FelhasznaloTabla.tsx` | létrehoz | táblázat |
+| `README.md` | módosít | login és felhasználó-kezelés leírása |
+
+---
+
+### Task 0: A függő shadcn-alapozás commitolása
+
+A working tree-ben commitolatlan a shadcn/Tailwind alapozás (`app/globals.css`, `package.json`, `components/ui/`, `components.json`, `lib/utils.ts`, `postcss.config.mjs`, `CLAUDE.md`, `AGENTS.md`). Erre épül minden UI ebben a planben, ezért először ez kerül commitba.
+
+**Files:**
+- Modify (commit only): a fenti fájlok
+
+- [ ] **Step 1: Ellenőrzés, hogy a working tree fordul**
+
+Run: `npx tsc --noEmit`
+Expected: nincs hiba.
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add app/globals.css package.json package-lock.json AGENTS.md CLAUDE.md components.json components/ui lib/utils.ts postcss.config.mjs
+git commit -m "chore: shadcn/ui v4 + Tailwind v4 alapozás, CLAUDE.md"
+git status --short
+```
+Expected: `git status --short` üres.
+
+---
+
+### Task 1: `user.orszag` mező a Better Auth konfigban és a sémában
+
+**Files:**
+- Modify: `lib/auth.ts`
+- Regenerate: `db/schema/auth.ts`
+- Generate: `drizzle/0001_*.sql`
+
+- [ ] **Step 1: `additionalFields` a `lib/auth.ts`-ben**
+
+Cseréld a `betterAuth({...})` hívást erre:
+
+```ts
+export const auth = betterAuth({
+  database: drizzleAdapter(db, { provider: 'sqlite', schema }),
+  emailAndPassword: {
+    enabled: true,
+    // Belső rendszer: nincs nyilvános regisztráció. Felhasználót seed vagy admin hoz létre.
+    disableSignUp: true,
+  },
+  user: {
+    additionalFields: {
+      // TéT attasé posztjának országa. Adminnál üres. Az admin UI kényszeríti ki attasénál.
+      orszag: { type: 'string', required: false, input: true },
+    },
+  },
+  plugins: [
+    admin({
+      defaultRole: 'attase',
+      adminRoles: ['admin'],
+    }),
+    // A nextCookies-nak mindig az utolsó pluginnak kell lennie.
+    nextCookies(),
+  ],
+});
+```
+
+- [ ] **Step 2: Séma regenerálása**
+
+Run: `npm run auth:generate`
+Expected: a `db/schema/auth.ts` felülíródik. Ellenőrzés:
+
+Run: `grep -n "orszag" db/schema/auth.ts`
+Expected: egy sor a `user` táblában, pl. `orszag: text("orszag"),`.
+
+Ha a generátor a `user` tábla más részét is átírta (pl. sorrend), az rendben van; ha a `banned`/`role` mezők eltűntek, a generálás rossz configgal futott – nézd meg, hogy az `admin()` plugin benne maradt-e.
+
+- [ ] **Step 3: Migráció generálása és alkalmazása**
+
+Run: `npm run db:generate`
+Expected: új fájl `drizzle/0001_<név>.sql`, tartalma `ALTER TABLE \`user\` ADD \`orszag\` text;`.
+
+Run: `npm run db:migrate`
+Expected: „migrations applied” jellegű kimenet, hiba nélkül.
+
+Run: `npx tsc --noEmit`
+Expected: nincs hiba.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add lib/auth.ts db/schema/auth.ts drizzle
+git commit -m "feat(auth): user.orszag mező (Better Auth additionalFields + migráció)"
+```
+
+---
+
+### Task 2: `lib/session.ts` helperek
+
+**Files:**
+- Create: `lib/session.ts`
+
+- [ ] **Step 1: Fájl létrehozása**
+
+```ts
+import { headers } from 'next/headers';
+import { notFound, redirect } from 'next/navigation';
+import { auth } from './auth';
+
+export type AppRole = 'admin' | 'attase';
+
+export interface AppSession {
+  userId: string;
+  name: string;
+  email: string;
+  role: AppRole;
+  orszag: string | null;
+}
+
+/** Aktuális session a kérés cookie-jából, vagy null. Csak szerver oldalon hívható. */
+export async function getSession(): Promise<AppSession | null> {
+  const result = await auth.api.getSession({ headers: await headers() });
+  if (!result) return null;
+  const u = result.user;
+  return {
+    userId: u.id,
+    name: u.name,
+    email: u.email,
+    // A role hiánya (régi rekord) attasénak számít.
+    role: u.role === 'admin' ? 'admin' : 'attase',
+    orszag: u.orszag ?? null,
+  };
+}
+
+/** Page-ek és action-ök bejelentkezés-ellenőrzése. Hiány esetén /login. */
+export async function requireSession(): Promise<AppSession> {
+  const session = await getSession();
+  if (!session) redirect('/login');
+  return session;
+}
+
+/** Admin-only oldalak. Nem admin → 404, hogy ne áruljuk el az oldal létét. */
+export async function requireAdmin(): Promise<AppSession> {
+  const session = await requireSession();
+  if (session.role !== 'admin') notFound();
+  return session;
+}
+```
+
+- [ ] **Step 2: Típusellenőrzés**
+
+Run: `npx tsc --noEmit`
+Expected: nincs hiba. Ha `u.orszag` ismeretlen mezőként hibázik, a Task 1 `additionalFields` nem került be a `lib/auth.ts`-be.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add lib/session.ts
+git commit -m "feat(auth): getSession/requireSession/requireAdmin helperek"
+```
+
+---
+
+### Task 3: `proxy.ts` route-védelem
+
+**Files:**
+- Create: `proxy.ts` (projektgyökér, a `app/` mellett)
+
+- [ ] **Step 1: Fájl létrehozása**
+
+```ts
+import { getSessionCookie } from 'better-auth/cookies';
+import { NextResponse, type NextRequest } from 'next/server';
+
+// Gyors szűrő: csak a session cookie meglétét nézi, nem az érvényességét.
+// A valódi ellenőrzés a page-ek/action-ök requireSession() hívása.
+export function proxy(request: NextRequest) {
+  const { pathname, search } = request.nextUrl;
+  const hasCookie = Boolean(getSessionCookie(request));
+
+  if (pathname === '/login') {
+    return hasCookie ? NextResponse.redirect(new URL('/terkep', request.url)) : NextResponse.next();
+  }
+
+  if (!hasCookie) {
+    const login = new URL('/login', request.url);
+    login.searchParams.set('next', pathname + search);
+    return NextResponse.redirect(login);
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  // Minden útvonal, kivéve: auth API, Next belső fájlok, statikus asset-ek.
+  matcher: ['/((?!api/auth|_next/static|_next/image|favicon\\.ico|tet-world-map\\.js).*)'],
+};
+```
+
+- [ ] **Step 2: Ellenőrzés curl-lel**
+
+Indítsd a dev szervert egy külön terminálban: `npm run dev` (nézd meg, melyik porton fut; lent 3000-et feltételezünk).
+
+Run: `curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" http://localhost:3000/riportok`
+Expected: `307 http://localhost:3000/login?next=%2Friportok`
+
+Run: `curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/login`
+Expected: `404` (a login oldal még nincs, de NEM redirect – tehát a proxy átengedte).
+
+Run: `curl -s -o /dev/null -w "%{http_code}\n" -X POST http://localhost:3000/api/auth/sign-in/email -H 'content-type: application/json' -d '{"email":"x@x.hu","password":"rossz"}'`
+Expected: `401` (az auth API nem lett átirányítva).
+
+Run: `npx tsc --noEmit`
+Expected: nincs hiba.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add proxy.ts
+git commit -m "feat(auth): proxy.ts – session cookie nélkül /login-ra irányít"
+```
+
+---
+
+### Task 4: Login oldal, és az AppShell csak bejelentkezve
+
+**Files:**
+- Create: `app/login/page.tsx`
+- Create: `app/login/components/LoginForm.tsx`
+- Modify: `app/layout.tsx`
+
+- [ ] **Step 1: `LoginForm.tsx`**
+
+```tsx
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { useState, type FormEvent } from 'react';
+import { Button } from '../../../components/ui/button';
+import { Input } from '../../../components/ui/input';
+import { Label } from '../../../components/ui/label';
+import { signIn } from '../../../lib/auth-client';
+
+function hibaSzoveg(error: { code?: string; status?: number }): string {
+  if (error.code === 'BANNED_USER') return 'A fiók le van tiltva.';
+  if (error.status === 401) return 'Hibás e-mail cím vagy jelszó.';
+  return 'Bejelentkezés sikertelen, próbáld újra.';
+}
+
+export default function LoginForm({ next }: { next: string }) {
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [pending, setPending] = useState(false);
+
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError('');
+    setPending(true);
+    const res = await signIn.email({ email: email.trim(), password });
+    if (res.error) {
+      setError(hibaSzoveg(res.error));
+      setPending(false);
+      return;
+    }
+    router.push(next);
+    router.refresh();
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="email">E-mail cím</Label>
+        <Input
+          id="email"
+          type="email"
+          autoComplete="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="password">Jelszó</Label>
+        <Input
+          id="password"
+          type="password"
+          autoComplete="current-password"
+          required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+      </div>
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
+      <Button type="submit" disabled={pending || !email || !password} className="mt-1">
+        {pending ? 'Bejelentkezés…' : 'Bejelentkezés'}
+      </Button>
+    </form>
+  );
+}
+```
+
+- [ ] **Step 2: `app/login/page.tsx`**
+
+```tsx
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import LoginForm from './components/LoginForm';
+
+// Csak relatív, egy perjellel kezdődő útvonalat fogadunk el (nyílt átirányítás ellen).
+function safeNext(raw: string | string[] | undefined): string {
+  const v = Array.isArray(raw) ? raw[0] : raw;
+  if (v && v.startsWith('/') && !v.startsWith('//')) return v;
+  return '/terkep';
+}
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const next = safeNext((await searchParams).next);
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-muted/40 p-6">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>NIÜ · TéT Platform</CardTitle>
+          <CardDescription>Bejelentkezés a belső munkakörnyezetbe</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <LoginForm next={next} />
+        </CardContent>
+      </Card>
+    </main>
+  );
+}
+```
+
+- [ ] **Step 3: `app/layout.tsx` – AppShell csak sessionnel**
+
+Az `AppShell` most még nem fogad `user` propot; Task 5 adja hozzá. Hogy a build közben ne törjön, ebben a lépésben az AppShell-t ideiglenesen `user` nélkül hívjuk, és Task 5-ben cseréljük. Cseréld a fájl teljes tartalmát erre:
+
+```tsx
+import type { Metadata } from 'next';
+import './globals.css';
+import AppShell from '../components/AppShell';
+import { getSession } from '../lib/session';
+
+export const metadata: Metadata = {
+  title: 'NIÜ · TéT Platform',
+  description: 'TéT attasé hálózat belső munkakörnyezet',
+};
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const session = await getSession();
+  return (
+    <html lang="hu">
+      <head>
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+        />
+      </head>
+      <body>{session ? <AppShell>{children}</AppShell> : children}</body>
+    </html>
+  );
+}
+```
+
+- [ ] **Step 4: Manuális ellenőrzés böngészőben**
+
+Run: `npx tsc --noEmit` → nincs hiba.
+
+Böngésző, dev szerver fut:
+1. `http://localhost:3000/riportok` → átirányít `/login?next=%2Friportok`-ra, a login kártya látszik, oldalsáv NINCS.
+2. Rossz jelszó → „Hibás e-mail cím vagy jelszó.”
+3. A seed admin adataival (`.env.local` `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`) → `/riportok` nyílik meg, oldalsávval.
+4. `http://localhost:3000/login` bejelentkezve → `/terkep`.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add app/login app/layout.tsx
+git commit -m "feat(auth): login oldal és AppShell csak bejelentkezve"
+```
+
+---
+
+### Task 5: AppShell a valódi sessionre
+
+**Files:**
+- Modify: `components/AppShell.tsx`
+- Modify: `app/layout.tsx` (a `user` prop átadása)
+
+- [ ] **Step 1: `AppShell.tsx` átírása**
+
+Cseréld a fájl teljes tartalmát. Változások: `user` prop, `setRole` és a dummy kapcsoló megszűnik, `POSTS`/`ME_ID` import kikerül, kijelentkezés gomb, admin-only menüpont, `TITLES` prefix-egyezéssel.
+
+```tsx
+'use client';
+
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { createContext, useContext, useState, type ReactNode } from 'react';
+import { CYCLES, DEADLINE, DEFAULT_CYCLE, TICKETS } from '../lib/data';
+import { ini } from '../lib/score';
+import { signOut } from '../lib/auth-client';
+import type { AppSession, AppRole } from '../lib/session';
+
+export type Role = AppRole;
+
+interface AppState {
+  role: Role;
+  user: AppSession;
+  cycle: string;
+  setCycle: (c: string) => void;
+}
+
+const EMPTY_USER: AppSession = { userId: '', name: '', email: '', role: 'attase', orszag: null };
+
+const AppContext = createContext<AppState>({
+  role: 'attase', user: EMPTY_USER, cycle: DEFAULT_CYCLE, setCycle: () => {},
+});
+
+export function useApp() {
+  return useContext(AppContext);
+}
+
+const NAV: { href: string; icon: string; label: string; adminOnly?: boolean }[] = [
+  { href: '/terkep', icon: '◍', label: 'Országprofil' },
+  { href: '/riportok', icon: '▦', label: 'Riportok' },
+  { href: '/uj-riport', icon: '✎', label: 'Új riport kitöltése' },
+  { href: '/kommunikacio', icon: '✉', label: 'Kommunikáció' },
+  { href: '/tudastar', icon: '◫', label: 'Tudástár' },
+  { href: '/monitoring', icon: '◈', label: 'Monitoring és értékelés' },
+  { href: '/felhasznalok', icon: '☺', label: 'Felhasználók', adminOnly: true },
+];
+
+const TITLES: Record<string, [string, string]> = {
+  '/terkep': ['Országprofil', 'A TéT attaséktól beérkező országjelentések térképen és teljes tartalommal'],
+  '/riportok': ['Riportok', 'Kimutatás a beérkező országjelentésekből, és a 7 blokkos riportok teljes listája'],
+  '/uj-riport': ['Új riport kitöltése', 'Kötött mezők az aggregáláshoz, szöveges kifejtés a részletekhez'],
+  '/kommunikacio': ['Kommunikáció', 'Ticket + üzenetszál az adminok és a TéT attasék között'],
+  '/tudastar': ['Tudástár', 'Magyarországról ajánlható programok, partnerek és együttműködési formák'],
+  '/monitoring': ['Monitoring és értékelés', '3 kategória, 14 szempont, rögzített adatforrás-metaadatokkal'],
+  '/felhasznalok': ['Felhasználók', 'Admin és TéT attasé fiókok kezelése'],
+};
+
+// Pontos egyezés, különben a leghosszabb prefix (pl. /riportok/abc → /riportok).
+function titleFor(pathname: string): [string, string] {
+  if (TITLES[pathname]) return TITLES[pathname];
+  const key = Object.keys(TITLES)
+    .filter((k) => pathname.startsWith(k + '/'))
+    .sort((a, b) => b.length - a.length)[0];
+  return key ? TITLES[key] : ['TéT Platform', ''];
+}
+
+export default function AppShell({ user, children }: { user: AppSession; children: ReactNode }) {
+  const [cycle, setCycle] = useState(DEFAULT_CYCLE);
+  const pathname = usePathname();
+  const router = useRouter();
+  const [title, sub] = titleFor(pathname);
+  const openTickets = TICKETS.filter((t) => t.statusz !== 'Lezárt').length;
+  const roleLabel = user.role === 'admin'
+    ? 'NIÜ admin'
+    : `TéT attasé${user.orszag ? ' · ' + user.orszag : ''}`;
+
+  async function logout() {
+    await signOut();
+    router.push('/login');
+    router.refresh();
+  }
+
+  return (
+    <AppContext.Provider value={{ role: user.role, user, cycle, setCycle }}>
+      <div style={{ display: 'flex', minHeight: '100vh' }}>
+        <aside style={{
+          width: 238, flex: '0 0 238px', background: '#131a24', color: '#e7ebf1',
+          display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh',
+        }}>
+          <div style={{ padding: '18px 18px 16px', borderBottom: '1px solid #232c39' }}>
+            <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: '.02em' }}>NIÜ · TéT Platform</div>
+            <div style={{ fontSize: 11, color: '#8d97a5', marginTop: 3 }}>Belső munkakörnyezet</div>
+          </div>
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '12px 10px' }}>
+            {NAV.filter((n) => !n.adminOnly || user.role === 'admin').map((n) => {
+              const on = pathname === n.href || pathname.startsWith(n.href + '/');
+              return (
+                <Link key={n.href} href={n.href} style={{
+                  display: 'flex', alignItems: 'center', gap: 10, padding: '9px 11px',
+                  borderRadius: 5, fontSize: 12.5, fontWeight: 500, textDecoration: 'none',
+                  background: on ? '#22304a' : 'transparent', color: on ? '#ffffff' : '#a3adbb',
+                }}>
+                  <span style={{ width: 16, textAlign: 'center', fontSize: 13 }}>{n.icon}</span>
+                  {n.label}
+                  {n.href === '/kommunikacio' && (
+                    <span style={{
+                      marginLeft: 'auto', background: '#b3261e', color: '#fff', fontSize: 10,
+                      fontWeight: 600, padding: '1px 6px', borderRadius: 9,
+                    }}>{openTickets}</span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+          <div style={{
+            marginTop: 'auto', padding: '14px 18px', borderTop: '1px solid #232c39',
+            fontSize: 11, color: '#8d97a5', lineHeight: 1.6,
+          }}>
+            <div style={{ color: '#c3cbd6', fontWeight: 600, fontSize: 11.5 }}>Aktív ciklus: {cycle}</div>
+            <div>Beadási határidő: {DEADLINE}</div>
+            <div style={{ marginTop: 8, padding: '6px 8px', background: '#1b2330', borderRadius: 4, color: '#7f8a99' }}>
+              Demóadatok – 14 poszt, 14 értékelési szempont
+            </div>
+          </div>
+        </aside>
+
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+          <header style={{
+            background: '#fff', borderBottom: '1px solid #dde1e7', padding: '13px 26px',
+            display: 'flex', alignItems: 'center', gap: 20, position: 'sticky', top: 0, zIndex: 20,
+          }}>
+            <div style={{ minWidth: 0 }}>
+              <h1 style={{ margin: 0, fontSize: 16, fontWeight: 600, letterSpacing: '-.01em' }}>{title}</h1>
+              <div style={{ fontSize: 11.5, color: '#6b7684', marginTop: 2 }}>{sub}</div>
+            </div>
+            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 14 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11.5, color: '#6b7684' }}>
+                Ciklus
+                <select className="input" value={cycle} onChange={(e) => setCycle(e.target.value)}>
+                  {CYCLES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 14, borderLeft: '1px solid #dde1e7' }}>
+                <div style={{
+                  width: 29, height: 29, borderRadius: '50%', background: '#1b3a6b', color: '#fff',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600,
+                }}>{ini(user.name)}</div>
+                <div style={{ lineHeight: 1.25 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600 }}>{user.name}</div>
+                  <div style={{ fontSize: 10.5, color: '#6b7684' }}>{roleLabel}</div>
+                </div>
+              </div>
+              <button type="button" onClick={logout} className="btn" style={{ fontSize: 11.5 }}>
+                Kijelentkezés
+              </button>
+            </div>
+          </header>
+          <main style={{ flex: 1, minWidth: 0, padding: '20px 26px 44px' }}>{children}</main>
+        </div>
+      </div>
+    </AppContext.Provider>
+  );
+}
+```
+
+Megjegyzés: a `.btn` a meglévő globális osztály (`app/globals.css`). A régi fejléc inline-style világát nem írjuk át ebben a lépésben (CLAUDE.md: csak az érintett részt), a kijelentkezés gomb ehhez illeszkedik.
+
+- [ ] **Step 2: `app/layout.tsx` – `user` prop átadása**
+
+A `<body>` sort cseréld:
+
+```tsx
+      <body>{session ? <AppShell user={session}>{children}</AppShell> : children}</body>
+```
+
+- [ ] **Step 3: Típusellenőrzés és a `setRole` hivatkozások**
+
+Run: `npx tsc --noEmit`
+Expected: nincs hiba. (A `useApp()` hívók – `app/riportok/page.tsx`, `app/uj-riport/page.tsx`, `app/monitoring/page.tsx` – csak a `cycle`-t használják, ezek változatlanul fordulnak.)
+
+Run: `grep -rn "setRole" app components`
+Expected: nincs találat.
+
+- [ ] **Step 4: Manuális ellenőrzés**
+
+Böngésző: bejelentkezve az adminnal a fejlécben a seed admin neve és „NIÜ admin” látszik, a „Felhasználók” menüpont megjelenik (még 404-et ad, az oldal Task 9-ben jön). „Kijelentkezés” → `/login`, majd `/terkep` kérése újra `/login`-ra visz.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add components/AppShell.tsx app/layout.tsx
+git commit -m "feat(auth): AppShell valódi sessionből, kijelentkezés, admin menüpont"
+```
+
+---
+
+### Task 6: shadcn `alert-dialog` és `sonner`, Toaster a layoutban
+
+**Files:**
+- Create (CLI): `components/ui/alert-dialog.tsx`, `components/ui/sonner.tsx`
+- Modify: `app/layout.tsx`, `package.json`
+
+- [ ] **Step 1: Komponensek hozzáadása**
+
+Run: `npx shadcn@latest add alert-dialog sonner`
+Expected: a két fájl létrejön a `components/ui/` alatt, a `sonner` (és esetleg `next-themes`) csomag a `package.json`-ba kerül.
+
+Run: `grep -n "^export" components/ui/alert-dialog.tsx components/ui/sonner.tsx`
+Expected: `alert-dialog.tsx` exportálja legalább: `AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel`; a `sonner.tsx` a `Toaster`-t.
+
+Ha a `sonner.tsx` `next-themes`-t importál és az nem települt: `npm install next-themes`.
+
+- [ ] **Step 2: `Toaster` a `layout.tsx`-ben**
+
+Import hozzáadása:
+
+```tsx
+import { Toaster } from '../components/ui/sonner';
+```
+
+A `<body>`:
+
+```tsx
+      <body>
+        {session ? <AppShell user={session}>{children}</AppShell> : children}
+        <Toaster position="bottom-right" />
+      </body>
+```
+
+- [ ] **Step 3: Ellenőrzés és commit**
+
+Run: `npx tsc --noEmit` → nincs hiba.
+
+```bash
+git add components/ui/alert-dialog.tsx components/ui/sonner.tsx app/layout.tsx package.json package-lock.json
+git commit -m "chore(ui): shadcn alert-dialog és sonner, Toaster a layoutban"
+```
+
+---
+
+### Task 7: Validátor és lekérdezés a felhasználó-kezeléshez
+
+**Files:**
+- Create: `lib/felhasznalo-validacio.ts`
+- Create: `db/queries/felhasznalo.ts`
+
+- [ ] **Step 1: `lib/felhasznalo-validacio.ts`**
+
+```ts
+export const SZEREPKOROK = ['admin', 'attase'] as const;
+export type Szerepkor = (typeof SZEREPKOROK)[number];
+
+export const SZEREPKOR_CIMKE: Record<Szerepkor, string> = {
+  admin: 'Admin (NIÜ)',
+  attase: 'TéT attasé',
+};
+
+export type MezoHibak = Record<string, string>;
+
+export interface UjFelhasznaloInput {
+  nev: string;
+  email: string;
+  jelszo: string;
+  szerepkor: Szerepkor;
+  orszag: string | null;
+}
+
+export interface SzerkesztesInput {
+  nev: string;
+  szerepkor: Szerepkor;
+  orszag: string | null;
+}
+
+export type ParseResult<T> = { ok: true; data: T } | { ok: false; errors: MezoHibak };
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function str(fd: FormData, key: string): string {
+  const v = fd.get(key);
+  return typeof v === 'string' ? v.trim() : '';
+}
+
+function validNev(nev: string, errors: MezoHibak) {
+  if (!nev) errors.nev = 'A név kötelező.';
+  else if (nev.length > 100) errors.nev = 'A név legfeljebb 100 karakter.';
+}
+
+function validJelszo(jelszo: string, errors: MezoHibak) {
+  if (jelszo.length < 8) errors.jelszo = 'A jelszó legalább 8 karakter.';
+  else if (jelszo.length > 128) errors.jelszo = 'A jelszó legfeljebb 128 karakter.';
+}
+
+function validSzerepkor(raw: string, errors: MezoHibak): Szerepkor | null {
+  if ((SZEREPKOROK as readonly string[]).includes(raw)) return raw as Szerepkor;
+  errors.szerepkor = 'Válassz szerepkört.';
+  return null;
+}
+
+/** Attasénál kötelező, adminnál eldobjuk. */
+function validOrszag(raw: string, szerepkor: Szerepkor | null, errors: MezoHibak): string | null {
+  if (szerepkor === 'admin') return null;
+  if (!raw) {
+    errors.orszag = 'TéT attasénál az ország kötelező.';
+    return null;
+  }
+  if (raw.length > 100) {
+    errors.orszag = 'Az ország legfeljebb 100 karakter.';
+    return null;
+  }
+  return raw;
+}
+
+export function parseUjFelhasznalo(fd: FormData): ParseResult<UjFelhasznaloInput> {
+  const errors: MezoHibak = {};
+  const nev = str(fd, 'nev');
+  const email = str(fd, 'email').toLowerCase();
+  const jelszo = typeof fd.get('jelszo') === 'string' ? (fd.get('jelszo') as string) : '';
+  validNev(nev, errors);
+  if (!email) errors.email = 'Az e-mail cím kötelező.';
+  else if (!EMAIL_RE.test(email)) errors.email = 'Érvénytelen e-mail cím.';
+  validJelszo(jelszo, errors);
+  const szerepkor = validSzerepkor(str(fd, 'szerepkor'), errors);
+  const orszag = validOrszag(str(fd, 'orszag'), szerepkor, errors);
+  if (Object.keys(errors).length > 0 || !szerepkor) return { ok: false, errors };
+  return { ok: true, data: { nev, email, jelszo, szerepkor, orszag } };
+}
+
+export function parseSzerkesztes(fd: FormData): ParseResult<SzerkesztesInput> {
+  const errors: MezoHibak = {};
+  const nev = str(fd, 'nev');
+  validNev(nev, errors);
+  const szerepkor = validSzerepkor(str(fd, 'szerepkor'), errors);
+  const orszag = validOrszag(str(fd, 'orszag'), szerepkor, errors);
+  if (Object.keys(errors).length > 0 || !szerepkor) return { ok: false, errors };
+  return { ok: true, data: { nev, szerepkor, orszag } };
+}
+
+export function parseJelszo(fd: FormData): ParseResult<{ jelszo: string }> {
+  const errors: MezoHibak = {};
+  const jelszo = typeof fd.get('jelszo') === 'string' ? (fd.get('jelszo') as string) : '';
+  validJelszo(jelszo, errors);
+  if (Object.keys(errors).length > 0) return { ok: false, errors };
+  return { ok: true, data: { jelszo } };
+}
+```
+
+- [ ] **Step 2: Gyors ellenőrzés eldobható scripttel**
+
+Hozd létre a `scripts/_check-validacio.ts` fájlt (nem commitoljuk):
+
+```ts
+import { parseUjFelhasznalo, parseSzerkesztes, parseJelszo } from '../lib/felhasznalo-validacio';
+
+function fd(o: Record<string, string>): FormData {
+  const f = new FormData();
+  for (const [k, v] of Object.entries(o)) f.set(k, v);
+  return f;
+}
+function assert(cond: boolean, msg: string) {
+  if (!cond) { console.error('FAIL:', msg); process.exit(1); }
+  console.log('ok:', msg);
+}
+
+let r = parseUjFelhasznalo(fd({ nev: 'Teszt Elek', email: 'Teszt@NIU.hu', jelszo: 'titok123', szerepkor: 'attase', orszag: 'Dél-Korea' }));
+assert(r.ok && r.data.email === 'teszt@niu.hu' && r.data.orszag === 'Dél-Korea', 'attasé országgal, email kisbetűs');
+
+r = parseUjFelhasznalo(fd({ nev: 'Teszt Elek', email: 'teszt@niu.hu', jelszo: 'titok123', szerepkor: 'attase', orszag: '' }));
+assert(!r.ok && r.errors.orszag !== undefined, 'attasé ország nélkül → orszag hiba');
+
+r = parseUjFelhasznalo(fd({ nev: 'Admin', email: 'a@niu.hu', jelszo: 'titok123', szerepkor: 'admin', orszag: 'Bármi' }));
+assert(r.ok && r.data.orszag === null, 'adminnál az ország eldobva');
+
+r = parseUjFelhasznalo(fd({ nev: '', email: 'nem-email', jelszo: 'rövid', szerepkor: 'x', orszag: '' }));
+assert(!r.ok && r.errors.nev !== undefined && r.errors.email !== undefined && r.errors.jelszo !== undefined && r.errors.szerepkor !== undefined, 'minden mező hibás');
+
+const s = parseSzerkesztes(fd({ nev: 'Új Név', szerepkor: 'attase', orszag: 'Japán' }));
+assert(s.ok && s.data.nev === 'Új Név', 'szerkesztés ok');
+
+const j = parseJelszo(fd({ jelszo: '1234567' }));
+assert(!j.ok && j.errors.jelszo !== undefined, 'rövid jelszó hiba');
+console.log('Minden ellenőrzés rendben.');
+```
+
+Run: `npx tsx scripts/_check-validacio.ts`
+Expected: hat `ok:` sor és „Minden ellenőrzés rendben.”
+
+Run: `rm scripts/_check-validacio.ts`
+
+- [ ] **Step 3: `db/queries/felhasznalo.ts`**
+
+```ts
+import { asc } from 'drizzle-orm';
+import { db } from '../index';
+import { user } from '../schema';
+import type { Szerepkor } from '../../lib/felhasznalo-validacio';
+
+export interface FelhasznaloSor {
+  id: string;
+  nev: string;
+  email: string;
+  szerepkor: Szerepkor;
+  orszag: string | null;
+  tiltott: boolean;
+  letrehozva: Date;
+}
+
+/** Minden felhasználó név szerint. Szinkron (better-sqlite3). */
+export function listFelhasznalok(): FelhasznaloSor[] {
+  return db
+    .select({
+      id: user.id,
+      nev: user.name,
+      email: user.email,
+      role: user.role,
+      orszag: user.orszag,
+      banned: user.banned,
+      createdAt: user.createdAt,
+    })
+    .from(user)
+    .orderBy(asc(user.name))
+    .all()
+    .map((r) => ({
+      id: r.id,
+      nev: r.nev,
+      email: r.email,
+      szerepkor: r.role === 'admin' ? 'admin' : 'attase',
+      orszag: r.orszag ?? null,
+      tiltott: Boolean(r.banned),
+      letrehozva: r.createdAt,
+    }));
+}
+```
+
+- [ ] **Step 4: Típusellenőrzés és commit**
+
+Run: `npx tsc --noEmit` → nincs hiba. (Ha `user.orszag` nem létezik: Task 1 Step 2 nem futott le.)
+
+```bash
+git add lib/felhasznalo-validacio.ts db/queries/felhasznalo.ts
+git commit -m "feat(felhasznalok): validátor és listázó lekérdezés"
+```
+
+---
+
+### Task 8: Server action-ök (`app/felhasznalok/actions.ts`)
+
+**Files:**
+- Create: `app/felhasznalok/actions.ts`
+
+- [ ] **Step 1: Fájl létrehozása**
+
+```ts
+'use server';
+
+import { revalidatePath } from 'next/cache';
+import { headers } from 'next/headers';
+import { auth } from '../../lib/auth';
+import {
+  parseJelszo,
+  parseSzerkesztes,
+  parseUjFelhasznalo,
+  type MezoHibak,
+} from '../../lib/felhasznalo-validacio';
+import { requireAdmin } from '../../lib/session';
+
+export interface MuveletState {
+  ok?: boolean;
+  errors?: MezoHibak;
+}
+
+const SAJAT_FIOK_HIBA = 'Saját fiókodon ez a művelet nem végezhető.';
+
+// A Better Auth APIError-nak body.code mezője van; duck-typing, hogy ne függjünk
+// a better-call osztálypéldányától.
+function apiKod(err: unknown): string | undefined {
+  if (typeof err === 'object' && err !== null && 'body' in err) {
+    const body = (err as { body?: { code?: string } }).body;
+    return body?.code;
+  }
+  return undefined;
+}
+
+function hibaUzenet(err: unknown): string {
+  switch (apiKod(err)) {
+    case 'USER_ALREADY_EXISTS':
+    case 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL':
+      return 'Ezzel az e-mail címmel már van felhasználó.';
+    case 'YOU_CANNOT_BAN_YOURSELF':
+    case 'YOU_CANNOT_REMOVE_YOURSELF':
+      return SAJAT_FIOK_HIBA;
+    default:
+      console.error('[felhasznalok] művelet sikertelen:', err);
+      return 'Művelet sikertelen.';
+  }
+}
+
+function kesz(): MuveletState {
+  revalidatePath('/felhasznalok');
+  return { ok: true };
+}
+
+export async function createFelhasznaloAction(
+  _prev: MuveletState,
+  formData: FormData,
+): Promise<MuveletState> {
+  await requireAdmin();
+  const parsed = parseUjFelhasznalo(formData);
+  if (!parsed.ok) return { errors: parsed.errors };
+  const { nev, email, jelszo, szerepkor, orszag } = parsed.data;
+  try {
+    await auth.api.createUser({
+      headers: await headers(),
+      body: {
+        name: nev,
+        email,
+        password: jelszo,
+        role: szerepkor,
+        data: orszag ? { orszag } : undefined,
+      },
+    });
+  } catch (err) {
+    return { errors: { form: hibaUzenet(err) } };
+  }
+  return kesz();
+}
+
+export async function updateFelhasznaloAction(
+  userId: string,
+  _prev: MuveletState,
+  formData: FormData,
+): Promise<MuveletState> {
+  const me = await requireAdmin();
+  const parsed = parseSzerkesztes(formData);
+  if (!parsed.ok) return { errors: parsed.errors };
+  const { nev, szerepkor, orszag } = parsed.data;
+  if (userId === me.userId && szerepkor !== 'admin') {
+    return { errors: { szerepkor: 'Saját admin szerepkörödet nem veheted el.' } };
+  }
+  try {
+    const h = await headers();
+    await auth.api.adminUpdateUser({ headers: h, body: { userId, data: { name: nev, orszag } } });
+    await auth.api.setRole({ headers: h, body: { userId, role: szerepkor } });
+  } catch (err) {
+    return { errors: { form: hibaUzenet(err) } };
+  }
+  return kesz();
+}
+
+export async function setJelszoAction(
+  userId: string,
+  _prev: MuveletState,
+  formData: FormData,
+): Promise<MuveletState> {
+  await requireAdmin();
+  const parsed = parseJelszo(formData);
+  if (!parsed.ok) return { errors: parsed.errors };
+  try {
+    await auth.api.setUserPassword({
+      headers: await headers(),
+      body: { userId, newPassword: parsed.data.jelszo },
+    });
+  } catch (err) {
+    return { errors: { form: hibaUzenet(err) } };
+  }
+  return kesz();
+}
+
+export async function banAction(userId: string): Promise<MuveletState> {
+  const me = await requireAdmin();
+  if (userId === me.userId) return { errors: { form: SAJAT_FIOK_HIBA } };
+  try {
+    await auth.api.banUser({ headers: await headers(), body: { userId } });
+  } catch (err) {
+    return { errors: { form: hibaUzenet(err) } };
+  }
+  return kesz();
+}
+
+export async function unbanAction(userId: string): Promise<MuveletState> {
+  await requireAdmin();
+  try {
+    await auth.api.unbanUser({ headers: await headers(), body: { userId } });
+  } catch (err) {
+    return { errors: { form: hibaUzenet(err) } };
+  }
+  return kesz();
+}
+
+export async function removeFelhasznaloAction(userId: string): Promise<MuveletState> {
+  const me = await requireAdmin();
+  if (userId === me.userId) return { errors: { form: SAJAT_FIOK_HIBA } };
+  try {
+    await auth.api.removeUser({ headers: await headers(), body: { userId } });
+  } catch (err) {
+    return { errors: { form: hibaUzenet(err) } };
+  }
+  return kesz();
+}
+```
+
+- [ ] **Step 2: Típusellenőrzés**
+
+Run: `npx tsc --noEmit`
+Expected: nincs hiba. Ha a `role: szerepkor` típushibát ad (a plugin szűkebb uniont vár), cseréld `role: szerepkor as 'admin' | 'attase'`-ra; ha a `data: { name, orszag }` hibázik `null` miatt, `orszag: orszag ?? undefined`.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add app/felhasznalok/actions.ts
+git commit -m "feat(felhasznalok): server action-ök a Better Auth admin API-ra"
+```
+
+---
+
+### Task 9: `/felhasznalok` oldal, táblázat, új felhasználó dialógus
+
+**Files:**
+- Create: `app/felhasznalok/components/MezoHiba.tsx`
+- Create: `app/felhasznalok/components/SzerepkorSelect.tsx`
+- Create: `app/felhasznalok/components/UjFelhasznaloDialog.tsx`
+- Create: `app/felhasznalok/components/FelhasznaloTabla.tsx`
+- Create: `app/felhasznalok/page.tsx`
+
+- [ ] **Step 1: `MezoHiba.tsx`**
+
+```tsx
+export function MezoHiba({ uzenet }: { uzenet?: string }) {
+  if (!uzenet) return null;
+  return (
+    <p role="alert" className="text-xs text-destructive">
+      {uzenet}
+    </p>
+  );
+}
+```
+
+- [ ] **Step 2: `SzerepkorSelect.tsx`**
+
+A Base UI `Select` a `name` prop miatt rejtett inputot rendel, így a `FormData`-ban `szerepkor` néven megjelenik. Az `items` a `SelectValue` címkéjéhez kell.
+
+```tsx
+'use client';
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../components/ui/select';
+import { SZEREPKOR_CIMKE, SZEREPKOROK, type Szerepkor } from '../../../lib/felhasznalo-validacio';
+
+export function SzerepkorSelect({
+  value,
+  onChange,
+}: {
+  value: Szerepkor;
+  onChange: (v: Szerepkor) => void;
+}) {
+  return (
+    <Select
+      name="szerepkor"
+      value={value}
+      onValueChange={(v) => onChange((v ?? 'attase') as Szerepkor)}
+      items={SZEREPKOR_CIMKE}
+    >
+      <SelectTrigger id="szerepkor" className="w-full">
+        <SelectValue placeholder="Válassz szerepkört" />
+      </SelectTrigger>
+      <SelectContent>
+        {SZEREPKOROK.map((k) => (
+          <SelectItem key={k} value={k}>
+            {SZEREPKOR_CIMKE[k]}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+```
+
+- [ ] **Step 3: `UjFelhasznaloDialog.tsx`**
+
+A form külön komponens a `DialogContent`-en belül: zárásnál unmountol, így az `useActionState` állapota nem ragad be a következő nyitásra.
+
+```tsx
+'use client';
+
+import { useActionState, useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { Button } from '../../../components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../../components/ui/dialog';
+import { Input } from '../../../components/ui/input';
+import { Label } from '../../../components/ui/label';
+import type { Szerepkor } from '../../../lib/felhasznalo-validacio';
+import { createFelhasznaloAction, type MuveletState } from '../actions';
+import { MezoHiba } from './MezoHiba';
+import { SzerepkorSelect } from './SzerepkorSelect';
+
+function UjFelhasznaloForm({ onKesz }: { onKesz: () => void }) {
+  const [state, formAction, pending] = useActionState<MuveletState, FormData>(
+    createFelhasznaloAction,
+    {},
+  );
+  const [szerepkor, setSzerepkor] = useState<Szerepkor>('attase');
+  const errors = state.errors ?? {};
+
+  useEffect(() => {
+    if (state.ok) {
+      toast.success('Felhasználó létrehozva.');
+      onKesz();
+    }
+  }, [state.ok, onKesz]);
+
+  return (
+    <form action={formAction} className="flex flex-col gap-3" noValidate>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="nev">Név</Label>
+        <Input id="nev" name="nev" required maxLength={100} autoComplete="off" />
+        <MezoHiba uzenet={errors.nev} />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="email">E-mail cím</Label>
+        <Input id="email" name="email" type="email" required autoComplete="off" />
+        <MezoHiba uzenet={errors.email} />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="jelszo">Kezdő jelszó</Label>
+        <Input id="jelszo" name="jelszo" type="password" required minLength={8} autoComplete="new-password" />
+        <MezoHiba uzenet={errors.jelszo} />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="szerepkor">Szerepkör</Label>
+        <SzerepkorSelect value={szerepkor} onChange={setSzerepkor} />
+        <MezoHiba uzenet={errors.szerepkor} />
+      </div>
+      {szerepkor === 'attase' && (
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="orszag">Ország (TéT poszt)</Label>
+          <Input id="orszag" name="orszag" required maxLength={100} placeholder="pl. Dél-Korea" />
+          <MezoHiba uzenet={errors.orszag} />
+        </div>
+      )}
+      <MezoHiba uzenet={errors.form} />
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onKesz} disabled={pending}>
+          Mégse
+        </Button>
+        <Button type="submit" disabled={pending}>
+          {pending ? 'Mentés…' : 'Létrehozás'}
+        </Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
+export function UjFelhasznaloDialog() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button onClick={() => setOpen(true)}>Új felhasználó</Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Új felhasználó</DialogTitle>
+            <DialogDescription>
+              A felhasználó a megadott e-mail címmel és jelszóval tud bejelentkezni.
+            </DialogDescription>
+          </DialogHeader>
+          <UjFelhasznaloForm onKesz={() => setOpen(false)} />
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+```
+
+- [ ] **Step 4: `FelhasznaloTabla.tsx`**
+
+A műveletek oszlop egyelőre üres helyőrző komponens nélkül; Task 10 teszi bele a `FelhasznaloMuveletek`-et.
+
+```tsx
+'use client';
+
+import { Badge } from '../../../components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../../../components/ui/table';
+import type { FelhasznaloSor } from '../../../db/queries/felhasznalo';
+import { SZEREPKOR_CIMKE } from '../../../lib/felhasznalo-validacio';
+
+function datum(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+export function FelhasznaloTabla({
+  felhasznalok,
+  sajatId,
+}: {
+  felhasznalok: FelhasznaloSor[];
+  sajatId: string;
+}) {
+  return (
+    <div className="overflow-x-auto rounded-xl border border-border bg-card">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Név</TableHead>
+            <TableHead>E-mail</TableHead>
+            <TableHead>Szerepkör</TableHead>
+            <TableHead>Ország</TableHead>
+            <TableHead>Állapot</TableHead>
+            <TableHead>Létrehozva</TableHead>
+            <TableHead className="w-12" />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {felhasznalok.map((f) => (
+            <TableRow key={f.id}>
+              <TableCell className="font-medium">
+                {f.nev}
+                {f.id === sajatId && <span className="ml-2 text-xs text-muted-foreground">(te)</span>}
+              </TableCell>
+              <TableCell className="text-muted-foreground">{f.email}</TableCell>
+              <TableCell>
+                <Badge variant={f.szerepkor === 'admin' ? 'default' : 'secondary'}>
+                  {SZEREPKOR_CIMKE[f.szerepkor]}
+                </Badge>
+              </TableCell>
+              <TableCell>{f.orszag ?? <span className="text-muted-foreground">–</span>}</TableCell>
+              <TableCell>
+                {f.tiltott ? <Badge variant="destructive">Tiltott</Badge> : <Badge variant="outline">Aktív</Badge>}
+              </TableCell>
+              <TableCell className="text-muted-foreground">{datum(f.letrehozva)}</TableCell>
+              <TableCell />
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+```
+
+- [ ] **Step 5: `app/felhasznalok/page.tsx`**
+
+```tsx
+import { listFelhasznalok } from '../../db/queries/felhasznalo';
+import { requireAdmin } from '../../lib/session';
+import { FelhasznaloTabla } from './components/FelhasznaloTabla';
+import { UjFelhasznaloDialog } from './components/UjFelhasznaloDialog';
+
+export default async function FelhasznalokPage() {
+  const me = await requireAdmin();
+  const felhasznalok = listFelhasznalok();
+  return (
+    <div className="flex max-w-6xl flex-col gap-4">
+      <div className="flex items-center gap-3">
+        <p className="text-sm text-muted-foreground">{felhasznalok.length} felhasználó</p>
+        <div className="ml-auto">
+          <UjFelhasznaloDialog />
+        </div>
+      </div>
+      <FelhasznaloTabla felhasznalok={felhasznalok} sajatId={me.userId} />
+    </div>
+  );
+}
+```
+
+- [ ] **Step 6: Ellenőrzés**
+
+Run: `npx tsc --noEmit` → nincs hiba.
+
+Böngésző adminnal: `/felhasznalok` mutatja a seed admint „(te)” jelöléssel. „Új felhasználó” → dialógus; attasé ország nélkül beküldve → „TéT attasénál az ország kötelező.”; kitöltve → toast, dialógus zárul, az új sor megjelenik. Ugyanazzal az e-mail címmel újra → „Ezzel az e-mail címmel már van felhasználó.” Szerepkört adminra váltva az ország mező eltűnik.
+
+Új privát ablakban az új attaséval bejelentkezve a fejléc „TéT attasé · <ország>”, a „Felhasználók” menü nem látszik, `/felhasznalok` → 404.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add app/felhasznalok
+git commit -m "feat(felhasznalok): admin lista és új felhasználó dialógus"
+```
+
+---
+
+### Task 10: Szerkesztés, jelszó, tiltás/feloldás, törlés
+
+**Files:**
+- Create: `app/felhasznalok/components/SzerkesztesDialog.tsx`
+- Create: `app/felhasznalok/components/JelszoDialog.tsx`
+- Create: `app/felhasznalok/components/FelhasznaloMuveletek.tsx`
+- Modify: `app/felhasznalok/components/FelhasznaloTabla.tsx`
+
+- [ ] **Step 1: `SzerkesztesDialog.tsx`**
+
+```tsx
+'use client';
+
+import { useActionState, useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { Button } from '../../../components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../../components/ui/dialog';
+import { Input } from '../../../components/ui/input';
+import { Label } from '../../../components/ui/label';
+import type { FelhasznaloSor } from '../../../db/queries/felhasznalo';
+import type { Szerepkor } from '../../../lib/felhasznalo-validacio';
+import { updateFelhasznaloAction, type MuveletState } from '../actions';
+import { MezoHiba } from './MezoHiba';
+import { SzerepkorSelect } from './SzerepkorSelect';
+
+function SzerkesztesForm({ felhasznalo, onKesz }: { felhasznalo: FelhasznaloSor; onKesz: () => void }) {
+  const action = updateFelhasznaloAction.bind(null, felhasznalo.id);
+  const [state, formAction, pending] = useActionState<MuveletState, FormData>(action, {});
+  const [szerepkor, setSzerepkor] = useState<Szerepkor>(felhasznalo.szerepkor);
+  const errors = state.errors ?? {};
+
+  useEffect(() => {
+    if (state.ok) {
+      toast.success('Felhasználó módosítva.');
+      onKesz();
+    }
+  }, [state.ok, onKesz]);
+
+  return (
+    <form action={formAction} className="flex flex-col gap-3" noValidate>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="nev">Név</Label>
+        <Input id="nev" name="nev" required maxLength={100} defaultValue={felhasznalo.nev} />
+        <MezoHiba uzenet={errors.nev} />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="szerepkor">Szerepkör</Label>
+        <SzerepkorSelect value={szerepkor} onChange={setSzerepkor} />
+        <MezoHiba uzenet={errors.szerepkor} />
+      </div>
+      {szerepkor === 'attase' && (
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="orszag">Ország (TéT poszt)</Label>
+          <Input id="orszag" name="orszag" required maxLength={100} defaultValue={felhasznalo.orszag ?? ''} />
+          <MezoHiba uzenet={errors.orszag} />
+        </div>
+      )}
+      <MezoHiba uzenet={errors.form} />
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onKesz} disabled={pending}>
+          Mégse
+        </Button>
+        <Button type="submit" disabled={pending}>
+          {pending ? 'Mentés…' : 'Mentés'}
+        </Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
+export function SzerkesztesDialog({
+  felhasznalo,
+  open,
+  onOpenChange,
+}: {
+  felhasznalo: FelhasznaloSor;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Felhasználó szerkesztése</DialogTitle>
+          <DialogDescription>{felhasznalo.email}</DialogDescription>
+        </DialogHeader>
+        <SzerkesztesForm felhasznalo={felhasznalo} onKesz={() => onOpenChange(false)} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+```
+
+- [ ] **Step 2: `JelszoDialog.tsx`**
+
+```tsx
+'use client';
+
+import { useActionState, useEffect } from 'react';
+import { toast } from 'sonner';
+import { Button } from '../../../components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../../components/ui/dialog';
+import { Input } from '../../../components/ui/input';
+import { Label } from '../../../components/ui/label';
+import type { FelhasznaloSor } from '../../../db/queries/felhasznalo';
+import { setJelszoAction, type MuveletState } from '../actions';
+import { MezoHiba } from './MezoHiba';
+
+function JelszoForm({ felhasznalo, onKesz }: { felhasznalo: FelhasznaloSor; onKesz: () => void }) {
+  const action = setJelszoAction.bind(null, felhasznalo.id);
+  const [state, formAction, pending] = useActionState<MuveletState, FormData>(action, {});
+  const errors = state.errors ?? {};
+
+  useEffect(() => {
+    if (state.ok) {
+      toast.success('Jelszó beállítva.');
+      onKesz();
+    }
+  }, [state.ok, onKesz]);
+
+  return (
+    <form action={formAction} className="flex flex-col gap-3" noValidate>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="jelszo">Új jelszó</Label>
+        <Input id="jelszo" name="jelszo" type="password" required minLength={8} autoComplete="new-password" />
+        <MezoHiba uzenet={errors.jelszo} />
+      </div>
+      <MezoHiba uzenet={errors.form} />
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onKesz} disabled={pending}>
+          Mégse
+        </Button>
+        <Button type="submit" disabled={pending}>
+          {pending ? 'Mentés…' : 'Jelszó beállítása'}
+        </Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
+export function JelszoDialog({
+  felhasznalo,
+  open,
+  onOpenChange,
+}: {
+  felhasznalo: FelhasznaloSor;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Jelszó-visszaállítás</DialogTitle>
+          <DialogDescription>
+            {felhasznalo.nev} új jelszót kap. E-mail nem megy ki, add át neki személyesen.
+          </DialogDescription>
+        </DialogHeader>
+        <JelszoForm felhasznalo={felhasznalo} onKesz={() => onOpenChange(false)} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+```
+
+- [ ] **Step 3: `FelhasznaloMuveletek.tsx`**
+
+Sor-menü (`DropdownMenu`) + megerősítő `AlertDialog` a tiltás/feloldás/törlés műveletekhez. A pontos `AlertDialog*` exportneveket a Task 6 Step 1 `grep`-je mutatta; ha eltérnek (pl. `AlertDialogAction` helyett más), igazítsd.
+
+```tsx
+'use client';
+
+import { MoreHorizontalIcon } from 'lucide-react';
+import { useState, useTransition } from 'react';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../../../components/ui/alert-dialog';
+import { Button } from '../../../components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../../../components/ui/dropdown-menu';
+import type { FelhasznaloSor } from '../../../db/queries/felhasznalo';
+import { banAction, removeFelhasznaloAction, unbanAction, type MuveletState } from '../actions';
+import { JelszoDialog } from './JelszoDialog';
+import { SzerkesztesDialog } from './SzerkesztesDialog';
+
+type Megerosites = 'tilt' | 'felold' | 'torol' | null;
+
+const MEGEROSITES_SZOVEG: Record<Exclude<Megerosites, null>, { cim: string; leiras: string; gomb: string; siker: string }> = {
+  tilt: {
+    cim: 'Fiók letiltása',
+    leiras: 'A felhasználó nem tud bejelentkezni, amíg fel nem oldod.',
+    gomb: 'Letiltás',
+    siker: 'Fiók letiltva.',
+  },
+  felold: {
+    cim: 'Tiltás feloldása',
+    leiras: 'A felhasználó újra be tud jelentkezni.',
+    gomb: 'Feloldás',
+    siker: 'Tiltás feloldva.',
+  },
+  torol: {
+    cim: 'Fiók végleges törlése',
+    leiras: 'Ez nem vonható vissza. A felhasználó sessionjei is törlődnek.',
+    gomb: 'Törlés',
+    siker: 'Fiók törölve.',
+  },
+};
+
+export function FelhasznaloMuveletek({ felhasznalo, sajat }: { felhasznalo: FelhasznaloSor; sajat: boolean }) {
+  const [szerkesztes, setSzerkesztes] = useState(false);
+  const [jelszo, setJelszo] = useState(false);
+  const [megerosites, setMegerosites] = useState<Megerosites>(null);
+  const [pending, startTransition] = useTransition();
+
+  function futtat(kind: Exclude<Megerosites, null>) {
+    const fn: (id: string) => Promise<MuveletState> =
+      kind === 'tilt' ? banAction : kind === 'felold' ? unbanAction : removeFelhasznaloAction;
+    startTransition(async () => {
+      const res = await fn(felhasznalo.id);
+      if (res.ok) toast.success(MEGEROSITES_SZOVEG[kind].siker);
+      else toast.error(res.errors?.form ?? 'Művelet sikertelen.');
+      setMegerosites(null);
+    });
+  }
+
+  const szoveg = megerosites ? MEGEROSITES_SZOVEG[megerosites] : null;
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Műveletek" />}>
+          <MoreHorizontalIcon />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setSzerkesztes(true)}>Szerkesztés</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setJelszo(true)}>Jelszó-visszaállítás</DropdownMenuItem>
+          {!sajat && (
+            <>
+              <DropdownMenuSeparator />
+              {felhasznalo.tiltott ? (
+                <DropdownMenuItem onClick={() => setMegerosites('felold')}>Tiltás feloldása</DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onClick={() => setMegerosites('tilt')}>Letiltás</DropdownMenuItem>
+              )}
+              <DropdownMenuItem variant="destructive" onClick={() => setMegerosites('torol')}>
+                Törlés
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <SzerkesztesDialog felhasznalo={felhasznalo} open={szerkesztes} onOpenChange={setSzerkesztes} />
+      <JelszoDialog felhasznalo={felhasznalo} open={jelszo} onOpenChange={setJelszo} />
+
+      <AlertDialog open={megerosites !== null} onOpenChange={(o) => !o && setMegerosites(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{szoveg?.cim}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {felhasznalo.nev} ({felhasznalo.email}). {szoveg?.leiras}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={pending}>Mégse</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={pending}
+              onClick={(e) => {
+                e.preventDefault();
+                if (megerosites) futtat(megerosites);
+              }}
+            >
+              {pending ? 'Folyamatban…' : szoveg?.gomb}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+```
+
+Megjegyzések:
+- A shadcn v4 `DropdownMenuTrigger` Base UI-s, a gombot a `render` proppal kapja (mint a `dialog.tsx` `DialogPrimitive.Close`-nál látható). Ha a `DropdownMenuItem` nem ismeri a `variant="destructive"` propot, nézd meg a `components/ui/dropdown-menu.tsx`-t; ha nincs, hagyd el a propot és adj `className="text-destructive"`-ot.
+- Az `AlertDialogAction` `onClick`-jében `preventDefault`, hogy a dialógus ne záruljon a szerver válasza előtt; a `futtat` zárja.
+
+- [ ] **Step 4: `FelhasznaloTabla.tsx` – műveletek oszlop**
+
+Import hozzáadása:
+
+```tsx
+import { FelhasznaloMuveletek } from './FelhasznaloMuveletek';
+```
+
+Az üres `<TableCell />` cseréje a sorban:
+
+```tsx
+              <TableCell className="text-right">
+                <FelhasznaloMuveletek felhasznalo={f} sajat={f.id === sajatId} />
+              </TableCell>
+```
+
+- [ ] **Step 5: Ellenőrzés**
+
+Run: `npx tsc --noEmit` → nincs hiba.
+
+Böngésző adminnal a `/felhasznalok`-on:
+1. Attasé sor menü → Szerkesztés → ország módosítás → toast, a tábla frissül.
+2. Jelszó-visszaállítás → új jelszó; privát ablakban az attasé az új jelszóval belép, a régivel nem.
+3. Letiltás → megerősítés → „Tiltott” badge; privát ablakban belépés → „A fiók le van tiltva.” Feloldás → újra be tud lépni.
+4. Törlés → megerősítés → a sor eltűnik.
+5. Saját sor menüjében nincs Letiltás/Törlés; saját szerkesztésnél szerepkör attaséra váltás → „Saját admin szerepkörödet nem veheted el.”
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add app/felhasznalok
+git commit -m "feat(felhasznalok): szerkesztés, jelszó-visszaállítás, tiltás, törlés"
+```
+
+---
+
+### Task 11: Build, curl-ellenőrzés, README
+
+**Files:**
+- Modify: `README.md`
+
+- [ ] **Step 1: Production build**
+
+Run: `npm run build`
+Expected: sikeres build. Ha a `/login` oldalnál „useSearchParams … Suspense” hibát látsz, valaki `useSearchParams`-t használt a `LoginForm`-ban – a terv szerint a `next` a page `searchParams` propjából jön, ne a kliens hookból.
+
+- [ ] **Step 2: curl a sign-in végpontra**
+
+Dev szerver fut. Cseréld az emailt/jelszót a `.env.local` seed értékeire:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" -X POST http://localhost:3000/api/auth/sign-in/email \
+  -H 'content-type: application/json' -d '{"email":"admin@niu.hu","password":"ROSSZ"}'
+```
+Expected: `401`
+
+```bash
+curl -s -c /tmp/tet-cookie.txt -o /dev/null -w "%{http_code}\n" -X POST http://localhost:3000/api/auth/sign-in/email \
+  -H 'content-type: application/json' -d '{"email":"admin@niu.hu","password":"<SEED_ADMIN_PASSWORD>"}'
+curl -s -b /tmp/tet-cookie.txt -o /dev/null -w "%{http_code}\n" http://localhost:3000/felhasznalok
+```
+Expected: `200`, majd `200` (cookie-val a védett oldal elérhető).
+
+- [ ] **Step 3: README frissítése**
+
+Az „Indítás” blokk után add hozzá:
+
+```markdown
+### Bejelentkezés és felhasználók
+
+- Minden oldal bejelentkezést kér (`proxy.ts` + `lib/session.ts`). Belépés: `/login`, a seed admin adataival.
+- Admin a `/felhasznalok` oldalon hoz létre TéT attasé fiókokat (név, e-mail, kezdő jelszó, ország), szerkeszt, jelszót állít vissza, tilt és töröl. Nyilvános regisztráció nincs.
+- Szerepkörök: `admin` (NIÜ) és `attase`; az attasé fiókon kötelező az ország (`user.orszag`).
+```
+
+A „Képernyők” táblázatba két sor:
+
+```markdown
+| `/login` | Bejelentkezés (email + jelszó) |
+| `/felhasznalok` | Felhasználó-kezelés (csak admin) |
+```
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add README.md
+git commit -m "docs: login és felhasználó-kezelés a README-ben"
+```
+
+- [ ] **Step 5: Végső teljes manuális forgatókönyv (a spec „Ellenőrzés” szakasza)**
+
+1. Kijelentkezve bármely oldal → `/login?next=...`; belépés után oda kerül vissza.
+2. Rossz jelszó → hibaüzenet; jó → `/terkep`, fejlécben név és szerepkör.
+3. Attasé: `/felhasznalok` → 404, a menüben nem látszik.
+4. Admin: létrehoz attasét országgal; ország nélkül → mezőhiba. Az új attasé belép, a fejléc az országot mutatja.
+5. Szerkesztés (ország módosítás), jelszó-visszaállítás → új jelszóval belép.
+6. Tiltás → a tiltott nem tud belépni, listában „Tiltott”; feloldás után igen.
+7. Törlés megerősítéssel; saját fiók tiltása/törlése nem elérhető a menüből, saját szerepkör elvétele → hiba.
+8. Kijelentkezés → `/login`, a védett oldal újra átirányít.
+
+Ha mind rendben: a plan kész. A következő plan (riportok) a `requireSession()` és `AppSession.orszag` interfészre épül.
