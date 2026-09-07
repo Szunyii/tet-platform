@@ -1,32 +1,31 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
+import { createContext, useActionState, useContext, useState, type ReactNode } from 'react';
+import type { LogoutState } from '../app/(app)/actions';
 import { CYCLES, DEADLINE, DEFAULT_CYCLE, TICKETS } from '../lib/data';
 import { ini } from '../lib/score';
-import { signOut } from '../lib/auth-client';
-import type { AppSession, AppRole } from '../lib/session';
+import type { AppSession } from '../lib/session';
 
-export type Role = AppRole;
+type LogoutAction = (prev: LogoutState) => Promise<LogoutState>;
 
 interface AppState {
-  role: Role;
   user: AppSession;
   cycle: string;
   setCycle: (c: string) => void;
 }
 
-const EMPTY_USER: AppSession = { userId: '', name: '', email: '', role: 'attase', orszag: null };
+const AppContext = createContext<AppState | null>(null);
 
-const AppContext = createContext<AppState>({
-  role: 'attase', user: EMPTY_USER, cycle: DEFAULT_CYCLE, setCycle: () => {},
-});
-
-export function useApp() {
-  return useContext(AppContext);
+export function useApp(): AppState {
+  const ctx = useContext(AppContext);
+  if (!ctx) throw new Error('useApp() csak az AppShell-en belül használható.');
+  return ctx;
 }
 
+// Csak megjelenítés: az adminOnly a menüpontot rejti el, a valódi védelem a page/action
+// requireAdmin() hívása (lib/session.ts).
 const NAV: { href: string; icon: string; label: string; adminOnly?: boolean }[] = [
   { href: '/terkep', icon: '◍', label: 'Országprofil' },
   { href: '/riportok', icon: '▦', label: 'Riportok' },
@@ -47,33 +46,53 @@ const TITLES: Record<string, [string, string]> = {
   '/felhasznalok': ['Felhasználók', 'Admin és TéT attasé fiókok kezelése'],
 };
 
-// Pontos egyezés, különben a leghosszabb prefix (pl. /riportok/abc → /riportok).
+// Pontos egyezés vagy alútvonal (pl. /riportok/abc → /riportok).
+function isActive(pathname: string, href: string): boolean {
+  return pathname === href || pathname.startsWith(href + '/');
+}
+
+// Pontos egyezés, különben a leghosszabb illeszkedő prefix.
 function titleFor(pathname: string): [string, string] {
   if (TITLES[pathname]) return TITLES[pathname];
   const key = Object.keys(TITLES)
-    .filter((k) => pathname.startsWith(k + '/'))
+    .filter((k) => isActive(pathname, k))
     .sort((a, b) => b.length - a.length)[0];
   return key ? TITLES[key] : ['TéT Platform', ''];
 }
 
-export default function AppShell({ user, children }: { user: AppSession; children: ReactNode }) {
+function LogoutForm({ action }: { action: LogoutAction }) {
+  const [state, formAction, pending] = useActionState(action, {});
+  return (
+    <form action={formAction} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      {state.error && (
+        <span role="alert" style={{ fontSize: 11, color: '#b3261e' }}>{state.error}</span>
+      )}
+      <button type="submit" className="btn" style={{ fontSize: 11.5 }} disabled={pending}>
+        {pending ? 'Kijelentkezés…' : 'Kijelentkezés'}
+      </button>
+    </form>
+  );
+}
+
+export default function AppShell({
+  user,
+  logoutAction,
+  children,
+}: {
+  user: AppSession;
+  logoutAction: LogoutAction;
+  children: ReactNode;
+}) {
   const [cycle, setCycle] = useState(DEFAULT_CYCLE);
   const pathname = usePathname();
-  const router = useRouter();
   const [title, sub] = titleFor(pathname);
   const openTickets = TICKETS.filter((t) => t.statusz !== 'Lezárt').length;
   const roleLabel = user.role === 'admin'
     ? 'NIÜ admin'
     : `TéT attasé${user.orszag ? ' · ' + user.orszag : ''}`;
 
-  async function logout() {
-    await signOut();
-    router.push('/login');
-    router.refresh();
-  }
-
   return (
-    <AppContext.Provider value={{ role: user.role, user, cycle, setCycle }}>
+    <AppContext.Provider value={{ user, cycle, setCycle }}>
       <div style={{ display: 'flex', minHeight: '100vh' }}>
         <aside style={{
           width: 238, flex: '0 0 238px', background: '#131a24', color: '#e7ebf1',
@@ -85,9 +104,9 @@ export default function AppShell({ user, children }: { user: AppSession; childre
           </div>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '12px 10px' }}>
             {NAV.filter((n) => !n.adminOnly || user.role === 'admin').map((n) => {
-              const on = pathname === n.href || pathname.startsWith(n.href + '/');
+              const on = isActive(pathname, n.href);
               return (
-                <Link key={n.href} href={n.href} style={{
+                <Link key={n.href} href={n.href} aria-current={on ? 'page' : undefined} style={{
                   display: 'flex', alignItems: 'center', gap: 10, padding: '9px 11px',
                   borderRadius: 5, fontSize: 12.5, fontWeight: 500, textDecoration: 'none',
                   background: on ? '#22304a' : 'transparent', color: on ? '#ffffff' : '#a3adbb',
@@ -142,9 +161,7 @@ export default function AppShell({ user, children }: { user: AppSession; childre
                   <div style={{ fontSize: 10.5, color: '#6b7684' }}>{roleLabel}</div>
                 </div>
               </div>
-              <button type="button" onClick={logout} className="btn" style={{ fontSize: 11.5 }}>
-                Kijelentkezés
-              </button>
+              <LogoutForm action={logoutAction} />
             </div>
           </header>
           <main style={{ flex: 1, minWidth: 0, padding: '20px 26px 44px' }}>{children}</main>

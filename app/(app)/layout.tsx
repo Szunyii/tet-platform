@@ -1,5 +1,6 @@
 import AppShell from '../../components/AppShell';
 import { requireSession } from '../../lib/session';
+import { logoutAction } from './actions';
 
 // Minden védett oldal ebben a route groupban van. A requireSession() itt egy helyen
 // kényszeríti ki a bejelentkezést (elavult cookie esetén is: a proxy átengedi, ez
@@ -11,5 +12,5 @@ import { requireSession } from '../../lib/session';
 // maga hívja a requireSession()/requireAdmin()-t.
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await requireSession();
-  return <AppShell user={session}>{children}</AppShell>;
+  return <AppShell user={session} logoutAction={logoutAction}>{children}</AppShell>;
 }
