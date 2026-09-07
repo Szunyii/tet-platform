@@ -45,6 +45,7 @@
 | `db/queries/felhasznalo.ts` | létrehoz | `listFelhasznalok()` |
 | `app/(app)/felhasznalok/actions.ts` | létrehoz | server action-ök a Better Auth admin API-ra |
 | `app/(app)/felhasznalok/page.tsx` | létrehoz | `requireAdmin`, lista |
+| `lib/datum.ts` | létrehoz | `formatDatum()` fix időzónával |
 | `app/(app)/felhasznalok/components/MezoHiba.tsx` | létrehoz | mezőhiba szöveg |
 | `app/(app)/felhasznalok/components/SzerepkorSelect.tsx` | létrehoz | szerepkör választó (shadcn Select, `name`) |
 | `app/(app)/felhasznalok/components/UjFelhasznaloDialog.tsx` | létrehoz | létrehozás |
@@ -1171,17 +1172,22 @@ function apiKod(err: unknown): string | undefined {
   return undefined;
 }
 
-function hibaUzenet(err: unknown): string {
+// Better Auth hiba → mezőhibák. Ami mezőhöz köthető (e-mail), az a mező kulcsára megy,
+// a többi a `form` kulcsra.
+function hibaMezok(err: unknown): MezoHibak {
   switch (apiKod(err)) {
     case 'USER_ALREADY_EXISTS':
     case 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL':
-      return 'Ezzel az e-mail címmel már van felhasználó.';
+      return { email: 'Ezzel az e-mail címmel már van felhasználó.' };
+    case 'INVALID_EMAIL':
+      // A saját validátorunk megengedőbb a Better Auth zod-szabályánál (pl. ékezetes cím).
+      return { email: 'Érvénytelen e-mail cím.' };
     case 'YOU_CANNOT_BAN_YOURSELF':
     case 'YOU_CANNOT_REMOVE_YOURSELF':
-      return SAJAT_FIOK_HIBA;
+      return { form: SAJAT_FIOK_HIBA };
     default:
       console.error('[felhasznalok] művelet sikertelen:', err);
-      return 'Művelet sikertelen.';
+      return { form: 'Művelet sikertelen.' };
   }
 }
 
@@ -1212,7 +1218,7 @@ export async function createFelhasznaloAction(
       },
     });
   } catch (err) {
-    return { errors: { form: hibaUzenet(err) } };
+    return { errors: hibaMezok(err) };
   }
   return kesz();
 }
@@ -1234,7 +1240,7 @@ export async function updateFelhasznaloAction(
     await auth.api.adminUpdateUser({ headers: h, body: { userId, data: { name: nev, orszag } } });
     await auth.api.setRole({ headers: h, body: { userId, role: szerepkor } });
   } catch (err) {
-    return { errors: { form: hibaUzenet(err) } };
+    return { errors: hibaMezok(err) };
   }
   return kesz();
 }
@@ -1253,7 +1259,7 @@ export async function setJelszoAction(
       body: { userId, newPassword: parsed.data.jelszo },
     });
   } catch (err) {
-    return { errors: { form: hibaUzenet(err) } };
+    return { errors: hibaMezok(err) };
   }
   return kesz();
 }
@@ -1264,7 +1270,7 @@ export async function banAction(userId: string): Promise<MuveletState> {
   try {
     await auth.api.banUser({ headers: await headers(), body: { userId } });
   } catch (err) {
-    return { errors: { form: hibaUzenet(err) } };
+    return { errors: hibaMezok(err) };
   }
   return kesz();
 }
@@ -1274,7 +1280,7 @@ export async function unbanAction(userId: string): Promise<MuveletState> {
   try {
     await auth.api.unbanUser({ headers: await headers(), body: { userId } });
   } catch (err) {
-    return { errors: { form: hibaUzenet(err) } };
+    return { errors: hibaMezok(err) };
   }
   return kesz();
 }
@@ -1285,7 +1291,7 @@ export async function removeFelhasznaloAction(userId: string): Promise<MuveletSt
   try {
     await auth.api.removeUser({ headers: await headers(), body: { userId } });
   } catch (err) {
-    return { errors: { form: hibaUzenet(err) } };
+    return { errors: hibaMezok(err) };
   }
   return kesz();
 }
@@ -1294,7 +1300,7 @@ export async function removeFelhasznaloAction(userId: string): Promise<MuveletSt
 - [ ] **Step 2: Típusellenőrzés**
 
 Run: `npx tsc --noEmit`
-Expected: nincs hiba. Ha a `role: szerepkor` típushibát ad (a plugin szűkebb uniont vár), cseréld `role: szerepkor as 'admin' | 'attase'`-ra; ha a `data: { name, orszag }` hibázik `null` miatt, `orszag: orszag ?? undefined`.
+Expected: nincs hiba. A `role: szerepkor` azért fordul, mert a `lib/auth.ts` admin pluginja `roles` mappel (`admin`, `attase`) van konfigurálva (Task 7 javítás); ha mégis típushibát ad, az a config hiánya, nem cast-tal kell megoldani. Ha a `data: { name, orszag }` hibázik `null` miatt, `orszag: orszag ?? undefined`.
 
 - [ ] **Step 3: Commit**
 
@@ -1308,11 +1314,30 @@ git commit -m "feat(felhasznalok): server action-ök a Better Auth admin API-ra"
 ### Task 9: `/felhasznalok` oldal, táblázat, új felhasználó dialógus
 
 **Files:**
+- Create: `lib/datum.ts`
 - Create: `app/(app)/felhasznalok/components/MezoHiba.tsx`
 - Create: `app/(app)/felhasznalok/components/SzerepkorSelect.tsx`
 - Create: `app/(app)/felhasznalok/components/UjFelhasznaloDialog.tsx`
 - Create: `app/(app)/felhasznalok/components/FelhasznaloTabla.tsx`
 - Create: `app/(app)/felhasznalok/page.tsx`
+
+- [ ] **Step 0: `lib/datum.ts` – determinisztikus dátumformázás**
+
+Kliens komponensben a `toISOString()` UTC-t adna, a `toLocaleDateString()` pedig a futtató időzónáját (SSR vs. böngésző eltérhet → hidratációs eltérés). Fix időzóna + locale, így a szerver és a kliens ugyanazt írja.
+
+```ts
+const HU_DATUM = new Intl.DateTimeFormat('hu-HU', {
+  timeZone: 'Europe/Budapest',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
+/** Dátum magyar formában (pl. „2026. 09. 07."), fix Europe/Budapest időzónával. */
+export function formatDatum(d: Date): string {
+  return HU_DATUM.format(d);
+}
+```
 
 - [ ] **Step 1: `MezoHiba.tsx`**
 
@@ -1492,11 +1517,8 @@ import {
   TableRow,
 } from '../../../../components/ui/table';
 import type { FelhasznaloSor } from '../../../../db/queries/felhasznalo';
+import { formatDatum } from '../../../../lib/datum';
 import { SZEREPKOR_CIMKE } from '../../../../lib/felhasznalo-validacio';
-
-function datum(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
 
 export function FelhasznaloTabla({
   felhasznalok,
@@ -1536,7 +1558,7 @@ export function FelhasznaloTabla({
               <TableCell>
                 {f.tiltott ? <Badge variant="destructive">Tiltott</Badge> : <Badge variant="outline">Aktív</Badge>}
               </TableCell>
-              <TableCell className="text-muted-foreground">{datum(f.letrehozva)}</TableCell>
+              <TableCell className="text-muted-foreground">{formatDatum(f.letrehozva)}</TableCell>
               <TableCell />
             </TableRow>
           ))}
@@ -1583,7 +1605,7 @@ Böngésző adminnal: `/felhasznalok` mutatja a seed admint „(te)” jelölés
 - [ ] **Step 7: Commit**
 
 ```bash
-git add "app/(app)/felhasznalok"
+git add lib/datum.ts "app/(app)/felhasznalok"
 git commit -m "feat(felhasznalok): admin lista és új felhasználó dialógus"
 ```
 
