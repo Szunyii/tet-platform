@@ -12,6 +12,12 @@ export const auth = betterAuth({
     // Belső rendszer: nincs nyilvános regisztráció. Felhasználót seed vagy admin hoz létre.
     disableSignUp: true,
   },
+  user: {
+    additionalFields: {
+      // TéT attasé posztjának országa. Adminnál üres. Az admin UI kényszeríti ki attasénál.
+      orszag: { type: 'string', required: false, input: true },
+    },
+  },
   plugins: [
     admin({
       defaultRole: 'attase',
