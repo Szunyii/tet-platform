@@ -13,8 +13,15 @@ const DB_PATH = resolve(
 
 function createDb() {
   mkdirSync(dirname(DB_PATH), { recursive: true });
-  const sqlite = new Database(DB_PATH);
-  sqlite.pragma('journal_mode = WAL');
+  const sqlite = new Database(DB_PATH, { timeout: 5000 });
+  try {
+    sqlite.pragma('journal_mode = WAL');
+  } catch (err) {
+    // A journal_mode váltás SQLITE_BUSY-t adhat, ha egy másik folyamat (pl. a next build
+    // párhuzamos workerei) épp ugyanezt csinálja; a WAL mód perzisztens, ezért ilyenkor
+    // elég továbbmenni. Minden más hibát továbbdobunk.
+    if (!(err instanceof Error && 'code' in err && err.code === 'SQLITE_BUSY')) throw err;
+  }
   sqlite.pragma('foreign_keys = ON');
   return drizzle(sqlite, { schema });
 }

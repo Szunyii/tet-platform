@@ -9,8 +9,9 @@ export const metadata: Metadata = { title: 'Bejelentkezés' };
 
 // Nyílt átirányítás elleni védelem. A next paramétert a böngészővel azonos URL-parserrel
 // értelmezzük, mert a regex kijátszható (pl. "/<TAB>/evil.com" → "//evil.com"): csak akkor
-// fogadjuk el, ha a bázis-originre mutat, és nem a /login maga (önhurok). A visszaadott
-// útvonal normalizált (vezérlőkarakterek nélkül), így a Location fejlécbe is biztonságos.
+// fogadjuk el, ha a bázis-originre mutat, és nem a /login maga (önhurok), és nem API-útvonal
+// (oda nem navigálunk). A visszaadott útvonal normalizált (vezérlőkarakterek nélkül), így a
+// Location fejlécbe is biztonságos.
 function safeNext(raw: string | string[] | undefined): string {
   const v = Array.isArray(raw) ? raw[0] : raw;
   if (!v) return HOME_ROUTE;
@@ -23,6 +24,7 @@ function safeNext(raw: string | string[] | undefined): string {
   if (u.origin !== 'http://n.invalid') return HOME_ROUTE;
   const path = u.pathname + u.search;
   if (path === '/login' || path.startsWith('/login/') || path.startsWith('/login?')) return HOME_ROUTE;
+  if (path === '/api' || path.startsWith('/api/')) return HOME_ROUTE;
   return path;
 }
 
