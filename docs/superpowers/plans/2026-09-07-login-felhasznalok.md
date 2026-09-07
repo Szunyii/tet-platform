@@ -1480,7 +1480,7 @@ A form külön komponens a `DialogContent`-en belül: zárásnál unmountol, íg
 ```tsx
 'use client';
 
-import { useActionState, useEffect, useState } from 'react';
+import { useActionState, useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../components/ui/button';
 import {
@@ -1557,6 +1557,9 @@ function UjFelhasznaloForm({ onKesz }: { onKesz: () => void }) {
 
 export function UjFelhasznaloDialog() {
   const [open, setOpen] = useState(false);
+  // Stabil referencia: a form useEffect-je [state.ok, onKesz]-re figyel, egy minden
+  // rendernél új callback a záró animáció alatt kétszer futtatná (dupla toast).
+  const kesz = useCallback(() => setOpen(false), []);
   return (
     <>
       <Button onClick={() => setOpen(true)}>Új felhasználó</Button>
@@ -1568,7 +1571,7 @@ export function UjFelhasznaloDialog() {
               A felhasználó a megadott e-mail címmel és jelszóval tud bejelentkezni.
             </DialogDescription>
           </DialogHeader>
-          <UjFelhasznaloForm onKesz={() => setOpen(false)} />
+          <UjFelhasznaloForm onKesz={kesz} />
         </DialogContent>
       </Dialog>
     </>
@@ -1700,7 +1703,7 @@ git commit -m "feat(felhasznalok): admin lista és új felhasználó dialógus"
 ```tsx
 'use client';
 
-import { useActionState, useEffect, useState } from 'react';
+import { useActionState, useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../components/ui/button';
 import {
@@ -1773,6 +1776,7 @@ export function SzerkesztesDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const kesz = useCallback(() => onOpenChange(false), [onOpenChange]);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -1780,7 +1784,7 @@ export function SzerkesztesDialog({
           <DialogTitle>Felhasználó szerkesztése</DialogTitle>
           <DialogDescription>{felhasznalo.email}</DialogDescription>
         </DialogHeader>
-        <SzerkesztesForm felhasznalo={felhasznalo} onKesz={() => onOpenChange(false)} />
+        <SzerkesztesForm felhasznalo={felhasznalo} onKesz={kesz} />
       </DialogContent>
     </Dialog>
   );
@@ -1792,7 +1796,7 @@ export function SzerkesztesDialog({
 ```tsx
 'use client';
 
-import { useActionState, useEffect } from 'react';
+import { useActionState, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../components/ui/button';
 import {
@@ -1850,6 +1854,7 @@ export function JelszoDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const kesz = useCallback(() => onOpenChange(false), [onOpenChange]);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -1857,9 +1862,10 @@ export function JelszoDialog({
           <DialogTitle>Jelszó-visszaállítás</DialogTitle>
           <DialogDescription>
             {felhasznalo.nev} új jelszót kap. E-mail nem megy ki, add át neki személyesen.
+            A régi bejelentkezései megszűnnek.
           </DialogDescription>
         </DialogHeader>
-        <JelszoForm felhasznalo={felhasznalo} onKesz={() => onOpenChange(false)} />
+        <JelszoForm felhasznalo={felhasznalo} onKesz={kesz} />
       </DialogContent>
     </Dialog>
   );
