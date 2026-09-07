@@ -228,18 +228,35 @@ import { NextResponse, type NextRequest } from 'next/server';
 // törölhető, így a "cookie van → /terkep" szabály és a requireSession() /login
 // redirectje végtelen hurkot adna. A bejelentkezett user /login-ról való
 // elirányítását az app/login/page.tsx végzi a valódi session alapján.
+//
+// Nem GET kérést (server action POST) átengedünk: a 307 a POST-ot is a login oldalra
+// irányítaná, ami hibát ad; az action saját requireSession()-je szabályosan redirectel.
+//
+// A getSessionCookie() a Better Auth alapértelmezett cookie-nevét keresi
+// (better-auth.session_token, HTTPS-en __Secure- prefixszel). Ha a lib/auth.ts
+// advanced.cookiePrefix / advanced.cookies beállítást kapna, azt ide is át kell adni,
+// különben minden kérés a loginra megy.
+
+// A ?next= hossza korlátozott, hogy a Location fejléc ne nőjön proxy-limit fölé.
+const NEXT_MAX_LENGTH = 512;
+
 export function proxy(request: NextRequest) {
+  if (request.method !== 'GET') return NextResponse.next();
   if (getSessionCookie(request)) return NextResponse.next();
 
   const { pathname, search } = request.nextUrl;
   const login = new URL('/login', request.url);
-  login.searchParams.set('next', pathname + search);
+  const next = pathname + search;
+  if (next.length <= NEXT_MAX_LENGTH) login.searchParams.set('next', next);
   return NextResponse.redirect(login);
 }
 
 export const config = {
-  // Minden útvonal, kivéve: /login, auth API, Next belső fájlok, statikus asset-ek.
-  matcher: ['/((?!login|api/auth|_next/static|_next/image|favicon\\.ico|tet-world-map\\.js).*)'],
+  // Minden útvonal, kivéve: /login (és alútjai), /api/auth/*, /_next/*, és a
+  // kiterjesztés alapján felismert statikus fájlok (public/, metadata route-ok).
+  matcher: [
+    '/((?!login(?:/|$)|api/auth(?:/|$)|_next/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff2?|txt|xml|webmanifest)$).*)',
+  ],
 };
 ```
 
@@ -255,6 +272,8 @@ Expected: `404` (a login oldal még nincs, de NEM redirect – a matcher kizárj
 
 Run: `curl -s -o /dev/null -w "%{http_code}\n" -X POST http://localhost:3000/api/auth/sign-in/email -H 'content-type: application/json' -d '{"email":"x@x.hu","password":"rossz"}'`
 Expected: `401` (az auth API nem lett átirányítva).
+
+További határesetek (mind `curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n"`): `/login/x` → `404`, nincs redirect; `/loginfoo` → `307` a loginra (útvonalhatár); `/api/authx` → `307`; `/tet-world-map.js` → `200`; `/robots.txt` → `404`, nincs redirect (kiterjesztés alapján kizárt); `POST /riportok` `-H 'Next-Action: deadbeef'` → NEM 307 (a POST átmegy, az action `requireSession()`-je dönt); `/riportok?x=<600 karakter>` → `307` a `/login`-ra `next` nélkül.
 
 Run: `npx tsc --noEmit`
 Expected: nincs hiba.
