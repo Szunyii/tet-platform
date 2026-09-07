@@ -747,7 +747,7 @@ Expected: nincs találat.
 
 - [ ] **Step 4: Ellenőrzés**
 
-curl (belépés a Task 4 Step 6/3 szerint, `C=/private/tmp/claude-501/tet-cookie.txt`): `curl -s -b $C http://localhost:3000/terkep` kimenetében szerepel a seed admin neve, az „NIÜ admin" felirat, a „Felhasználók" menüpont és a „Kijelentkezés" gomb; nem szerepel az „Admin (NIÜ)" / „TéT attasé" dummy kapcsoló. `curl -s -b $C -o /dev/null -w "%{http_code}\n" -X POST http://localhost:3000/api/auth/sign-out` → `200`, utána `curl -s -b $C -o /dev/null -w "%{http_code} %{redirect_url}\n" http://localhost:3000/terkep` → `307 …/login` (a cookie még ott van, de a session törölve: a `(app)` layout irányít).
+curl (belépés a Task 4 Step 6/3 szerint, `C=/private/tmp/claude-501/tet-cookie.txt`): `curl -s -b $C http://localhost:3000/terkep` kimenetében szerepel a seed admin neve, az „NIÜ admin" felirat, a „Felhasználók" menüpont és a „Kijelentkezés" gomb; nem szerepel az „Admin (NIÜ)" / „TéT attasé" dummy kapcsoló. `curl -s -b $C -o /dev/null -w "%{http_code}\n" -X POST http://localhost:3000/api/auth/sign-out -H 'Origin: http://localhost:3000' -H 'content-type: application/json' -d '{}'` → `200` (a Better Auth cookie-s POST-hoz Origin fejléc és JSON body kell), utána `curl -s -b $C -o /dev/null -w "%{http_code} %{redirect_url}\n" http://localhost:3000/terkep` → `307 …/login` (a cookie még ott van, de a session törölve: a `(app)` layout irányít).
 
 Böngésző (ha van rá mód): bejelentkezve az adminnal a fejlécben a seed admin neve és „NIÜ admin” látszik, a „Felhasználók” menüpont megjelenik (még 404-et ad, az oldal Task 9-ben jön). „Kijelentkezés” → `/login`, majd `/terkep` kérése újra `/login`-ra visz.
 
