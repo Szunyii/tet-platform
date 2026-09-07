@@ -38,6 +38,7 @@
 | `app/layout.tsx` | módosít | session lekérés, AppShell csak bejelentkezve, `Toaster` |
 | `components/AppShell.tsx` | módosít | `user` prop, dummy szerep-kapcsoló ki, kijelentkezés, admin menü |
 | `components/ui/alert-dialog.tsx`, `components/ui/sonner.tsx` | shadcn CLI | megerősítő dialógus, toast |
+| `app/not-found.tsx` | létrehoz | magyar 404 (a `requireAdmin()` ide fut ki) |
 | `lib/felhasznalo-validacio.ts` | létrehoz | tiszta validátor az admin űrlapokhoz |
 | `db/queries/felhasznalo.ts` | létrehoz | `listFelhasznalok()` |
 | `app/felhasznalok/actions.ts` | létrehoz | server action-ök a Better Auth admin API-ra |
@@ -221,38 +222,36 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 // Gyors szűrő: csak a session cookie meglétét nézi, nem az érvényességét.
 // A valódi ellenőrzés a page-ek/action-ök requireSession() hívása.
+//
+// A /login-t a matcher kizárja, és a proxy szándékosan NEM irányít el onnan cookie
+// esetén: egy elavult cookie (tiltott/törölt user, lejárt session) RSC renderben nem
+// törölhető, így a "cookie van → /terkep" szabály és a requireSession() /login
+// redirectje végtelen hurkot adna. A bejelentkezett user /login-ról való
+// elirányítását az app/login/page.tsx végzi a valódi session alapján.
 export function proxy(request: NextRequest) {
+  if (getSessionCookie(request)) return NextResponse.next();
+
   const { pathname, search } = request.nextUrl;
-  const hasCookie = Boolean(getSessionCookie(request));
-
-  if (pathname === '/login') {
-    return hasCookie ? NextResponse.redirect(new URL('/terkep', request.url)) : NextResponse.next();
-  }
-
-  if (!hasCookie) {
-    const login = new URL('/login', request.url);
-    login.searchParams.set('next', pathname + search);
-    return NextResponse.redirect(login);
-  }
-
-  return NextResponse.next();
+  const login = new URL('/login', request.url);
+  login.searchParams.set('next', pathname + search);
+  return NextResponse.redirect(login);
 }
 
 export const config = {
-  // Minden útvonal, kivéve: auth API, Next belső fájlok, statikus asset-ek.
-  matcher: ['/((?!api/auth|_next/static|_next/image|favicon\\.ico|tet-world-map\\.js).*)'],
+  // Minden útvonal, kivéve: /login, auth API, Next belső fájlok, statikus asset-ek.
+  matcher: ['/((?!login|api/auth|_next/static|_next/image|favicon\\.ico|tet-world-map\\.js).*)'],
 };
 ```
 
 - [ ] **Step 2: Ellenőrzés curl-lel**
 
-Indítsd a dev szervert egy külön terminálban: `npm run dev` (nézd meg, melyik porton fut; lent 3000-et feltételezünk).
+A dev szerver fusson (`npm run dev`; nézd meg, melyik porton fut; lent 3000-et feltételezünk). Ha már fut, ne indíts másikat. Új `proxy.ts` létrehozását a Turbopack dev szerver futás közben felveszi; ha a curl mégsem mutat átirányítást, a dev szerver újraindítása kell (ezt jelezd, ne csináld a felhasználó folyamatával).
 
 Run: `curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" http://localhost:3000/riportok`
 Expected: `307 http://localhost:3000/login?next=%2Friportok`
 
 Run: `curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/login`
-Expected: `404` (a login oldal még nincs, de NEM redirect – tehát a proxy átengedte).
+Expected: `404` (a login oldal még nincs, de NEM redirect – a matcher kizárja a /login-t).
 
 Run: `curl -s -o /dev/null -w "%{http_code}\n" -X POST http://localhost:3000/api/auth/sign-in/email -H 'content-type: application/json' -d '{"email":"x@x.hu","password":"rossz"}'`
 Expected: `401` (az auth API nem lett átirányítva).
@@ -355,7 +354,9 @@ export default function LoginForm({ next }: { next: string }) {
 - [ ] **Step 2: `app/login/page.tsx`**
 
 ```tsx
+import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { getSession } from '../../lib/session';
 import LoginForm from './components/LoginForm';
 
 // Csak relatív, egy perjellel kezdődő útvonalat fogadunk el (nyílt átirányítás ellen).
@@ -371,6 +372,9 @@ export default async function LoginPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const next = safeNext((await searchParams).next);
+  // Érvényes sessionnel nincs mit keresni itt. Ezt a valódi session dönti el, nem a
+  // cookie megléte (lásd proxy.ts kommentjét az elavult cookie-hurokról).
+  if (await getSession()) redirect(next);
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/40 p-6">
       <Card className="w-full max-w-sm">
@@ -427,7 +431,8 @@ Böngésző, dev szerver fut:
 1. `http://localhost:3000/riportok` → átirányít `/login?next=%2Friportok`-ra, a login kártya látszik, oldalsáv NINCS.
 2. Rossz jelszó → „Hibás e-mail cím vagy jelszó.”
 3. A seed admin adataival (`.env.local` `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`) → `/riportok` nyílik meg, oldalsávval.
-4. `http://localhost:3000/login` bejelentkezve → `/terkep`.
+4. `http://localhost:3000/login` bejelentkezve → `/terkep` (a page `getSession()`-je irányít el, nem a proxy).
+5. Elavult cookie próba: jelentkezz be, majd töröld a session sort a DB-ből (`node -e "const D=require('better-sqlite3');new D('data/tet.db').prepare('DELETE FROM session').run()"`), és kérd le a `/terkep`-et → `/login` jelenik meg, NINCS redirect-hurok (`ERR_TOO_MANY_REDIRECTS` nélkül); belépés után újra működik.
 
 - [ ] **Step 5: Commit**
 
@@ -637,10 +642,11 @@ git commit -m "feat(auth): AppShell valódi sessionből, kijelentkezés, admin m
 
 ---
 
-### Task 6: shadcn `alert-dialog` és `sonner`, Toaster a layoutban
+### Task 6: shadcn `alert-dialog` és `sonner`, Toaster a layoutban, magyar 404 oldal
 
 **Files:**
 - Create (CLI): `components/ui/alert-dialog.tsx`, `components/ui/sonner.tsx`
+- Create: `app/not-found.tsx`
 - Modify: `app/layout.tsx`, `package.json`
 
 - [ ] **Step 1: Komponensek hozzáadása**
@@ -670,13 +676,37 @@ A `<body>`:
       </body>
 ```
 
-- [ ] **Step 3: Ellenőrzés és commit**
+- [ ] **Step 3: `app/not-found.tsx` – magyar 404**
+
+A `requireAdmin()` `notFound()`-ja és minden ismeretlen útvonal ide fut ki. Bejelentkezve a root layout az AppShell-be ágyazza (session van), így az oldalsáv megmarad.
+
+```tsx
+import Link from 'next/link';
+import { Button } from '../components/ui/button';
+
+export default function NotFound() {
+  return (
+    <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-center">
+      <p className="font-mono text-sm text-muted-foreground">404</p>
+      <h2 className="text-lg font-semibold">Az oldal nem található</h2>
+      <p className="max-w-sm text-sm text-muted-foreground">
+        A keresett oldal nem létezik, vagy nincs hozzá jogosultságod.
+      </p>
+      <Button render={<Link href="/terkep" />}>Vissza az Országprofilra</Button>
+    </div>
+  );
+}
+```
+
+- [ ] **Step 4: Ellenőrzés és commit**
 
 Run: `npx tsc --noEmit` → nincs hiba.
 
+Böngésző bejelentkezve: `http://localhost:3000/nincs-ilyen` → a magyar 404 az oldalsávval; a gomb a `/terkep`-re visz.
+
 ```bash
-git add components/ui/alert-dialog.tsx components/ui/sonner.tsx app/layout.tsx package.json package-lock.json
-git commit -m "chore(ui): shadcn alert-dialog és sonner, Toaster a layoutban"
+git add components/ui/alert-dialog.tsx components/ui/sonner.tsx app/not-found.tsx app/layout.tsx package.json package-lock.json
+git commit -m "chore(ui): shadcn alert-dialog és sonner, Toaster a layoutban, magyar 404 oldal"
 ```
 
 ---
