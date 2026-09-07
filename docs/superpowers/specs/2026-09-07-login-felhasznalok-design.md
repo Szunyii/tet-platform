@@ -39,6 +39,7 @@ hitelesítés, impersonation, session-lista.
 | `components/AppShell.tsx` | Dummy szerep-kapcsoló megszűnik; user propból; kijelentkezés; „Felhasználók” menü adminnak. |
 | `app/felhasznalok/page.tsx` | `requireAdmin()`, lista. |
 | `app/felhasznalok/actions.ts` | Server action-ök a Better Auth admin API-ra. |
+| `app/not-found.tsx` | Magyar 404 oldal; a `requireAdmin()` `notFound()`-ja ide fut ki. |
 | `app/felhasznalok/components/` | `FelhasznaloTabla.tsx`, `UjFelhasznaloDialog.tsx`, `SzerkesztesDialog.tsx`, `JelszoDialog.tsx`, `FelhasznaloMuveletek.tsx` (tiltás/feloldás/törlés `AlertDialog`-gal). |
 | `lib/felhasznalo-validacio.ts` | Tiszta validátor az admin űrlapokhoz. |
 
@@ -63,9 +64,16 @@ a Better Auth nem ad sessiont, külön kezelés nem kell.
   `favicon.ico`, `tet-world-map.js` és egyéb statikus fájlok.
 - Nincs session cookie (`getSessionCookie(request)` a `better-auth/cookies`-ból)
   → `NextResponse.redirect('/login?next=<eredeti path>')`.
-- `/login`-on van cookie → redirect `/terkep`.
+- A `/login`-t a matcher kizárja; a proxy cookie esetén sem irányít el onnan.
+  Indok: egy elavult cookie (tiltott/törölt user, lejárt session) RSC renderben
+  nem törölhető, így a „cookie van → `/terkep`" szabály és a `requireSession()`
+  `/login` redirectje végtelen hurkot adna. A bejelentkezett user elirányítását
+  a login page végzi a valódi session alapján (`getSession()` → `redirect(next)`).
 - Nem ellenőrzi a session érvényességét, csak a cookie meglétét; a bíró a
   `requireSession()`.
+- `getSession()` `React.cache()`-ben fut (layout + page egy kérésen belül egyszer
+  kérdezi le a DB-t). A Better Auth `session.cookieCache` szándékosan nincs
+  bekapcsolva, hogy tiltás/törlés azonnal érvényesüljön.
 
 ## Login oldal
 
@@ -78,6 +86,8 @@ a Better Auth nem ad sessiont, külön kezelés nem kell.
 - A `next` paramétert csak `/`-rel kezdődő relatív útvonalként fogadja el.
 - A `layout.tsx` a `/login` alatt nem rendereli az AppShellt: `getSession()`
   eredménye alapján dönt (nincs session → csak `children`).
+- A login page érvényes session esetén `redirect(next)`-tel elirányít (ez váltja
+  ki a proxy korábbi „cookie van → `/terkep`" szabályát).
 
 ## AppShell
 
