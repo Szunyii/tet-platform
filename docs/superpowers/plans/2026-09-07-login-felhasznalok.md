@@ -46,6 +46,7 @@
 | `app/(app)/felhasznalok/actions.ts` | létrehoz | server action-ök a Better Auth admin API-ra |
 | `app/(app)/felhasznalok/page.tsx` | létrehoz | `requireAdmin`, lista |
 | `lib/datum.ts` | létrehoz | `formatDatum()` fix időzónával |
+| `app/(app)/felhasznalok/components/useMuveletForm.ts` | létrehoz | `useActionState` + siker-toast + zárás egy helyen |
 | `app/(app)/felhasznalok/components/MezoHiba.tsx` | létrehoz | mezőhiba szöveg |
 | `app/(app)/felhasznalok/components/SzerepkorSelect.tsx` | létrehoz | szerepkör választó (shadcn Select, `name`) |
 | `app/(app)/felhasznalok/components/UjFelhasznaloDialog.tsx` | létrehoz | létrehozás |
@@ -1391,6 +1392,7 @@ git commit -m "feat(felhasznalok): server action-ök a Better Auth admin API-ra"
 
 **Files:**
 - Create: `lib/datum.ts`
+- Create: `app/(app)/felhasznalok/components/useMuveletForm.ts`
 - Create: `app/(app)/felhasznalok/components/MezoHiba.tsx`
 - Create: `app/(app)/felhasznalok/components/SzerepkorSelect.tsx`
 - Create: `app/(app)/felhasznalok/components/UjFelhasznaloDialog.tsx`
@@ -1415,16 +1417,55 @@ export function formatDatum(d: Date): string {
 }
 ```
 
+- [ ] **Step 0b: `useMuveletForm.ts` – közös form-hook**
+
+A siker-kezelés (toast + zárás) az `useActionState` action wrapperében történik, nem `useEffect`-ben: pontosan egyszer fut, és nem függ az `onKesz` referencia-stabilitásától.
+
+```ts
+import { useActionState } from 'react';
+import { toast } from 'sonner';
+import type { MuveletState } from '../actions';
+
+type FormAction = (prev: MuveletState, formData: FormData) => Promise<MuveletState>;
+
+/**
+ * useActionState + siker-toast + záró callback egy helyen. A siker-kezelés az action
+ * wrapperben történik, nem useEffect-ben: így pontosan egyszer fut, és nem függ az
+ * onKesz referencia-stabilitásától. Visszaad: [state, formAction, pending].
+ */
+export function useMuveletForm(action: FormAction, siker: string, onKesz: () => void) {
+  return useActionState<MuveletState, FormData>(
+    async (prev, formData) => {
+      const eredmeny = await action(prev, formData);
+      if (eredmeny.ok) {
+        toast.success(siker);
+        onKesz();
+      }
+      return eredmeny;
+    },
+    {},
+  );
+}
+```
+
 - [ ] **Step 1: `MezoHiba.tsx`**
 
 ```tsx
-export function MezoHiba({ uzenet }: { uzenet?: string }) {
+import type { MezoHibak } from '../../../../lib/felhasznalo-validacio';
+
+/** Mezőhiba szövege. Az `id`-t a mező `aria-describedby`-ja hivatkozza (hibaAttr). */
+export function MezoHiba({ id, uzenet, alert = false }: { id?: string; uzenet?: string; alert?: boolean }) {
   if (!uzenet) return null;
   return (
-    <p role="alert" className="text-xs text-destructive">
+    <p id={id} role={alert ? 'alert' : undefined} className="text-xs text-destructive">
       {uzenet}
     </p>
   );
+}
+
+/** A hibás mező aria attribútumai: aria-invalid + aria-describedby a `<mezo>-hiba` id-ra. */
+export function hibaAttr(errors: MezoHibak, mezo: string) {
+  return errors[mezo] ? { 'aria-invalid': true as const, 'aria-describedby': `${mezo}-hiba` } : {};
 }
 ```
 
@@ -1444,21 +1485,28 @@ import {
 } from '../../../../components/ui/select';
 import { SZEREPKOR_CIMKE, SZEREPKOROK, type Szerepkor } from '../../../../lib/felhasznalo-validacio';
 
+// A Base UI Select a `name` miatt rejtett inputot rendel, így a FormData-ban `szerepkor`
+// néven megjelenik. Az `items` a SelectValue címkéjéhez kell. A trigger <button
+// role=combobox>, amire a <label for> nem minden AT-nél számít névnek, ezért
+// aria-labelledby: a label id + a saját id (név + aktuális érték).
 export function SzerepkorSelect({
   value,
   onChange,
+  invalid = false,
 }: {
   value: Szerepkor;
   onChange: (v: Szerepkor) => void;
+  invalid?: boolean;
 }) {
   return (
-    <Select
-      name="szerepkor"
-      value={value}
-      onValueChange={(v) => onChange((v ?? 'attase') as Szerepkor)}
-      items={SZEREPKOR_CIMKE}
-    >
-      <SelectTrigger id="szerepkor" className="w-full">
+    <Select name="szerepkor" value={value} onValueChange={(v) => onChange(v ?? 'attase')} items={SZEREPKOR_CIMKE}>
+      <SelectTrigger
+        id="szerepkor"
+        aria-labelledby="szerepkor-label szerepkor"
+        aria-invalid={invalid || undefined}
+        aria-describedby={invalid ? 'szerepkor-hiba' : undefined}
+        className="w-full"
+      >
         <SelectValue placeholder="Válassz szerepkört" />
       </SelectTrigger>
       <SelectContent>
@@ -1475,13 +1523,12 @@ export function SzerepkorSelect({
 
 - [ ] **Step 3: `UjFelhasznaloDialog.tsx`**
 
-A form külön komponens a `DialogContent`-en belül: zárásnál unmountol, így az `useActionState` állapota nem ragad be a következő nyitásra.
+A modal (hook + Dialog + form) külön komponens, amit a nyitó gomb `key`-vel indít újra minden nyitáskor, így az `useActionState` és a vezérelt mezők állapota tiszta. Beküldés közben a dialógus nem zárható (`details.cancel()`, `showCloseButton={!pending}`). A `-hiba` és `szerepkor(-label)` id-k dokumentum-szintűek: egyszerre csak egy dialógus lehet nyitva (a Base UI a zárt dialógus tartalmát nem rendereli), ezért nem ütköznek.
 
 ```tsx
 'use client';
 
-import { useActionState, useCallback, useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { useState } from 'react';
 import { Button } from '../../../../components/ui/button';
 import {
   Dialog,
@@ -1494,14 +1541,41 @@ import {
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
 import type { Szerepkor } from '../../../../lib/felhasznalo-validacio';
-import { createFelhasznaloAction, type MuveletState } from '../actions';
-import { MezoHiba } from './MezoHiba';
+import { createFelhasznaloAction } from '../actions';
+import { hibaAttr, MezoHiba } from './MezoHiba';
 import { SzerepkorSelect } from './SzerepkorSelect';
+import { useMuveletForm } from './useMuveletForm';
 
-function UjFelhasznaloForm({ onKesz }: { onKesz: () => void }) {
-  const [state, formAction, pending] = useActionState<MuveletState, FormData>(
+export function UjFelhasznaloDialog() {
+  const [open, setOpen] = useState(false);
+  // Minden nyitás új key: a modal (és benne az űrlap állapota) tisztán újraindul.
+  const [nyitas, setNyitas] = useState(0);
+  return (
+    <>
+      <Button
+        onClick={() => {
+          setNyitas((n) => n + 1);
+          setOpen(true);
+        }}
+      >
+        Új felhasználó
+      </Button>
+      <UjFelhasznaloModal key={nyitas} open={open} onOpenChange={setOpen} />
+    </>
+  );
+}
+
+function UjFelhasznaloModal({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [state, formAction, pending] = useMuveletForm(
     createFelhasznaloAction,
-    {},
+    'Felhasználó létrehozva.',
+    () => onOpenChange(false),
   );
   // Vezérelt mezők: a React 19 a <form action> beküldése után (hibánál is) alaphelyzetbe
   // állítja a nem vezérelt inputokat; a state megőrzi a beírt értékeket, és az ország is
@@ -1513,123 +1587,111 @@ function UjFelhasznaloForm({ onKesz }: { onKesz: () => void }) {
   const [orszag, setOrszag] = useState('');
   const errors = state.errors ?? {};
 
-  useEffect(() => {
-    if (state.ok) {
-      toast.success('Felhasználó létrehozva.');
-      onKesz();
-    }
-  }, [state.ok, onKesz]);
-
   return (
-    <form action={formAction} className="flex flex-col gap-3" noValidate>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="nev">Név</Label>
-        <Input
-          id="nev"
-          name="nev"
-          required
-          maxLength={100}
-          autoComplete="off"
-          aria-invalid={errors.nev ? true : undefined}
-          value={nev}
-          onChange={(e) => setNev(e.target.value)}
-        />
-        <MezoHiba uzenet={errors.nev} />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="email">E-mail cím</Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          required
-          autoComplete="off"
-          aria-invalid={errors.email ? true : undefined}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <MezoHiba uzenet={errors.email} />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="jelszo">Kezdő jelszó</Label>
-        <Input
-          id="jelszo"
-          name="jelszo"
-          type="password"
-          required
-          minLength={8}
-          autoComplete="new-password"
-          aria-invalid={errors.jelszo ? true : undefined}
-          value={jelszo}
-          onChange={(e) => setJelszo(e.target.value)}
-        />
-        <MezoHiba uzenet={errors.jelszo} />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="szerepkor">Szerepkör</Label>
-        <SzerepkorSelect value={szerepkor} onChange={setSzerepkor} />
-        <MezoHiba uzenet={errors.szerepkor} />
-      </div>
-      {szerepkor === 'attase' && (
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="orszag">Ország (TéT poszt)</Label>
-          <Input
-            id="orszag"
-            name="orszag"
-            required
-            maxLength={100}
-            placeholder="pl. Dél-Korea"
-            aria-invalid={errors.orszag ? true : undefined}
-            value={orszag}
-            onChange={(e) => setOrszag(e.target.value)}
-          />
-          <MezoHiba uzenet={errors.orszag} />
-        </div>
-      )}
-      <MezoHiba uzenet={errors.form} />
-      <DialogFooter>
-        <Button type="button" variant="outline" onClick={onKesz} disabled={pending}>
-          Mégse
-        </Button>
-        <Button type="submit" disabled={pending}>
-          {pending ? 'Mentés…' : 'Létrehozás'}
-        </Button>
-      </DialogFooter>
-    </form>
-  );
-}
-
-export function UjFelhasznaloDialog() {
-  const [open, setOpen] = useState(false);
-  // Stabil referencia: a form useEffect-je [state.ok, onKesz]-re figyel, egy minden
-  // rendernél új callback a záró animáció alatt kétszer futtatná (dupla toast).
-  const kesz = useCallback(() => setOpen(false), []);
-  return (
-    <>
-      <Button onClick={() => setOpen(true)}>Új felhasználó</Button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Új felhasználó</DialogTitle>
-            <DialogDescription>
-              A felhasználó a megadott e-mail címmel és jelszóval tud bejelentkezni.
-            </DialogDescription>
-          </DialogHeader>
-          <UjFelhasznaloForm onKesz={kesz} />
-        </DialogContent>
-      </Dialog>
-    </>
+    <Dialog
+      open={open}
+      onOpenChange={(next, details) => {
+        // Beküldés közben nem zárható (Esc, háttér, X), különben az eredmény elveszne.
+        if (!next && pending) {
+          details.cancel();
+          return;
+        }
+        onOpenChange(next);
+      }}
+    >
+      <DialogContent showCloseButton={!pending}>
+        <DialogHeader>
+          <DialogTitle>Új felhasználó</DialogTitle>
+          <DialogDescription>
+            A felhasználó a megadott e-mail címmel és jelszóval tud bejelentkezni.
+          </DialogDescription>
+        </DialogHeader>
+        <form action={formAction} className="flex flex-col gap-3" noValidate>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="nev">Név</Label>
+            <Input
+              id="nev"
+              name="nev"
+              required
+              maxLength={100}
+              autoComplete="off"
+              value={nev}
+              onChange={(e) => setNev(e.target.value)}
+              {...hibaAttr(errors, 'nev')}
+            />
+            <MezoHiba id="nev-hiba" uzenet={errors.nev} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="email">E-mail cím</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autoComplete="off"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              {...hibaAttr(errors, 'email')}
+            />
+            <MezoHiba id="email-hiba" uzenet={errors.email} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="jelszo">Kezdő jelszó</Label>
+            <Input
+              id="jelszo"
+              name="jelszo"
+              type="password"
+              required
+              minLength={8}
+              autoComplete="new-password"
+              value={jelszo}
+              onChange={(e) => setJelszo(e.target.value)}
+              {...hibaAttr(errors, 'jelszo')}
+            />
+            <MezoHiba id="jelszo-hiba" uzenet={errors.jelszo} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label id="szerepkor-label" htmlFor="szerepkor">Szerepkör</Label>
+            <SzerepkorSelect value={szerepkor} onChange={setSzerepkor} invalid={Boolean(errors.szerepkor)} />
+            <MezoHiba id="szerepkor-hiba" uzenet={errors.szerepkor} />
+          </div>
+          {szerepkor === 'attase' && (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="orszag">Ország (TéT poszt)</Label>
+              <Input
+                id="orszag"
+                name="orszag"
+                required
+                maxLength={100}
+                placeholder="pl. Dél-Korea"
+                value={orszag}
+                onChange={(e) => setOrszag(e.target.value)}
+                {...hibaAttr(errors, 'orszag')}
+              />
+              <MezoHiba id="orszag-hiba" uzenet={errors.orszag} />
+            </div>
+          )}
+          <MezoHiba id="form-hiba" uzenet={errors.form} alert />
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
+              Mégse
+            </Button>
+            <Button type="submit" disabled={pending}>
+              {pending ? 'Mentés…' : 'Létrehozás'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 ```
 
 - [ ] **Step 4: `FelhasznaloTabla.tsx`**
 
-A műveletek oszlop egyelőre üres helyőrző komponens nélkül; Task 10 teszi bele a `FelhasznaloMuveletek`-et.
+Server Component (nincs `'use client'`): az adat propként jön, a kliens határ a Task 10-ben bekerülő soronkénti `FelhasznaloMuveletek`. A műveletek oszlop egyelőre üres cella.
 
 ```tsx
-'use client';
-
 import { Badge } from '../../../../components/ui/badge';
 import {
   Table,
@@ -1651,7 +1713,7 @@ export function FelhasznaloTabla({
   sajatId: string;
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-border bg-card">
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
       <Table>
         <TableHeader>
           <TableRow>
@@ -1661,7 +1723,7 @@ export function FelhasznaloTabla({
             <TableHead>Ország</TableHead>
             <TableHead>Állapot</TableHead>
             <TableHead>Létrehozva</TableHead>
-            <TableHead className="w-12" />
+            <TableHead className="w-12"><span className="sr-only">Műveletek</span></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
