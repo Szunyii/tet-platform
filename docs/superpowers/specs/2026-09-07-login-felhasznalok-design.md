@@ -29,7 +29,7 @@ hitelesítés, impersonation, session-lista.
 
 | Fájl | Felelősség |
 | --- | --- |
-| `lib/auth.ts` | `user: { additionalFields: { orszag: { type: 'string', required: false, input: true } } }`. Utána `npm run auth:generate` és `npm run db:generate` (új migráció: `user.orszag`). |
+| `lib/auth.ts` | `user: { additionalFields: { orszag: { type: 'string', required: false, input: false } } }` – `input: false`, hogy a felhasználó a saját `/update-user` végponton ne írhassa át; az admin plugin `createUser`/`adminUpdateUser` útja ezt megkerüli, tehát az admin UI írhatja. Admin plugin `ac`/`roles` mappel (`admin: adminAc`, `attase: userAc`), különben a role típusa `'admin' \| 'user'` lenne. Utána `npm run auth:generate` és `npm run db:generate` (új migráció: `user.orszag`). |
 | `db/schema/auth.ts` | Regenerált, `orszag` oszloppal. |
 | `lib/session.ts` | `getSession()`, `requireSession()`, `requireAdmin()`. Lásd lent. |
 | `proxy.ts` | Gyökérben. Cookie-alapú átirányítás. |
@@ -119,16 +119,23 @@ a Better Auth nem ad sessiont, külön kezelés nem kell.
   - `createFelhasznaloAction`: név, email, jelszó (min 8), szerepkör, ország.
     Attasénál ország kötelező. `auth.api.createUser({ body: { name, email,
     password, role, data: { orszag } } })`.
-  - `updateFelhasznaloAction`: név, ország, szerepkör. `auth.api.adminUpdateUser`
-    (név, orszag) + `auth.api.setRole` ha változott.
-  - `setJelszoAction`: `auth.api.setUserPassword`.
+  - `updateFelhasznaloAction`: név, ország, szerepkör egyetlen atomi
+    `auth.api.adminUpdateUser({ data: { name, orszag, role } })` hívással (a plugin a
+    `data.role`-t maga ellenőrzi és menti; így nincs részlegesen mentett állapot).
+  - `setJelszoAction`: `auth.api.setUserPassword`, majd `auth.api.revokeUserSessions`
+    (fiók-helyreállítás: a régi sessionök megszűnnek), kivéve ha az admin a saját
+    jelszavát állítja.
   - `banAction` / `unbanAction`: `auth.api.banUser` / `auth.api.unbanUser`.
   - `removeFelhasznaloAction`: `auth.api.removeUser`.
   - Az admin saját magát nem tilthatja, nem törölheti, saját szerepkörét nem
     veheti el: az action hibát ad („Saját fiókodon ez a művelet nem végezhető.”).
   - Minden action a végén `revalidatePath('/', 'layout')` (a lista és az AppShell
     fejléce is frissül, pl. saját név módosításakor); visszatérés
-    `{ errors?: Record<string, string> }` az `useActionState`-hez.
+    `MuveletState = { ok?: boolean; errors?: Record<string, string> }` az
+    `useActionState`-hez (`ok` zárja a dialógust és adja a toastot; a `form` kulcs az
+    űrlap-szintű hiba). Better Auth hibakódok mezőre képezve: `INVALID_EMAIL`,
+    `USER_ALREADY_EXISTS*` → `email`; `PASSWORD_TOO_*` → `jelszo`; `USER_NOT_FOUND` →
+    `form` + revalidálás; a Next control-flow kivételeit `unstable_rethrow` engedi át.
 - Dialógusok: shadcn `Dialog` űrlapokkal, `AlertDialog` a tiltás/törlés
   megerősítéséhez, `sonner` toast sikernél.
 - Validáció `lib/felhasznalo-validacio.ts`-ben: e-mail formátum, jelszó hossz,

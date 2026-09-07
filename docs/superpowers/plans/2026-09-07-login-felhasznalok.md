@@ -173,12 +173,15 @@ git commit -m "feat(auth): user.orszag mező (Better Auth additionalFields + mig
 **Files:**
 - Create: `lib/session.ts`
 
-- [ ] **Step 1: Fájl létrehozása**
+- [ ] **Step 1: Fájl létrehozása** (végleges tartalom a review-k után: `server-only` guard, `React.cache`, `LOGIN_ROUTE` a `lib/routes.ts`-ből – ez utóbbi a Task 6-ban jön létre, addig `'/login'` literál)
 
 ```ts
+import 'server-only';
 import { headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
+import { cache } from 'react';
 import { auth } from './auth';
+import { LOGIN_ROUTE } from './routes';
 
 export type AppRole = 'admin' | 'attase';
 
@@ -190,8 +193,13 @@ export interface AppSession {
   orszag: string | null;
 }
 
-/** Aktuális session a kérés cookie-jából, vagy null. Csak szerver oldalon hívható. */
-export async function getSession(): Promise<AppSession | null> {
+/**
+ * Aktuális session a kérés cookie-jából, vagy null. Csak szerver oldalon hívható.
+ * React.cache: egy kérésen belül (layout + page) egyszer fut le. Server action-ben
+ * a cache átlátszó, minden hívás friss. A Better Auth session.cookieCache szándékosan
+ * NINCS bekapcsolva: tiltás/törlés után azonnal érvénytelen legyen a session.
+ */
+export const getSession = cache(async (): Promise<AppSession | null> => {
   const result = await auth.api.getSession({ headers: await headers() });
   if (!result) return null;
   const u = result.user;
@@ -203,16 +211,22 @@ export async function getSession(): Promise<AppSession | null> {
     role: u.role === 'admin' ? 'admin' : 'attase',
     orszag: u.orszag ?? null,
   };
-}
+});
 
-/** Page-ek és action-ök bejelentkezés-ellenőrzése. Hiány esetén /login. */
+/**
+ * Page-ek és action-ök bejelentkezés-ellenőrzése. Hiány esetén /login.
+ * A redirect() kivétellel működik: mindig await-eld, és soha ne hívd try/catch-en belül.
+ */
 export async function requireSession(): Promise<AppSession> {
   const session = await getSession();
-  if (!session) redirect('/login');
+  if (!session) redirect(LOGIN_ROUTE);
   return session;
 }
 
-/** Admin-only oldalak. Nem admin → 404, hogy ne áruljuk el az oldal létét. */
+/**
+ * Admin-only oldalak. Nem admin → 404, hogy ne áruljuk el az oldal létét.
+ * A notFound() kivétellel működik: mindig await-eld, és soha ne hívd try/catch-en belül.
+ */
 export async function requireAdmin(): Promise<AppSession> {
   const session = await requireSession();
   if (session.role !== 'admin') notFound();
@@ -428,29 +442,30 @@ export default function LoginForm({ next }: { next: string }) {
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { HOME_ROUTE } from '../../lib/routes';
 import { getSession } from '../../lib/session';
 import LoginForm from './components/LoginForm';
 
 export const metadata: Metadata = { title: 'Bejelentkezés' };
 
-const HOME = '/terkep';
-
 // Nyílt átirányítás elleni védelem. A next paramétert a böngészővel azonos URL-parserrel
 // értelmezzük, mert a regex kijátszható (pl. "/<TAB>/evil.com" → "//evil.com"): csak akkor
-// fogadjuk el, ha a bázis-originre mutat, és nem a /login maga (önhurok). A visszaadott
-// útvonal normalizált (vezérlőkarakterek nélkül), így a Location fejlécbe is biztonságos.
+// fogadjuk el, ha a bázis-originre mutat, és nem a /login maga (önhurok), és nem API-útvonal
+// (oda nem navigálunk). A visszaadott útvonal normalizált (vezérlőkarakterek nélkül), így a
+// Location fejlécbe is biztonságos.
 function safeNext(raw: string | string[] | undefined): string {
   const v = Array.isArray(raw) ? raw[0] : raw;
-  if (!v) return HOME;
+  if (!v) return HOME_ROUTE;
   let u: URL;
   try {
     u = new URL(v, 'http://n.invalid');
   } catch {
-    return HOME;
+    return HOME_ROUTE;
   }
-  if (u.origin !== 'http://n.invalid') return HOME;
+  if (u.origin !== 'http://n.invalid') return HOME_ROUTE;
   const path = u.pathname + u.search;
-  if (path === '/login' || path.startsWith('/login/') || path.startsWith('/login?')) return HOME;
+  if (path === '/login' || path.startsWith('/login/') || path.startsWith('/login?')) return HOME_ROUTE;
+  if (path === '/api' || path.startsWith('/api/')) return HOME_ROUTE;
   return path;
 }
 
@@ -629,6 +644,8 @@ const NAV: { href: string; icon: string; label: string; adminOnly?: boolean }[] 
   { href: '/felhasznalok', icon: '☺', label: 'Felhasználók', adminOnly: true },
 ];
 
+const ADMIN_ONLY_HREFS = NAV.filter((n) => n.adminOnly).map((n) => n.href);
+
 const TITLES: Record<string, [string, string]> = {
   '/terkep': ['Országprofil', 'A TéT attaséktól beérkező országjelentések térképen és teljes tartalommal'],
   '/riportok': ['Riportok', 'Kimutatás a beérkező országjelentésekből, és a 7 blokkos riportok teljes listája'],
@@ -644,8 +661,13 @@ function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(href + '/');
 }
 
-// Pontos egyezés, különben a leghosszabb illeszkedő prefix.
-function titleFor(pathname: string): [string, string] {
+// Pontos egyezés, különben a leghosszabb illeszkedő prefix. Admin-only útvonalnál nem
+// admin usernek a generikus címet adja: a requireAdmin() 404-e az AppShellben renderelődik,
+// és a fejléc nem árulhatja el az oldal létét.
+function titleFor(pathname: string, role: AppSession['role']): [string, string] {
+  if (role !== 'admin' && ADMIN_ONLY_HREFS.some((h) => isActive(pathname, h))) {
+    return ['TéT Platform', ''];
+  }
   if (TITLES[pathname]) return TITLES[pathname];
   const key = Object.keys(TITLES)
     .filter((k) => isActive(pathname, k))
@@ -678,7 +700,7 @@ export default function AppShell({
 }) {
   const [cycle, setCycle] = useState(DEFAULT_CYCLE);
   const pathname = usePathname();
-  const [title, sub] = titleFor(pathname);
+  const [title, sub] = titleFor(pathname, user.role);
   const openTickets = TICKETS.filter((t) => t.statusz !== 'Lezárt').length;
   const roleLabel = user.role === 'admin'
     ? 'NIÜ admin'
@@ -778,6 +800,7 @@ import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { auth } from '../../lib/auth';
+import { LOGIN_ROUTE } from '../../lib/routes';
 
 export interface LogoutState {
   error?: string;
@@ -795,7 +818,7 @@ export async function logoutAction(_prev: LogoutState): Promise<LogoutState> {
     return { error: 'Nem sikerült kijelentkezni. Próbáld újra.' };
   }
   revalidatePath('/', 'layout');
-  redirect('/login');
+  redirect(LOGIN_ROUTE);
 }
 ```
 
@@ -2315,7 +2338,7 @@ A `CLAUDE.md`-ben pontosan ezeket cseréld:
 
 2. Az **UI shell.** bekezdést cseréld erre:
 
-`**UI shell.** A védett oldalak az `app/(app)/` route groupban vannak (`terkep`, `riportok`, `uj-riport`, `kommunikacio`, `tudastar`, `monitoring`, `felhasznalok`); az `app/(app)/layout.tsx` `requireSession()`-t hív és a `components/AppShell.tsx`-nek propként adja a usert (`user: AppSession`) és a `logoutAction`-t. A `/login` és a 404 a gyökér layout alatt, AppShell nélkül renderelődik. Az AppShell context-je (`useApp()`: `user`, `cycle`, `setCycle`) csak a provideren belül használható; a `cycle` váltó még kliens-oldali demó. A sidebar `NAV` (admin-only menüpont: `adminOnly`, csak megjelenítés) és a fejléc `TITLES` táblázata az AppShell-ben van; új oldalhoz mindkettőt bővíteni kell. Fix célpontok: `lib/routes.ts` (`HOME_ROUTE`, `LOGIN_ROUTE`); a `/` a `/terkep`-re irányít.`
+`**UI shell.** A védett oldalak az `app/(app)/` route groupban vannak (`terkep`, `riportok`, `uj-riport`, `kommunikacio`, `tudastar`, `monitoring`, `felhasznalok`); az `app/(app)/layout.tsx` `requireSession()`-t hív és a `components/AppShell.tsx`-nek propként adja a usert (`user: AppSession`) és a `logoutAction`-t. A `/login` a gyökér layout alatt, AppShell nélkül renderelődik; 404-ből kettő van: `app/not-found.tsx` (gyökér, AppShell nélkül) és `app/(app)/not-found.tsx` (a shellen belül – ide fut a `requireAdmin()`). Az AppShell context-je (`useApp()`: `user`, `cycle`, `setCycle`) csak a provideren belül használható; a `cycle` váltó még kliens-oldali demó. A sidebar `NAV` (admin-only menüpont: `adminOnly`, csak megjelenítés) és a fejléc `TITLES` táblázata az AppShell-ben van; új oldalhoz mindkettőt bővíteni kell. Fix célpontok: `lib/routes.ts` (`HOME_ROUTE`, `LOGIN_ROUTE`); a `/` a `/terkep`-re irányít.`
 
 3. A projektstruktúra táblában a „Route belépési pont” sor útvonalát `app/<route>/page.tsx` → `app/(app)/<route>/page.tsx` (védett oldal; a `login` a gyökérben marad), a „Server function-ök” sorét `app/<route>/actions.ts` → `app/(app)/<route>/actions.ts`, a „Route-specifikus komponensek” sorét `app/<route>/components/` → `app/(app)/<route>/components/`.
 
@@ -2338,5 +2361,13 @@ git commit -m "docs: login, session, felhasználó-kezelés a README-ben és a C
 6. Tiltás → a tiltott nem tud belépni, listában „Tiltott”; feloldás után igen.
 7. Törlés megerősítéssel; saját fiók tiltása/törlése nem elérhető a menüből, saját szerepkör elvétele → hiba.
 8. Kijelentkezés → `/login`, a védett oldal újra átirányít.
+
+- [ ] **Step 6: Záró review utáni javítások**
+
+- `db/index.ts`: a `PRAGMA journal_mode = WAL` `SQLITE_BUSY`-t adhat, ha a `next build` párhuzamos workerei egyszerre nyitják a DB-t (a `lib/session.ts` import miatt minden védett route eléri); a WAL mód perzisztens, ezért a `SQLITE_BUSY`-t elnyeljük, a `Database`-t `{ timeout: 5000 }`-tel nyitjuk.
+- `.env.example`: `BETTER_AUTH_URL` éles útmutató (publikus HTTPS origin, különben `403 INVALID_ORIGIN`).
+- `app/login/page.tsx` `safeNext`: `/api/...` célt sem fogad el.
+- `lib/auth-client.ts`: a kliens `signOut` nincs exportálva (a kijelentkezés server action).
+- Két egymás utáni `npm run build` hibátlan.
 
 Ha mind rendben: a plan kész. A következő plan (riportok) a `requireSession()` és `AppSession.orszag` interfészre épül.
