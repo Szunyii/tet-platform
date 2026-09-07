@@ -560,42 +560,42 @@ git commit -m "feat(auth): login oldal, (app) route group requireSession()-nel, 
 
 **Files:**
 - Modify: `components/AppShell.tsx`
-- Modify: `app/(app)/layout.tsx` (a `user` prop átadása)
+- Create: `app/(app)/actions.ts` (`logoutAction`)
+- Modify: `app/(app)/layout.tsx` (a `user` és `logoutAction` prop átadása)
 
 - [ ] **Step 1: `AppShell.tsx` átírása**
 
-Cseréld a fájl teljes tartalmát. Változások: `user` prop, `setRole` és a dummy kapcsoló megszűnik, `POSTS`/`ME_ID` import kikerül, kijelentkezés gomb, admin-only menüpont, `TITLES` prefix-egyezéssel.
+Cseréld a fájl teljes tartalmát. Változások: `user` és `logoutAction` prop, `setRole`/`role` és a dummy kapcsoló megszűnik, `POSTS`/`ME_ID` import kikerül, a context `null` alapértékű és a `useApp()` a provideren kívül hibát dob, kijelentkezés `<form action={logoutAction}>`-nel (`useActionState`, pending állapot, hibaüzenet), admin-only menüpont (csak megjelenítés, komment jelzi), `isActive`/`titleFor` prefix-egyezéssel, `aria-current`.
 
 ```tsx
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
+import { createContext, useActionState, useContext, useState, type ReactNode } from 'react';
+import type { LogoutState } from '../app/(app)/actions';
 import { CYCLES, DEADLINE, DEFAULT_CYCLE, TICKETS } from '../lib/data';
 import { ini } from '../lib/score';
-import { signOut } from '../lib/auth-client';
-import type { AppSession, AppRole } from '../lib/session';
+import type { AppSession } from '../lib/session';
 
-export type Role = AppRole;
+type LogoutAction = (prev: LogoutState) => Promise<LogoutState>;
 
 interface AppState {
-  role: Role;
   user: AppSession;
   cycle: string;
   setCycle: (c: string) => void;
 }
 
-const EMPTY_USER: AppSession = { userId: '', name: '', email: '', role: 'attase', orszag: null };
+const AppContext = createContext<AppState | null>(null);
 
-const AppContext = createContext<AppState>({
-  role: 'attase', user: EMPTY_USER, cycle: DEFAULT_CYCLE, setCycle: () => {},
-});
-
-export function useApp() {
-  return useContext(AppContext);
+export function useApp(): AppState {
+  const ctx = useContext(AppContext);
+  if (!ctx) throw new Error('useApp() csak az AppShell-en belül használható.');
+  return ctx;
 }
 
+// Csak megjelenítés: az adminOnly a menüpontot rejti el, a valódi védelem a page/action
+// requireAdmin() hívása (lib/session.ts).
 const NAV: { href: string; icon: string; label: string; adminOnly?: boolean }[] = [
   { href: '/terkep', icon: '◍', label: 'Országprofil' },
   { href: '/riportok', icon: '▦', label: 'Riportok' },
@@ -616,33 +616,53 @@ const TITLES: Record<string, [string, string]> = {
   '/felhasznalok': ['Felhasználók', 'Admin és TéT attasé fiókok kezelése'],
 };
 
-// Pontos egyezés, különben a leghosszabb prefix (pl. /riportok/abc → /riportok).
+// Pontos egyezés vagy alútvonal (pl. /riportok/abc → /riportok).
+function isActive(pathname: string, href: string): boolean {
+  return pathname === href || pathname.startsWith(href + '/');
+}
+
+// Pontos egyezés, különben a leghosszabb illeszkedő prefix.
 function titleFor(pathname: string): [string, string] {
   if (TITLES[pathname]) return TITLES[pathname];
   const key = Object.keys(TITLES)
-    .filter((k) => pathname.startsWith(k + '/'))
+    .filter((k) => isActive(pathname, k))
     .sort((a, b) => b.length - a.length)[0];
   return key ? TITLES[key] : ['TéT Platform', ''];
 }
 
-export default function AppShell({ user, children }: { user: AppSession; children: ReactNode }) {
+function LogoutForm({ action }: { action: LogoutAction }) {
+  const [state, formAction, pending] = useActionState(action, {});
+  return (
+    <form action={formAction} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      {state.error && (
+        <span role="alert" style={{ fontSize: 11, color: '#b3261e' }}>{state.error}</span>
+      )}
+      <button type="submit" className="btn" style={{ fontSize: 11.5 }} disabled={pending}>
+        {pending ? 'Kijelentkezés…' : 'Kijelentkezés'}
+      </button>
+    </form>
+  );
+}
+
+export default function AppShell({
+  user,
+  logoutAction,
+  children,
+}: {
+  user: AppSession;
+  logoutAction: LogoutAction;
+  children: ReactNode;
+}) {
   const [cycle, setCycle] = useState(DEFAULT_CYCLE);
   const pathname = usePathname();
-  const router = useRouter();
   const [title, sub] = titleFor(pathname);
   const openTickets = TICKETS.filter((t) => t.statusz !== 'Lezárt').length;
   const roleLabel = user.role === 'admin'
     ? 'NIÜ admin'
     : `TéT attasé${user.orszag ? ' · ' + user.orszag : ''}`;
 
-  async function logout() {
-    await signOut();
-    router.push('/login');
-    router.refresh();
-  }
-
   return (
-    <AppContext.Provider value={{ role: user.role, user, cycle, setCycle }}>
+    <AppContext.Provider value={{ user, cycle, setCycle }}>
       <div style={{ display: 'flex', minHeight: '100vh' }}>
         <aside style={{
           width: 238, flex: '0 0 238px', background: '#131a24', color: '#e7ebf1',
@@ -654,9 +674,9 @@ export default function AppShell({ user, children }: { user: AppSession; childre
           </div>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '12px 10px' }}>
             {NAV.filter((n) => !n.adminOnly || user.role === 'admin').map((n) => {
-              const on = pathname === n.href || pathname.startsWith(n.href + '/');
+              const on = isActive(pathname, n.href);
               return (
-                <Link key={n.href} href={n.href} style={{
+                <Link key={n.href} href={n.href} aria-current={on ? 'page' : undefined} style={{
                   display: 'flex', alignItems: 'center', gap: 10, padding: '9px 11px',
                   borderRadius: 5, fontSize: 12.5, fontWeight: 500, textDecoration: 'none',
                   background: on ? '#22304a' : 'transparent', color: on ? '#ffffff' : '#a3adbb',
@@ -711,9 +731,7 @@ export default function AppShell({ user, children }: { user: AppSession; childre
                   <div style={{ fontSize: 10.5, color: '#6b7684' }}>{roleLabel}</div>
                 </div>
               </div>
-              <button type="button" onClick={logout} className="btn" style={{ fontSize: 11.5 }}>
-                Kijelentkezés
-              </button>
+              <LogoutForm action={logoutAction} />
             </div>
           </header>
           <main style={{ flex: 1, minWidth: 0, padding: '20px 26px 44px' }}>{children}</main>
@@ -726,14 +744,46 @@ export default function AppShell({ user, children }: { user: AppSession; childre
 
 Megjegyzés: a `.btn` a meglévő globális osztály (`app/globals.css`). A régi fejléc inline-style világát nem írjuk át ebben a lépésben (CLAUDE.md: csak az érintett részt), a kijelentkezés gomb ehhez illeszkedik.
 
-- [ ] **Step 2: `app/(app)/layout.tsx` – `user` prop átadása**
+- [ ] **Step 2: `app/(app)/actions.ts` – kijelentkezés server action**
 
-Cseréld a layout törzsét erre (a session értékét most már felhasználjuk):
+Miért server action: a kliens `signOut()` hálózati hibánál dob és nem-2xx-nél `{ error }`-t ad, amit könnyű elnyelni; a `router.refresh()` pedig csak az aktuális route cache-ét üríti, így a vissza gomb az előző session oldalait mutatná. Server actionben a `nextCookies` plugin törli a cookie-t, a `revalidatePath('/', 'layout')` a teljes kliens-cache-t üríti.
+
+```ts
+'use server';
+
+import { revalidatePath } from 'next/cache';
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { auth } from '../../lib/auth';
+
+export interface LogoutState {
+  error?: string;
+}
+
+// Kijelentkezés server actionként (CLAUDE.md: mutáció → actions.ts). A nextCookies plugin
+// itt tudja törölni a session cookie-t; a revalidatePath('/', 'layout') a teljes
+// kliens-oldali router cache-t üríti, így a vissza gomb sem mutatja a korábbi session
+// oldalait. A signOut session nélkül is sikeres, csak valódi hibánál (pl. DB) dob.
+export async function logoutAction(_prev: LogoutState): Promise<LogoutState> {
+  try {
+    await auth.api.signOut({ headers: await headers() });
+  } catch (err) {
+    console.error('[auth] kijelentkezés sikertelen:', err);
+    return { error: 'Nem sikerült kijelentkezni. Próbáld újra.' };
+  }
+  revalidatePath('/', 'layout');
+  redirect('/login');
+}
+```
+
+- [ ] **Step 2b: `app/(app)/layout.tsx` – `user` és `logoutAction` prop átadása**
+
+Import hozzáadása: `import { logoutAction } from './actions';` A törzs:
 
 ```tsx
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await requireSession();
-  return <AppShell user={session}>{children}</AppShell>;
+  return <AppShell user={session} logoutAction={logoutAction}>{children}</AppShell>;
 }
 ```
 
@@ -742,20 +792,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 Run: `npx tsc --noEmit`
 Expected: nincs hiba. (A `useApp()` hívók – `app/(app)/riportok/page.tsx`, `app/(app)/uj-riport/page.tsx`, `app/(app)/monitoring/page.tsx` – csak a `cycle`-t használják, ezek változatlanul fordulnak.)
 
-Run: `grep -rn "setRole" app components`
-Expected: nincs találat.
+Run: `grep -rn "setRole\|EMPTY_USER\|signOut" app components`
+Expected: csak az `app/(app)/actions.ts` `auth.api.signOut` sora.
 
 - [ ] **Step 4: Ellenőrzés**
 
 curl (belépés a Task 4 Step 6/3 szerint, `C=/private/tmp/claude-501/tet-cookie.txt`): `curl -s -b $C http://localhost:3000/terkep` kimenetében szerepel a seed admin neve, az „NIÜ admin" felirat, a „Felhasználók" menüpont és a „Kijelentkezés" gomb; nem szerepel az „Admin (NIÜ)" / „TéT attasé" dummy kapcsoló. `curl -s -b $C -o /dev/null -w "%{http_code}\n" -X POST http://localhost:3000/api/auth/sign-out -H 'Origin: http://localhost:3000' -H 'content-type: application/json' -d '{}'` → `200` (a Better Auth cookie-s POST-hoz Origin fejléc és JSON body kell), utána `curl -s -b $C -o /dev/null -w "%{http_code} %{redirect_url}\n" http://localhost:3000/terkep` → `307 …/login` (a cookie még ott van, de a session törölve: a `(app)` layout irányít).
 
-Böngésző (ha van rá mód): bejelentkezve az adminnal a fejlécben a seed admin neve és „NIÜ admin” látszik, a „Felhasználók” menüpont megjelenik (még 404-et ad, az oldal Task 9-ben jön). „Kijelentkezés” → `/login`, majd `/terkep` kérése újra `/login`-ra visz.
+Böngésző (a gstack `browse` binárissal: `~/.claude/skills/gstack/browse/dist/browse goto/fill/click/url/back`): bejelentkezve az adminnal a fejlécben a seed admin neve és „NIÜ admin” látszik, a „Felhasználók” menüpont megjelenik (még 404-et ad, az oldal Task 9-ben jön). „Kijelentkezés” kattintás → `/login`; vissza gomb → nem jelenik meg védett tartalom (`/login?next=…`); `/terkep` kérése újra `/login`-ra visz.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add components/AppShell.tsx "app/(app)/layout.tsx"
-git commit -m "feat(auth): AppShell valódi sessionből, kijelentkezés, admin menüpont"
+git add components/AppShell.tsx "app/(app)/layout.tsx" "app/(app)/actions.ts"
+git commit -m "feat(auth): AppShell valódi sessionből, kijelentkezés server actionnel, admin menüpont"
 ```
 
 ---
