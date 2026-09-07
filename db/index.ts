@@ -4,7 +4,12 @@ import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import * as schema from './schema';
 
-const DB_PATH = resolve(process.cwd(), process.env.DATABASE_URL ?? './data/tet.db');
+// A turbopackIgnore megakadályozza, hogy a Next a dinamikus útvonal miatt az egész
+// projektet a szerverbundle-be nyomkövesse.
+const DB_PATH = resolve(
+  /* turbopackIgnore: true */ process.cwd(),
+  process.env.DATABASE_URL ?? './data/tet.db',
+);
 
 function createDb() {
   mkdirSync(dirname(DB_PATH), { recursive: true });
