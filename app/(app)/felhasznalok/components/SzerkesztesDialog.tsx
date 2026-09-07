@@ -1,21 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '../../../../components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../../../../components/ui/dialog';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
 import type { FelhasznaloSor } from '../../../../db/queries/felhasznalo';
 import type { Szerepkor } from '../../../../lib/felhasznalo-validacio';
 import { updateFelhasznaloAction } from '../actions';
 import { hibaAttr, MezoHiba } from './MezoHiba';
+import { MuveletDialog } from './MuveletDialog';
 import { SzerepkorSelect } from './SzerepkorSelect';
 import { useMuveletForm } from './useMuveletForm';
 
@@ -41,70 +33,54 @@ export function SzerkesztesDialog({
   const errors = state.errors ?? {};
 
   return (
-    <Dialog
+    <MuveletDialog
       open={open}
-      onOpenChange={(next, details) => {
-        // Beküldés közben nem zárható (Esc, háttér, X), különben az eredmény elveszne.
-        if (!next && pending) {
-          details.cancel();
-          return;
-        }
-        onOpenChange(next);
-      }}
+      onOpenChange={onOpenChange}
+      pending={pending}
+      cim="Felhasználó szerkesztése"
+      leiras={felhasznalo.email}
+      gomb="Mentés"
+      formAction={formAction}
+      errors={errors}
     >
-      <DialogContent showCloseButton={!pending}>
-        <DialogHeader>
-          <DialogTitle>Felhasználó szerkesztése</DialogTitle>
-          <DialogDescription>{felhasznalo.email}</DialogDescription>
-        </DialogHeader>
-        <form action={formAction} className="flex flex-col gap-3" noValidate>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="nev">Név</Label>
-            <Input
-              id="nev"
-              name="nev"
-              required
-              maxLength={100}
-              value={nev}
-              onChange={(e) => setNev(e.target.value)}
-              {...hibaAttr(errors, 'nev')}
-            />
-            <MezoHiba id="nev-hiba" uzenet={errors.nev} />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label id="szerepkor-label" htmlFor="szerepkor">Szerepkör</Label>
-            <SzerepkorSelect value={szerepkor} onChange={setSzerepkor} invalid={Boolean(errors.szerepkor)} />
-            <MezoHiba id="szerepkor-hiba" uzenet={errors.szerepkor} />
-            {szerepkor === 'admin' && felhasznalo.orszag && (
-              <p className="text-xs text-muted-foreground">Adminra váltva az ország törlődik.</p>
-            )}
-          </div>
-          {szerepkor === 'attase' && (
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="orszag">Ország (TéT poszt)</Label>
-              <Input
-                id="orszag"
-                name="orszag"
-                required
-                maxLength={100}
-                value={orszag}
-                onChange={(e) => setOrszag(e.target.value)}
-                {...hibaAttr(errors, 'orszag')}
-              />
-              <MezoHiba id="orszag-hiba" uzenet={errors.orszag} />
-            </div>
-          )}
-          <MezoHiba id="form-hiba" uzenet={errors.form} alert />
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
-              Mégse
-            </Button>
-            <Button type="submit" disabled={pending}>
-              {pending ? 'Mentés…' : 'Mentés'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="nev">Név</Label>
+        <Input
+          id="nev"
+          name="nev"
+          required
+          maxLength={100}
+          autoComplete="off"
+          value={nev}
+          onChange={(e) => setNev(e.target.value)}
+          {...hibaAttr(errors, 'nev')}
+        />
+        <MezoHiba mezo="nev" errors={errors} />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label id="szerepkor-label" htmlFor="szerepkor">Szerepkör</Label>
+        <SzerepkorSelect value={szerepkor} onChange={setSzerepkor} invalid={Boolean(errors.szerepkor)} />
+        <MezoHiba mezo="szerepkor" errors={errors} />
+        {szerepkor === 'admin' && felhasznalo.orszag && (
+          <p className="text-xs text-muted-foreground">Adminra váltva az ország törlődik.</p>
+        )}
+      </div>
+      {szerepkor === 'attase' && (
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="orszag">Ország (TéT poszt)</Label>
+          <Input
+            id="orszag"
+            name="orszag"
+            required
+            maxLength={100}
+            autoComplete="off"
+            value={orszag}
+            onChange={(e) => setOrszag(e.target.value)}
+            {...hibaAttr(errors, 'orszag')}
+          />
+          <MezoHiba mezo="orszag" errors={errors} />
+        </div>
+      )}
+    </MuveletDialog>
   );
 }

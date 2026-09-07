@@ -1,10 +1,14 @@
 import type { MezoHibak } from '../../../../lib/felhasznalo-validacio';
 
-/** Mezőhiba szövege. Az `id`-t a mező `aria-describedby`-ja hivatkozza (hibaAttr). */
-export function MezoHiba({ id, uzenet, alert = false }: { id?: string; uzenet?: string; alert?: boolean }) {
+/**
+ * Egy mező hibaüzenete. Az elem id-ja `<mezo>-hiba`, erre mutat a mező aria-describedby-ja
+ * (hibaAttr). Az űrlap-szintű hiba (`mezo="form"`) role="alert"-tel jelenik meg.
+ */
+export function MezoHiba({ mezo, errors, alert = false }: { mezo: string; errors: MezoHibak; alert?: boolean }) {
+  const uzenet = errors[mezo];
   if (!uzenet) return null;
   return (
-    <p id={id} role={alert ? 'alert' : undefined} className="text-xs text-destructive">
+    <p id={`${mezo}-hiba`} role={alert ? 'alert' : undefined} className="text-xs text-destructive">
       {uzenet}
     </p>
   );

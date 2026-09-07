@@ -27,26 +27,41 @@ import { banAction, removeFelhasznaloAction, unbanAction, type MuveletState } fr
 import { JelszoDialog } from './JelszoDialog';
 import { SzerkesztesDialog } from './SzerkesztesDialog';
 
-type Megerosites = 'tilt' | 'felold' | 'torol' | null;
+type Megerosites = 'tilt' | 'felold' | 'torol';
 
-const MEGEROSITES_SZOVEG: Record<Exclude<Megerosites, null>, { cim: string; leiras: string; gomb: string; siker: string }> = {
+interface MegerositesLeiras {
+  cim: string;
+  leiras: string;
+  gomb: string;
+  siker: string;
+  veszelyes: boolean;
+  fn: (userId: string) => Promise<MuveletState>;
+}
+
+const MEGEROSITES: Record<Megerosites, MegerositesLeiras> = {
   tilt: {
     cim: 'Fiók letiltása',
     leiras: 'A felhasználó nem tud bejelentkezni, amíg fel nem oldod.',
     gomb: 'Letiltás',
     siker: 'Fiók letiltva.',
+    veszelyes: false,
+    fn: banAction,
   },
   felold: {
     cim: 'Tiltás feloldása',
     leiras: 'A felhasználó újra be tud jelentkezni.',
     gomb: 'Feloldás',
     siker: 'Tiltás feloldva.',
+    veszelyes: false,
+    fn: unbanAction,
   },
   torol: {
     cim: 'Fiók végleges törlése',
     leiras: 'Ez nem vonható vissza. A felhasználó sessionjei is törlődnek.',
     gomb: 'Törlés',
     siker: 'Fiók törölve.',
+    veszelyes: true,
+    fn: removeFelhasznaloAction,
   },
 };
 
@@ -55,7 +70,10 @@ export function FelhasznaloMuveletek({ felhasznalo, sajat }: { felhasznalo: Felh
   const [jelszo, setJelszo] = useState(false);
   // Minden dialógus-nyitás új key: a dialógus (és az űrlap állapota) tisztán újraindul.
   const [nyitas, setNyitas] = useState(0);
-  const [megerosites, setMegerosites] = useState<Megerosites>(null);
+  const [megerosites, setMegerosites] = useState<Megerosites | null>(null);
+  // A szöveg külön state-ben marad, hogy a záró animáció alatt is az utolsó kérdés látsszon
+  // (különben a cím és a gomb üresen tűnne el).
+  const [szoveg, setSzoveg] = useState<MegerositesLeiras>(MEGEROSITES.tilt);
   const [pending, startTransition] = useTransition();
 
   function nyit(setter: (v: boolean) => void) {
@@ -63,13 +81,17 @@ export function FelhasznaloMuveletek({ felhasznalo, sajat }: { felhasznalo: Felh
     setter(true);
   }
 
-  function futtat(kind: Exclude<Megerosites, null>) {
-    const fn: (id: string) => Promise<MuveletState> =
-      kind === 'tilt' ? banAction : kind === 'felold' ? unbanAction : removeFelhasznaloAction;
+  function kerdez(kind: Megerosites) {
+    setSzoveg(MEGEROSITES[kind]);
+    setMegerosites(kind);
+  }
+
+  function futtat(kind: Megerosites) {
+    const { fn, siker } = MEGEROSITES[kind];
     startTransition(async () => {
       try {
         const res = await fn(felhasznalo.id);
-        if (res.ok) toast.success(MEGEROSITES_SZOVEG[kind].siker);
+        if (res.ok) toast.success(siker);
         else toast.error(res.errors?.form ?? 'Művelet sikertelen.');
       } catch (err) {
         // A server action dobhat (pl. notFound(), ha közben elveszett az admin jog): a Next
@@ -81,8 +103,6 @@ export function FelhasznaloMuveletek({ felhasznalo, sajat }: { felhasznalo: Felh
       }
     });
   }
-
-  const szoveg = megerosites ? MEGEROSITES_SZOVEG[megerosites] : null;
 
   return (
     <>
@@ -97,11 +117,11 @@ export function FelhasznaloMuveletek({ felhasznalo, sajat }: { felhasznalo: Felh
             <>
               <DropdownMenuSeparator />
               {felhasznalo.tiltott ? (
-                <DropdownMenuItem onClick={() => setMegerosites('felold')}>Tiltás feloldása</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => kerdez('felold')}>Tiltás feloldása</DropdownMenuItem>
               ) : (
-                <DropdownMenuItem onClick={() => setMegerosites('tilt')}>Letiltás</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => kerdez('tilt')}>Letiltás</DropdownMenuItem>
               )}
-              <DropdownMenuItem variant="destructive" onClick={() => setMegerosites('torol')}>
+              <DropdownMenuItem variant="destructive" onClick={() => kerdez('torol')}>
                 Törlés
               </DropdownMenuItem>
             </>
@@ -125,21 +145,21 @@ export function FelhasznaloMuveletek({ felhasznalo, sajat }: { felhasznalo: Felh
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{szoveg?.cim}</AlertDialogTitle>
+            <AlertDialogTitle>{szoveg.cim}</AlertDialogTitle>
             <AlertDialogDescription>
-              {felhasznalo.nev} ({felhasznalo.email}). {szoveg?.leiras}
+              {felhasznalo.nev} ({felhasznalo.email}). {szoveg.leiras}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={pending}>Mégse</AlertDialogCancel>
             <AlertDialogAction
-              variant={megerosites === 'torol' ? 'destructive' : 'default'}
+              variant={szoveg.veszelyes ? 'destructive' : 'default'}
               disabled={pending}
               onClick={() => {
                 if (megerosites) futtat(megerosites);
               }}
             >
-              {pending ? 'Folyamatban…' : szoveg?.gomb}
+              {pending ? 'Folyamatban…' : szoveg.gomb}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
