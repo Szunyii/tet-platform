@@ -22,6 +22,12 @@ Ezután nyisd meg: http://localhost:3000
 - Séma: `db/schema/`, migrációk: `drizzle/`, auth végpont: `/api/auth/*`
 - Scriptek: `db:generate` (migráció generálás séma-változás után), `db:migrate`, `db:studio`, `db:seed`, `auth:generate` (auth séma újragenerálás a Better Auth config változásakor)
 
+### Bejelentkezés és felhasználók
+
+- Minden oldal bejelentkezést kér (`proxy.ts` + `lib/session.ts`). Belépés: `/login`, a seed admin adataival.
+- Admin a `/felhasznalok` oldalon hoz létre TéT attasé fiókokat (név, e-mail, kezdő jelszó, ország), szerkeszt, jelszót állít vissza, tilt és töröl. Nyilvános regisztráció nincs.
+- Szerepkörök: `admin` (NIÜ) és `attase`; az attasé fiókon kötelező az ország (`user.orszag`).
+
 ## Képernyők
 
 | Útvonal | Képernyő |
@@ -33,13 +39,15 @@ Ezután nyisd meg: http://localhost:3000
 | `/kommunikacio` | Ticketek és üzenetszálak |
 | `/tudastar` | Tudástár – Magyarországról ajánlható programok, partnerek, együttműködési formák |
 | `/monitoring` | Hálózati rangsor + 14 szempontos részletes értékelés |
+| `/login` | Bejelentkezés (email + jelszó) |
+| `/felhasznalok` | Felhasználó-kezelés (csak admin) |
 
 ## Felépítés
 
 - `lib/data.ts` – demóadatok: 14 poszt, 3 kategória, 14 értékelési szempont, 7 riportblokk, ticketek
 - `lib/knowledge.ts` – tudástár demóadatok: 6 program, 6 ökoszisztéma-elem, 5 együttműködési forma
 - `lib/score.ts` – determinisztikus dummy pontszámok és státuszok (a doksi logikája szerint)
-- `components/AppShell.tsx` – sidebar, fejléc, szerepkör- és ciklusváltó (React context)
+- `components/AppShell.tsx` – sidebar, fejléc (bejelentkezett felhasználó, kijelentkezés), ciklusváltó (React context)
 - `public/tet-world-map.js` – `<tet-world-map>` webkomponens (d3 + world-atlas, CDN-ről töltődik)
 
 Megjegyzés: a térkép internetkapcsolatot igényel (d3, topojson és a world-atlas TopoJSON CDN-ről jön).
