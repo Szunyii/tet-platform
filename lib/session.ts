@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { cache } from 'react';
 import { auth } from './auth';
+import { LOGIN_ROUTE } from './routes';
 
 export type AppRole = 'admin' | 'attase';
 
@@ -40,7 +41,7 @@ export const getSession = cache(async (): Promise<AppSession | null> => {
  */
 export async function requireSession(): Promise<AppSession> {
   const session = await getSession();
-  if (!session) redirect('/login');
+  if (!session) redirect(LOGIN_ROUTE);
   return session;
 }
 

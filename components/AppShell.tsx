@@ -36,6 +36,8 @@ const NAV: { href: string; icon: string; label: string; adminOnly?: boolean }[] 
   { href: '/felhasznalok', icon: '☺', label: 'Felhasználók', adminOnly: true },
 ];
 
+const ADMIN_ONLY_HREFS = NAV.filter((n) => n.adminOnly).map((n) => n.href);
+
 const TITLES: Record<string, [string, string]> = {
   '/terkep': ['Országprofil', 'A TéT attaséktól beérkező országjelentések térképen és teljes tartalommal'],
   '/riportok': ['Riportok', 'Kimutatás a beérkező országjelentésekből, és a 7 blokkos riportok teljes listája'],
@@ -51,8 +53,13 @@ function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(href + '/');
 }
 
-// Pontos egyezés, különben a leghosszabb illeszkedő prefix.
-function titleFor(pathname: string): [string, string] {
+// Pontos egyezés, különben a leghosszabb illeszkedő prefix. Admin-only útvonalnál nem
+// admin usernek a generikus címet adja: a requireAdmin() 404-e az AppShellben renderelődik,
+// és a fejléc nem árulhatja el az oldal létét.
+function titleFor(pathname: string, role: AppSession['role']): [string, string] {
+  if (role !== 'admin' && ADMIN_ONLY_HREFS.some((h) => isActive(pathname, h))) {
+    return ['TéT Platform', ''];
+  }
   if (TITLES[pathname]) return TITLES[pathname];
   const key = Object.keys(TITLES)
     .filter((k) => isActive(pathname, k))
@@ -85,7 +92,7 @@ export default function AppShell({
 }) {
   const [cycle, setCycle] = useState(DEFAULT_CYCLE);
   const pathname = usePathname();
-  const [title, sub] = titleFor(pathname);
+  const [title, sub] = titleFor(pathname, user.role);
   const openTickets = TICKETS.filter((t) => t.statusz !== 'Lezárt').length;
   const roleLabel = user.role === 'admin'
     ? 'NIÜ admin'

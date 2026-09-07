@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { auth } from '../../lib/auth';
+import { LOGIN_ROUTE } from '../../lib/routes';
 
 export interface LogoutState {
   error?: string;
@@ -21,5 +22,5 @@ export async function logoutAction(_prev: LogoutState): Promise<LogoutState> {
     return { error: 'Nem sikerült kijelentkezni. Próbáld újra.' };
   }
   revalidatePath('/', 'layout');
-  redirect('/login');
+  redirect(LOGIN_ROUTE);
 }

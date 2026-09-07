@@ -1,15 +1,18 @@
 "use client"
 
-import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
 
+// Az app light-only (nincs téma-váltó/ThemeProvider), ezért theme="light" fixen: egy
+// rendszerbeállítást követő téma sötét OS mellett "dark"-ot adna, és a sonner
+// data-sonner-theme="dark" a fehér popoveren olvashatatlan (pl. #e8e8e8) szöveget
+// renderelne. A fontFamily inline stílusként kell: a sonner futásidőben beszúrt,
+// réteg nélküli CSS-e felülírja a Tailwind rétegzett utility-jeit, csak az inline
+// stílus nyer.
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
-
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme="light"
       className="toaster group"
       icons={{
         success: (
@@ -34,6 +37,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
           "--border-radius": "var(--radius)",
+          fontFamily: "var(--font-sans)",
         } as React.CSSProperties
       }
       toastOptions={{

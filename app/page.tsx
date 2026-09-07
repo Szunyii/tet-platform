@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
+import { HOME_ROUTE } from '../lib/routes';
 
 export default function Home() {
-  redirect('/terkep');
+  redirect(HOME_ROUTE);
 }
