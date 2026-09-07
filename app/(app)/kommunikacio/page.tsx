@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { TICKET_TYPES, TICKETS, type Ticket } from '../../lib/data';
-import { ini, pill } from '../../lib/score';
+import { TICKET_TYPES, TICKETS, type Ticket } from '../../../lib/data';
+import { ini, pill } from '../../../lib/score';
 
 const FILTERS = ['Aktív', 'Magas prioritás', 'Mind'];
 

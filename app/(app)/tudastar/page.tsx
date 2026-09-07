@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { FIELDS, FIELD_COLORS } from '../../lib/data';
-import { KB_ITEMS, KB_SECTIONS, type KbItem } from '../../lib/knowledge';
+import { FIELDS, FIELD_COLORS } from '../../../lib/data';
+import { KB_ITEMS, KB_SECTIONS, type KbItem } from '../../../lib/knowledge';
 
 function matches(item: KbItem, q: string, field: string): boolean {
   if (field && !item.teruletek.includes(field)) return false;

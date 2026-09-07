@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useApp } from '../../components/AppShell';
-import { BLOCKS, FIELDS, ME_ID, POSTS } from '../../lib/data';
+import { useApp } from '../../../components/AppShell';
+import { BLOCKS, FIELDS, ME_ID, POSTS } from '../../../lib/data';
 
 interface Draft {
   selects: Record<string, string>;

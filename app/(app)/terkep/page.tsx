@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import WorldMap, { type MapMetric } from '../../components/WorldMap';
-import { FIELD_COLORS, FIELDS, POSTS, type Post } from '../../lib/data';
-import { RISK_COLORS, fmt, nyitottsag, pill } from '../../lib/score';
+import WorldMap, { type MapMetric } from '../../../components/WorldMap';
+import { FIELD_COLORS, FIELDS, POSTS, type Post } from '../../../lib/data';
+import { RISK_COLORS, fmt, nyitottsag, pill } from '../../../lib/score';
 
 const METRICS: { k: MapMetric; l: string }[] = [
   { k: 'focus', l: 'Fókuszterület' },

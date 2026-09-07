@@ -1,9 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useApp } from '../../components/AppShell';
-import { BLOCKS, FIELD_COLORS, FIELDS, POSTS, type Post } from '../../lib/data';
-import { blk, pill, reports } from '../../lib/score';
+import { useApp } from '../../../components/AppShell';
+import { BLOCKS, FIELD_COLORS, FIELDS, POSTS, type Post } from '../../../lib/data';
+import { blk, pill, reports } from '../../../lib/score';
 
 const STATUSES = ['Elfogadva', 'Beadva', 'Hiányos', 'Visszaküldve'];
 

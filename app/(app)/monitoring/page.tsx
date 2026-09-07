@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useApp } from '../../components/AppShell';
-import { CATS, CRITERIA, POSTS, SCORE_THRESHOLD } from '../../lib/data';
-import { avg, catAvg, col, fmt, pill, sc } from '../../lib/score';
+import { useApp } from '../../../components/AppShell';
+import { CATS, CRITERIA, POSTS, SCORE_THRESHOLD } from '../../../lib/data';
+import { avg, catAvg, col, fmt, pill, sc } from '../../../lib/score';
 
 export default function MonitoringPage() {
   const { cycle } = useApp();
