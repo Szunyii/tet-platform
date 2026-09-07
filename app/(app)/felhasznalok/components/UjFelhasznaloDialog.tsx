@@ -23,7 +23,14 @@ function UjFelhasznaloForm({ onKesz }: { onKesz: () => void }) {
     createFelhasznaloAction,
     {},
   );
+  // Vezérelt mezők: a React 19 a <form action> beküldése után (hibánál is) alaphelyzetbe
+  // állítja a nem vezérelt inputokat; a state megőrzi a beírt értékeket, és az ország is
+  // megmarad, ha a szerepkör-váltás ideiglenesen elrejti a mezőt.
+  const [nev, setNev] = useState('');
+  const [email, setEmail] = useState('');
+  const [jelszo, setJelszo] = useState('');
   const [szerepkor, setSzerepkor] = useState<Szerepkor>('attase');
+  const [orszag, setOrszag] = useState('');
   const errors = state.errors ?? {};
 
   useEffect(() => {
@@ -37,17 +44,45 @@ function UjFelhasznaloForm({ onKesz }: { onKesz: () => void }) {
     <form action={formAction} className="flex flex-col gap-3" noValidate>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="nev">Név</Label>
-        <Input id="nev" name="nev" required maxLength={100} autoComplete="off" />
+        <Input
+          id="nev"
+          name="nev"
+          required
+          maxLength={100}
+          autoComplete="off"
+          aria-invalid={errors.nev ? true : undefined}
+          value={nev}
+          onChange={(e) => setNev(e.target.value)}
+        />
         <MezoHiba uzenet={errors.nev} />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="email">E-mail cím</Label>
-        <Input id="email" name="email" type="email" required autoComplete="off" />
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          required
+          autoComplete="off"
+          aria-invalid={errors.email ? true : undefined}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
         <MezoHiba uzenet={errors.email} />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="jelszo">Kezdő jelszó</Label>
-        <Input id="jelszo" name="jelszo" type="password" required minLength={8} autoComplete="new-password" />
+        <Input
+          id="jelszo"
+          name="jelszo"
+          type="password"
+          required
+          minLength={8}
+          autoComplete="new-password"
+          aria-invalid={errors.jelszo ? true : undefined}
+          value={jelszo}
+          onChange={(e) => setJelszo(e.target.value)}
+        />
         <MezoHiba uzenet={errors.jelszo} />
       </div>
       <div className="flex flex-col gap-1.5">
@@ -58,7 +93,16 @@ function UjFelhasznaloForm({ onKesz }: { onKesz: () => void }) {
       {szerepkor === 'attase' && (
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="orszag">Ország (TéT poszt)</Label>
-          <Input id="orszag" name="orszag" required maxLength={100} placeholder="pl. Dél-Korea" />
+          <Input
+            id="orszag"
+            name="orszag"
+            required
+            maxLength={100}
+            placeholder="pl. Dél-Korea"
+            aria-invalid={errors.orszag ? true : undefined}
+            value={orszag}
+            onChange={(e) => setOrszag(e.target.value)}
+          />
           <MezoHiba uzenet={errors.orszag} />
         </div>
       )}
