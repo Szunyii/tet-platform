@@ -315,7 +315,10 @@ import { signIn } from '../../../lib/auth-client';
 
 function hibaSzoveg(error: { code?: string; status?: number }): string {
   if (error.code === 'BANNED_USER') return 'A fiók le van tiltva.';
-  if (error.status === 401) return 'Hibás e-mail cím vagy jelszó.';
+  if (error.status === 429) return 'Túl sok próbálkozás. Várj néhány másodpercet, majd próbáld újra.';
+  // 400 (érvénytelen e-mail formátum) és 401 (rossz e-mail vagy jelszó) egyformán:
+  // nem különböztetünk, hogy ne lehessen fiókokat felderíteni.
+  if (error.status === 400 || error.status === 401) return 'Hibás e-mail cím vagy jelszó.';
   return 'Bejelentkezés sikertelen, próbáld újra.';
 }
 
@@ -328,17 +331,31 @@ export default function LoginForm({ next }: { next: string }) {
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError('');
-    setPending(true);
-    const res = await signIn.email({ email: email.trim(), password });
-    if (res.error) {
-      setError(hibaSzoveg(res.error));
-      setPending(false);
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !password) {
+      setError('Add meg az e-mail címet és a jelszót.');
       return;
     }
-    router.push(next);
-    router.refresh();
+    setError('');
+    setPending(true);
+    try {
+      const res = await signIn.email({ email: trimmedEmail, password });
+      if (res.error) {
+        setError(hibaSzoveg(res.error));
+        setPending(false);
+        return;
+      }
+      // replace: a /login ne maradjon a history-ban (a vissza gomb ne vigyen a loginra).
+      // A céloldal RSC-lekérése már az új cookie-val megy, refresh() nem kell.
+      router.replace(next);
+    } catch {
+      // A signIn.email hálózati hibánál dob (nincs válasz), nem { error }-t ad vissza.
+      setError('Nem sikerült elérni a szervert. Ellenőrizd a kapcsolatot, és próbáld újra.');
+      setPending(false);
+    }
   }
+
+  const hasError = Boolean(error);
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
@@ -348,7 +365,10 @@ export default function LoginForm({ next }: { next: string }) {
           id="email"
           type="email"
           autoComplete="email"
+          autoFocus
           required
+          aria-invalid={hasError || undefined}
+          aria-describedby={hasError ? 'login-hiba' : undefined}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
@@ -360,16 +380,18 @@ export default function LoginForm({ next }: { next: string }) {
           type="password"
           autoComplete="current-password"
           required
+          aria-invalid={hasError || undefined}
+          aria-describedby={hasError ? 'login-hiba' : undefined}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
       </div>
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p id="login-hiba" role="alert" className="text-sm text-destructive">
           {error}
         </p>
       )}
-      <Button type="submit" disabled={pending || !email || !password} className="mt-1">
+      <Button type="submit" disabled={pending} className="mt-1">
         {pending ? 'Bejelentkezés…' : 'Bejelentkezés'}
       </Button>
     </form>
@@ -380,18 +402,33 @@ export default function LoginForm({ next }: { next: string }) {
 - [ ] **Step 2: `app/login/page.tsx`**
 
 ```tsx
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { getSession } from '../../lib/session';
 import LoginForm from './components/LoginForm';
 
-// Csak relatív, egy perjellel kezdődő útvonalat fogadunk el (nyílt átirányítás ellen):
-// nem "//" és nem "/\" (a böngészők a backslash-t perjelre normalizálják), és nem a
-// /login maga (önhurok).
+export const metadata: Metadata = { title: 'Bejelentkezés' };
+
+const HOME = '/terkep';
+
+// Nyílt átirányítás elleni védelem. A next paramétert a böngészővel azonos URL-parserrel
+// értelmezzük, mert a regex kijátszható (pl. "/<TAB>/evil.com" → "//evil.com"): csak akkor
+// fogadjuk el, ha a bázis-originre mutat, és nem a /login maga (önhurok). A visszaadott
+// útvonal normalizált (vezérlőkarakterek nélkül), így a Location fejlécbe is biztonságos.
 function safeNext(raw: string | string[] | undefined): string {
   const v = Array.isArray(raw) ? raw[0] : raw;
-  if (v && /^\/(?![/\\])/.test(v) && !v.startsWith('/login')) return v;
-  return '/terkep';
+  if (!v) return HOME;
+  let u: URL;
+  try {
+    u = new URL(v, 'http://n.invalid');
+  } catch {
+    return HOME;
+  }
+  if (u.origin !== 'http://n.invalid') return HOME;
+  const path = u.pathname + u.search;
+  if (path === '/login' || path.startsWith('/login/') || path.startsWith('/login?')) return HOME;
+  return path;
 }
 
 export default async function LoginPage({
@@ -407,7 +444,9 @@ export default async function LoginPage({
     <main className="flex min-h-screen items-center justify-center bg-muted/40 p-6">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>NIÜ · TéT Platform</CardTitle>
+          <CardTitle>
+            <h1 className="text-base font-medium">NIÜ · TéT Platform</h1>
+          </CardTitle>
           <CardDescription>Bejelentkezés a belső munkakörnyezetbe</CardDescription>
         </CardHeader>
         <CardContent>
@@ -428,7 +467,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'NIÜ · TéT Platform',
+  title: { default: 'NIÜ · TéT Platform', template: '%s · NIÜ · TéT Platform' },
   description: 'TéT attasé hálózat belső munkakörnyezet',
 };
 
@@ -459,6 +498,11 @@ import { requireSession } from '../../lib/session';
 // Minden védett oldal ebben a route groupban van. A requireSession() itt egy helyen
 // kényszeríti ki a bejelentkezést (elavult cookie esetén is: a proxy átengedi, ez
 // viszont /login-ra irányít). A /login a gyökér layout alatt marad.
+//
+// Ez NEM helyettesíti az oldalankénti és action-önkénti ellenőrzést: kliens-oldali
+// navigációnál a layout nem fut újra, a server action-ök pedig egyáltalán nem
+// renderelnek layoutot. Minden szerver-oldali adatot olvasó page és minden action
+// maga hívja a requireSession()/requireAdmin()-t.
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   await requireSession();
   return <AppShell>{children}</AppShell>;
@@ -480,7 +524,7 @@ A hat `page.tsx`-ben minden `'../../` kezdetű relatív import egy szinttel mél
 grep -rln "from '\.\./\.\./" "app/(app)" | xargs sed -i '' "s#from '\.\./\.\./#from '../../../#g"
 grep -rn "from '\.\./" "app/(app)"
 ```
-Expected: minden találat `'../../../components/…'`, `'../../../lib/…'` alakú (2–3 import fájlonként, összesen 16). Az `app/page.tsx` (`/` → `/terkep` redirect) és az `app/api/` a helyén marad.
+Expected: minden találat `'../../../components/…'`, `'../../../lib/…'` alakú (2–3 import fájlonként, összesen 15). Az `app/page.tsx` (`/` → `/terkep` redirect) és az `app/api/` a helyén marad.
 
 Run: `npx tsc --noEmit`
 Expected: nincs hiba. Ha egy import nem oldódik fel, az adott fájlban a sed-et kézzel ellenőrizd.
