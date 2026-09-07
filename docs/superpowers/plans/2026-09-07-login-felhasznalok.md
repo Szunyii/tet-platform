@@ -1863,8 +1863,7 @@ export function FelhasznaloMuveletek({ felhasznalo, sajat }: { felhasznalo: Felh
             <AlertDialogCancel disabled={pending}>Mégse</AlertDialogCancel>
             <AlertDialogAction
               disabled={pending}
-              onClick={(e) => {
-                e.preventDefault();
+              onClick={() => {
                 if (megerosites) futtat(megerosites);
               }}
             >
@@ -1880,7 +1879,7 @@ export function FelhasznaloMuveletek({ felhasznalo, sajat }: { felhasznalo: Felh
 
 Megjegyzések:
 - A shadcn v4 `DropdownMenuTrigger` Base UI-s, a gombot a `render` proppal kapja (mint a `dialog.tsx` `DialogPrimitive.Close`-nál látható). Ha a `DropdownMenuItem` nem ismeri a `variant="destructive"` propot, nézd meg a `components/ui/dropdown-menu.tsx`-t; ha nincs, hagyd el a propot és adj `className="text-destructive"`-ot.
-- Az `AlertDialogAction` `onClick`-jében `preventDefault`, hogy a dialógus ne záruljon a szerver válasza előtt; a `futtat` zárja.
+- A base-nova `AlertDialogAction` sima `Button` (nem `Close`), nem zárja a dialógust; a dialógus vezérelt (`open={megerosites !== null}`), a `futtat` zárja a szerver válasza után. Az `AlertDialogCancel` viszont `Close`, az zár.
 
 - [ ] **Step 4: `FelhasznaloTabla.tsx` – műveletek oszlop**
 
