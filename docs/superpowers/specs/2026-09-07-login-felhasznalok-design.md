@@ -35,7 +35,8 @@ hitelesítés, impersonation, session-lista.
 | `proxy.ts` | Gyökérben. Cookie-alapú átirányítás. |
 | `app/login/page.tsx` | Login oldal (AppShell nélkül). |
 | `app/login/components/LoginForm.tsx` | `'use client'`, `signIn.email`. |
-| `app/layout.tsx` | Session lekérés szerveren; AppShell csak bejelentkezve, propként kapja a usert. |
+| `app/layout.tsx` | Gyökér layout: html/head/body, `Toaster`. AppShell nélkül. |
+| `app/(app)/layout.tsx` | Route-group layout a védett oldalaknak: `requireSession()`, majd `AppShell user={session}`. A meglévő oldalak (`terkep`, `riportok`, `uj-riport`, `kommunikacio`, `tudastar`, `monitoring`) és a `felhasznalok` ide kerülnek; az URL-ek nem változnak. |
 | `components/AppShell.tsx` | Dummy szerep-kapcsoló megszűnik; user propból; kijelentkezés; „Felhasználók” menü adminnak. |
 | `app/felhasznalok/page.tsx` | `requireAdmin()`, lista. |
 | `app/felhasznalok/actions.ts` | Server action-ök a Better Auth admin API-ra. |
@@ -84,8 +85,10 @@ a Better Auth nem ad sessiont, külön kezelés nem kell.
   jelszó.” (nem különböztetünk); tiltott fiók → „A fiók le van tiltva.”
   (Better Auth `BANNED_USER` hibakód).
 - A `next` paramétert csak `/`-rel kezdődő relatív útvonalként fogadja el.
-- A `layout.tsx` a `/login` alatt nem rendereli az AppShellt: `getSession()`
-  eredménye alapján dönt (nincs session → csak `children`).
+- A `/login` a gyökér layout alatt van (AppShell nélkül); a védett oldalak az
+  `app/(app)/` route groupban, aminek layoutja `requireSession()`-nel dönt. Így a
+  bejelentkezés-kényszer egy helyen van, és elavult cookie-val sem renderelődik
+  védett oldal.
 - A login page érvényes session esetén `redirect(next)`-tel elirányít (ez váltja
   ki a proxy korábbi „cookie van → `/terkep`" szabályát).
 
