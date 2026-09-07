@@ -55,7 +55,7 @@ A további fejlesztések rendezetten, az alábbi helyekre kerüljenek. Ne halmoz
 | Megosztott komponensek | `components/<terület>/` | Több route-on használt, saját komponensek, alkönyvtárba rendezve (pl. `components/riport/`). A shadcn primitívekből épülnek. Az `AppShell.tsx` és a `WorldMap.tsx` már itt van. |
 | DB táblák | `db/schema/<domain>.ts` | Domainenként egy fájl, `db/schema/index.ts`-ből re-exportálva. Utána `npm run db:generate`. |
 | DB lekérdezések | `db/queries/<domain>.ts` | Szerver-oldali Drizzle lekérdezések és mutációk, domainenként. A page-ek és action-ök ezeket hívják, nem írnak közvetlen Drizzle kódot. |
-| Tiszta segédfüggvények, típusok | `lib/` | Framework-független logika (formázás, számítás, auth helper). Nincs benne React és nincs benne DB hívás. |
+| Tiszta segédfüggvények, típusok | `lib/` | Framework-független logika (formázás, számítás, auth helper). Nincs benne React és nincs benne DB hívás. Kivétel: `lib/auth.ts` és `lib/session.ts` a szerver-oldali auth réteg (Next és DB függő), ezek tudatosan itt vannak. |
 | Egyszeri scriptek | `scripts/` | tsx-szel futtatva, relatív importokkal. |
 
 Konvenciók:
