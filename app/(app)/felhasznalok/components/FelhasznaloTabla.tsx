@@ -10,6 +10,7 @@ import {
 import type { FelhasznaloSor } from '../../../../db/queries/felhasznalo';
 import { formatDatum } from '../../../../lib/datum';
 import { SZEREPKOR_CIMKE } from '../../../../lib/felhasznalo-validacio';
+import { FelhasznaloMuveletek } from './FelhasznaloMuveletek';
 
 export function FelhasznaloTabla({
   felhasznalok,
@@ -50,7 +51,9 @@ export function FelhasznaloTabla({
                 {f.tiltott ? <Badge variant="destructive">Tiltott</Badge> : <Badge variant="outline">Aktív</Badge>}
               </TableCell>
               <TableCell className="text-muted-foreground">{formatDatum(f.letrehozva)}</TableCell>
-              <TableCell />
+              <TableCell className="text-right">
+                <FelhasznaloMuveletek felhasznalo={f} sajat={f.id === sajatId} />
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
