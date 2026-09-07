@@ -2,12 +2,14 @@
 
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
+import { unstable_rethrow } from 'next/navigation';
 import { auth } from '../../../lib/auth';
 import {
   parseJelszo,
   parseSzerkesztes,
   parseUjFelhasznalo,
   type MezoHibak,
+  type Szerepkor,
 } from '../../../lib/felhasznalo-validacio';
 import { requireAdmin } from '../../../lib/session';
 
@@ -16,10 +18,17 @@ export interface MuveletState {
   errors?: MezoHibak;
 }
 
+/** A Better Auth `user` rekord általunk írt mezői (createUser / adminUpdateUser `data`). */
+interface FelhasznaloAdatok {
+  name?: string;
+  orszag: string | null;
+  role?: Szerepkor;
+}
+
 const SAJAT_FIOK_HIBA = 'Saját fiókodon ez a művelet nem végezhető.';
 
-// A Better Auth APIError-nak body.code mezője van; duck-typing, hogy ne függjünk
-// a better-call osztálypéldányától.
+// A Better Auth APIError-nak body.code mezője van; duck-typing, hogy ne függjünk a
+// better-call osztálypéldányától (a validációs hiba pl. sima Error, de body.code-dal).
 function apiKod(err: unknown): string | undefined {
   if (typeof err === 'object' && err !== null && 'body' in err) {
     const body = (err as { body?: { code?: string } }).body;
@@ -28,30 +37,40 @@ function apiKod(err: unknown): string | undefined {
   return undefined;
 }
 
-// Better Auth hiba → mezőhibák. Ami mezőhöz köthető (e-mail), az a mező kulcsára megy,
-// a többi a `form` kulcsra.
-function hibaMezok(err: unknown): MezoHibak {
-  switch (apiKod(err)) {
-    case 'USER_ALREADY_EXISTS':
-    case 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL':
-      return { email: 'Ezzel az e-mail címmel már van felhasználó.' };
-    case 'INVALID_EMAIL':
-      // A saját validátorunk megengedőbb a Better Auth zod-szabályánál (pl. ékezetes cím).
-      return { email: 'Érvénytelen e-mail cím.' };
-    case 'YOU_CANNOT_BAN_YOURSELF':
-    case 'YOU_CANNOT_REMOVE_YOURSELF':
-      return { form: SAJAT_FIOK_HIBA };
-    default:
-      console.error('[felhasznalok] művelet sikertelen:', err);
-      return { form: 'Művelet sikertelen.' };
-  }
-}
-
 // A teljes layout revalidálása: a lista és az AppShell fejléce is frissül (pl. az admin
 // a saját nevét módosítja), és a kliens-oldali router cache is ürül.
 function kesz(): MuveletState {
   revalidatePath('/', 'layout');
   return { ok: true };
+}
+
+// Hiba → MuveletState. Ami mezőhöz köthető, a mező kulcsára megy, a többi a `form`-ra.
+// A Next control-flow kivételeit (redirect/notFound) tovább kell dobni, nem elnyelni.
+function hiba(err: unknown, muvelet: string): MuveletState {
+  unstable_rethrow(err);
+  switch (apiKod(err)) {
+    case 'USER_ALREADY_EXISTS':
+    case 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL':
+      return { errors: { email: 'Ezzel az e-mail címmel már van felhasználó.' } };
+    case 'INVALID_EMAIL':
+      // A saját validátorunk megengedőbb a Better Auth zod-szabályánál (pl. ékezetes cím).
+      return { errors: { email: 'Érvénytelen e-mail cím.' } };
+    case 'PASSWORD_TOO_SHORT':
+    case 'PASSWORD_TOO_LONG':
+      // A validátorunk 8–128 karaktert enged (a Better Auth alapértelmezése); ha a
+      // lib/auth.ts min/maxPasswordLength változna, ez a fallback marad.
+      return { errors: { jelszo: 'A jelszó hossza nem megfelelő (8–128 karakter).' } };
+    case 'USER_NOT_FOUND':
+      // Elavult lista (másik admin közben törölte): frissítjük, hogy a sor eltűnjön.
+      revalidatePath('/', 'layout');
+      return { errors: { form: 'Ez a felhasználó már nem létezik, a lista frissült.' } };
+    case 'YOU_CANNOT_BAN_YOURSELF':
+    case 'YOU_CANNOT_REMOVE_YOURSELF':
+      return { errors: { form: SAJAT_FIOK_HIBA } };
+    default:
+      console.error(`[felhasznalok] ${muvelet} sikertelen:`, err);
+      return { errors: { form: 'Művelet sikertelen.' } };
+  }
 }
 
 export async function createFelhasznaloAction(
@@ -70,11 +89,11 @@ export async function createFelhasznaloAction(
         email,
         password: jelszo,
         role: szerepkor,
-        data: orszag ? { orszag } : undefined,
+        data: { orszag } satisfies FelhasznaloAdatok,
       },
     });
   } catch (err) {
-    return { errors: hibaMezok(err) };
+    return hiba(err, 'createUser');
   }
   return kesz();
 }
@@ -92,11 +111,14 @@ export async function updateFelhasznaloAction(
     return { errors: { szerepkor: 'Saját admin szerepkörödet nem veheted el.' } };
   }
   try {
-    const h = await headers();
-    await auth.api.adminUpdateUser({ headers: h, body: { userId, data: { name: nev, orszag } } });
-    await auth.api.setRole({ headers: h, body: { userId, role: szerepkor } });
+    // Egyetlen hívás (név, ország, szerepkör együtt): az adminUpdateUser a data.role-t
+    // maga ellenőrzi és menti, így nincs részlegesen mentett állapot.
+    await auth.api.adminUpdateUser({
+      headers: await headers(),
+      body: { userId, data: { name: nev, orszag, role: szerepkor } satisfies FelhasznaloAdatok },
+    });
   } catch (err) {
-    return { errors: hibaMezok(err) };
+    return hiba(err, 'adminUpdateUser');
   }
   return kesz();
 }
@@ -106,16 +128,19 @@ export async function setJelszoAction(
   _prev: MuveletState,
   formData: FormData,
 ): Promise<MuveletState> {
-  await requireAdmin();
+  const me = await requireAdmin();
   const parsed = parseJelszo(formData);
   if (!parsed.ok) return { errors: parsed.errors };
   try {
-    await auth.api.setUserPassword({
-      headers: await headers(),
-      body: { userId, newPassword: parsed.data.jelszo },
-    });
+    const h = await headers();
+    await auth.api.setUserPassword({ headers: h, body: { userId, newPassword: parsed.data.jelszo } });
+    // Jelszó-visszaállítás = fiók-helyreállítás: a célfelhasználó régi sessionjei is
+    // érvénytelenek legyenek. Saját jelszónál a saját sessiont megtartjuk.
+    if (userId !== me.userId) {
+      await auth.api.revokeUserSessions({ headers: h, body: { userId } });
+    }
   } catch (err) {
-    return { errors: hibaMezok(err) };
+    return hiba(err, 'setUserPassword');
   }
   return kesz();
 }
@@ -126,7 +151,7 @@ export async function banAction(userId: string): Promise<MuveletState> {
   try {
     await auth.api.banUser({ headers: await headers(), body: { userId } });
   } catch (err) {
-    return { errors: hibaMezok(err) };
+    return hiba(err, 'banUser');
   }
   return kesz();
 }
@@ -136,7 +161,7 @@ export async function unbanAction(userId: string): Promise<MuveletState> {
   try {
     await auth.api.unbanUser({ headers: await headers(), body: { userId } });
   } catch (err) {
-    return { errors: hibaMezok(err) };
+    return hiba(err, 'unbanUser');
   }
   return kesz();
 }
@@ -147,7 +172,7 @@ export async function removeFelhasznaloAction(userId: string): Promise<MuveletSt
   try {
     await auth.api.removeUser({ headers: await headers(), body: { userId } });
   } catch (err) {
-    return { errors: hibaMezok(err) };
+    return hiba(err, 'removeUser');
   }
   return kesz();
 }
