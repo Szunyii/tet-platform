@@ -4,3 +4,10 @@ out/
 *.tsbuildinfo
 next-env.d.ts
 .DS_Store
+
+# lokális adatbázis és titkok
+data/
+*.db
+*.db-wal
+*.db-shm
+.env*.local
