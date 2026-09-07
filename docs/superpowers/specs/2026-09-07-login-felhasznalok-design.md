@@ -38,10 +38,11 @@ hitelesítés, impersonation, session-lista.
 | `app/layout.tsx` | Gyökér layout: html/head/body, `Toaster`. AppShell nélkül. |
 | `app/(app)/layout.tsx` | Route-group layout a védett oldalaknak: `requireSession()`, majd `AppShell user={session}`. A meglévő oldalak (`terkep`, `riportok`, `uj-riport`, `kommunikacio`, `tudastar`, `monitoring`) és a `felhasznalok` ide kerülnek; az URL-ek nem változnak. |
 | `components/AppShell.tsx` | Dummy szerep-kapcsoló megszűnik; user propból; kijelentkezés; „Felhasználók” menü adminnak. |
-| `app/felhasznalok/page.tsx` | `requireAdmin()`, lista. |
-| `app/felhasznalok/actions.ts` | Server action-ök a Better Auth admin API-ra. |
-| `app/not-found.tsx` | Magyar 404 oldal; a `requireAdmin()` `notFound()`-ja ide fut ki. |
-| `app/felhasznalok/components/` | `FelhasznaloTabla.tsx`, `UjFelhasznaloDialog.tsx`, `SzerkesztesDialog.tsx`, `JelszoDialog.tsx`, `FelhasznaloMuveletek.tsx` (tiltás/feloldás/törlés `AlertDialog`-gal). |
+| `app/(app)/felhasznalok/page.tsx` | `requireAdmin()`, lista. |
+| `app/(app)/felhasznalok/actions.ts` | Server action-ök a Better Auth admin API-ra. |
+| `app/(app)/actions.ts` | `logoutAction`: `auth.api.signOut({ headers })`, `revalidatePath('/', 'layout')`, `redirect('/login')`. |
+| `app/(app)/not-found.tsx`, `app/not-found.tsx` | Magyar 404. A `(app)` alatti (a `requireAdmin()` `notFound()`-ja) az AppShellben, oldalsávval renderelődik; a gyökér szintű az ismeretlen URL-eknek, AppShell nélkül. Közös tartalom: `components/NotFoundContent.tsx`. |
+| `app/(app)/felhasznalok/components/` | `FelhasznaloTabla.tsx`, `UjFelhasznaloDialog.tsx`, `SzerkesztesDialog.tsx`, `JelszoDialog.tsx`, `FelhasznaloMuveletek.tsx` (tiltás/feloldás/törlés `AlertDialog`-gal). |
 | `lib/felhasznalo-validacio.ts` | Tiszta validátor az admin űrlapokhoz. |
 
 ## `lib/session.ts`
@@ -97,7 +98,11 @@ a Better Auth nem ad sessiont, külön kezelés nem kell.
 - Prop: `user: AppSession`. A `useApp()` `role`-ja ebből jön, a `setRole`
   megszűnik; a `cycle` kapcsoló marad.
 - Fejléc: név + szerepkör (admin: „NIÜ admin”, attasé: „TéT attasé · <ország>”),
-  „Kijelentkezés” gomb → `signOut()` → `router.push('/login')`.
+  „Kijelentkezés” gomb → `<form action={logoutAction}>` (server action az
+  `app/(app)/actions.ts`-ben: `auth.api.signOut({ headers })`, `revalidatePath('/',
+  'layout')` a teljes kliens-cache ürítésére, majd `redirect('/login')`). Hibánál a
+  gomb mellett üzenet. A kliens `signOut()`-ot nem használjuk: hálózati hibánál dob,
+  és a `router.refresh()` csak az aktuális route cache-ét ürítené.
 - `NAV`: `{ href: '/felhasznalok', label: 'Felhasználók', adminOnly: true }`,
   csak adminnak jelenik meg. `TITLES` bővítése.
 
@@ -108,7 +113,7 @@ a Better Auth nem ad sessiont, külön kezelés nem kell.
   `orszag` mezőt és a rendezést egyszerűbben adja.
 - Tábla oszlopai: név, email, szerepkör `Badge`, ország, állapot (Aktív /
   Tiltott), létrehozva, műveletek.
-- Server action-ök (`app/felhasznalok/actions.ts`), mind `requireAdmin()` után,
+- Server action-ök (`app/(app)/felhasznalok/actions.ts`), mind `requireAdmin()` után,
   a Better Auth admin API-t hívják `headers: await headers()`-szel, hogy a
   jogosultság-ellenőrzés a pluginban is lefusson:
   - `createFelhasznaloAction`: név, email, jelszó (min 8), szerepkör, ország.
@@ -121,7 +126,8 @@ a Better Auth nem ad sessiont, külön kezelés nem kell.
   - `removeFelhasznaloAction`: `auth.api.removeUser`.
   - Az admin saját magát nem tilthatja, nem törölheti, saját szerepkörét nem
     veheti el: az action hibát ad („Saját fiókodon ez a művelet nem végezhető.”).
-  - Minden action a végén `revalidatePath('/felhasznalok')`; visszatérés
+  - Minden action a végén `revalidatePath('/', 'layout')` (a lista és az AppShell
+    fejléce is frissül, pl. saját név módosításakor); visszatérés
     `{ errors?: Record<string, string> }` az `useActionState`-hez.
 - Dialógusok: shadcn `Dialog` űrlapokkal, `AlertDialog` a tiltás/törlés
   megerősítéséhez, `sonner` toast sikernél.

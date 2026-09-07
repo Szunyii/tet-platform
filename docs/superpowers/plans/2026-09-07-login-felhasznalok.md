@@ -40,7 +40,7 @@
 | `app/(app)/{terkep,riportok,uj-riport,kommunikacio,tudastar,monitoring}/` | `git mv` | a meglévő oldalak a route groupba (URL nem változik) |
 | `components/AppShell.tsx` | módosít | `user` prop, dummy szerep-kapcsoló ki, kijelentkezés, admin menü |
 | `components/ui/alert-dialog.tsx`, `components/ui/sonner.tsx` | shadcn CLI | megerősítő dialógus, toast |
-| `app/not-found.tsx` | létrehoz | magyar 404 (a `requireAdmin()` ide fut ki) |
+| `components/NotFoundContent.tsx`, `app/not-found.tsx`, `app/(app)/not-found.tsx` | létrehoz | magyar 404: a `(app)` alatti az AppShellben (a `requireAdmin()` ide fut ki), a gyökér az ismeretlen URL-eknek |
 | `lib/felhasznalo-validacio.ts` | létrehoz | tiszta validátor az admin űrlapokhoz |
 | `db/queries/felhasznalo.ts` | létrehoz | `listFelhasznalok()` |
 | `app/(app)/felhasznalok/actions.ts` | létrehoz | server action-ök a Better Auth admin API-ra |
@@ -764,7 +764,7 @@ git commit -m "feat(auth): AppShell valódi sessionből, kijelentkezés, admin m
 
 **Files:**
 - Create (CLI): `components/ui/alert-dialog.tsx`, `components/ui/sonner.tsx`
-- Create: `app/not-found.tsx`
+- Create: `components/NotFoundContent.tsx`, `app/not-found.tsx`, `app/(app)/not-found.tsx`
 - Modify: `app/layout.tsx`, `package.json`
 
 - [ ] **Step 1: Komponensek hozzáadása**
@@ -794,23 +794,53 @@ A `<body>`:
       </body>
 ```
 
-- [ ] **Step 3: `app/not-found.tsx` – magyar 404**
+- [ ] **Step 3: Magyar 404 – közös tartalom, két helyen**
 
-A `requireAdmin()` `notFound()`-ja és minden ismeretlen útvonal ide fut ki. A gyökér layout alatt renderelődik (AppShell nélkül), ezért önálló, középre igazított oldal, mint a login.
+A `notFound()` a legközelebbi `not-found.tsx`-et rendereli, a saját szegmensének layoutjában. Ezért két fájl kell: `app/(app)/not-found.tsx` a `requireAdmin()` 404-éhez (az AppShellben, oldalsávval), és a gyökér `app/not-found.tsx` az ismeretlen URL-ekhez (AppShell nélkül, önálló oldal). A tartalom közös.
+
+`components/NotFoundContent.tsx`:
 
 ```tsx
 import Link from 'next/link';
-import { Button } from '../components/ui/button';
+import { Button } from './ui/button';
 
-export default function NotFound() {
+export function NotFoundContent() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-3 p-6 text-center">
+    <div className="flex flex-col items-center gap-3 text-center">
       <p className="font-mono text-sm text-muted-foreground">404</p>
       <h2 className="text-lg font-semibold">Az oldal nem található</h2>
       <p className="max-w-sm text-sm text-muted-foreground">
         A keresett oldal nem létezik, vagy nincs hozzá jogosultságod.
       </p>
       <Button render={<Link href="/terkep" />}>Vissza az Országprofilra</Button>
+    </div>
+  );
+}
+```
+
+`app/(app)/not-found.tsx`:
+
+```tsx
+import { NotFoundContent } from '../../components/NotFoundContent';
+
+export default function NotFound() {
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center">
+      <NotFoundContent />
+    </div>
+  );
+}
+```
+
+`app/not-found.tsx`:
+
+```tsx
+import { NotFoundContent } from '../components/NotFoundContent';
+
+export default function NotFound() {
+  return (
+    <main className="flex min-h-screen items-center justify-center p-6">
+      <NotFoundContent />
     </main>
   );
 }
@@ -820,11 +850,11 @@ export default function NotFound() {
 
 Run: `npx tsc --noEmit` → nincs hiba.
 
-`curl -s -b $C http://localhost:3000/nincs-ilyen | grep -c "Az oldal nem található"` → legalább `1`, és a státusz `404`. Böngészőben a gomb a `/terkep`-re visz.
+`curl -s -b $C -o /dev/null -w "%{http_code}\n" http://localhost:3000/nincs-ilyen` → `404`, és a body tartalmazza az „Az oldal nem található” szöveget, de NEM tartalmazza az „Aktív ciklus”-t (gyökér 404, AppShell nélkül). A `(app)` alatti 404-et a Task 9 ellenőrzi (attasé a `/felhasznalok`-on → 404 oldalsávval).
 
 ```bash
-git add components/ui/alert-dialog.tsx components/ui/sonner.tsx app/not-found.tsx app/layout.tsx package.json package-lock.json
-git commit -m "chore(ui): shadcn alert-dialog és sonner, Toaster a layoutban, magyar 404 oldal"
+git add components/ui/alert-dialog.tsx components/ui/sonner.tsx components/NotFoundContent.tsx app/not-found.tsx "app/(app)/not-found.tsx" app/layout.tsx package.json package-lock.json
+git commit -m "chore(ui): shadcn alert-dialog és sonner, Toaster a layoutban, magyar 404 oldalak"
 ```
 
 ---
@@ -1085,8 +1115,10 @@ function hibaUzenet(err: unknown): string {
   }
 }
 
+// A teljes layout revalidálása: a lista és az AppShell fejléce is frissül (pl. az admin
+// a saját nevét módosítja), és a kliens-oldali router cache is ürül.
 function kesz(): MuveletState {
-  revalidatePath('/felhasznalok');
+  revalidatePath('/', 'layout');
   return { ok: true };
 }
 
@@ -1476,7 +1508,7 @@ Run: `npx tsc --noEmit` → nincs hiba.
 
 Böngésző adminnal: `/felhasznalok` mutatja a seed admint „(te)” jelöléssel. „Új felhasználó” → dialógus; attasé ország nélkül beküldve → „TéT attasénál az ország kötelező.”; kitöltve → toast, dialógus zárul, az új sor megjelenik. Ugyanazzal az e-mail címmel újra → „Ezzel az e-mail címmel már van felhasználó.” Szerepkört adminra váltva az ország mező eltűnik.
 
-Új privát ablakban az új attaséval bejelentkezve a fejléc „TéT attasé · <ország>”, a „Felhasználók” menü nem látszik, `/felhasznalok` → 404.
+Új privát ablakban (vagy külön curl cookie-jarral) az új attaséval bejelentkezve a fejléc „TéT attasé · <ország>”, a „Felhasználók” menü nem látszik, `/felhasznalok` → `404`, a body tartalmazza az „Az oldal nem található” szöveget ÉS az „Aktív ciklus”-t (a `(app)` 404 oldalsávval renderelődik).
 
 - [ ] **Step 7: Commit**
 
