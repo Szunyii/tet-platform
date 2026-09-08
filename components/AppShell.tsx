@@ -29,7 +29,7 @@ export function useApp(): AppState {
 const NAV: { href: string; icon: string; label: string; adminOnly?: boolean }[] = [
   { href: '/terkep', icon: '◍', label: 'Országprofil' },
   { href: '/riportok', icon: '▦', label: 'Riportok' },
-  { href: '/uj-riport', icon: '✎', label: 'Új riport kitöltése' },
+  { href: '/uj-riport', icon: '✎', label: 'Új bejegyzés' },
   { href: '/kommunikacio', icon: '✉', label: 'Kommunikáció' },
   { href: '/tudastar', icon: '◫', label: 'Tudástár' },
   { href: '/monitoring', icon: '◈', label: 'Monitoring és értékelés' },
@@ -40,8 +40,8 @@ const ADMIN_ONLY_HREFS = NAV.filter((n) => n.adminOnly).map((n) => n.href);
 
 const TITLES: Record<string, [string, string]> = {
   '/terkep': ['Országprofil', 'A TéT attaséktól beérkező országjelentések térképen és teljes tartalommal'],
-  '/riportok': ['Riportok', 'Kimutatás a beérkező országjelentésekből, és a 7 blokkos riportok teljes listája'],
-  '/uj-riport': ['Új riport kitöltése', 'Kötött mezők az aggregáláshoz, szöveges kifejtés a részletekhez'],
+  '/riportok': ['Riportok', 'A TéT hálózat információs bejegyzései kategóriák és kulcsszavak szerint'],
+  '/uj-riport': ['Új bejegyzés', 'Kategória, tárgy, leírás, kulcsszavak – rendezvénynél dátum és helyszín'],
   '/kommunikacio': ['Kommunikáció', 'Ticket + üzenetszál az adminok és a TéT attasék között'],
   '/tudastar': ['Tudástár', 'Magyarországról ajánlható programok, partnerek és együttműködési formák'],
   '/monitoring': ['Monitoring és értékelés', '3 kategória, 14 szempont, rögzített adatforrás-metaadatokkal'],

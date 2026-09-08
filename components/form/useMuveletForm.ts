@@ -17,6 +17,8 @@ type FormAction = (prev: MuveletState, formData: FormData) => Promise<MuveletSta
  * useActionState + siker-toast + záró callback + hibakezelés egy helyen.
  * - A siker-kezelés az action wrapperben történik, nem useEffect-ben: pontosan egyszer fut,
  *   és nem függ az onKesz referencia-stabilitásától.
+ * - A `siker` és az `onKesz` opcionális: ha az action sikernél átirányít (redirect), sosem
+ *   tér vissza `{ ok: true }`-val, ilyenkor nincs mit toastolni és nincs mit lezárni.
  * - Ha az action hívása elutasítással tér vissza (hálózati hiba, újraindított szerver, elavult
  *   action id), nem dobjuk tovább – az az egész oldalt hibaképernyőre vinné –, hanem űrlap-
  *   szintű hibát adunk. A Next control-flow kivételeit (redirect/notFound) tovább kell dobni.
@@ -24,14 +26,14 @@ type FormAction = (prev: MuveletState, formData: FormData) => Promise<MuveletSta
  *   kulcsa), így billentyűzettel és felolvasóval is észlelhető a hiba.
  * Visszaad: [state, formAction, pending].
  */
-export function useMuveletForm(action: FormAction, siker: string, onKesz: () => void) {
+export function useMuveletForm(action: FormAction, siker?: string, onKesz?: () => void) {
   const result = useActionState<MuveletState, FormData>(
     async (prev, formData) => {
       try {
         const eredmeny = await action(prev, formData);
         if (eredmeny.ok) {
-          toast.success(siker);
-          onKesz();
+          if (siker) toast.success(siker);
+          onKesz?.();
         }
         return eredmeny;
       } catch (err) {
