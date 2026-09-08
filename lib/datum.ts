@@ -61,3 +61,17 @@ export function kovetkezoNapKezdete(datum: string): Date {
   const kovetkezo = new Date(Date.UTC(ev, ho - 1, nap + 1));
   return napKezdeteSzamokbol(kovetkezo.getUTCFullYear(), kovetkezo.getUTCMonth() + 1, kovetkezo.getUTCDate());
 }
+
+const DATUM_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** `YYYY-MM-DD` naptárilag is érvényes-e (elutasítja pl. a 2026-02-31-et), 2000–2100 évkorláttal. */
+export function ervenyesNaptariDatum(d: string): boolean {
+  if (!DATUM_RE.test(d)) return false;
+  const [evStr, hoStr, napStr] = d.split('-');
+  const ev = Number(evStr);
+  const ho = Number(hoStr);
+  const nap = Number(napStr);
+  if (ev < 2000 || ev > 2100) return false;
+  const dt = new Date(Date.UTC(ev, ho - 1, nap));
+  return dt.getUTCFullYear() === ev && dt.getUTCMonth() === ho - 1 && dt.getUTCDate() === nap;
+}

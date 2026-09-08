@@ -4,6 +4,7 @@
  * (= a mezők DOM id-ja, hogy a fókusz az első hibás mezőre ugorhasson), a `form` kulcs
  * az űrlap-szintű hibáé, a `csatolmany` a fájloké.
  */
+import { ervenyesNaptariDatum } from './datum';
 import {
   CSATOLMANY_LIMIT,
   formatMeret,
@@ -47,20 +48,6 @@ export interface ElfogadottFajl {
 export type ParseRiportResult =
   | { ok: true; data: RiportInput; fajlok: ElfogadottFajl[]; torlendoCsatolmanyIdk: string[] }
   | { ok: false; errors: RiportErrors };
-
-const DATUM_RE = /^\d{4}-\d{2}-\d{2}$/;
-
-/** `YYYY-MM-DD` naptárilag is érvényes-e (elutasítja pl. a 2026-02-31-et), 2000–2100 évkorláttal. */
-function ervenyesNaptariDatum(d: string): boolean {
-  if (!DATUM_RE.test(d)) return false;
-  const [evStr, hoStr, napStr] = d.split('-');
-  const ev = Number(evStr);
-  const ho = Number(hoStr);
-  const nap = Number(napStr);
-  if (ev < 2000 || ev > 2100) return false;
-  const dt = new Date(Date.UTC(ev, ho - 1, nap));
-  return dt.getUTCFullYear() === ev && dt.getUTCMonth() === ho - 1 && dt.getUTCDate() === nap;
-}
 
 function opcionalis(fd: FormData, key: string, max: number, cimke: string, errors: RiportErrors): string | null {
   const v = mezo(fd, key);
