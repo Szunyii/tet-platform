@@ -84,7 +84,7 @@ Kategóriák (`KATEGORIAK`): `kulcs`, `cimke`, `leiras` (egy sor), `ikon` (lucid
 | `palyazat` | Pályázati felhívás, rendezvény részvételi lehetőség | nem |
 | `egyuttmukodes` | Együttműködési lehetőségek (kutatási / technológiai / oktatási / pályázati / üzleti), partnerkeresés | nem |
 
-Kulcsszavak (`KULCSSZAVAK`, 33 db, ebben a sorrendben): Innováció; Innovációs
+Kulcsszavak (`KULCSSZAVAK`, 32 db, ebben a sorrendben): Innováció; Innovációs
 ökoszisztéma; Tudomány; Tudományos együttműködés; Technológia;
 Technológiafejlesztés; Egyetem; Felsőoktatás; Kutatás; K+F / KFI; Startup;
 Scaleup; Mesterséges intelligencia / AI; Nemzetközi együttműködés; Rendezvény;
@@ -288,6 +288,15 @@ konténerben.
 - DB hiba: az action elkapja (`unstable_rethrow` után), `{ errors: { form: 'Mentés
   sikertelen, próbáld újra.' } }`, szerver-oldali `console.error`. A `requireSession()`
   és a `redirect()` a `try`-on kívül.
+
+Megvalósítás: `docs/superpowers/plans/2026-09-08-riportok.md`. Eltérések a spechez képest:
+natív `<input type="date">` (nem shadcn `Calendar`); a kulcsszó-választó Base UI combobox
+chipekkel (Escape zárt lenyíló mellett nem üríti a kiválasztást); a kategória-kártyán nincs
+pipa, a kiválasztást keret + ring jelzi; nincs drag-and-drop zóna, a csatolmány gombbal +
+natív fájlválasztóval megy; a listában a tárgy a link, nem a teljes sor (a11y); a
+`KATEGORIAK`-ban `rovid` és `szin` van, az ikonok a komponensben; a `parseRiportForm` második
+paramétere a meglévő csatolmányok id-listája (nem a darabszámuk); a letöltő route
+`Content-Disposition` fejléce RFC 5987 `filename*` + ASCII `filename` fallback.
 
 ## Ellenőrzés
 

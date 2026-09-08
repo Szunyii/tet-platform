@@ -1,5 +1,5 @@
 // Determinisztikus dummy pontszámok a doksi logikája szerint (poszt id + szempont id alapján)
-import { CRITERIA, POSTS, SCORE_THRESHOLD, type Post } from './data';
+import { CRITERIA, SCORE_THRESHOLD, type Post } from './data';
 
 export function sc(p: Post, i: number): number {
   const j = (((p.id * 37 + i * 13) % 9) / 9 - 0.44) * 1.75;
@@ -29,16 +29,6 @@ export const RISK_COLORS: Record<string, string> = {
   Alacsony: '#0f7a68', Közepes: '#a86a00', Magas: '#b3261e',
 };
 
-export function blk(p: Post, i: number): boolean {
-  return ((p.id * 29 + i * 11) % 10) < Math.round(p.base * 2.05 - 1.2);
-}
-
-export function blkCount(p: Post): number {
-  let n = 0;
-  for (let i = 0; i < 7; i++) if (blk(p, i)) n++;
-  return n;
-}
-
 export function fmt(v: number): string {
   return v.toFixed(1).replace('.', ',');
 }
@@ -64,25 +54,4 @@ const PILL_COLORS: Record<string, [string, string]> = {
 export function pill(t: string): { t: string; bg: string; fg: string } {
   const c = PILL_COLORS[t] || ['#f0f2f5', '#6b7684'];
   return { t, bg: c[0], fg: c[1] };
-}
-
-export function repStatusOf(p: Post): string {
-  const n = blkCount(p);
-  if (n === 7) return 'Elfogadva';
-  if (n >= 5) return 'Beadva';
-  if (n >= 3) return 'Hiányos';
-  return 'Visszaküldve';
-}
-
-export interface Report {
-  id: string; post: Post; orszag: string; attase: string;
-  ciklus: string; st: string; blokkok: number;
-}
-
-export function reports(cycle: string): Report[] {
-  return POSTS.map((p) => ({
-    id: 'RPT-' + cycle.replace(' ', '') + '-' + (100 + p.id),
-    post: p, orszag: p.orszag, attase: p.attase, ciklus: cycle,
-    st: repStatusOf(p), blokkok: blkCount(p),
-  }));
 }

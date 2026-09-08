@@ -1,4 +1,4 @@
-// Demóadatok a TéT Platform doksiból (14 poszt, 3 kategória, 14 szempont, 7 riportblokk, ticketek)
+// Demóadatok a TéT Platform doksiból (14 poszt, 3 kategória, 14 szempont, ticketek)
 
 export const FIELDS = [
   'Mesterséges intelligencia',
@@ -220,61 +220,6 @@ export const POSTS: Post[] = [
     esemenyek: [{ n: 'Agrishow előkészítő', t: 'Workshop', d: '2026-12-03', rel: 'Közepes' }],
     politika: { irany: 'Semleges', kockazat: 'Közepes', megj: 'A szövetségi és tartományi szabályozás eltér, a szerződéskötés hosszú.' },
     tanulsag: 'A tartományi ügynökségek (pl. FAPESP) gyorsabbak, mint a szövetségi csatorna – ott kell kezdeni.',
-  },
-];
-
-export interface BlockDef {
-  k: string; nev: string; hint: string; ph: string;
-  selects?: { l: string; o: string[] }[];
-  cols?: string[]; rowPh?: string[];
-  chips?: boolean;
-}
-export const BLOCKS: BlockDef[] = [
-  {
-    k: 'kf', nev: 'K+F helyzetkép', hint: 'Az adott ország kutatás-fejlesztési helyzetének strukturált értékelése a ciklusban.',
-    selects: [
-      { l: 'K+F intenzitás trend', o: ['Növekvő', 'Stagnáló', 'Csökkenő'] },
-      { l: 'Állami K+F prioritás', o: ['Kiemelt', 'Közepes', 'Alacsony'] },
-      { l: 'Magyar jelenlét szintje', o: ['Erős', 'Kialakuló', 'Nincs'] },
-    ],
-    ph: 'Fő szereplők, K+F ráfordítás alakulása, változások az elmúlt ciklushoz képest.',
-  },
-  {
-    k: 'int', nev: 'Ajánlott kutatóintézmények', hint: 'Konkrét intézmények, akikkel a NIÜ-nek érdemes felvennie a kapcsolatot.',
-    cols: ['Intézmény', 'Típus', 'Terület', 'Nyitottság 1–5'], rowPh: ['pl. Fraunhofer IZM', 'Kutatóintézet', 'Mikroelektronika', '4'],
-    ph: 'Miért ők, milyen belépési ponton és kinek a közvetítésével.',
-  },
-  {
-    k: 'pal', nev: 'Pályázati és finanszírozási lehetőségek', hint: 'Nyitott vagy várható kiírások, magyar részvételi feltételekkel.',
-    cols: ['Kiíró', 'Program', 'Keret', 'Határidő'], rowPh: ['pl. BMBF', '2+2 call', '1,5 M €', '2026-09-30'],
-    ph: 'Részvételi feltételek, javasolt konzorciumi partnerek, előkészítési igény.',
-  },
-  {
-    k: 'tech', nev: 'Technológiai fókuszterületek', hint: 'Mely területeken van reális magyar belépési pont az adott országban.',
-    chips: true, ph: 'Miért ezek a területek, milyen magyar kapacitásra épülhet a belépés.',
-  },
-  {
-    k: 'ev', nev: 'Események, workshopok, konferenciák', hint: 'Ciklusban releváns rendezvények, ahol magyar jelenlét indokolt.',
-    cols: ['Esemény', 'Típus', 'Dátum', 'NIÜ-relevancia'], rowPh: ['pl. SEMICON West', 'Szakkiállítás', '2026-07-07', 'Magas'],
-    ph: 'Javasolt magyar részvétel formája, várható kimenet.',
-  },
-  {
-    k: 'pol', nev: 'Politikai és szabályozási környezet', hint: 'Amit a helyi politikáról és szabályozásról tudni kell a döntés előtt.',
-    selects: [
-      { l: 'Szabályozási irány', o: ['Nyitó', 'Semleges', 'Szigorító'] },
-      { l: 'Kockázati szint', o: ['Alacsony', 'Közepes', 'Magas'] },
-      { l: 'Változás valószínűsége 12 hónapon belül', o: ['Kicsi', 'Közepes', 'Nagy'] },
-    ],
-    ph: 'Konkrét szabályozási tételek, várható változások, ezek hatása a magyar szereplőkre.',
-  },
-  {
-    k: 'tan', nev: 'Tanulási javaslatok', hint: 'Átadható tanulság: mit tegyen másképp a NIÜ vagy egy másik poszt.',
-    selects: [
-      { l: 'Javaslat típusa', o: ['Szakpolitikai', 'Intézményi', 'Vállalati', 'Finanszírozási'] },
-      { l: 'Címzett', o: ['NIÜ vezetés', 'XPAND program', 'Szakmai főosztály', 'Másik TéT poszt'] },
-      { l: 'Sürgősség', o: ['Azonnali', 'Ciklus közbeni', 'Következő ciklus'] },
-    ],
-    ph: 'Egy-két mondatban a tanulság, és hogy pontosan mit javasolsz.',
   },
 ];
 

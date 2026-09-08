@@ -1,7 +1,7 @@
 # NIÜ · TéT Platform – Next.js dummy demó
 
 Egyszerű Next.js (App Router, TypeScript) demóprojekt a „TéT Platform" design-doksi alapján.
-A képernyők adatai egyelőre statikus dummy adatok (`lib/data.ts`); az auth és az adatbázis-réteg már valódi (lásd lent).
+A térkép, a kommunikáció, a tudástár és a monitoring képernyő még statikus dummy adatokból dolgozik (`lib/data.ts`, `lib/knowledge.ts`); az auth, a felhasználó-kezelés és a riportok (információs bejegyzések) már valódi adatbázisból (lásd lent).
 
 ## Indítás
 
@@ -34,8 +34,10 @@ Ezután nyisd meg: http://localhost:3000
 | --- | --- |
 | `/` | Átirányítás az Országprofil (`/terkep`) képernyőre |
 | `/terkep` | Térkép és országprofil (d3-geo világtérkép, kattintható posztok) |
-| `/riportok` | Riportlista + aggregált kimutatás |
-| `/uj-riport` | Új riport kitöltése (7 blokkos varázsló, nem perzisztens) |
+| `/riportok` | Információs bejegyzések listája szűrőkkel (attasé: saját, admin: mind) |
+| `/riportok/[id]` | Bejegyzés részletei, csatolmány-letöltés |
+| `/riportok/[id]/szerkesztes` | Bejegyzés szerkesztése |
+| `/uj-riport` | Új bejegyzés (kategória, tárgy, leírás, kulcsszavak, rendezvény adatai, csatolmány) |
 | `/kommunikacio` | Ticketek és üzenetszálak |
 | `/tudastar` | Tudástár – Magyarországról ajánlható programok, partnerek, együttműködési formák |
 | `/monitoring` | Hálózati rangsor + 14 szempontos részletes értékelés |
@@ -44,11 +46,23 @@ Ezután nyisd meg: http://localhost:3000
 
 ## Felépítés
 
-- `lib/data.ts` – demóadatok: 14 poszt, 3 kategória, 14 értékelési szempont, 7 riportblokk, ticketek
+- `lib/data.ts` – demóadatok: 14 poszt, 3 kategória, 14 értékelési szempont, ticketek
 - `lib/knowledge.ts` – tudástár demóadatok: 6 program, 6 ökoszisztéma-elem, 5 együttműködési forma
 - `lib/score.ts` – determinisztikus dummy pontszámok és státuszok (a doksi logikája szerint)
+- `lib/riport-szotar.ts` – kategóriák, kulcsszavak, csatolmány-limit
+- `components/riport/` – a bejegyzés űrlap, lista és részlet komponensei
+- `components/form/` – megosztott form-minta (`useMuveletForm`, `MezoHiba`)
 - `components/AppShell.tsx` – sidebar, fejléc (bejelentkezett felhasználó, kijelentkezés), ciklusváltó (React context)
 - `public/tet-world-map.js` – `<tet-world-map>` webkomponens (d3 + world-atlas, CDN-ről töltődik)
 
 Megjegyzés: a térkép internetkapcsolatot igényel (d3, topojson és a world-atlas TopoJSON CDN-ről jön).
+
+## Ismert korlátok / következő lépések
+
+- A bejegyzés-lista lapozás nélküli: minden találat egy oldalon jelenik meg.
+- A szabadszavas keresés SQLite `LIKE`, ami ékezetes nagybetűre nem kis-nagybetű-független
+  (az „Ő" nem találja meg az „ő"-t); ékezet nélküli betűkre igen.
+- A kategória-színek (`KATEGORIAK.szin`) világos módra készültek, nincs `dark:` párjuk.
+- Felhasználó törlésekor a bejegyzései és a csatolmányaik is törlődnek (FK cascade);
+  távozó attasénál ezért a tiltás a javasolt művelet, nem a törlés.
 # tet-platform
