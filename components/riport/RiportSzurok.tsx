@@ -17,6 +17,60 @@ function szuroErtek(v: string | null): string {
   return v === null || v === MIND ? '' : v;
 }
 
+interface SzuroOpcio {
+  ertek: string;
+  cimke: string;
+}
+
+/**
+ * Egy szűrő-legördülő „Mind" opcióval. A trigger `role=combobox` gomb, amire a `<label for>`
+ * nem minden AT-nél számít névnek, ezért `aria-labelledby`: a címke id-ja + a sajátja
+ * (így a név a „címke + aktuális érték").
+ */
+function SzuroSelect({
+  id,
+  cimke,
+  ertek,
+  opciok,
+  onChange,
+  className,
+}: {
+  id: string;
+  cimke: string;
+  ertek: string;
+  opciok: readonly SzuroOpcio[];
+  onChange: (v: string) => void;
+  className?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label id={`${id}-label`} htmlFor={id}>
+        {cimke}
+      </Label>
+      <Select
+        value={ertek || MIND}
+        onValueChange={(v) => onChange(szuroErtek(v))}
+        items={{ [MIND]: 'Mind', ...Object.fromEntries(opciok.map((o) => [o.ertek, o.cimke])) }}
+      >
+        <SelectTrigger id={id} aria-labelledby={`${id}-label ${id}`} className={className}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={MIND}>Mind</SelectItem>
+          {opciok.map((o) => (
+            <SelectItem key={o.ertek} value={o.ertek}>
+              {o.cimke}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+const KATEGORIA_OPCIOK: SzuroOpcio[] = KATEGORIAK.map((k) => ({ ertek: k.kulcs, cimke: k.rovid }));
+const KULCSSZO_OPCIOK: SzuroOpcio[] = KULCSSZAVAK.map((k) => ({ ertek: k, cimke: k }));
+
 export function RiportSzurok({
   ertekek,
   orszagok,
@@ -34,22 +88,36 @@ export function RiportSzurok({
   // A legfrissebb URL-szűrők és keresőszöveg, hogy a `frissit` referenciája stabil maradjon
   // (így a debounce effekt nem indul újra minden szülő-renderre).
   const ertekekRef = useRef(ertekek);
-  ertekekRef.current = ertekek;
   const qRef = useRef(q);
-  qRef.current = q;
+  // Amit legutóbb magunk küldtünk az URL-be: ehhez mérjük, hogy az `ertekek.q` változása
+  // a saját navigációnk visszhangja-e, vagy valódi külső változás.
+  const kuldottQRef = useRef(ertekek.q);
+
+  // Render közben nem írunk refet; ez az effekt a debounce effekt ELŐTT van deklarálva,
+  // ezért ugyanabban a commitban már a friss értékeket látja.
+  useEffect(() => {
+    ertekekRef.current = ertekek;
+    qRef.current = q;
+  });
 
   const frissit = useCallback(
     (valtozas: Partial<SzuroErtekek>) => {
       const uj = { ...ertekekRef.current, q: qRef.current, ...valtozas };
+      kuldottQRef.current = uj.q;
       const sp = new URLSearchParams();
       for (const [k, v] of Object.entries(uj)) if (v) sp.set(k, v);
-      startTransition(() => router.replace(sp.size ? `${pathname}?${sp}` : pathname));
+      const qs = sp.toString();
+      startTransition(() => router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false }));
     },
     [pathname, router],
   );
 
-  // Ha az URL más úton változik (vissza gomb, „Szűrők törlése"), a kereső kövesse.
+  // Csak a valóban külső URL-változást – vissza gomb, „Szűrők törlése" – írjuk vissza a
+  // mezőbe; a saját, közben elavult navigációnk visszhangját nem, különben a szerver
+  // válaszáig begépelt karaktereket elnyelné a mező.
   useEffect(() => {
+    if (ertekek.q === kuldottQRef.current) return;
+    kuldottQRef.current = ertekek.q;
     setQ(ertekek.q);
   }, [ertekek.q]);
 
@@ -64,9 +132,6 @@ export function RiportSzurok({
   }, [q, frissit]);
 
   const vanAktiv = Object.values(ertekek).some(Boolean);
-  const kategoriaCimke = Object.fromEntries(KATEGORIAK.map((k) => [k.kulcs, k.rovid]));
-  const kulcsszoCimke = Object.fromEntries(KULCSSZAVAK.map((k) => [k, k]));
-  const orszagCimke = Object.fromEntries(orszagok.map((o) => [o, o]));
 
   return (
     <div
@@ -82,85 +147,31 @@ export function RiportSzurok({
           onChange={(e) => setQ(e.target.value)}
         />
       </div>
-      <div className="flex flex-col gap-1.5">
-        <Label id="szuro-kategoria-label" htmlFor="szuro-kategoria">
-          Kategória
-        </Label>
-        <Select
-          value={ertekek.kategoria || MIND}
-          onValueChange={(v) => frissit({ kategoria: szuroErtek(v) })}
-          items={{ [MIND]: 'Mind', ...kategoriaCimke }}
-        >
-          <SelectTrigger
-            id="szuro-kategoria"
-            aria-labelledby="szuro-kategoria-label szuro-kategoria"
-            className="w-44"
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={MIND}>Mind</SelectItem>
-            {KATEGORIAK.map((k) => (
-              <SelectItem key={k.kulcs} value={k.kulcs}>
-                {k.rovid}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label id="szuro-kulcsszo-label" htmlFor="szuro-kulcsszo">
-          Kulcsszó
-        </Label>
-        <Select
-          value={ertekek.kulcsszo || MIND}
-          onValueChange={(v) => frissit({ kulcsszo: szuroErtek(v) })}
-          items={{ [MIND]: 'Mind', ...kulcsszoCimke }}
-        >
-          <SelectTrigger
-            id="szuro-kulcsszo"
-            aria-labelledby="szuro-kulcsszo-label szuro-kulcsszo"
-            className="w-56"
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={MIND}>Mind</SelectItem>
-            {KULCSSZAVAK.map((k) => (
-              <SelectItem key={k} value={k}>
-                {k}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <SzuroSelect
+        id="szuro-kategoria"
+        cimke="Kategória"
+        ertek={ertekek.kategoria}
+        opciok={KATEGORIA_OPCIOK}
+        onChange={(v) => frissit({ kategoria: v })}
+        className="w-44"
+      />
+      <SzuroSelect
+        id="szuro-kulcsszo"
+        cimke="Kulcsszó"
+        ertek={ertekek.kulcsszo}
+        opciok={KULCSSZO_OPCIOK}
+        onChange={(v) => frissit({ kulcsszo: v })}
+        className="w-56"
+      />
       {admin && (
-        <div className="flex flex-col gap-1.5">
-          <Label id="szuro-orszag-label" htmlFor="szuro-orszag">
-            Ország
-          </Label>
-          <Select
-            value={ertekek.orszag || MIND}
-            onValueChange={(v) => frissit({ orszag: szuroErtek(v) })}
-            items={{ [MIND]: 'Mind', ...orszagCimke }}
-          >
-            <SelectTrigger
-              id="szuro-orszag"
-              aria-labelledby="szuro-orszag-label szuro-orszag"
-              className="w-44"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={MIND}>Mind</SelectItem>
-              {orszagok.map((o) => (
-                <SelectItem key={o} value={o}>
-                  {o}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <SzuroSelect
+          id="szuro-orszag"
+          cimke="Ország"
+          ertek={ertekek.orszag}
+          opciok={orszagok.map((o) => ({ ertek: o, cimke: o }))}
+          onChange={(v) => frissit({ orszag: v })}
+          className="w-44"
+        />
       )}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="szuro-tol">Beadva ettől</Label>
@@ -186,7 +197,8 @@ export function RiportSzurok({
           variant="ghost"
           onClick={() => {
             setQ('');
-            startTransition(() => router.replace(pathname));
+            kuldottQRef.current = '';
+            startTransition(() => router.replace(pathname, { scroll: false }));
           }}
         >
           Szűrők törlése

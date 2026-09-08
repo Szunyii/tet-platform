@@ -75,3 +75,14 @@ export function ervenyesNaptariDatum(d: string): boolean {
   const dt = new Date(Date.UTC(ev, ho - 1, nap));
   return dt.getUTCFullYear() === ev && dt.getUTCMonth() === ho - 1 && dt.getUTCDate() === nap;
 }
+
+/**
+ * `YYYY-MM-DD` → `YYYY. MM. DD.` (magyar forma), tisztán string-alapon: nincs `Date` és
+ * nincs időzóna, így a tárolt naptári nap sosem csúszik el. Érvénytelen bemenetet
+ * változatlanul ad vissza.
+ */
+export function formatNaptariDatum(d: string): string {
+  if (!ervenyesNaptariDatum(d)) return d;
+  const [ev, ho, nap] = d.split('-');
+  return `${ev}. ${ho}. ${nap}.`;
+}

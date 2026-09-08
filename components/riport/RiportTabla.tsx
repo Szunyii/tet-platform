@@ -1,18 +1,11 @@
 import { PaperclipIcon } from 'lucide-react';
 import Link from 'next/link';
 import type { RiportListItem } from '../../db/queries/riport';
-import { formatDatum } from '../../lib/datum';
-import { kategoriaByKulcs } from '../../lib/riport-szotar';
-import { cn } from '../../lib/utils';
+import { formatDatum, formatNaptariDatum } from '../../lib/datum';
 import { Badge } from '../ui/badge';
 import { buttonVariants } from '../ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-
-/** A kategória színes címkéje; a részletnézet (`RiportReszlet`) is ezt használja. */
-export function KategoriaBadge({ kulcs }: { kulcs: RiportListItem['kategoria'] }) {
-  const k = kategoriaByKulcs(kulcs);
-  return <Badge className={cn('border-transparent', k.szin)}>{k.rovid}</Badge>;
-}
+import { KategoriaBadge } from './KategoriaBadge';
 
 export function RiportTabla({
   sorok,
@@ -62,12 +55,15 @@ export function RiportTabla({
               <TableCell className="max-w-md">
                 <Link
                   href={`/riportok/${r.id}`}
+                  title={r.targy}
                   className="block truncate font-medium underline-offset-2 hover:underline"
                 >
                   {r.targy}
                 </Link>
                 {r.esemenyDatum && (
-                  <span className="text-xs text-muted-foreground">Esemény: {r.esemenyDatum}</span>
+                  <span className="text-xs text-muted-foreground">
+                    Esemény: {formatNaptariDatum(r.esemenyDatum)}
+                  </span>
                 )}
               </TableCell>
               <TableCell>
