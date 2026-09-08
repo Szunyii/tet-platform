@@ -57,7 +57,8 @@ const MEGEROSITES: Record<Megerosites, MegerositesLeiras> = {
   },
   torol: {
     cim: 'Fiók végleges törlése',
-    leiras: 'Ez nem vonható vissza. A felhasználó sessionjei is törlődnek.',
+    leiras:
+      'Ez nem vonható vissza. A felhasználó sessionjei és az összes bejegyzése (riportja) a csatolmányaival együtt is törlődik. Távozó attasénál a tiltás a javasolt művelet.',
     gomb: 'Törlés',
     siker: 'Fiók törölve.',
     veszelyes: true,

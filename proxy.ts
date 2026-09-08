@@ -12,6 +12,8 @@ import { NextResponse, type NextRequest } from 'next/server';
 //
 // Nem GET kérést (server action POST) átengedünk: a 307 a POST-ot is a login oldalra
 // irányítaná, ami hibát ad; az action saját requireSession()-je szabályosan redirectel.
+// Ez azt is jelenti, hogy cookie nélkül is pufferelődik a body a proxyClientMaxBodySize-ig
+// (50 MB), ezért éles környezetben a reverse proxyn is legyen client_max_body_size.
 //
 // A getSessionCookie() a Better Auth alapértelmezett cookie-nevét keresi
 // (better-auth.session_token, HTTPS-en __Secure- prefixszel). Ha a lib/auth.ts
