@@ -1,6 +1,6 @@
 # Riportok – kategorizált információs bejegyzések – tervezési spec
 
-Dátum: 2026-09-07
+Dátum: 2026-09-07 (frissítve 2026-09-08 a login-feature után)
 Állapot: jóváhagyva
 
 ## Cél
@@ -27,17 +27,38 @@ A régi, 7 blokkos ciklus-riport koncepció **teljesen kikerül** a riport oldal
 | Részlet | Saját oldal `/riportok/[id]` | Linkelhető, hely a csatolmányoknak, szerkesztés ugyanazzal az űrlappal. |
 | Form-library | Nincs; natív `<form>` + Server Action + `useActionState` | Kis űrlap, egy feltételes szabály; nincs új függőség. |
 
-## Előfeltétel: minimális login (külön spec és plan)
+## Előfeltétel: login (kész, a `main`-en)
 
-Ez a spec az alábbi interfészt várja el a login-lépéstől:
+A login-feature (`2026-09-07-login-felhasznalok-design.md`) elkészült; ez a spec az
+ott megvalósult interfészre épül:
 
-- `lib/session.ts`: `requireSession()` szerver-oldali helper, visszatér:
-  `{ userId: string; name: string; role: 'admin' | 'attase'; orszag: string | null }`.
-  Bejelentkezés hiányában `redirect('/login')`.
-- `user` táblán új `orszag` mező (attasénál kötelező, adminnál üres).
-- Az `AppShell` dummy szerep-/posztkapcsolója helyett a valódi session.
+- `lib/session.ts` (`server-only`): `getSession()` (`React.cache`), `requireSession()`
+  → `AppSession = { userId, name, email, role: 'admin' | 'attase', orszag: string | null }`,
+  bejelentkezés hiányában `redirect(LOGIN_ROUTE)`; `requireAdmin()` → `notFound()`.
+  Mindig `await`, soha `try/catch`-en belül.
+- `user.orszag` (attasénál kötelező, adminnál üres) – a bejegyzés `orszag` mezője
+  ebből másolódik.
+- A védett oldalak az `app/(app)/` route groupban vannak; az `app/(app)/layout.tsx`
+  `requireSession()`-t hív, és az `AppShell` propként kapja a usert. A `titleFor`
+  már prefix-egyezéssel ad címet (`/riportok/abc` → „Riportok”).
+- Kész shadcn komponensek: `alert-dialog`, `sonner` (Toaster a gyökér layoutban),
+  `badge`, `button`, `card`, `dialog`, `dropdown-menu`, `input`, `label`, `select`,
+  `table`, `textarea`, `tabs`, `separator`.
+- Kialakult form-minta (`app/(app)/felhasznalok/components/`): `useMuveletForm`
+  (`useActionState` wrapper: siker-toast, action-elutasítás → űrlap-hiba,
+  `unstable_rethrow`, fókusz az első hibás mezőre), `MezoHiba` + `hibaAttr`
+  (`<mezo>-hiba` id-k, `aria-invalid`/`aria-describedby`), vezérelt mezők (a React 19
+  a `<form action>` után resetel), `MuveletDialog`. A riport-feature a mezőszintű
+  részeket (`MezoHiba`, `hibaAttr`, a hook) `components/form/` alá költözteti, hogy
+  mindkét feature ugyanazt használja.
+- Server action minta: `requireSession()` a `try`-on kívül, Better Auth/DB hiba
+  → `{ errors }`, `unstable_rethrow` a `catch` elején.
 
-Amíg a login nincs kész, ez a feature nem indítható el; a plan a login plan után jön.
+Kiegészítés a session-rétegen (ebben a feature-ben): a `requireSession()` őrizze meg
+a cél útvonalat (`redirect(LOGIN_ROUTE + '?next=' + path)`), mert a riport mélylinkek
+(`/riportok/[id]`) elavult cookie-val a proxyn átjutnak, és a login után a `/terkep`-re
+kerülne a felhasználó. Megoldás: a `proxy.ts` `x-pathname` fejlécet ad a kérésnek
+(`NextResponse.next({ request: { headers } })`), a `requireSession()` ezt olvassa.
 
 ## Hatókörön kívül
 
@@ -157,14 +178,14 @@ hiba kulcsa `csatolmany`.
 
 ### Server actions
 
-`app/uj-riport/actions.ts`:
+`app/(app)/uj-riport/actions.ts`:
 - `createRiportAction(prev: RiportFormState, formData): Promise<RiportFormState>` –
   `requireSession()`; attasénál `orszag` kötelező (ha `null`, általános hiba:
   „A fiókodhoz nincs ország rendelve.”); `parseRiportForm`; fájlok
   `arrayBuffer()` → `Buffer`; `createRiport`; `revalidatePath('/riportok')`;
   `redirect('/riportok/' + id)`. Hibánál `{ errors }` visszaadása.
 
-`app/riportok/actions.ts`:
+`app/(app)/riportok/actions.ts`:
 - `updateRiportAction(id, prev, formData)` – `requireSession`, `getRiport`,
   `canEditRiport` különben `{ errors: { form: 'Nincs jogosultságod.' } }`;
   a form `torlendoCsatolmany[]` mezőit is olvassa; darab-limit ellenőrzés;
@@ -172,7 +193,9 @@ hiba kulcsa `csatolmany`.
 - `deleteRiportAction(id)` – jog-ellenőrzés, `deleteRiport`, revalidate,
   `redirect('/riportok')`.
 
-`RiportFormState = { errors?: RiportErrors & { form?: string } }`.
+`RiportFormState = { ok?: boolean; errors?: RiportErrors & { form?: string } }` (a
+`MuveletState`-tel azonos alak, hogy a közös hook kezelje). Sikeres létrehozás /
+módosítás után `redirect` a részletre; törlés után `redirect('/riportok')`.
 
 ### Letöltés
 
@@ -185,33 +208,35 @@ filename*=UTF-8''<encoded>`.
 
 Minden új felület shadcn/ui + Tailwind; a régi `.card`/`.tbl`/inline-style
 világot ezek az oldalak nem használják. Hozzáadandó shadcn komponensek:
-`popover`, `command`, `calendar`, `collapsible`, `alert-dialog`, `sonner`,
-`tooltip`, `skeleton`. (A `sonner` `Toaster`-e a `layout.tsx`-be kerül.)
+`popover`, `command`, `calendar`, `collapsible`, `tooltip`, `skeleton` (az
+`alert-dialog` és a `sonner` már megvan, a Toaster a gyökér layoutban).
 
 ### Route-ok
 
 | Route | Fájl | Felelősség |
 | --- | --- | --- |
-| `/uj-riport` | `app/uj-riport/page.tsx` | Server Component. `requireSession()`. `<RiportForm mode="create" action={createRiportAction} />`. |
-| `/riportok` | `app/riportok/page.tsx` | Server Component. `requireSession()`; `searchParams` → `RiportFilter` (attasénál `szerzoId` kényszerítve); `listRiportok`; admin esetén `listOrszagok`. Rendereli a fejlécet, `RiportSzurok`, `RiportTabla`. |
-| `/riportok/[id]` | `app/riportok/[id]/page.tsx` | `getRiport`; nincs vagy `!canViewRiport` → `notFound()`. Részletnézet. |
-| `/riportok/[id]/szerkesztes` | `app/riportok/[id]/szerkesztes/page.tsx` | Mint fent, plusz `!canEditRiport` → `notFound()`. `<RiportForm mode="edit" initial={...} action={updateRiportAction.bind(null, id)} />`. |
+| `/uj-riport` | `app/(app)/uj-riport/page.tsx` | Server Component. `requireSession()`. `<RiportForm mode="create" action={createRiportAction} />`. A régi 7 blokkos kliens-oldali űrlap törlődik. |
+| `/riportok` | `app/(app)/riportok/page.tsx` | Server Component. `requireSession()`; `searchParams` → `RiportFilter` (attasénál `szerzoId` kényszerítve); `listRiportok`; admin esetén `listOrszagok`. Rendereli a fejlécet, `RiportSzurok`, `RiportTabla`. A régi demó kimutatás/riportlista törlődik. |
+| `/riportok/[id]` | `app/(app)/riportok/[id]/page.tsx` | `getRiport`; nincs vagy `!canViewRiport` → `notFound()` (az `app/(app)/not-found.tsx` az AppShellben). Részletnézet. |
+| `/riportok/[id]/szerkesztes` | `app/(app)/riportok/[id]/szerkesztes/page.tsx` | Mint fent, plusz `!canEditRiport` → `notFound()`. `<RiportForm mode="edit" initial={...} action={updateRiportAction.bind(null, id)} />`. |
 
 Az `AppShell.tsx` `NAV` címkéi: „Riportok” (`/riportok`), „Új bejegyzés”
-(`/uj-riport`). `TITLES`: a `/riportok/...` prefixre „Riportok” cím, ehhez a
-pontos egyezés helyett prefix-egyezés a lookupban.
+(`/uj-riport`); a `TITLES` alcímei a bejegyzés-modellre frissülnek. A prefix-egyezés
+(`titleFor`) már megvan.
 
 ### Komponensek (`components/riport/`)
 
 Megosztottak, mert az új és a szerkesztő route is használja.
 
-- `RiportForm.tsx` (`'use client'`) – natív `<form action={...}>` +
-  `useActionState`. Prop: `mode: 'create' | 'edit'`, `initial?: RiportDetail`,
-  `action`. Állapot: kiválasztott kategória (a feltételes blokkhoz), kulcsszavak,
-  fájlok. Beküldés alatt gomb letiltva + spinner (`useFormStatus`). Hibánál az
-  első hibás mezőre görget (`scrollIntoView`). Az űrlap értékei hiba után
-  megmaradnak (a kliens állapot tartja), a fájlválasztás nem: ezt a hibaüzenet
-  jelzi. Gombok: „Mégse” (vissza), „Bejegyzés beadása” / „Módosítások mentése”.
+- `RiportForm.tsx` (`'use client'`) – natív `<form action={...}>` a közös
+  `useMuveletForm` hookkal (siker: toast; a redirect az actionben történik). Prop:
+  `mode: 'create' | 'edit'`, `initial?: RiportDetail`, `action`. Minden szöveges mező
+  vezérelt (React 19 reset), a kategória, a kulcsszavak és a fájlok is state-ben.
+  Beküldés alatt gomb letiltva + „Mentés…”. Hibánál a hook az első hibás mezőre
+  fókuszál (a mező id-ja = a hiba kulcsa; a kategória-rács és a kulcsszó-választó
+  fókuszálható gyökérelemet kap ezzel az id-val). A fájlválasztás hiba után nem
+  marad meg: ezt a hibaüzenet jelzi. Mezőhibák: `MezoHiba` + `hibaAttr`. Gombok:
+  „Mégse” (vissza), „Bejegyzés beadása” / „Módosítások mentése”.
 - `KategoriaValaszto.tsx` – 6 kártya rácsban (ikon, címke, egysoros leírás),
   rádió-szemantika (`role="radiogroup"`, billentyűzettel léptethető), a
   kiválasztott kártya színes kerettel és pipával. Rejtett `<input name="kategoria">`.
@@ -233,7 +258,7 @@ Megosztottak, mert az új és a szerkesztő route is használja.
   `Select`, kulcsszó `Select`, admin esetén ország `Select`, dátumtartomány
   (két dátum). Minden szűrő az URL `searchParams`-ban (`router.replace`), így
   megosztható és a szerver szűr. „Szűrők törlése” gomb, ha bármelyik aktív.
-- `RiportTabla.tsx` – shadcn `Table`. Oszlopok: dátum (`created_at`, `YYYY-MM-DD`),
+- `RiportTabla.tsx` – shadcn `Table` (Server Component, adat propként). Oszlopok: dátum (`created_at`, `formatDatum` a `lib/datum.ts`-ből),
   kategória `Badge` (kategóriánként rögzített szín a szótárban), tárgy (link a
   részletre, 1 sor, ellipszis), ország · szerző (adminnál; attasénál csak ország),
   kulcsszavak (max 3 chip + „+N”), csatolmány ikon + darabszám. Sor kattintható.
@@ -260,13 +285,16 @@ konténerben.
   `useActionState` hibaágán általános üzenet: „A csatolmányok együtt túl nagyok.”
 - Jogosultsági hiba action-ben: általános üzenet, részletek nélkül. Oldalon:
   `notFound()` (nem árulja el, hogy létezik).
-- DB hiba: az action elkapja, `{ errors: { form: 'Mentés sikertelen, próbáld újra.' } }`,
-  szerver-oldali `console.error`.
+- DB hiba: az action elkapja (`unstable_rethrow` után), `{ errors: { form: 'Mentés
+  sikertelen, próbáld újra.' } }`, szerver-oldali `console.error`. A `requireSession()`
+  és a `redirect()` a `try`-on kívül.
 
 ## Ellenőrzés
 
 Nincs tesztkeretrendszer a projektben. Kötelező: `npx tsc --noEmit`,
-`npm run build`, `npm run db:migrate` üres DB-n. Manuális forgatókönyv:
+`npm run build`, `npm run db:migrate` üres DB-n. A manuális forgatókönyv a gstack
+headless böngészővel (`~/.claude/skills/gstack/browse/dist/browse`) is végigjárható;
+fájlfeltöltéshez az `upload <sel> <file>` parancs. Manuális forgatókönyv:
 
 1. Attasé: beküldés mind a 6 kategóriával; `rendezveny` dátum nélkül → mezőhiba.
 2. 0 kulcsszó → hiba; 6. kulcsszó nem választható.
