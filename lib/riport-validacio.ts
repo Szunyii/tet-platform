@@ -6,6 +6,7 @@
  */
 import {
   CSATOLMANY_LIMIT,
+  formatMeret,
   HELYSZIN_MAX,
   isKategoriaKulcs,
   isKulcsszo,
@@ -136,6 +137,24 @@ function parseFajlok(fajlok: File[], meglevoDb: number, errors: RiportErrors): E
     elfogadott.push({ file, mime, nev });
   }
   return elfogadott;
+}
+
+/**
+ * Kliens-oldali előellenőrzés a csatolmányokra: ugyanazokat a korlátokat nézi, mint a
+ * `parseFajlok`, de a beküldés előtt, azonnali visszajelzéshez. A szerver-oldali
+ * ellenőrzés ettől függetlenül lefut.
+ *
+ * @param fajlok a most kiválasztott (még be nem küldött) fájlok
+ * @param meglevoDb a bejegyzésen megmaradó, korábban feltöltött csatolmányok száma
+ */
+export function csatolmanyElocheck(fajlok: File[], meglevoDb: number): string | null {
+  const { maxDarab, maxMeret } = CSATOLMANY_LIMIT;
+  if (meglevoDb + fajlok.length > maxDarab) return `Legfeljebb ${maxDarab} csatolmány lehet egy bejegyzésen.`;
+  for (const f of fajlok) {
+    if (!mimeFromFajlnev(f.name)) return `Nem engedélyezett fájltípus: ${nevHibahoz(f.name)}.`;
+    if (f.size > maxMeret) return `Túl nagy fájl: ${nevHibahoz(f.name)} (max. ${formatMeret(maxMeret)}).`;
+  }
+  return null;
 }
 
 /**

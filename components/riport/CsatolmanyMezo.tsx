@@ -4,16 +4,18 @@ import { PaperclipIcon, XIcon } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
-import { CSATOLMANY_ACCEPT, CSATOLMANY_LIMIT, formatMeret, mimeFromFajlnev } from '../../lib/riport-szotar';
+import { CSATOLMANY_ACCEPT, CSATOLMANY_LIMIT, formatMeret } from '../../lib/riport-szotar';
+import type { MezoHibak } from '../../lib/urlap';
 import type { CsatolmanyMeta } from '../../db/queries/riport';
 
-export function csatolmanyElocheck(uj: File[], osszesDb: number): string | null {
-  if (osszesDb > CSATOLMANY_LIMIT.maxDarab) return `Legfeljebb ${CSATOLMANY_LIMIT.maxDarab} csatolmány lehet egy bejegyzésen.`;
-  for (const f of uj) {
-    if (!mimeFromFajlnev(f.name)) return `Nem engedélyezett fájltípus: ${f.name}.`;
-    if (f.size > CSATOLMANY_LIMIT.maxMeret) return `Túl nagy fájl: ${f.name} (max. 8 MB).`;
-  }
-  return null;
+/** Ugyanaz a fájl van-e már a listában (a File objektum azonossága nem elég: minden választás új példány). */
+function ugyanaz(a: File, b: File): boolean {
+  return a.name === b.name && a.size === b.size && a.lastModified === b.lastModified;
+}
+
+/** Listabeli kulcs: a fájl azonossága, nem az index (így az eltávolítás nem kever meg más sorokat). */
+function fajlKulcs(f: File): string {
+  return `${f.name}-${f.size}-${f.lastModified}`;
 }
 
 export function CsatolmanyMezo({
@@ -30,26 +32,32 @@ export function CsatolmanyMezo({
   meglevok?: CsatolmanyMeta[];
   torlendo?: string[];
   onTorlendo?: (idk: string[]) => void;
-  errors: Record<string, string>;
+  errors: MezoHibak;
   elocheckHiba: string | null;
 }) {
   const rejtett = useRef<HTMLInputElement>(null);
   const valaszto = useRef<HTMLInputElement>(null);
 
   // A beküldött fájlok forrása a state: a rejtett file-inputot ebből töltjük (DataTransfer).
+  // A rejtett file-inputot minden render után újratöltjük: a React a <form action> beküldése
+  // után form.reset()-et hív, ami a files listát kiüríti, a `fajlok` referencia viszont
+  // változatlan – egy [fajlok] dependency nem elég. Legfeljebb 5 elem, olcsó művelet.
   useEffect(() => {
     if (!rejtett.current) return;
     const dt = new DataTransfer();
     for (const f of fajlok) dt.items.add(f);
     rejtett.current.files = dt.files;
-  }, [fajlok]);
+  });
 
   const megmaradoDb = meglevok.length - torlendo.length;
   const hiba = elocheckHiba ?? errors.csatolmany;
 
   return (
     <div className="flex flex-col gap-2">
-      <Label htmlFor="csatolmany-valaszto">Csatolmány (max. 5 fájl, egyenként 8 MB; PDF, Word, Excel, PowerPoint, PNG, JPG)</Label>
+      <Label id="csatolmany-label">
+        Csatolmány (max. {CSATOLMANY_LIMIT.maxDarab} fájl, egyenként {formatMeret(CSATOLMANY_LIMIT.maxMeret)}; PDF, Word,
+        Excel, PowerPoint, PNG, JPG)
+      </Label>
       <input ref={rejtett} type="file" name="csatolmany" multiple hidden tabIndex={-1} aria-hidden />
       <input
         ref={valaszto}
@@ -59,13 +67,15 @@ export function CsatolmanyMezo({
         accept={CSATOLMANY_ACCEPT}
         className="hidden"
         onChange={(e) => {
-          const ujak = Array.from(e.target.files ?? []);
+          const ujak = Array.from(e.target.files ?? []).filter((u) => !fajlok.some((m) => ugyanaz(m, u)));
           e.target.value = '';
-          onFajlok([...fajlok, ...ujak]);
+          if (ujak.length > 0) onFajlok([...fajlok, ...ujak]);
         }}
       />
       <div
         id="csatolmany"
+        role="group"
+        aria-labelledby="csatolmany-label"
         tabIndex={-1}
         aria-invalid={hiba ? true : undefined}
         aria-describedby={hiba ? 'csatolmany-hiba' : undefined}
@@ -104,7 +114,7 @@ export function CsatolmanyMezo({
               );
             })}
             {fajlok.map((f, i) => (
-              <li key={`${f.name}-${i}`} className="flex items-center gap-2">
+              <li key={fajlKulcs(f)} className="flex items-center gap-2">
                 <span>{f.name}</span>
                 <span className="text-xs text-muted-foreground">{formatMeret(f.size)}</span>
                 <Button
@@ -123,7 +133,7 @@ export function CsatolmanyMezo({
         )}
       </div>
       {hiba && (
-        <p id="csatolmany-hiba" className="text-xs text-destructive">
+        <p id="csatolmany-hiba" role="status" className="text-xs text-destructive">
           {hiba}
         </p>
       )}

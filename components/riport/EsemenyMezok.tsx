@@ -3,6 +3,7 @@
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { hibaAttr, MezoHiba } from '../form/MezoHiba';
+import type { MezoHibak } from '../../lib/urlap';
 
 export function EsemenyMezok({
   datum,
@@ -15,7 +16,7 @@ export function EsemenyMezok({
   helyszin: string;
   onDatum: (v: string) => void;
   onHelyszin: (v: string) => void;
-  errors: Record<string, string>;
+  errors: MezoHibak;
 }) {
   return (
     <fieldset className="grid gap-3 rounded-xl border border-border bg-muted/30 p-3 animate-in fade-in-0 sm:grid-cols-2">

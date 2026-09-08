@@ -9,7 +9,7 @@ import {
   NetworkIcon,
   type LucideIcon,
 } from 'lucide-react';
-import { useRef } from 'react';
+import { useRef, type KeyboardEvent } from 'react';
 import { cn } from '../../lib/utils';
 import { KATEGORIAK, type KategoriaKulcs } from '../../lib/riport-szotar';
 
@@ -34,7 +34,7 @@ export function KategoriaValaszto({
   const gombok = useRef<(HTMLButtonElement | null)[]>([]);
 
   // Rádiócsoport billentyűzet: nyilak léptetnek és választanak, a fókusz a választotton marad.
-  function onKeyDown(e: React.KeyboardEvent, i: number) {
+  function onKeyDown(e: KeyboardEvent, i: number) {
     const irany = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
     if (!irany) return;
     e.preventDefault();
