@@ -157,6 +157,7 @@ export function csatolmanyElocheck(fajlok: File[], meglevoDb: number): string | 
   const { maxDarab, maxMeret } = CSATOLMANY_LIMIT;
   if (meglevoDb + fajlok.length > maxDarab) return `Legfeljebb ${maxDarab} csatolmány lehet egy bejegyzésen.`;
   for (const f of fajlok) {
+    if (f.size === 0) return `Üres fájl: ${nevHibahoz(f.name)}.`;
     if (!mimeFromFajlnev(f.name)) return `Nem engedélyezett fájltípus: ${nevHibahoz(f.name)}.`;
     if (f.size > maxMeret) return `Túl nagy fájl: ${nevHibahoz(f.name)} (max. ${formatMeret(maxMeret)}).`;
   }

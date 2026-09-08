@@ -15,7 +15,7 @@ import {
 } from '../../lib/riport-szotar';
 import { cn } from '../../lib/utils';
 import { hibaAttr, MezoHiba } from '../form/MezoHiba';
-import { useMuveletForm, type MuveletState } from '../form/useMuveletForm';
+import { useMuveletForm, type FormAction } from '../form/useMuveletForm';
 import { Button, buttonVariants } from '../ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { Input } from '../ui/input';
@@ -26,17 +26,13 @@ import { EsemenyMezok } from './EsemenyMezok';
 import { KategoriaValaszto } from './KategoriaValaszto';
 import { KulcsszoValaszto } from './KulcsszoValaszto';
 
-type FormAction = (prev: MuveletState, formData: FormData) => Promise<MuveletState>;
+/** Létrehozásnál nincs `initial`, szerkesztésnél kötelező – a típus is ezt kényszeríti ki. */
+export type RiportFormProps = { action: FormAction } & (
+  | { mode: 'create'; initial?: undefined }
+  | { mode: 'edit'; initial: RiportDetail }
+);
 
-export function RiportForm({
-  mode,
-  initial,
-  action,
-}: {
-  mode: 'create' | 'edit';
-  initial?: RiportDetail;
-  action: FormAction;
-}) {
+export function RiportForm({ mode, initial, action }: RiportFormProps) {
   // Sikernél az action redirectel a részletoldalra; a hook unstable_rethrow-val továbbengedi,
   // ezért nincs siker-toast.
   const [state, formAction, pending] = useMuveletForm(action);
@@ -189,8 +185,14 @@ export function RiportForm({
       <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
         {/* Link + buttonVariants (nem Button render={<Link/>}): a Base UI Button natív <button>-t vár. */}
         <Link
-          href={mode === 'create' ? '/riportok' : `/riportok/${initial?.id}`}
+          href={mode === 'create' ? '/riportok' : `/riportok/${initial.id}`}
           className={cn(buttonVariants({ variant: 'outline' }), pending && 'pointer-events-none opacity-50')}
+          aria-disabled={pending || undefined}
+          tabIndex={pending ? -1 : undefined}
+          onClick={(e) => {
+            // A pointer-events-none csak egérrel tiltja; billentyűzetről (Enter) is meg kell fogni.
+            if (pending) e.preventDefault();
+          }}
         >
           Mégse
         </Link>

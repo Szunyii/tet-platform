@@ -11,7 +11,8 @@ export interface MuveletState {
   errors?: MezoHibak;
 }
 
-type FormAction = (prev: MuveletState, formData: FormData) => Promise<MuveletState>;
+/** A hookkal használható server action alakja. */
+export type FormAction = (prev: MuveletState, formData: FormData) => Promise<MuveletState>;
 
 /**
  * useActionState + siker-toast + záró callback + hibakezelés egy helyen.

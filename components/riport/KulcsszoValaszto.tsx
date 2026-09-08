@@ -12,6 +12,7 @@ import {
   ComboboxValue,
   useComboboxAnchor,
 } from '../ui/combobox';
+import { useState } from 'react';
 import { KULCSSZAVAK, KULCSSZO_MAX, type Kulcsszo } from '../../lib/riport-szotar';
 
 export function KulcsszoValaszto({
@@ -25,6 +26,7 @@ export function KulcsszoValaszto({
 }) {
   const anchor = useComboboxAnchor();
   const tele = value.length >= KULCSSZO_MAX;
+  const [nyitva, setNyitva] = useState(false);
 
   return (
     <Combobox
@@ -34,6 +36,7 @@ export function KulcsszoValaszto({
       onValueChange={(v) => {
         if (v.length <= KULCSSZO_MAX) onChange(v);
       }}
+      onOpenChange={(open) => setNyitva(open)}
     >
       <input type="hidden" name="kulcsszavak" value={JSON.stringify(value)} />
       <ComboboxChips ref={anchor} id="kulcsszavak-doboz" tabIndex={-1} className="cursor-text">
@@ -58,6 +61,10 @@ export function KulcsszoValaszto({
                 aria-labelledby="kulcsszavak-label"
                 aria-invalid={invalid || undefined}
                 aria-describedby={invalid ? 'kulcsszavak-hiba' : undefined}
+                onKeyDown={(e) => {
+                  // Base UI: zárt lenyílónál az Escape kiürítené a kiválasztott kulcsszavakat.
+                  if (e.key === 'Escape' && !nyitva) e.preventBaseUIHandler();
+                }}
               />
             </>
           )}

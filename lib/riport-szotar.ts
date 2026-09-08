@@ -150,8 +150,8 @@ export function mimeFromFajlnev(fajlnev: string): string | undefined {
 export function formatMeret(bajt: number): string {
   if (bajt < 1024) return `${bajt} B`;
   if (bajt < 1024 * 1024) return `${(bajt / 1024).toFixed(0)} KB`;
-  // Egy tizedes, de a fölösleges `.0` nélkül: 8 MB, 2.5 MB.
-  return `${(bajt / (1024 * 1024)).toFixed(1).replace(/\.0$/, '')} MB`;
+  // Egy tizedes, a fölösleges `.0` nélkül, magyar tizedesvesszővel: 8 MB, 2,5 MB.
+  return `${(bajt / (1024 * 1024)).toFixed(1).replace(/\.0$/, '').replace('.', ',')} MB`;
 }
 
 export const FAJLNEV_MAX = 200;
