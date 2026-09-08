@@ -41,7 +41,7 @@ export async function updateRiportAction(
   redirect(`/riportok/${id}`);
 }
 
-export async function deleteRiportAction(id: string): Promise<MuveletState> {
+export async function deleteRiportAction(id: string): Promise<RiportFormState> {
   const session = await requireSession();
   const meglevo = getRiport(id);
   if (!meglevo || !canEditRiport(session, meglevo)) return { errors: { form: NINCS_JOG } };

@@ -1,3 +1,4 @@
+import 'server-only';
 import type { CsatolmanyInput } from '../db/queries/riport';
 import type { ElfogadottFajl } from './riport-validacio';
 
