@@ -131,7 +131,7 @@ function parseFajlok(fajlok: File[], meglevoDb: number, errors: RiportErrors): E
       return [];
     }
     if (file.size > maxMeret) {
-      errors.csatolmany = `Túl nagy fájl: ${nevHibahoz(nev)} (max. 8 MB).`;
+      errors.csatolmany = `Túl nagy fájl: ${nevHibahoz(nev)} (max. ${formatMeret(maxMeret)}).`;
       return [];
     }
     elfogadott.push({ file, mime, nev });
