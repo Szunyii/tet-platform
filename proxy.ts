@@ -24,13 +24,19 @@ import { NextResponse, type NextRequest } from 'next/server';
 const NEXT_MAX_LENGTH = 512;
 
 export function proxy(request: NextRequest) {
-  if (request.method !== 'GET') return NextResponse.next();
-  if (getSessionCookie(request)) return NextResponse.next();
-
   const { pathname, search } = request.nextUrl;
+  // A page-ek requireSession()-je ebből tudja, hova térjen vissza a login után (?next=).
+  // Mindig felülírjuk, hogy a kliens ne tudja hamisítani.
+  const reqHeaders = new Headers(request.headers);
+  reqHeaders.set('x-pathname', pathname + search);
+  const next = NextResponse.next({ request: { headers: reqHeaders } });
+
+  if (request.method !== 'GET') return next;
+  if (getSessionCookie(request)) return next;
+
   const login = new URL('/login', request.url);
-  const next = pathname + search;
-  if (next.length <= NEXT_MAX_LENGTH) login.searchParams.set('next', next);
+  const cel = pathname + search;
+  if (cel.length <= NEXT_MAX_LENGTH) login.searchParams.set('next', cel);
   return NextResponse.redirect(login);
 }
 

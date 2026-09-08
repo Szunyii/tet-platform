@@ -36,12 +36,17 @@ export const getSession = cache(async (): Promise<AppSession | null> => {
 });
 
 /**
- * Page-ek és action-ök bejelentkezés-ellenőrzése. Hiány esetén /login.
+ * Page-ek és action-ök bejelentkezés-ellenőrzése. Hiány esetén /login, a cél útvonallal
+ * (?next=), amit a proxy x-pathname fejlécként ad át (elavult cookie-val a proxy átenged,
+ * de a session már nincs meg – így sem vész el a mélylink).
  * A redirect() kivétellel működik: mindig await-eld, és soha ne hívd try/catch-en belül.
  */
 export async function requireSession(): Promise<AppSession> {
   const session = await getSession();
-  if (!session) redirect(LOGIN_ROUTE);
+  if (!session) {
+    const cel = (await headers()).get('x-pathname');
+    redirect(cel && cel.startsWith('/') ? `${LOGIN_ROUTE}?next=${encodeURIComponent(cel)}` : LOGIN_ROUTE);
+  }
   return session;
 }
 
