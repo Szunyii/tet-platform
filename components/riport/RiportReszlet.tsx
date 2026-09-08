@@ -3,7 +3,6 @@ import Link from 'next/link';
 import type { RiportDetail } from '../../db/queries/riport';
 import { formatDatum, formatNaptariDatum } from '../../lib/datum';
 import { formatMeret, kategoriaByKulcs } from '../../lib/riport-szotar';
-import { cn } from '../../lib/utils';
 import type { MuveletState } from '../form/useMuveletForm';
 import { Badge } from '../ui/badge';
 import { buttonVariants } from '../ui/button';
@@ -21,8 +20,8 @@ export function RiportReszlet({
   torlesAction: () => Promise<MuveletState>;
 }) {
   const kat = kategoriaByKulcs(riport.kategoria);
-  // A mentés updated_at-et is ír; egy perc alatti eltérés még a létrehozás, nem módosítás.
-  const modositva = riport.updatedAt.getTime() - riport.createdAt.getTime() > 60_000;
+  // A formázott dátum a mérvadó, mert azt írjuk ki: napon belüli mentés nem „módosítva”.
+  const modositva = formatDatum(riport.updatedAt) !== formatDatum(riport.createdAt);
   return (
     <article className="flex max-w-3xl flex-col gap-5">
       <header className="flex flex-col gap-2">
@@ -50,18 +49,22 @@ export function RiportReszlet({
 
       <p className="text-sm leading-relaxed whitespace-pre-wrap">{riport.leiras}</p>
 
-      <div className="flex flex-wrap gap-1">
-        {riport.kulcsszavak.map((k) => (
-          <Badge key={k} variant="secondary">
-            {k}
-          </Badge>
-        ))}
-      </div>
+      {riport.kulcsszavak.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {riport.kulcsszavak.map((k) => (
+            <Badge key={k} variant="secondary">
+              {k}
+            </Badge>
+          ))}
+        </div>
+      )}
 
       {riport.esemenyDatum && (
         <Card size="sm">
           <CardHeader>
-            <CardTitle>Rendezvény adatai</CardTitle>
+            <CardTitle role="heading" aria-level={3}>
+              Rendezvény adatai
+            </CardTitle>
           </CardHeader>
           <CardContent className="text-sm">
             <div>
@@ -75,18 +78,22 @@ export function RiportReszlet({
       )}
 
       {riport.joGyakorlat && (
-        <Card size="sm" className={cn('border-l-4', 'border-l-emerald-500')}>
+        <Card size="sm" className="border-l-4 border-l-emerald-500">
           <CardHeader>
-            <CardTitle>Magyarország számára átvehető jó gyakorlat</CardTitle>
+            <CardTitle role="heading" aria-level={3}>
+              Magyarország számára átvehető jó gyakorlat
+            </CardTitle>
           </CardHeader>
           <CardContent className="text-sm whitespace-pre-wrap">{riport.joGyakorlat}</CardContent>
         </Card>
       )}
 
       {riport.kapcsolodoFeladat && (
-        <Card size="sm" className={cn('border-l-4', 'border-l-amber-500')}>
+        <Card size="sm" className="border-l-4 border-l-amber-500">
           <CardHeader>
-            <CardTitle>Kapcsolódó feladat, kérés</CardTitle>
+            <CardTitle role="heading" aria-level={3}>
+              Kapcsolódó feladat, kérés
+            </CardTitle>
           </CardHeader>
           <CardContent className="text-sm whitespace-pre-wrap">{riport.kapcsolodoFeladat}</CardContent>
         </Card>

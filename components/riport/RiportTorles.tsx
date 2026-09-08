@@ -25,12 +25,11 @@ export function RiportTorles({ targy, action }: { targy: string; action: () => P
       try {
         const res = await action();
         // Sikernél az action redirectel (a Next router követi): ha ide visszatérünk, hiba történt.
-        toast.error(res.errors?.form ?? 'Törlés sikertelen.');
-        setOpen(false);
+        // A dialógus nyitva marad, hogy újra lehessen próbálni; a Mégse zárja.
+        toast.error(res?.errors?.form ?? 'Törlés sikertelen.');
       } catch (err) {
         unstable_rethrow(err);
         toast.error('Törlés sikertelen.');
-        setOpen(false);
       }
     });
   }
