@@ -42,7 +42,7 @@ export type ParseRiportResult =
   | { ok: false; errors: RiportErrors };
 
 const DATUM_RE = /^\d{4}-\d{2}-\d{2}$/;
-const LATHATATLAN_RE = /[​-‍﻿]/g;
+const LATHATATLAN_RE = /[\u200B-\u200D\uFEFF]/g;
 
 function str(fd: FormData, key: string): string {
   const v = fd.get(key);
