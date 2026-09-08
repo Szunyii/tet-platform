@@ -1,7 +1,8 @@
 import 'server-only';
-import { and, desc, eq, gte, inArray, lte, or, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, lt, or, sql, type SQL } from 'drizzle-orm';
 import { db } from '../index';
 import { riport, riportCsatolmany, user } from '../schema';
+import { kovetkezoNapKezdete, napKezdete } from '../../lib/datum';
 import type { KategoriaKulcs } from '../../lib/riport-szotar';
 import type { RiportInput } from '../../lib/riport-validacio';
 
@@ -11,7 +12,10 @@ export interface RiportFilter {
   kulcsszo?: string;
   orszag?: string;
   q?: string;
-  /** YYYY-MM-DD, a created_at napjára (a szerver időzónája szerint) */
+  /**
+   * YYYY-MM-DD, a created_at budapesti naptári napjára (lib/datum.ts IDOZONA), a
+   * megjelenítéssel (formatDatum) konzisztensen.
+   */
   datumTol?: string;
   datumIg?: string;
 }
@@ -70,7 +74,7 @@ const listOszlopok = {
 
 /** Lista blob nélkül, szerző nevével és csatolmány-darabszámmal, legújabb elöl. */
 export function listRiportok(filter: RiportFilter = {}): RiportListItem[] {
-  const felt = [];
+  const felt: SQL[] = [];
   if (filter.szerzoId) felt.push(eq(riport.szerzoId, filter.szerzoId));
   if (filter.kategoria) felt.push(eq(riport.kategoria, filter.kategoria));
   if (filter.orszag) felt.push(eq(riport.orszag, filter.orszag));
@@ -80,11 +84,19 @@ export function listRiportok(filter: RiportFilter = {}): RiportListItem[] {
     );
   }
   if (filter.q) {
-    const minta = `%${filter.q.replace(/[%_]/g, (c) => '\\' + c)}%`;
-    felt.push(or(sql`${riport.targy} like ${minta} escape '\\'`, sql`${riport.leiras} like ${minta} escape '\\'`)!);
+    // A `\` is escape-elendő a mintában, hiszen az `escape '\\'` karaktert ad meg elválasztónak.
+    const minta = `%${filter.q.replace(/[\\%_]/g, (c) => '\\' + c)}%`;
+    const qFelt = or(sql`${riport.targy} like ${minta} escape '\\'`, sql`${riport.leiras} like ${minta} escape '\\'`);
+    if (qFelt) felt.push(qFelt);
   }
-  if (filter.datumTol) felt.push(gte(riport.createdAt, new Date(`${filter.datumTol}T00:00:00`)));
-  if (filter.datumIg) felt.push(lte(riport.createdAt, new Date(`${filter.datumIg}T23:59:59.999`)));
+  if (filter.datumTol) {
+    const d = napKezdete(filter.datumTol);
+    if (!Number.isNaN(d.getTime())) felt.push(gte(riport.createdAt, d));
+  }
+  if (filter.datumIg) {
+    const d = kovetkezoNapKezdete(filter.datumIg);
+    if (!Number.isNaN(d.getTime())) felt.push(lt(riport.createdAt, d));
+  }
 
   return db
     .select(listOszlopok)
@@ -158,7 +170,19 @@ export function updateRiport(
   torlendoCsatolmanyIdk: string[],
 ): void {
   db.transaction((tx) => {
-    tx.update(riport).set(input).where(eq(riport.id, id)).run();
+    tx.update(riport)
+      .set({
+        kategoria: input.kategoria,
+        targy: input.targy,
+        leiras: input.leiras,
+        kulcsszavak: input.kulcsszavak,
+        esemenyDatum: input.esemenyDatum,
+        esemenyHelyszin: input.esemenyHelyszin,
+        joGyakorlat: input.joGyakorlat,
+        kapcsolodoFeladat: input.kapcsolodoFeladat,
+      })
+      .where(eq(riport.id, id))
+      .run();
     if (torlendoCsatolmanyIdk.length > 0) {
       tx.delete(riportCsatolmany)
         .where(and(eq(riportCsatolmany.riportId, id), inArray(riportCsatolmany.id, torlendoCsatolmanyIdk)))
@@ -185,6 +209,23 @@ export function getCsatolmany(id: string): (CsatolmanyMeta & { riportId: string;
         mime: riportCsatolmany.mime,
         meret: riportCsatolmany.meret,
         tartalom: riportCsatolmany.tartalom,
+      })
+      .from(riportCsatolmany)
+      .where(eq(riportCsatolmany.id, id))
+      .get() ?? null
+  );
+}
+
+/** Letöltés előtti jogosultság-ellenőrzéshez, blob nélkül. */
+export function getCsatolmanyMeta(id: string): (CsatolmanyMeta & { riportId: string }) | null {
+  return (
+    db
+      .select({
+        id: riportCsatolmany.id,
+        riportId: riportCsatolmany.riportId,
+        fajlnev: riportCsatolmany.fajlnev,
+        mime: riportCsatolmany.mime,
+        meret: riportCsatolmany.meret,
       })
       .from(riportCsatolmany)
       .where(eq(riportCsatolmany.id, id))
