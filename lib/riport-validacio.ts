@@ -10,14 +10,17 @@ import {
   isKategoriaKulcs,
   isKulcsszo,
   kategoriaByKulcs,
-  kiterjesztes,
   KULCSSZO_MAX,
+  KULCSSZO_RAW_MAX,
   LEIRAS_MAX,
+  mimeFromFajlnev,
   SZOVEG_MAX,
   TARGY_MAX,
+  tisztitFajlnev,
   type KategoriaKulcs,
   type Kulcsszo,
 } from './riport-szotar';
+import { mezo, type MezoHibak } from './urlap';
 
 export interface RiportInput {
   kategoria: KategoriaKulcs;
@@ -30,11 +33,14 @@ export interface RiportInput {
   kapcsolodoFeladat: string | null;
 }
 
-export type RiportErrors = Record<string, string>;
+/** Kompatibilitási alias: a hibatérkép-típus a közös `lib/urlap.ts`-ből jön. */
+export type RiportErrors = MezoHibak;
 
 export interface ElfogadottFajl {
   file: File;
   mime: string;
+  /** Tisztított fájlnév (útvonal, vezérlő- és láthatatlan karakterek nélkül). */
+  nev: string;
 }
 
 export type ParseRiportResult =
@@ -42,21 +48,31 @@ export type ParseRiportResult =
   | { ok: false; errors: RiportErrors };
 
 const DATUM_RE = /^\d{4}-\d{2}-\d{2}$/;
-const LATHATATLAN_RE = /[\u200B-\u200D\uFEFF]/g;
 
-function str(fd: FormData, key: string): string {
-  const v = fd.get(key);
-  return typeof v === 'string' ? v.replace(LATHATATLAN_RE, '').trim() : '';
+/** `YYYY-MM-DD` naptárilag is érvényes-e (elutasítja pl. a 2026-02-31-et), 2000–2100 évkorláttal. */
+function ervenyesNaptariDatum(d: string): boolean {
+  if (!DATUM_RE.test(d)) return false;
+  const [evStr, hoStr, napStr] = d.split('-');
+  const ev = Number(evStr);
+  const ho = Number(hoStr);
+  const nap = Number(napStr);
+  if (ev < 2000 || ev > 2100) return false;
+  const dt = new Date(Date.UTC(ev, ho - 1, nap));
+  return dt.getUTCFullYear() === ev && dt.getUTCMonth() === ho - 1 && dt.getUTCDate() === nap;
 }
 
 function opcionalis(fd: FormData, key: string, max: number, cimke: string, errors: RiportErrors): string | null {
-  const v = str(fd, key);
+  const v = mezo(fd, key);
   if (!v) return null;
   if (v.length > max) errors[key] = `${cimke} legfeljebb ${max} karakter.`;
   return v;
 }
 
 function parseKulcsszavak(raw: string, errors: RiportErrors): Kulcsszo[] {
+  if (raw.length > KULCSSZO_RAW_MAX) {
+    errors.kulcsszavak = 'Érvénytelen kulcsszó-lista.';
+    return [];
+  }
   let lista: unknown;
   try {
     lista = raw ? JSON.parse(raw) : [];
@@ -85,62 +101,75 @@ function parseKulcsszavak(raw: string, errors: RiportErrors): Kulcsszo[] {
   return egyedi as Kulcsszo[];
 }
 
-/** A böngésző üres file-inputnál üres nevű, 0 bájtos File-t küld: azt nem tekintjük fájlnak. */
+/** A böngésző üres file-inputnál üres nevű File-t küld: azt nem tekintjük fájlnak. */
 function valodiFajlok(fd: FormData, key: string): File[] {
-  return fd.getAll(key).filter((v): v is File => v instanceof File && v.name !== '' && v.size > 0);
+  return fd.getAll(key).filter((v): v is File => v instanceof File && v.name !== '');
+}
+
+/** Hibaüzenetbe való, max. ~80 karakterre vágott fájlnév. */
+function nevHibahoz(nev: string): string {
+  return nev.length > 80 ? `${nev.slice(0, 80)}…` : nev;
 }
 
 function parseFajlok(fajlok: File[], meglevoDb: number, errors: RiportErrors): ElfogadottFajl[] {
-  const { maxDarab, maxMeret, tipusok } = CSATOLMANY_LIMIT;
+  const { maxDarab, maxMeret } = CSATOLMANY_LIMIT;
   if (meglevoDb + fajlok.length > maxDarab) {
     errors.csatolmany = `Legfeljebb ${maxDarab} csatolmány lehet egy bejegyzésen.`;
     return [];
   }
   const elfogadott: ElfogadottFajl[] = [];
   for (const file of fajlok) {
-    const mime = tipusok[kiterjesztes(file.name)];
+    const nev = tisztitFajlnev(file.name);
+    if (file.size === 0) {
+      errors.csatolmany = `Üres fájl: ${nevHibahoz(nev)}.`;
+      return [];
+    }
+    const mime = mimeFromFajlnev(nev);
     if (!mime) {
-      errors.csatolmany = `Nem engedélyezett fájltípus: ${file.name}. Engedett: PDF, Word, Excel, PowerPoint, PNG, JPG.`;
+      errors.csatolmany = `Nem engedélyezett fájltípus: ${nevHibahoz(nev)}. Engedett: PDF, Word, Excel, PowerPoint, PNG, JPG.`;
       return [];
     }
     if (file.size > maxMeret) {
-      errors.csatolmany = `Túl nagy fájl: ${file.name} (max. 8 MB).`;
+      errors.csatolmany = `Túl nagy fájl: ${nevHibahoz(nev)} (max. 8 MB).`;
       return [];
     }
-    elfogadott.push({ file, mime });
+    elfogadott.push({ file, mime, nev });
   }
   return elfogadott;
 }
 
 /**
- * @param meglevoCsatolmanyDb szerkesztésnél a már tárolt csatolmányok száma (a törlésre
- *   jelöltek nélkül számít bele a limitbe); létrehozásnál 0.
+ * @param meglevoCsatolmanyIdk szerkesztésnél a már tárolt csatolmányok id-jai (a limitbe
+ *   csak a ténylegesen létező, meg nem jelölt id-k számítanak bele); létrehozásnál üres lista.
  */
-export function parseRiportForm(fd: FormData, meglevoCsatolmanyDb = 0): ParseRiportResult {
+export function parseRiportForm(
+  fd: FormData,
+  meglevoCsatolmanyIdk: readonly string[] = [],
+): ParseRiportResult {
   const errors: RiportErrors = {};
 
-  const kategoriaRaw = str(fd, 'kategoria');
+  const kategoriaRaw = mezo(fd, 'kategoria');
   const kategoria = isKategoriaKulcs(kategoriaRaw) ? kategoriaRaw : null;
   if (!kategoria) errors.kategoria = 'Válassz kategóriát.';
 
-  const targy = str(fd, 'targy');
+  const targy = mezo(fd, 'targy');
   if (!targy) errors.targy = 'A tárgy kötelező.';
   else if (targy.length > TARGY_MAX) errors.targy = `A tárgy legfeljebb ${TARGY_MAX} karakter.`;
 
-  const leiras = str(fd, 'leiras');
+  const leiras = mezo(fd, 'leiras');
   if (!leiras) errors.leiras = 'A leírás kötelező.';
   else if (leiras.length > LEIRAS_MAX) errors.leiras = `A leírás legfeljebb ${LEIRAS_MAX} karakter.`;
 
-  const kulcsszavak = parseKulcsszavak(str(fd, 'kulcsszavak'), errors);
+  const kulcsszavak = parseKulcsszavak(mezo(fd, 'kulcsszavak'), errors);
 
   let esemenyDatum: string | null = null;
   let esemenyHelyszin: string | null = null;
   if (kategoria && kategoriaByKulcs(kategoria).datumKotelezo) {
-    const d = str(fd, 'esemenyDatum');
+    const d = mezo(fd, 'esemenyDatum');
     if (!d) errors.esemenyDatum = 'Rendezvénynél a dátum kötelező.';
-    else if (!DATUM_RE.test(d) || Number.isNaN(Date.parse(d))) errors.esemenyDatum = 'Érvénytelen dátum.';
+    else if (!ervenyesNaptariDatum(d)) errors.esemenyDatum = 'Érvénytelen dátum.';
     else esemenyDatum = d;
-    const h = str(fd, 'esemenyHelyszin');
+    const h = mezo(fd, 'esemenyHelyszin');
     if (!h) errors.esemenyHelyszin = 'Rendezvénynél a helyszín kötelező.';
     else if (h.length > HELYSZIN_MAX) errors.esemenyHelyszin = `A helyszín legfeljebb ${HELYSZIN_MAX} karakter.`;
     else esemenyHelyszin = h;
@@ -149,10 +178,13 @@ export function parseRiportForm(fd: FormData, meglevoCsatolmanyDb = 0): ParseRip
   const joGyakorlat = opcionalis(fd, 'joGyakorlat', SZOVEG_MAX, 'A jó gyakorlat', errors);
   const kapcsolodoFeladat = opcionalis(fd, 'kapcsolodoFeladat', SZOVEG_MAX, 'A kapcsolódó feladat', errors);
 
-  const torlendoCsatolmanyIdk = fd
+  const meglevoSet = new Set(meglevoCsatolmanyIdk);
+  const torlendoRaw = fd
     .getAll('torlendoCsatolmany')
     .filter((v): v is string => typeof v === 'string' && v.length > 0);
-  const megmarado = Math.max(0, meglevoCsatolmanyDb - torlendoCsatolmanyIdk.length);
+  const torlendoSet = new Set(torlendoRaw.filter((id) => meglevoSet.has(id)));
+  const torlendoCsatolmanyIdk = [...torlendoSet];
+  const megmarado = meglevoCsatolmanyIdk.length - torlendoSet.size;
   const fajlok = parseFajlok(valodiFajlok(fd, 'csatolmany'), megmarado, errors);
 
   if (Object.keys(errors).length > 0 || !kategoria) return { ok: false, errors };

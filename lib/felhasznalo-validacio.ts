@@ -5,6 +5,7 @@
  * kötött hibáké (a server action-ök használják). Az e-mail trim + kisbetű (a Better Auth
  * is kisbetűsít); a jelszót szándékosan nem trimmeljük.
  */
+import type { MezoHibak } from './urlap';
 
 export const SZEREPKOROK = ['admin', 'attase'] as const;
 export type Szerepkor = (typeof SZEREPKOROK)[number];
@@ -14,8 +15,8 @@ export const SZEREPKOR_CIMKE: Record<Szerepkor, string> = {
   attase: 'TéT attasé',
 };
 
-/** Mezőnév → hibaüzenet. A `form` kulcs az űrlap-szintű hibáé. */
-export type MezoHibak = Record<string, string>;
+/** Mezőnév → hibaüzenet. A `form` kulcs az űrlap-szintű hibáé. A típus a közös `lib/urlap.ts`-ből jön. */
+export type { MezoHibak };
 
 export interface UjFelhasznaloInput {
   nev: string;

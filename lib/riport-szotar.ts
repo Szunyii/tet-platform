@@ -123,7 +123,7 @@ export const CSATOLMANY_LIMIT = {
     '.png': 'image/png',
     '.jpg': 'image/jpeg',
     '.jpeg': 'image/jpeg',
-  } as Record<string, string>,
+  } satisfies Record<string, string>,
 } as const;
 
 /** A fájlválasztó `accept` attribútumához. */
@@ -133,6 +133,8 @@ export const TARGY_MAX = 200;
 export const LEIRAS_MAX = 5000;
 export const HELYSZIN_MAX = 200;
 export const SZOVEG_MAX = 5000;
+/** A kulcsszavak mező nyers (JSON.stringify-olt) hossza; JSON.parse előtt szűrünk vele. */
+export const KULCSSZO_RAW_MAX = 2000;
 
 /** Fájlnév kiterjesztése kisbetűvel, ponttal (pl. ".pdf"), vagy üres string. */
 export function kiterjesztes(fajlnev: string): string {
@@ -140,8 +142,39 @@ export function kiterjesztes(fajlnev: string): string {
   return i >= 0 ? fajlnev.slice(i).toLowerCase() : '';
 }
 
+/** A kiterjesztéshez tartozó engedélyezett MIME, vagy `undefined`, ha nem engedélyezett. */
+export function mimeFromFajlnev(fajlnev: string): string | undefined {
+  return (CSATOLMANY_LIMIT.tipusok as Record<string, string | undefined>)[kiterjesztes(fajlnev)];
+}
+
 export function formatMeret(bajt: number): string {
   if (bajt < 1024) return `${bajt} B`;
   if (bajt < 1024 * 1024) return `${(bajt / 1024).toFixed(0)} KB`;
   return `${(bajt / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+export const FAJLNEV_MAX = 200;
+
+// Útvonal-elválasztó utáni rész, majd C0 vezérlő- (U+0000–U+001F, U+007F) és láthatatlan
+// (U+200B–U+200D, U+FEFF) karakterek eltávolítása: ezek a tárolt fájlnévben csak zajt és
+// (elvben) útvonal-kikerülési kísérletet jelentenének, nem hordoznak információt. A
+// szótár tudatosan nem függ a lib/urlap.ts-től, hogy önmagában importálható maradjon.
+const FAJLNEV_TISZTITO_RE = /[\u0000-\u001F\u007F\u200B-\u200D\uFEFF]/g;
+
+/**
+ * Fájlnév tisztítása tárolás/megjelenítés előtt: csak az útvonal utolsó szegmense marad,
+ * vezérlő- és láthatatlan karakterek nélkül, `FAJLNEV_MAX`-ra vágva (a kiterjesztés
+ * megtartásával). Üres, `.` vagy `..` eredménynél `'csatolmany'`.
+ */
+export function tisztitFajlnev(nev: string): string {
+  const utolsoElvalaszto = Math.max(nev.lastIndexOf('/'), nev.lastIndexOf('\\'));
+  let alap = (utolsoElvalaszto >= 0 ? nev.slice(utolsoElvalaszto + 1) : nev)
+    .replace(FAJLNEV_TISZTITO_RE, '')
+    .trim();
+  if (!alap || alap === '.' || alap === '..') return 'csatolmany';
+  if (alap.length > FAJLNEV_MAX) {
+    const ext = kiterjesztes(alap);
+    alap = alap.slice(0, Math.max(0, FAJLNEV_MAX - ext.length)) + ext;
+  }
+  return alap;
 }
