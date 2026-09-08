@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from '../../../../components/ui/dialog';
 import type { MezoHibak } from '../../../../lib/felhasznalo-validacio';
-import { MezoHiba } from './MezoHiba';
+import { MezoHiba } from '../../../../components/form/MezoHiba';
 
 /**
  * Közös dialógus-keret a form-műveletekhez: fejléc, <form action>, űrlap-szintű hiba,

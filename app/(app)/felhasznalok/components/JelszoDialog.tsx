@@ -5,9 +5,9 @@ import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
 import type { FelhasznaloSor } from '../../../../db/queries/felhasznalo';
 import { setJelszoAction } from '../actions';
-import { hibaAttr, MezoHiba } from './MezoHiba';
+import { hibaAttr, MezoHiba } from '../../../../components/form/MezoHiba';
 import { MuveletDialog } from './MuveletDialog';
-import { useMuveletForm } from './useMuveletForm';
+import { useMuveletForm } from '../../../../components/form/useMuveletForm';
 
 export function JelszoDialog({
   felhasznalo,

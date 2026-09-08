@@ -1,4 +1,4 @@
-import type { MezoHibak } from '../../../../lib/felhasznalo-validacio';
+import type { MezoHibak } from '../../lib/urlap';
 
 /**
  * Egy mező hibaüzenete. Az elem id-ja `<mezo>-hiba`, erre mutat a mező aria-describedby-ja

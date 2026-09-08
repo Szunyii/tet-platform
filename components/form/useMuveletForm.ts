@@ -1,7 +1,12 @@
 import { unstable_rethrow } from 'next/navigation';
 import { useActionState, useEffect } from 'react';
 import { toast } from 'sonner';
-import type { MuveletState } from '../actions';
+
+/** Server action visszatérési alakja: `ok` siker, `errors` mezőnév → üzenet (`form` = űrlap-szintű). */
+export interface MuveletState {
+  ok?: boolean;
+  errors?: Record<string, string>;
+}
 
 type FormAction = (prev: MuveletState, formData: FormData) => Promise<MuveletState>;
 

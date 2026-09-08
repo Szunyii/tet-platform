@@ -6,10 +6,10 @@ import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
 import type { Szerepkor } from '../../../../lib/felhasznalo-validacio';
 import { createFelhasznaloAction } from '../actions';
-import { hibaAttr, MezoHiba } from './MezoHiba';
+import { hibaAttr, MezoHiba } from '../../../../components/form/MezoHiba';
 import { MuveletDialog } from './MuveletDialog';
 import { SzerepkorSelect } from './SzerepkorSelect';
-import { useMuveletForm } from './useMuveletForm';
+import { useMuveletForm } from '../../../../components/form/useMuveletForm';
 
 export function UjFelhasznaloDialog() {
   const [open, setOpen] = useState(false);
