@@ -156,6 +156,8 @@ Csak itt van Drizzle kód a riport domainhez.
 - `updateRiport(id, input, ujCsatolmanyok, torlendoCsatolmanyIdk)` – tranzakció;
   a limitet (max 5) a meglévő – törlendő + új összegre a hívó ellenőrzi.
 - `deleteRiport(id)`.
+- `getCsatolmanyMeta(id): { riportId, fajlnev, mime, meret } | null` – blob nélküli
+  metaadat a letöltés jog-ellenőrzéséhez.
 - `getCsatolmany(id): { riportId, fajlnev, mime, tartalom } | null` – letöltéshez.
 - `listOrszagok(): string[]` – distinct `orszag`, admin szűrőhöz.
 
@@ -163,10 +165,13 @@ Csak itt van Drizzle kód a riport domainhez.
 
 Tiszta függvény, nincs benne React és DB.
 
-`parseRiportForm(formData: FormData): { ok: true; data: RiportInput; fajlok: File[] }
-| { ok: false; errors: RiportErrors }` – `RiportErrors = Partial<Record<mezo, string>>`
-magyar üzenetekkel. Szabályok: a fenti adatmodell-táblázat + a `rendezveny` →
-dátum és helyszín kötelező; nem-`rendezveny` kategóriánál a dátum/helyszín értéke
+`parseRiportForm(formData: FormData, meglevoCsatolmanyIdk: string[]): ParseRiportResult`,
+ahol `ParseRiportResult = { ok: true; data: RiportInput; fajlok: ElfogadottFajl[];
+torlendoCsatolmanyIdk: string[] } | { ok: false; errors: RiportErrors }`. Az
+`ElfogadottFajl` a `{ file, mime, nev }` hármas (a `mime` a kiterjesztésből, a `nev`
+a tisztított fájlnév), a `RiportErrors` pedig a `lib/urlap.ts` `MezoHibak`-ja, azaz
+`Record<string, string>` magyar üzenetekkel. Szabályok: a fenti adatmodell-táblázat
++ a `rendezveny` → dátum és helyszín kötelező; nem-`rendezveny` kategóriánál a dátum/helyszín értéke
 eldobandó. Fájlok: darab, méret, MIME a `CSATOLMANY_LIMIT` szerint; a `fajlok`
 hiba kulcsa `csatolmany`.
 
@@ -187,7 +192,8 @@ hiba kulcsa `csatolmany`.
 
 `app/(app)/riportok/actions.ts`:
 - `updateRiportAction(id, prev, formData)` – `requireSession`, `getRiport`,
-  `canEditRiport` különben `{ errors: { form: 'Nincs jogosultságod.' } }`;
+  `canEditRiport` különben
+  `{ errors: { form: 'Nincs jogosultságod ehhez a bejegyzéshez.' } }`;
   a form `torlendoCsatolmany[]` mezőit is olvassa; darab-limit ellenőrzés;
   `updateRiport`; revalidate; redirect a részletre.
 - `deleteRiportAction(id)` – jog-ellenőrzés, `deleteRiport`, revalidate,
@@ -199,17 +205,18 @@ módosítás után `redirect` a részletre; törlés után `redirect('/riportok'
 
 ### Letöltés
 
-`app/api/riport/csatolmany/[id]/route.ts` GET: session (nincs → 401),
-`getCsatolmany` (nincs → 404), `getRiport` + `canViewRiport` (nem → 404),
-válasz a blobbal, `Content-Type` a tárolt MIME, `Content-Disposition: attachment;
-filename*=UTF-8''<encoded>`.
+`app/api/riport/csatolmany/[id]/route.ts` GET, ebben a sorrendben: `getSession()`
+(nincs → 401), `getCsatolmanyMeta(id)` (nincs → 404), `getRiport(meta.riportId)` +
+`canViewRiport` (nem → 404), és csak ezután `getCsatolmany(id)` – a (potenciálisan
+nagy) blob nem olvasódik be jogosulatlan kérésre. Válasz a blobbal, `Content-Type`
+a tárolt MIME, `Content-Disposition: attachment; filename*=UTF-8''<encoded>`.
 
 ## UI
 
 Minden új felület shadcn/ui + Tailwind; a régi `.card`/`.tbl`/inline-style
-világot ezek az oldalak nem használják. Hozzáadandó shadcn komponensek:
-`popover`, `command`, `calendar`, `collapsible`, `tooltip`, `skeleton` (az
-`alert-dialog` és a `sonner` már megvan, a Toaster a gyökér layoutban).
+világot ezek az oldalak nem használják. Hozzáadott shadcn komponensek: `combobox`,
+`input-group` (a combobox függősége) és `collapsible` (az `alert-dialog` és a
+`sonner` már megvolt, a Toaster a gyökér layoutban).
 
 ### Route-ok
 
@@ -281,8 +288,9 @@ konténerben.
 
 - Validációs hiba: mezőnként, magyar üzenettel, űrlap-állapot megmarad
   (fájlok kivételével, jelezve).
-- Túl nagy kérés: a kliens előellenőrzés kiszűri; ha mégis 413 jön, az
-  `useActionState` hibaágán általános üzenet: „A csatolmányok együtt túl nagyok.”
+- Túl nagy kérés: a kliens előellenőrzés kiszűri; ha mégis 413 (vagy más hálózati
+  hiba) jön, nincs külön üzenet, a `useMuveletForm` általános űrlap-szintű hibája
+  jelenik meg: „A művelet nem futott le. Ellenőrizd a kapcsolatot, és próbáld újra.”
 - Jogosultsági hiba action-ben: általános üzenet, részletek nélkül. Oldalon:
   `notFound()` (nem árulja el, hogy létezik).
 - DB hiba: az action elkapja (`unstable_rethrow` után), `{ errors: { form: 'Mentés
@@ -297,6 +305,9 @@ natív fájlválasztóval megy; a listában a tárgy a link, nem a teljes sor (a
 `KATEGORIAK`-ban `rovid` és `szin` van, az ikonok a komponensben; a `parseRiportForm` második
 paramétere a meglévő csatolmányok id-listája (nem a darabszámuk); a letöltő route
 `Content-Disposition` fejléce RFC 5987 `filename*` + ASCII `filename` fallback.
+A tervezett shadcn komponensek közül csak a `collapsible` került be, mellé a `combobox`
+és a függősége, az `input-group`; a `popover`, `command`, `calendar`, `tooltip` és
+`skeleton` nem kellett.
 
 ## Ellenőrzés
 

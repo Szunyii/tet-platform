@@ -48,7 +48,7 @@ Ezután nyisd meg: http://localhost:3000
 
 - `lib/data.ts` – demóadatok: 14 poszt, 3 kategória, 14 értékelési szempont, ticketek
 - `lib/knowledge.ts` – tudástár demóadatok: 6 program, 6 ökoszisztéma-elem, 5 együttműködési forma
-- `lib/score.ts` – determinisztikus dummy pontszámok és státuszok (a doksi logikája szerint)
+- `lib/score.ts` – determinisztikus dummy pontszámok és státusz-színek (a doksi logikája szerint)
 - `lib/riport-szotar.ts` – kategóriák, kulcsszavak, csatolmány-limit
 - `components/riport/` – a bejegyzés űrlap, lista és részlet komponensei
 - `components/form/` – megosztott form-minta (`useMuveletForm`, `MezoHiba`)
