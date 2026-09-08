@@ -1,11 +1,14 @@
+'use client';
+
 import { unstable_rethrow } from 'next/navigation';
 import { useActionState, useEffect } from 'react';
 import { toast } from 'sonner';
+import type { MezoHibak } from '../../lib/urlap';
 
 /** Server action visszatérési alakja: `ok` siker, `errors` mezőnév → üzenet (`form` = űrlap-szintű). */
 export interface MuveletState {
   ok?: boolean;
-  errors?: Record<string, string>;
+  errors?: MezoHibak;
 }
 
 type FormAction = (prev: MuveletState, formData: FormData) => Promise<MuveletState>;
