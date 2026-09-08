@@ -121,15 +121,17 @@ export function RiportSzurok({
     setQ(ertekek.q);
   }, [ertekek.q]);
 
-  // Keresőmező: 300 ms debounce, csak ha tényleg eltér az URL-ben lévőtől. A `frissit`
-  // és az `ertekekRef` stabil, ezért a `q` az egyetlen valódi kiváltó ok.
+  // Keresőmező: 300 ms debounce, csak ha tényleg eltér az URL-ben lévőtől. A guard és a
+  // függőség szándékosan a propra (`ertekek.q`) megy, nem refre: ha a mező és az URL
+  // bármi miatt szétcsúszik (pl. a válasz megérkezése előtt kiürítjük a mezőt), az effekt
+  // a válasz beérkezésekor újraindul és helyrehozza.
   useEffect(() => {
-    if (q === ertekekRef.current.q) return;
+    if (q === ertekek.q) return;
     const t = setTimeout(() => {
-      if (q !== ertekekRef.current.q) frissit({ q });
+      if (q !== ertekek.q) frissit({ q });
     }, 300);
     return () => clearTimeout(t);
-  }, [q, frissit]);
+  }, [q, ertekek.q, frissit]);
 
   const vanAktiv = Object.values(ertekek).some(Boolean);
 
