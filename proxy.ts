@@ -1,5 +1,6 @@
 import { getSessionCookie } from 'better-auth/cookies';
 import { NextResponse, type NextRequest } from 'next/server';
+import { loginUtvonal } from './lib/routes';
 
 // Gyors szűrő: csak a session cookie meglétét nézi, nem az érvényességét.
 // A valódi ellenőrzés a page-ek/action-ök requireSession() hívása.
@@ -20,24 +21,21 @@ import { NextResponse, type NextRequest } from 'next/server';
 // advanced.cookiePrefix / advanced.cookies beállítást kapna, azt ide is át kell adni,
 // különben minden kérés a loginra megy.
 
-// A ?next= hossza korlátozott, hogy a Location fejléc ne nőjön proxy-limit fölé.
-const NEXT_MAX_LENGTH = 512;
-
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+  const cel = pathname + search;
   // A page-ek requireSession()-je ebből tudja, hova térjen vissza a login után (?next=).
-  // Mindig felülírjuk, hogy a kliens ne tudja hamisítani.
+  // Minden matcher-elt kérésen felülírjuk, hogy a kliens ne tudja hamisítani; a matcher
+  // által kizárt útvonalakon (statikus kiterjesztés, /login, /api/auth) nem fut a proxy,
+  // ott a loginUtvonal() validációja a védelem.
   const reqHeaders = new Headers(request.headers);
-  reqHeaders.set('x-pathname', pathname + search);
+  reqHeaders.set('x-pathname', cel);
   const next = NextResponse.next({ request: { headers: reqHeaders } });
 
   if (request.method !== 'GET') return next;
   if (getSessionCookie(request)) return next;
 
-  const login = new URL('/login', request.url);
-  const cel = pathname + search;
-  if (cel.length <= NEXT_MAX_LENGTH) login.searchParams.set('next', cel);
-  return NextResponse.redirect(login);
+  return NextResponse.redirect(new URL(loginUtvonal(cel), request.url));
 }
 
 export const config = {

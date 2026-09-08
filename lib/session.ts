@@ -3,7 +3,7 @@ import { headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { cache } from 'react';
 import { auth } from './auth';
-import { LOGIN_ROUTE } from './routes';
+import { loginUtvonal } from './routes';
 
 export type AppRole = 'admin' | 'attase';
 
@@ -43,10 +43,7 @@ export const getSession = cache(async (): Promise<AppSession | null> => {
  */
 export async function requireSession(): Promise<AppSession> {
   const session = await getSession();
-  if (!session) {
-    const cel = (await headers()).get('x-pathname');
-    redirect(cel && cel.startsWith('/') ? `${LOGIN_ROUTE}?next=${encodeURIComponent(cel)}` : LOGIN_ROUTE);
-  }
+  if (!session) redirect(loginUtvonal((await headers()).get('x-pathname')));
   return session;
 }
 
