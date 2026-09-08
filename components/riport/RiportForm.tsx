@@ -2,7 +2,7 @@
 
 import { ChevronDownIcon } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { RiportDetail } from '../../db/queries/riport';
 import { csatolmanyElocheck } from '../../lib/riport-validacio';
 import {
@@ -65,11 +65,15 @@ export function RiportForm({
   const elocheckHiba = csatolmanyElocheck(fajlok, meglevok.length - torlendo.length);
 
   // Szerverhibánál egyszer kinyitjuk az opcionális szekciót (különben a hiba láthatatlan
-  // maradna); utána a felhasználó szabadon becsukhatja.
-  useEffect(() => {
+  // maradna); utána a felhasználó szabadon becsukhatja. Render közbeni állapot-igazítás
+  // (nem useEffect): így a panel már a beküldés utáni commitban nyitva van, és a
+  // useMuveletForm fókusz-effektje a `csatolmany` mezőre is rá tud ugrani – egy rejtett
+  // (hidden) elem nem fókuszálható.
+  const [latottState, setLatottState] = useState(state);
+  if (latottState !== state) {
+    setLatottState(state);
     if (vanOpcionalisHiba) setTovabbiNyitva(true);
-    // A `state` a dependency (nem a belőle számolt flag): minden beküldés után egyszer fut.
-  }, [state]);
+  }
 
   return (
     <form action={formAction} className="flex max-w-3xl flex-col gap-6" noValidate>
@@ -137,7 +141,11 @@ export function RiportForm({
           <ChevronDownIcon className={cn('transition-transform', tovabbiNyitva && 'rotate-180')} />
           További adatok (opcionális): jó gyakorlat, kapcsolódó feladat, csatolmány
         </CollapsibleTrigger>
-        <CollapsibleContent className="mt-3 flex flex-col gap-4">
+        {/* keepMounted: becsukott állapotban a panel tartalma alapból unmountolódik, és a benne
+            lévő mezők (jó gyakorlat, kapcsolódó feladat, a csatolmányok rejtett file-inputja)
+            kimaradnának a beküldött FormData-ból – a felhasználó által megadott adat némán
+            elveszne. Így a mezők a DOM-ban maradnak (hidden), és beküldésre kerülnek. */}
+        <CollapsibleContent keepMounted className="mt-3 flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="joGyakorlat">Magyarország számára átvehető jó gyakorlat</Label>
             <Textarea

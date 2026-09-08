@@ -102,9 +102,15 @@ function parseKulcsszavak(raw: string, errors: RiportErrors): Kulcsszo[] {
   return egyedi as Kulcsszo[];
 }
 
-/** A böngésző üres file-inputnál üres nevű File-t küld: azt nem tekintjük fájlnak. */
+/**
+ * A böngésző üres file-inputnál helykitöltő File-t küld: üres névvel és 0 mérettel (a React
+ * server action kódolásában a neve a `"undefined"` string). Ezt nem tekintjük fájlnak. A
+ * valódi, névvel rendelkező 0 bájtos fájlt a `parseFajlok` utasítja el külön hibaüzenettel.
+ */
 function valodiFajlok(fd: FormData, key: string): File[] {
-  return fd.getAll(key).filter((v): v is File => v instanceof File && v.name !== '');
+  return fd
+    .getAll(key)
+    .filter((v): v is File => v instanceof File && !(v.size === 0 && (v.name === '' || v.name === 'undefined')));
 }
 
 /** Hibaüzenetbe való, max. ~80 karakterre vágott fájlnév. */
