@@ -14,6 +14,10 @@ interface AppState {
   user: AppSession;
   cycle: string;
   setCycle: (c: string) => void;
+  /** Olvasatlan, nem lezárt ticketek száma – a Kommunikáció menüpont számlálója. */
+  olvasatlan: number;
+  /** A /kommunikacio oldal írja felül a saját, frissebb számával (OlvasatlanSzinkron). */
+  setOlvasatlan: (n: number) => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -84,16 +88,26 @@ function LogoutForm({ action }: { action: LogoutAction }) {
 export default function AppShell({
   user,
   logoutAction,
-  olvasatlan,
+  olvasatlan: szerverOlvasatlan,
   children,
 }: {
   user: AppSession;
   logoutAction: LogoutAction;
-  /** Olvasatlan, nem lezárt ticketek száma – a Kommunikáció menüpont számlálója. */
+  /** Olvasatlan, nem lezárt ticketek száma a layoutból – a menü-számláló kiindulópontja. */
   olvasatlan: number;
   children: ReactNode;
 }) {
   const [cycle, setCycle] = useState(DEFAULT_CYCLE);
+  // A számláló állapotban él, mert a /kommunikacio oldal a saját, frissebb értékével
+  // felülírja (a layout a megtekintés-jelölés ELŐTT számol). A szerverről érkező új érték
+  // viszont nyer: a layout revalidálásakor (revalidatePath) ez a render-közbeni igazítás
+  // frissíti az állapotot – ez a React ajánlott „prop változásra állapot igazítása" mintája.
+  const [olvasatlan, setOlvasatlan] = useState(szerverOlvasatlan);
+  const [elozoSzerver, setElozoSzerver] = useState(szerverOlvasatlan);
+  if (elozoSzerver !== szerverOlvasatlan) {
+    setElozoSzerver(szerverOlvasatlan);
+    setOlvasatlan(szerverOlvasatlan);
+  }
   const pathname = usePathname();
   const [title, sub] = titleFor(pathname, user.role);
   const roleLabel = user.role === 'admin'
@@ -101,7 +115,7 @@ export default function AppShell({
     : `TéT attasé${user.orszag ? ' · ' + user.orszag : ''}`;
 
   return (
-    <AppContext.Provider value={{ user, cycle, setCycle }}>
+    <AppContext.Provider value={{ user, cycle, setCycle, olvasatlan, setOlvasatlan }}>
       <div style={{ display: 'flex', minHeight: '100vh' }}>
         <aside style={{
           width: 238, flex: '0 0 238px', background: '#131a24', color: '#e7ebf1',
@@ -123,10 +137,13 @@ export default function AppShell({
                   <span style={{ width: 16, textAlign: 'center', fontSize: 13 }}>{n.icon}</span>
                   {n.label}
                   {n.href === '/kommunikacio' && olvasatlan > 0 && (
-                    <span aria-label={`${olvasatlan} olvasatlan ticket`} style={{
-                      marginLeft: 'auto', background: '#b3261e', color: '#fff', fontSize: 10,
-                      fontWeight: 600, padding: '1px 6px', borderRadius: 9,
-                    }}>{olvasatlan}</span>
+                    <>
+                      <span aria-hidden style={{
+                        marginLeft: 'auto', background: '#b3261e', color: '#fff', fontSize: 10,
+                        fontWeight: 600, padding: '1px 6px', borderRadius: 9,
+                      }}>{olvasatlan}</span>
+                      <span className="sr-only">{olvasatlan} olvasatlan ticket</span>
+                    </>
                   )}
                 </Link>
               );

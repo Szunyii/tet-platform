@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Card } from '../../../components/ui/card';
 import {
+  countOlvasatlan,
   getTicket,
   jelolOlvasottnak,
   listCimzettJeloltek,
@@ -12,6 +13,7 @@ import { requireSession } from '../../../lib/session';
 import { canViewTicket } from '../../../lib/ticket-jog';
 import { parseSzuro } from '../../../lib/ticket-szotar';
 import { closeTicketAction, reopenTicketAction, sendUzenetAction } from './actions';
+import { OlvasatlanSzinkron } from './components/OlvasatlanSzinkron';
 import { TicketAdatlap } from './components/TicketAdatlap';
 import { TicketBeszelgetes } from './components/TicketBeszelgetes';
 import { TicketLista } from './components/TicketLista';
@@ -39,6 +41,9 @@ export default async function KommunikacioPage({ searchParams }: { searchParams:
 
   // Megtekintés = olvasott. Idempotens upsert, ezért a dev-módú dupla render sem gond;
   // a listában is olvasottnak mutatjuk, mert a lista a jelölés előtt készült.
+  // A route dinamikus és nincs loading.tsx-e, ezért a Link-prefetch nem rendereli az oldalt
+  // (így nem is jelöl olvasottnak); loading boundary vagy Cache Components bevezetésekor ezt
+  // újra át kell gondolni.
   if (kivalasztott) {
     jelolOlvasottnak(kivalasztott.id, session.userId);
     kivalasztott = { ...kivalasztott, olvasatlan: false };
@@ -46,11 +51,14 @@ export default async function KommunikacioPage({ searchParams }: { searchParams:
   const kivalasztottId = kivalasztott?.id ?? null;
   const sorok = lista.map((t) => (t.id === kivalasztottId ? { ...t, olvasatlan: false } : t));
 
+  // A jelölés utáni, friss szám: a layout ennél régebbit adott az AppShellnek.
+  const olvasatlan = countOlvasatlan(session);
   const ma = maiNaptariNap();
   const jeloltek = admin ? listCimzettJeloltek() : [];
 
   return (
-    <div className="grid max-w-[1500px] items-start gap-4 lg:grid-cols-[22rem_minmax(0,1fr)_17rem]">
+    <div className="grid max-w-[1500px] items-start gap-4 lg:grid-cols-[18rem_minmax(0,1fr)] 2xl:grid-cols-[22rem_minmax(0,1fr)_17rem]">
+      <OlvasatlanSzinkron ertek={olvasatlan} />
       <TicketLista sorok={sorok} kivalasztottId={kivalasztottId} szuro={szuro} admin={admin} ma={ma} />
 
       {kivalasztott ? (
@@ -63,7 +71,7 @@ export default async function KommunikacioPage({ searchParams }: { searchParams:
         />
       ) : (
         <Card className="p-6 text-sm text-muted-foreground">
-          {admin ? 'Nincs kiválasztott ticket. Nyiss egyet a jobb oldali gombbal.' : 'Még nincs hozzád címzett ticket.'}
+          {admin ? 'Nincs kiválasztott ticket. Nyiss egyet az Új ticket gombbal.' : 'Még nincs hozzád címzett ticket.'}
         </Card>
       )}
 
