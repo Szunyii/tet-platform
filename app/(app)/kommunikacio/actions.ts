@@ -19,7 +19,12 @@ export type TicketFormState = MuveletState;
 
 // Azonos szöveg hiányzó és idegen ticketre: nem áruljuk el a létezését.
 const NINCS_JOG = 'Nincs jogosultságod ehhez a tickethez.';
+// Admin-only action: itt nem kell titkolni a hiányt, a hibaüzenet ezt tükrözi.
+const NINCS_TICKET = 'Ez a ticket már nem létezik, a lista frissült.';
 const MENTES_HIBA = 'Mentés sikertelen, próbáld újra.';
+const LEZARVA = 'A ticket le van zárva.';
+const LEZARAS_HIBA = 'Lezárás sikertelen, próbáld újra.';
+const UJRANYITAS_HIBA = 'Újranyitás sikertelen, próbáld újra.';
 
 // A teljes layout revalidálása: a lista, a beszélgetés és az AppShell menü-számlálója is frissül.
 function frissit(): void {
@@ -52,7 +57,11 @@ export async function sendUzenetAction(
   if (!parsed.ok) return { errors: parsed.errors };
   const t = getTicket(ticketId, session);
   if (!t || !canViewTicket(session, t)) return { errors: { form: NINCS_JOG } };
-  if (!canWriteTicket(session, t)) return { errors: { form: 'A ticket le van zárva.' } };
+  if (!canWriteTicket(session, t)) {
+    // Elavult kliens-állapot: a lista/panel is frissüljön.
+    frissit();
+    return { errors: { form: LEZARVA } };
+  }
   try {
     addUzenet(ticketId, { id: session.userId, nev: session.name, szerep: session.role }, parsed.szoveg);
   } catch (err) {
@@ -68,14 +77,20 @@ export async function sendUzenetAction(
 export async function closeTicketAction(ticketId: string): Promise<TicketFormState> {
   const session = await requireAdmin();
   const t = getTicket(ticketId, session);
-  if (!t) return { errors: { form: NINCS_JOG } };
-  if (t.statusz === 'lezart') return { ok: true };
+  if (!t) {
+    frissit();
+    return { errors: { form: NINCS_TICKET } };
+  }
+  if (t.statusz === 'lezart') {
+    frissit();
+    return { ok: true };
+  }
   try {
     closeTicket(ticketId);
   } catch (err) {
     unstable_rethrow(err);
     console.error('[ticket] closeTicket sikertelen:', err);
-    return { errors: { form: 'Lezárás sikertelen, próbáld újra.' } };
+    return { errors: { form: LEZARAS_HIBA } };
   }
   frissit();
   return { ok: true };
@@ -84,14 +99,20 @@ export async function closeTicketAction(ticketId: string): Promise<TicketFormSta
 export async function reopenTicketAction(ticketId: string): Promise<TicketFormState> {
   const session = await requireAdmin();
   const t = getTicket(ticketId, session);
-  if (!t) return { errors: { form: NINCS_JOG } };
-  if (t.statusz !== 'lezart') return { ok: true };
+  if (!t) {
+    frissit();
+    return { errors: { form: NINCS_TICKET } };
+  }
+  if (t.statusz !== 'lezart') {
+    frissit();
+    return { ok: true };
+  }
   try {
     reopenTicket(ticketId);
   } catch (err) {
     unstable_rethrow(err);
     console.error('[ticket] reopenTicket sikertelen:', err);
-    return { errors: { form: 'Újranyitás sikertelen, próbáld újra.' } };
+    return { errors: { form: UJRANYITAS_HIBA } };
   }
   frissit();
   return { ok: true };
