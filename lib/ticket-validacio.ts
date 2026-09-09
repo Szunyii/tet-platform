@@ -9,17 +9,11 @@ import {
   isTipusKulcs,
   TARGY_MAX,
   UZENET_MAX,
+  type CimzettJelolt,
   type PrioKulcs,
   type TipusKulcs,
 } from './ticket-szotar';
 import { mezo, type MezoHibak } from './urlap';
-
-/** Az admin által választható címzett: nem tiltott attasé, akinek van országa. */
-export interface CimzettJelolt {
-  id: string;
-  nev: string;
-  orszag: string;
-}
 
 export interface UjTicketInput {
   cimzettId: string;
@@ -36,7 +30,7 @@ export type ParseUzenetResult = { ok: true; szoveg: string } | { ok: false; erro
 
 function parseSzoveg(fd: FormData, errors: MezoHibak): string {
   const szoveg = mezo(fd, 'szoveg');
-  if (!szoveg) errors.szoveg = 'Az üzenet nem lehet üres.';
+  if (!szoveg) errors.szoveg = 'Az üzenet kötelező.';
   else if (szoveg.length > UZENET_MAX) errors.szoveg = `Az üzenet legfeljebb ${UZENET_MAX} karakter.`;
   return szoveg;
 }
@@ -46,25 +40,32 @@ export function parseUjTicketForm(fd: FormData, jeloltek: readonly CimzettJelolt
 
   const cimzettId = mezo(fd, 'cimzettId');
   const cimzett = jeloltek.find((j) => j.id === cimzettId);
-  if (!cimzettId) errors.cimzettId = 'Válassz címzettet.';
-  else if (!cimzett) errors.cimzettId = 'A címzett nem választható (nem attasé, tiltott, vagy nincs országa).';
+  if (jeloltek.length === 0) {
+    errors.form = 'Nincs címezhető attasé.';
+  } else if (!cimzettId) {
+    errors.cimzettId = 'Válassz címzettet.';
+  } else if (!cimzett) {
+    errors.cimzettId = 'A címzett nem választható (nem attasé, tiltott, vagy nincs országa).';
+  }
 
-  const tipus = mezo(fd, 'tipus');
-  if (!isTipusKulcs(tipus)) errors.tipus = 'Válassz típust.';
+  const tipusRaw = mezo(fd, 'tipus');
+  const tipus = isTipusKulcs(tipusRaw) ? tipusRaw : null;
+  if (!tipus) errors.tipus = 'Válassz típust.';
 
-  const prio = mezo(fd, 'prio');
-  if (!isPrioKulcs(prio)) errors.prio = 'Válassz prioritást.';
+  const prioRaw = mezo(fd, 'prio');
+  const prio = isPrioKulcs(prioRaw) ? prioRaw : null;
+  if (!prio) errors.prio = 'Válassz prioritást.';
 
   const hataridoRaw = mezo(fd, 'hatarido');
-  if (hataridoRaw && !ervenyesNaptariDatum(hataridoRaw)) errors.hatarido = 'Érvénytelen dátum (ÉÉÉÉ-HH-NN).';
+  if (hataridoRaw && !ervenyesNaptariDatum(hataridoRaw)) errors.hatarido = 'Érvénytelen dátum.';
 
   const targy = mezo(fd, 'targy');
-  if (!targy) errors.targy = 'A tárgy megadása kötelező.';
+  if (!targy) errors.targy = 'A tárgy kötelező.';
   else if (targy.length > TARGY_MAX) errors.targy = `A tárgy legfeljebb ${TARGY_MAX} karakter.`;
 
   const szoveg = parseSzoveg(fd, errors);
 
-  if (Object.keys(errors).length > 0 || !cimzett || !isTipusKulcs(tipus) || !isPrioKulcs(prio)) {
+  if (Object.keys(errors).length > 0 || !cimzett || !tipus || !prio) {
     return { ok: false, errors };
   }
   return {

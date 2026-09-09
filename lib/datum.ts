@@ -101,7 +101,9 @@ export function formatDatumIdo(d: Date): string {
   return HU_DATUM_IDO.format(d);
 }
 
-const ISO_NAP = new Intl.DateTimeFormat('en-CA', {
+// Locale-független: `formatToParts`-ból építjük az ISO alakot, mint a `FALIORA_FORMATTER`
+// fent, hogy ne egy adott locale (`en-CA`) elválasztó-konvenciójára hagyatkozzunk.
+const ISO_NAP = new Intl.DateTimeFormat('en-US', {
   timeZone: IDOZONA,
   year: 'numeric',
   month: '2-digit',
@@ -110,5 +112,7 @@ const ISO_NAP = new Intl.DateTimeFormat('en-CA', {
 
 /** A mai naptári nap `YYYY-MM-DD` alakban, Europe/Budapest szerint (határidő-összevetéshez). */
 export function maiNaptariNap(): string {
-  return ISO_NAP.format(new Date());
+  const p: Record<string, string> = {};
+  for (const x of ISO_NAP.formatToParts(new Date())) p[x.type] = x.value;
+  return `${p.year}-${p.month}-${p.day}`;
 }

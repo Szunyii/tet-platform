@@ -4,27 +4,27 @@
  */
 
 export const TIPUSOK = {
-  adatkeres: { nev: 'Adatkérés' },
-  feladat: { nev: 'Feladatkiosztás' },
-  riport_visszajelzes: { nev: 'Riport-visszajelzés' },
-  egyeztetes: { nev: 'Egyeztetés' },
+  adatkeres: 'Adatkérés',
+  feladat: 'Feladatkiosztás',
+  riport_visszajelzes: 'Riport-visszajelzés',
+  egyeztetes: 'Egyeztetés',
 } as const;
 export type TipusKulcs = keyof typeof TIPUSOK;
 export const TIPUS_KULCSOK = Object.keys(TIPUSOK) as TipusKulcs[];
 
 export const PRIORITASOK = {
-  magas: { nev: 'Magas' },
-  kozepes: { nev: 'Közepes' },
-  alacsony: { nev: 'Alacsony' },
+  magas: 'Magas',
+  kozepes: 'Közepes',
+  alacsony: 'Alacsony',
 } as const;
 export type PrioKulcs = keyof typeof PRIORITASOK;
 export const PRIO_KULCSOK = Object.keys(PRIORITASOK) as PrioKulcs[];
 
 export const STATUSZOK = {
-  nyitott: { nev: 'Nyitott' },
-  valaszra_var: { nev: 'Válaszra vár' }, // az attasé következik
-  folyamatban: { nev: 'Folyamatban' }, // az attasé válaszolt, az NIÜ következik
-  lezart: { nev: 'Lezárt' },
+  nyitott: 'Nyitott',
+  valaszra_var: 'Válaszra vár', // az attasé következik
+  folyamatban: 'Folyamatban', // az attasé válaszolt, az NIÜ következik
+  lezart: 'Lezárt',
 } as const;
 export type StatuszKulcs = keyof typeof STATUSZOK;
 
@@ -40,20 +40,30 @@ export const SZURO_KULCSOK = Object.keys(SZUROK) as TicketSzuro[];
 export const TARGY_MAX = 200;
 export const UZENET_MAX = 4000;
 
+/** Az admin által választható címzett: nem tiltott attasé, akinek van országa. */
+export interface CimzettJelolt {
+  id: string;
+  nev: string;
+  orszag: string;
+}
+
+/**
+ * Az üzenet szerzőjének szerepe: a DB-ben tárolt pillanatkép a küldés pillanatáról.
+ * Tudatosan nem az élő auth-szerepből (`AppRole`, `lib/session.ts`) származik, hogy a
+ * szótár framework- és DB-mentes maradjon, és hogy a szerep utólagos módosítása (pl.
+ * admin → attasé) ne írja át a már elküldött üzenetek megjelenített szerzőjét.
+ */
+export type UzenetSzerep = 'admin' | 'attase';
+
 export function isTipusKulcs(v: string): v is TipusKulcs {
   return Object.prototype.hasOwnProperty.call(TIPUSOK, v);
 }
 export function isPrioKulcs(v: string): v is PrioKulcs {
   return Object.prototype.hasOwnProperty.call(PRIORITASOK, v);
 }
-export function isStatuszKulcs(v: string): v is StatuszKulcs {
-  return Object.prototype.hasOwnProperty.call(STATUSZOK, v);
-}
 
-/** `?sz=` érték → szűrő; ismeretlen vagy hiányzó → `aktiv`. */
-export function parseSzuro(v: unknown): TicketSzuro {
-  return typeof v === 'string' && Object.prototype.hasOwnProperty.call(SZUROK, v) ? (v as TicketSzuro) : 'aktiv';
+/** `?sz=` érték → szűrő; ismeretlen, hiányzó vagy tömb (több `sz=`) → az első elem, egyébként `aktiv`. */
+export function parseSzuro(v: string | string[] | undefined): TicketSzuro {
+  const elso = Array.isArray(v) ? v[0] : v;
+  return typeof elso === 'string' && Object.prototype.hasOwnProperty.call(SZUROK, elso) ? (elso as TicketSzuro) : 'aktiv';
 }
-
-/** Az üzenet szerzőjének szerepe (pillanatkép a DB-ben). */
-export type UzenetSzerep = 'admin' | 'attase';
