@@ -14,8 +14,8 @@ export type MezoHibak = Record<string, string>;
 export const LATHATATLAN_RE = /[\u200B-\u200D\uFEFF]/g;
 
 // C0 vezérlőkarakterek a sortörés (LF, \n) és tabulátor (\t) kivételével: ezek a
-// mezőértékben nem hordoznak információt, csak zavart okoznak. A CR (\r) nem itt, hanem
-// a normalizálásnál tűnik el (lásd lent), ezért a listából is kimarad.
+// mezőértékben nem hordoznak információt, csak zavart okoznak. A CR-t (\r) a
+// tisztitSzoveg normalizálása már LF-re cserélte, mire ide ér.
 export const VEZERLO_RE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g;
 
 /**

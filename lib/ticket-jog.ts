@@ -11,7 +11,11 @@ export function canViewTicket(session: Pick<AppSession, 'userId' | 'role'>, t: T
   return session.role === 'admin' || t.cimzettId === session.userId;
 }
 
-/** Írni az tud, aki látja a ticketet, és csak amíg nincs lezárva. Nyitás/lezárás/újranyitás admin-only: azt az action-ök requireAdmin()-ja kényszeríti ki, nem ez a modul. */
+/**
+ * Írni az tud, aki látja a ticketet, és csak amíg nincs lezárva. Nyitás/lezárás/
+ * újranyitás admin-only: azt az action-ök requireAdmin()-ja kényszeríti ki, nem ez
+ * a modul.
+ */
 export function canWriteTicket(
   session: Pick<AppSession, 'userId' | 'role'>,
   t: TicketJogAlany & { statusz: StatuszKulcs },
