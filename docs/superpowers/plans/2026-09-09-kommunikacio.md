@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+A kódblokkok az eredeti tervet mutatják; a végleges kód eltéréseit taskonként a „Megvalósítási eltérések” szakasz sorolja fel.
+
 **Goal:** A `/kommunikacio` képernyő valódi, adatbázisra épülő működése: az admin egy adott TéT attasénak ticketet nyit (típus, prioritás, határidő, tárgy, első üzenet), minden ticketnek saját üzenetszála van, az attasé a hozzá címzett ticketekben válaszol; státusz automatikus, admin zár le és nyit újra; olvasatlan-jelzés a listán és a sidebar menüpontján.
 
 **Architecture:** Három új Drizzle tábla (`ticket`, `ticket_uzenet`, `ticket_olvasas`). Szótár (`lib/ticket-szotar.ts`), validátor (`lib/ticket-validacio.ts`) és jog (`lib/ticket-jog.ts`) tiszta modulok; minden Drizzle kód a `db/queries/ticket.ts`-ben. Egyetlen route: `app/(app)/kommunikacio/page.tsx` Server Component, `?t=<id>` (kiválasztott ticket) és `?sz=` (szűrő) URL-paraméterekkel; server action-ök az `app/(app)/kommunikacio/actions.ts`-ben; a route-specifikus komponensek `app/(app)/kommunikacio/components/` alatt. A felhasználók-feature `MuveletDialog`-ja `components/form/` alá költözik, mert az új ticket dialógus is használja. Az `AppShell` menü-számlálója a layoutból kapott `olvasatlan` prop.
@@ -60,7 +62,7 @@
 - Modify: `lib/datum.ts` (a fájl végére)
 - Test: `scripts/_ticket-validacio.ts` (eldobható)
 
-- [ ] **Step 1: Szótár**
+- [x] **Step 1: Szótár**
 
 `lib/ticket-szotar.ts`:
 
@@ -126,7 +128,7 @@ export function parseSzuro(v: unknown): TicketSzuro {
 export type UzenetSzerep = 'admin' | 'attase';
 ```
 
-- [ ] **Step 2: Validátor**
+- [x] **Step 2: Validátor**
 
 `lib/ticket-validacio.ts`:
 
@@ -222,7 +224,7 @@ export function parseUzenetForm(fd: FormData): ParseUzenetResult {
 }
 ```
 
-- [ ] **Step 3: Jog**
+- [x] **Step 3: Jog**
 
 `lib/ticket-jog.ts`:
 
@@ -249,7 +251,7 @@ export function canWriteTicket(
 }
 ```
 
-- [ ] **Step 4: Dátum-helperek**
+- [x] **Step 4: Dátum-helperek**
 
 `lib/datum.ts` végére:
 
@@ -281,7 +283,7 @@ export function maiNaptariNap(): string {
 }
 ```
 
-- [ ] **Step 5: Ellenőrző script**
+- [x] **Step 5: Ellenőrző script**
 
 `scripts/_ticket-validacio.ts`:
 
@@ -346,7 +348,7 @@ console.log('ticket-validacio OK');
 Run: `npx tsx scripts/_ticket-validacio.ts`
 Expected: `ticket-validacio OK`
 
-- [ ] **Step 6: Típusellenőrzés, script törlése, commit**
+- [x] **Step 6: Típusellenőrzés, script törlése, commit**
 
 ```bash
 npx tsc --noEmit && rm scripts/_ticket-validacio.ts
@@ -355,6 +357,19 @@ git commit -m "feat(kommunikacio): ticket szótár, validátor, jog és dátum-h
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
+
+**Megvalósítási eltérések**
+
+- A szótárak **laposak** (`Record<kulcs, cimke>`, pl. `TIPUSOK.adatkeres === 'Adatkérés'`), nem `{ nev }` objektumok; a hívók így `TIPUSOK[k]`-val olvassák a címkét.
+- `isStatuszKulcs` kimaradt: sehol nem volt rá szükség (a státuszt csak a DB és a query réteg állítja). Maradt `isTipusKulcs` és `isPrioKulcs`.
+- A `CimzettJelolt` interfész a szótárban él (nem a lekérdezésekben), így a validátor DB-mentes maradhat.
+- `parseSzuro(v: string | string[] | undefined)`: közvetlenül a Next `searchParams` értékét fogadja; tömbnél az első elemet nézi, ismeretlen/hiányzó érték → `aktiv`.
+- `maiNaptariNap()` a `lib/datum.ts`-ben `Intl.DateTimeFormat.formatToParts`-tal állítja össze az `YYYY-MM-DD`-t (nincs manuális eltolás-számítás).
+- A `tisztitSzoveg` (`lib/urlap.ts`) a CRLF-et LF-re normalizálja, mielőtt szűrne és trimmelne – a textarea CRLF-fel küld, a `maxLength` viszont LF-ként számol.
+- Hibaszövegek a projekt meglévő megfogalmazásaihoz igazítva: „A tárgy kötelező.", „Az üzenet kötelező.", „Érvénytelen dátum.".
+- Ha nincs egyetlen címezhető attasé sem, a hiba űrlap-szintű (`errors.form = 'Nincs címezhető attasé.'`), nem a címzett mezőé.
+- A típusőrök egyszer futnak le (`const tipus = isTipusKulcs(raw) ? raw : null`), az eredményt használja a hibaág és az adat-összeállítás is.
+- Később, a UI-tasknál került ide két dolog: a `lejartE(hatarido, statusz, ma)` (a lista és az adatlap közösen használja) és a `parseSzoveg(fd, errors, kulcs)` kulcs-paramétere – a válasz-űrlap mezőneve `valasz`, hogy egy oldalon ne ütközzön az új-ticket dialógus `szoveg` id-jával.
 
 ---
 
@@ -365,7 +380,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Modify: `db/schema/index.ts`
 - Create (generált): `drizzle/0003_*.sql`, `drizzle/meta/0003_snapshot.json`, `drizzle/meta/_journal.json`
 
-- [ ] **Step 1: Séma**
+- [x] **Step 1: Séma**
 
 `db/schema/ticket.ts`:
 
@@ -451,7 +466,7 @@ export * from './riport';
 export * from './ticket';
 ```
 
-- [ ] **Step 2: Migráció generálása és alkalmazása**
+- [x] **Step 2: Migráció generálása és alkalmazása**
 
 Run: `npm run db:generate`
 Expected: új `drizzle/0003_<név>.sql` három `CREATE TABLE`-lel (`ticket`, `ticket_olvasas`, `ticket_uzenet`) és négy indexszel; `drizzle/meta/_journal.json` új bejegyzés.
@@ -459,7 +474,7 @@ Expected: új `drizzle/0003_<név>.sql` három `CREATE TABLE`-lel (`ticket`, `ti
 Run: `npm run db:migrate`
 Expected: hibátlan lefutás. Ellenőrzés: `sqlite3 data/tet.db ".tables"` tartalmazza a `ticket`, `ticket_uzenet`, `ticket_olvasas` táblákat (ha nincs `sqlite3` CLI: `node -e "const D=require('better-sqlite3');console.log(new D('data/tet.db').prepare(\"select name from sqlite_master where type='table' and name like 'ticket%'\").all())"`).
 
-- [ ] **Step 3: Típusellenőrzés és commit**
+- [x] **Step 3: Típusellenőrzés és commit**
 
 ```bash
 npx tsc --noEmit
@@ -469,6 +484,10 @@ git commit -m "feat(kommunikacio): ticket, ticket_uzenet, ticket_olvasas táblá
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
 
+**Megvalósítási eltérések**
+
+- A séma a terv szerint készült; a generált migráció neve `drizzle/0003_dapper_triton.sql`.
+
 ---
 
 ### Task 3: Lekérdezések (`db/queries/ticket.ts`)
@@ -477,7 +496,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Create: `db/queries/ticket.ts`
 - Test: `scripts/_ticket-queries.ts` (eldobható; a lokális DB-be ír, a végén takarít)
 
-- [ ] **Step 1: Lekérdezések**
+- [x] **Step 1: Lekérdezések**
 
 `db/queries/ticket.ts`:
 
@@ -770,7 +789,7 @@ export function listCimzettJeloltek(): CimzettJelolt[] {
 
 Megjegyzés az implementálónak: a `tipusos()` paramétere szándékosan laza, a visszatérést a hívó `as`-eli. Ha a `tsc` a `listOszlopok` spreadjére vagy az `alias` `name` oszlopára panaszkodik, a `select` objektumot írd ki explicit mezőnként. A `user.banned`/`banExpires` mezők a `db/schema/auth.ts`-ben vannak (a `listFelhasznalok` ugyanígy használja őket: tiltott = `banned && (!banExpires || banExpires > most)`).
 
-- [ ] **Step 2: Ellenőrző script (a lokális DB-n, takarít maga után)**
+- [x] **Step 2: Ellenőrző script (a lokális DB-n, takarít maga után)**
 
 `scripts/_ticket-queries.ts`:
 
@@ -838,7 +857,7 @@ try {
 Run: `NODE_OPTIONS="--conditions=react-server" npx tsx --env-file=.env.local scripts/_ticket-queries.ts`
 Expected: `ticket-queries OK`, és a `ticket` tábla utána üres (`_teszt ticket` törölve).
 
-- [ ] **Step 3: Típusellenőrzés, script törlése, commit**
+- [x] **Step 3: Típusellenőrzés, script törlése, commit**
 
 ```bash
 npx tsc --noEmit && rm scripts/_ticket-queries.ts
@@ -848,6 +867,14 @@ git commit -m "feat(kommunikacio): ticket lekérdezések (lista, részlet, létr
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
 
+**Megvalósítási eltérések**
+
+- Az `olvasatlanSql` a nyers táblanevek helyett tipizált oszlop-referenciákkal épül (`${ticketUzenet.createdAt}` stb.), így séma-átnevezésnél a fordító jelez.
+- A `tipusos()` segédfüggvényhez explicit `Tipusositott<T>` visszatérési típus kellett: enélkül a TS nem engedte a generikus spread eredményét tovább spreadelni a `getTicket`-ben.
+- A `getTicket(id, nezo)` a láthatóságot **magában az SQL-ben is** kikényszeríti (attasénak `cimzett_id = nezo.userId`), tehát idegen ticketre `null`-t ad. A hívók emellett továbbra is futtatják a `canViewTicket`-et, hogy a jogosultsági modell explicit maradjon (ez pontosítja a plan fejlécének 3. pontját).
+- `closeTicket` és `reopenTicket` idempotens: a `WHERE`-be státusz-predikátum került (`ne(statusz,'lezart')`, illetve `eq(statusz,'lezart')`), így a kétszeri beküldés nem bumpolja az `updatedAt`-ot és nem írja felül a `lezarvaAt`-ot.
+- `countOlvasatlan` csak a **nem lezárt** ticketeket számolja (a menü-számláló nem ragadhat be lezárt tickettől).
+
 ---
 
 ### Task 4: Server action-ök
@@ -855,7 +882,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 **Files:**
 - Create: `app/(app)/kommunikacio/actions.ts`
 
-- [ ] **Step 1: Action-ök**
+- [x] **Step 1: Action-ök**
 
 `app/(app)/kommunikacio/actions.ts`:
 
@@ -959,7 +986,7 @@ export async function reopenTicketAction(ticketId: string): Promise<TicketFormSt
 }
 ```
 
-- [ ] **Step 2: Típusellenőrzés és commit**
+- [x] **Step 2: Típusellenőrzés és commit**
 
 ```bash
 npx tsc --noEmit
@@ -968,6 +995,12 @@ git commit -m "feat(kommunikacio): server action-ök (nyitás, üzenet, lezárá
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
+
+**Megvalósítási eltérések**
+
+- Az elavult kliens-állapot ágain (lezárt ticketbe írás, eltűnt ticket, már lezárt/már nyitott ticket) is fut a `frissit()` = `revalidatePath('/', 'layout')`, hogy a lista és a panel azonnal a valós állapotot mutassa.
+- Külön üzenet-konstans az admin-only action-ök hiányzó ticketjére (`NINCS_TICKET = 'Ez a ticket már nem létezik, a lista frissült.'`): itt nincs mit titkolni, szemben a `NINCS_JOG`-gal, ami hiányzó és idegen ticketre szándékosan azonos.
+- Minden hibaszöveg modul-szintű konstans (`NINCS_JOG`, `NINCS_TICKET`, `MENTES_HIBA`, `LEZARVA`, `LEZARAS_HIBA`, `UJRANYITAS_HIBA`).
 
 ---
 
@@ -978,7 +1011,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Modify: `app/(app)/felhasznalok/components/UjFelhasznaloDialog.tsx`, `SzerkesztesDialog.tsx`, `JelszoDialog.tsx` (import útvonal)
 - Create: `app/(app)/kommunikacio/components/TicketJelzesek.tsx`
 
-- [ ] **Step 1: Átköltöztetés**
+- [x] **Step 1: Átköltöztetés**
 
 ```bash
 git mv "app/(app)/felhasznalok/components/MuveletDialog.tsx" components/form/MuveletDialog.tsx
@@ -1005,7 +1038,7 @@ A három felhasználók-dialógusban: `import { MuveletDialog } from './MuveletD
 
 Run: `npx tsc --noEmit` → hibátlan.
 
-- [ ] **Step 2: Jelzés-komponensek**
+- [x] **Step 2: Jelzés-komponensek**
 
 `app/(app)/kommunikacio/components/TicketJelzesek.tsx`:
 
@@ -1063,7 +1096,7 @@ export function Monogram({ nev, sajat }: { nev: string; sajat: boolean }) {
 }
 ```
 
-- [ ] **Step 3: Típusellenőrzés és commit**
+- [x] **Step 3: Típusellenőrzés és commit**
 
 ```bash
 npx tsc --noEmit
@@ -1073,6 +1106,11 @@ git commit -m "refactor(form): MuveletDialog közös komponens; feat(kommunikaci
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
 
+**Megvalósítási eltérések**
+
+- A jelzés-komponensek a lapos szótárakból olvasnak (`STATUSZOK[statusz]`, `TIPUSOK[tipus]`, `PRIORITASOK[prio]`), nincs `.nev`.
+- A `MuveletDialog` a Task 6–8 során kapott egy `gombFolyamatban` propot (alapértelmezés `'Mentés…'`), hogy az új-ticket dialógus „Létrehozás…"-t mutathasson beküldés közben.
+
 ---
 
 ### Task 6: Ticketlista szűrőkkel
@@ -1080,7 +1118,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 **Files:**
 - Create: `app/(app)/kommunikacio/components/TicketLista.tsx`
 
-- [ ] **Step 1: Komponens**
+- [x] **Step 1: Komponens**
 
 `app/(app)/kommunikacio/components/TicketLista.tsx` (Server Component, nincs `'use client'`):
 
@@ -1173,7 +1211,7 @@ export function TicketLista({
 }
 ```
 
-- [ ] **Step 2: Típusellenőrzés és commit**
+- [x] **Step 2: Típusellenőrzés és commit**
 
 ```bash
 npx tsc --noEmit
@@ -1182,6 +1220,15 @@ git commit -m "feat(kommunikacio): ticketlista szűrő-linkekkel és olvasatlan-
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
+
+**Megvalósítási eltérések**
+
+- A kiválasztott sor jelölése `bg-primary/10` + `ring-1 ring-inset ring-primary/20`, a fókuszgyűrű pedig `focus-visible:ring-inset` (a sorok egymáshoz érnek, a kilógó gyűrű levágódna).
+- Felolvasó-szövegek: `sr-only` „Olvasatlan", „<prioritás> prioritás" (a prioritást vizuálisan csak a bal szegély színe mutatja) és „Lejárt határidő: " / „Határidő: ".
+- Szűrőnkénti üres állapot: „Még nincs ticket." (mind), „Nincs aktív ticket." (aktív), „Nincs aktív, magas prioritású ticket." (magas).
+- A tárgy `line-clamp-2` + `title` attribútum, hogy a hosszú tárgy se törje szét a sort, de teljes egészében elérhető legyen.
+- A szűrő-linkek megtartják a `?t=`-t akkor is, ha az adott ticket nem felel meg az új szűrőnek (kommentben rögzítve): a beszélgetés nyitva marad, csak a sor nem lesz kiemelve.
+- QA-javítás (Task 10): a teljes sor egy `Link`, ezért a globális `a` szabály kék színét és hover-aláhúzását `text-foreground no-underline hover:no-underline` utility-kkel írjuk felül – az affordancia a sor kiemelése.
 
 ---
 
@@ -1193,7 +1240,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Create: `app/(app)/kommunikacio/components/TicketStatuszGombok.tsx`
 - Create: `app/(app)/kommunikacio/components/TicketAdatlap.tsx`
 
-- [ ] **Step 1: Üzenet-űrlap**
+- [x] **Step 1: Üzenet-űrlap**
 
 `app/(app)/kommunikacio/components/UzenetUrlap.tsx`:
 
@@ -1249,7 +1296,7 @@ export function UzenetUrlap({ action, kuldoNev }: { action: FormAction; kuldoNev
 }
 ```
 
-- [ ] **Step 2: Beszélgetés-panel**
+- [x] **Step 2: Beszélgetés-panel**
 
 `app/(app)/kommunikacio/components/TicketBeszelgetes.tsx`:
 
@@ -1334,7 +1381,7 @@ export function TicketBeszelgetes({
 }
 ```
 
-- [ ] **Step 3: Státusz-gombok (admin)**
+- [x] **Step 3: Státusz-gombok (admin)**
 
 `app/(app)/kommunikacio/components/TicketStatuszGombok.tsx`:
 
@@ -1443,7 +1490,7 @@ export function TicketStatuszGombok({
 }
 ```
 
-- [ ] **Step 4: Adatlap**
+- [x] **Step 4: Adatlap**
 
 `app/(app)/kommunikacio/components/TicketAdatlap.tsx` (Server Component):
 
@@ -1530,7 +1577,7 @@ export function TicketAdatlap({
 }
 ```
 
-- [ ] **Step 5: Típusellenőrzés és commit**
+- [x] **Step 5: Típusellenőrzés és commit**
 
 ```bash
 npx tsc --noEmit
@@ -1540,6 +1587,17 @@ git commit -m "feat(kommunikacio): beszélgetés-panel, üzenet-űrlap, adatlap,
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
 
+**Megvalósítási eltérések**
+
+- Az `UzenetUrlap` `key={ticket.id}`-vel mountolódik újra: ticketváltáskor a vázlat és a hibaüzenet nem szivárog át.
+- Az üzenetlista `<ol>`-je `ref` + `tabIndex={0}` + `aria-label="Üzenetek"`: az új üzenetnél csak a listán belül görgetünk (az oldal pozíciója marad), és a görgethető régió billentyűzettel is olvasható.
+- A válasz-mező neve és id-ja `valasz` (nem `szoveg`), mert az új-ticket dialógus ugyanezen az oldalon él.
+- A Ctrl/Cmd+Enter kezelője IME-őrt kapott (`!e.nativeEvent.isComposing`), hogy japán/kínai bevitelnél az Enter a jelöltet erősítse meg.
+- A lezáró `AlertDialog` `finalFocus`-a a gombsáv `div`-jére mutat, nem a triggerre: a Lezárás gomb a művelet után már nem létezik (Újranyitásra cserélődik). QA-val ellenőrizve: záráskor a fókusz az „Újranyitás" gombra kerül.
+- Az adatlap `CardTitle`-je `role="heading" aria-level={3}` (a shadcn `CardTitle` alapból `div`).
+- A lejárt határidőt a lista és az adatlap is a közös `lejartE()`-vel számolja (a `ma` propként jön a page-ből).
+- QA-javítás (Task 10): a lezárt-jelzésben nincs dupla pont – a `formatDatum` kimenete („2026. 09. 09.") már ponttal végződik.
+
 ---
 
 ### Task 8: Új ticket dialógus (admin)
@@ -1547,7 +1605,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 **Files:**
 - Create: `app/(app)/kommunikacio/components/UjTicketDialog.tsx`
 
-- [ ] **Step 1: Komponens**
+- [x] **Step 1: Komponens**
 
 `app/(app)/kommunikacio/components/UjTicketDialog.tsx`:
 
@@ -1763,7 +1821,7 @@ function UjTicketModal({
 
 Megjegyzés: a `Select value={value || null}` azért, hogy üres kiválasztásnál a placeholder látsszon (a Base UI Select `null` értéket vár „nincs kiválasztva"-ként; ha a típus panaszkodik, `value={value === '' ? null : value}`). Ellenőrizd a `components/ui/select.tsx`-ben, hogy a `Select` átadja-e a `name`-et (a `SzerepkorSelect` már így használja, tehát igen).
 
-- [ ] **Step 2: Típusellenőrzés és commit**
+- [x] **Step 2: Típusellenőrzés és commit**
 
 ```bash
 npx tsc --noEmit
@@ -1772,6 +1830,15 @@ git commit -m "feat(kommunikacio): új ticket dialógus (admin)
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
+
+**Megvalósítási eltérések**
+
+- A `Valaszto` `required` és `disabled` propot is átad a Base UI `Select`-nek (nincs címezhető attasé → a címzett-választó letiltva), és a `hibaAttr(errors, id)` a triggerre kerül (`aria-invalid` + `aria-describedby`).
+- A címzett-lista `useMemo`-val áll elő a `jeloltek` propból (`{ id: 'Név · Ország' }`).
+- A vezérelt state-eket `isTipusKulcs` / `isPrioKulcs` őrzi (`onChange`-ben szűrve), így a state típusa nem hazudik.
+- A típus és a prioritás egy `grid-cols-1 sm:grid-cols-2` rácsban van (keskeny dialógusban egymás alá kerül).
+- A dátum-mező `min="2000-01-01"` / `max="2100-12-31"` határokkal.
+- A beküldés gomb felirata `gombFolyamatban="Létrehozás…"` (a `MuveletDialog` új propja).
 
 ---
 
@@ -1784,7 +1851,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Modify: `lib/data.ts` (a `TICKET_TYPES`, `TicketMsg`, `Ticket`, `TICKETS` törlése)
 - Modify: `app/(app)/felhasznalok/components/FelhasznaloMuveletek.tsx` (törlés-szöveg)
 
-- [ ] **Step 1: Page**
+- [x] **Step 1: Page**
 
 `app/(app)/kommunikacio/page.tsx` (a régi tartalom teljesen lecserélve):
 
@@ -1873,7 +1940,7 @@ export default async function KommunikacioPage({ searchParams }: { searchParams:
 }
 ```
 
-- [ ] **Step 2: Layout és AppShell**
+- [x] **Step 2: Layout és AppShell**
 
 `app/(app)/layout.tsx`:
 
@@ -1937,7 +2004,7 @@ export default function AppShell({
                   )}
 ```
 
-- [ ] **Step 3: Demóadat törlése és a felhasználó-törlés szövege**
+- [x] **Step 3: Demóadat törlése és a felhasználó-törlés szövege**
 
 `lib/data.ts`: töröld a `TICKET_TYPES` konstanst, a `TicketMsg` és `Ticket` interfészt és a teljes `TICKETS` tömböt (a `// Demóadatok ...` fejléc-kommentből a „ticketek" szót is vedd ki). A `CYCLES`, `DEFAULT_CYCLE`, `DEADLINE`, `SCORE_THRESHOLD`, `ME_ID` marad.
 
@@ -1949,7 +2016,7 @@ Run: `grep -rn "TICKETS\|TICKET_TYPES\|TicketMsg" app lib components` → nincs 
 'Ez nem vonható vissza. A felhasználó sessionjei, az összes bejegyzése (riportja) a csatolmányaival együtt, és a hozzá címzett ticketek az üzeneteikkel is törlődnek. Távozó attasénál a tiltás a javasolt művelet.',
 ```
 
-- [ ] **Step 4: Típusellenőrzés, gyors böngészős füstpróba, commit**
+- [x] **Step 4: Típusellenőrzés, gyors böngészős füstpróba, commit**
 
 ```bash
 npx tsc --noEmit
@@ -1977,6 +2044,14 @@ git commit -m "feat(kommunikacio): DB-alapú kommunikáció oldal, olvasatlan-sz
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
 
+**Megvalósítási eltérések**
+
+- A `TicketBeszelgetes` a page-ből `key={kivalasztott.id}`-t kap (ticketváltáskor tiszta kliens-állapot).
+- Link-gomb-olvashatóság: a globális `a { color; text-decoration }` szabályok az `app/globals.css` `@layer base` blokkjába kerültek (rétegezetlenül minden Tailwind utility-t vertek), a `components/ui/button.tsx` alap-osztályai pedig `no-underline hover:no-underline`-t, az `outline` variáns `text-foreground`-ot kapott. Ez projekt-szintű módosítás a shadcn fájlon.
+- A menü-számláló szinkronja: az `AppShell` állapotban tartja az `olvasatlan`-t (prop-változásra render közben igazítva), a page pedig az olvasottnak jelölés UTÁN újraszámolt értéket írja bele az `OlvasatlanSzinkron` kliens-komponenssel (`useApp().setOlvasatlan`). Enélkül a layout a jelölés előtti (eggyel nagyobb) számot mutatta volna, kliens-oldali navigációnál pedig egyáltalán nem frissült volna.
+- A rács `lg`-n 2 oszlopos (lista + beszélgetés, az adatlap alá kerül), `2xl`-en 3 oszlopos (`22rem_minmax(0,1fr)_17rem`), `max-w-[1500px]` kerettel.
+- Szövegjavítás: „Nincs kiválasztott ticket. Nyiss egyet az **Új ticket gombbal**." (a korábbi „a jobb oldali gombbal" a 2 oszlopos elrendezésben nem volt igaz).
+
 ---
 
 ### Task 10: Záró forgatókönyv (headless QA), dokumentáció, build
@@ -1985,7 +2060,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Modify: `README.md`, `CLAUDE.md`
 - Modify (ha kell): bármely előző fájl a QA-ban talált hibák javítására
 
-- [ ] **Step 1: Végponti forgatókönyv a gstack böngészővel**
+- [x] **Step 1: Végponti forgatókönyv a gstack böngészővel**
 
 `B=~/.claude/skills/gstack/browse/dist/browse`. Minden lépés után `$B console --errors` legyen üres. Bejelentkezés: `/login`, `#email` / `#password` mezők (ha más, `$B snapshot -i`), majd `button[type=submit]`. Kijelentkezés a fejléc „Kijelentkezés" gombjával (`$B click 'button:has-text("Kijelentkezés")'` vagy snapshot ref).
 
@@ -2002,7 +2077,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 
 Ha bármelyik lépés eltér az elvárttól: javítsd a kódot, commitold külön (`fix(kommunikacio): …`), és ismételd a lépést.
 
-- [ ] **Step 2: Build**
+- [x] **Step 2: Build**
 
 ```bash
 npm run build
@@ -2010,7 +2085,7 @@ npm run build
 
 Expected: sikeres build, a `/kommunikacio` dinamikus (ƒ) route. Ha a típusellenőrzés nem létező `app/...` modulra panaszkodik: `rm .next/dev/types/validator.ts`, majd újra build (lásd CLAUDE.md).
 
-- [ ] **Step 3: README és CLAUDE.md**
+- [x] **Step 3: README és CLAUDE.md**
 
 `README.md`:
 - A bevezető mondatban („A térkép, a kommunikáció, a tudástár és a monitoring képernyő még statikus dummy adatokból dolgozik…") vedd ki a kommunikációt, és add a DB-s felsoroláshoz: „az auth, a felhasználó-kezelés, a riportok (információs bejegyzések) és a kommunikáció (ticketek) már valódi adatbázisból".
@@ -2037,7 +2112,7 @@ Expected: sikeres build, a `/kommunikacio` dinamikus (ƒ) route. Ha a típuselle
 - A **UI shell** bekezdésben az `AppShell` propjai: `user: AppSession`, `logoutAction`, `olvasatlan: number`.
 - A Projektstruktúra táblázat „Megosztott komponensek" sora említse a `components/form/MuveletDialog.tsx`-et is (`useMuveletForm`, `MezoHiba`, `MuveletDialog`).
 
-- [ ] **Step 4: Plan szinkron és záró commit**
+- [x] **Step 4: Plan szinkron és záró commit**
 
 A plan minden taskjához írj „Megvalósítási eltérések" alszakaszt, ha a végleges kód eltér a plan kódblokkjától, és a kódblokkokat igazítsd a végleges fájlokhoz (külön docs-commit). Pipáld ki a checkboxokat.
 
@@ -2047,6 +2122,24 @@ git commit -m "docs(kommunikacio): README, CLAUDE.md, plan szinkron a végleges 
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
+
+**Megvalósítási eltérések**
+
+A záró QA (11 lépés, admin + két attasé, 1280×800 és 1600×900) a forgatókönyv szerint lefutott. Két hiba került elő és javítva lett:
+
+- `fix(kommunikacio): dupla pont a lezárt-jelzésben` – „A ticket lezárva 2026. 09. 09.**.** Lezárt ticketbe…": a `formatDatum` kimenete már ponttal végződik.
+- `fix(kommunikacio): a ticketlista sorai ne link-stílusúak legyenek` – a teljes sor egy `Link`, ezért a globális `a` szabálytól a tárgy kék lett, és hoverre az egész sor aláhúzódott.
+
+Megfigyelt, szándékos viselkedések (nem hibák):
+
+- Az automatikusan kiválasztott ticket a listában **nem** kap olvasatlan-pöttyöt: a page a jelölés után olvasottként rendereli (a lista a jelölés előtt készül). Az olvasatlanság bizonyítéka a menü-számláló a megnyitás előtti oldalon.
+- Ha a `?t=` nincs az URL-ben (pl. a sidebarból érkezünk), a ticket lezárása után a kiválasztás megszűnik, és az „Aktív" szűrőben az üres állapot jelenik meg – az Újranyitás gomb ilyenkor csak a `?sz=mind` szűrőn át érhető el. `?t=`-vel a beszélgetés a helyén marad, a fókusz pedig az „Újranyitás" gombra kerül.
+
+Nyitott, későbbi teendők:
+
+- A `Valaszto` (Base UI `Select` + `Label` + `MezoHiba` keret) felvihető a `components/form/` alá, és lecserélhető vele a felhasználók-feature `SzerepkorSelect`-je.
+- Mérlegelendő egy `(cimzett_id, updated_at)` összetett index a `ticket` táblán, ha az attasé-lista mérete megnő.
+- Opcionális `loading.tsx` a navigációs visszajelzéshez – de ez megváltoztatja a prefetch-szemantikát (a prefetch renderelné az oldalt, és olvasottnak jelölne), ezért csak az olvasott-jelölés áthelyezésével együtt vezethető be.
 
 ---
 

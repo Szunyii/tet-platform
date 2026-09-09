@@ -1,7 +1,7 @@
 # NIÜ · TéT Platform – Next.js dummy demó
 
 Egyszerű Next.js (App Router, TypeScript) demóprojekt a „TéT Platform" design-doksi alapján.
-A térkép, a kommunikáció, a tudástár és a monitoring képernyő még statikus dummy adatokból dolgozik (`lib/data.ts`, `lib/knowledge.ts`); az auth, a felhasználó-kezelés és a riportok (információs bejegyzések) már valódi adatbázisból (lásd lent).
+A térkép, a tudástár és a monitoring képernyő még statikus dummy adatokból dolgozik (`lib/data.ts`, `lib/knowledge.ts`); az auth, a felhasználó-kezelés, a riportok (információs bejegyzések) és a kommunikáció (ticketek) már valódi adatbázisból (lásd lent).
 
 ## Indítás
 
@@ -38,7 +38,7 @@ Ezután nyisd meg: http://localhost:3000
 | `/riportok/[id]` | Bejegyzés részletei, csatolmány-letöltés |
 | `/riportok/[id]/szerkesztes` | Bejegyzés szerkesztése |
 | `/uj-riport` | Új bejegyzés (kategória, tárgy, leírás, kulcsszavak, rendezvény adatai, csatolmány) |
-| `/kommunikacio` | Ticketek és üzenetszálak |
+| `/kommunikacio` | Ticketek és üzenetszálak: az admin nyit ticketet egy attasénak, mindkét fél válaszol; `?t=<id>` a kiválasztott ticket, `?sz=` szűrő (`aktiv`/`magas`/`mind`) |
 | `/tudastar` | Tudástár – Magyarországról ajánlható programok, partnerek, együttműködési formák |
 | `/monitoring` | Hálózati rangsor + 14 szempontos részletes értékelés |
 | `/login` | Bejelentkezés (email + jelszó) |
@@ -46,11 +46,13 @@ Ezután nyisd meg: http://localhost:3000
 
 ## Felépítés
 
-- `lib/data.ts` – demóadatok: 14 poszt, 3 kategória, 14 értékelési szempont, ticketek
+- `lib/data.ts` – demóadatok: 14 poszt, 3 kategória, 14 értékelési szempont
 - `lib/knowledge.ts` – tudástár demóadatok: 6 program, 6 ökoszisztéma-elem, 5 együttműködési forma
 - `lib/score.ts` – determinisztikus dummy pontszámok és státusz-színek (a doksi logikája szerint)
 - `lib/riport-szotar.ts` – kategóriák, kulcsszavak, csatolmány-limit
+- `lib/ticket-szotar.ts` – ticket típusok, prioritások, státuszok, szűrők
 - `components/riport/` – a bejegyzés űrlap, lista és részlet komponensei
+- `app/(app)/kommunikacio/components/` – a ticketlista, beszélgetés, adatlap és új-ticket dialógus
 - `components/form/` – megosztott form-minta (`useMuveletForm`, `MezoHiba`)
 - `components/AppShell.tsx` – sidebar, fejléc (bejelentkezett felhasználó, kijelentkezés), ciklusváltó (React context)
 - `public/tet-world-map.js` – `<tet-world-map>` webkomponens (d3 + world-atlas, CDN-ről töltődik)
@@ -65,4 +67,10 @@ Megjegyzés: a térkép internetkapcsolatot igényel (d3, topojson és a world-a
 - A kategória-színek (`KATEGORIAK.szin`) világos módra készültek, nincs `dark:` párjuk.
 - Felhasználó törlésekor a bejegyzései és a csatolmányaik is törlődnek (FK cascade);
   távozó attasénál ezért a tiltás a javasolt művelet, nem a törlés.
+- Kommunikáció: nincs valós idejű frissítés (küldéskor és újratöltéskor frissül); a ticket nyitás
+  után nem szerkeszthető és nem törölhető; az olvasatlan-jelzés szerep-alapú (két admin egymás
+  üzeneteit nem látja olvasatlannak; szerepkör-váltásnál a régi üzenetek a régi szerepnél
+  maradnak); a lista lapozás nélküli.
+- Felhasználó törlésekor a hozzá címzett ticketek az üzeneteikkel együtt törlődnek (FK cascade);
+  a törölt nyitó/szerző neve pillanatképként megmarad az üzeneteken.
 # tet-platform
