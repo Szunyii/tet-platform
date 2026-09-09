@@ -30,8 +30,14 @@ export function PrioJelzes({ prio }: { prio: PrioKulcs }) {
 }
 
 /** A listaelem bal szegélyének színe prioritás szerint. */
+const PRIO_SZEGELY: Record<PrioKulcs, string> = {
+  magas: 'border-l-destructive',
+  kozepes: 'border-l-amber-500',
+  alacsony: 'border-l-border',
+};
+
 export function prioSzegely(prio: PrioKulcs): string {
-  return prio === 'magas' ? 'border-l-destructive' : prio === 'kozepes' ? 'border-l-amber-500' : 'border-l-border';
+  return PRIO_SZEGELY[prio];
 }
 
 /** Monogram-kör az üzenetbuborékhoz. */
