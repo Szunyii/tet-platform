@@ -68,7 +68,10 @@ export function TicketLista({
                   href={listaUrl(szuro, t.id)}
                   aria-current={aktiv ? 'page' : undefined}
                   className={cn(
-                    'block px-3 py-2.5 outline-none hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+                    // A teljes sor a link, ezért nem link-stílusú: a globális `a` szabály (globals.css
+                    // @layer base) kék színét és hover-aláhúzását utility-vel írjuk felül – az
+                    // affordancia a sor kiemelése, nem az aláhúzott szöveg.
+                    'block px-3 py-2.5 text-foreground no-underline outline-none hover:bg-muted/40 hover:no-underline focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
                     aktiv && 'bg-primary/10 ring-1 ring-inset ring-primary/20',
                   )}
                 >
