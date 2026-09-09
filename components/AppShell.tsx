@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { createContext, useActionState, useContext, useState, type ReactNode } from 'react';
 import type { LogoutState } from '../app/(app)/actions';
-import { CYCLES, DEADLINE, DEFAULT_CYCLE, TICKETS } from '../lib/data';
+import { CYCLES, DEADLINE, DEFAULT_CYCLE } from '../lib/data';
 import { ini } from '../lib/score';
 import type { AppSession } from '../lib/session';
 
@@ -84,16 +84,18 @@ function LogoutForm({ action }: { action: LogoutAction }) {
 export default function AppShell({
   user,
   logoutAction,
+  olvasatlan,
   children,
 }: {
   user: AppSession;
   logoutAction: LogoutAction;
+  /** Olvasatlan, nem lezárt ticketek száma – a Kommunikáció menüpont számlálója. */
+  olvasatlan: number;
   children: ReactNode;
 }) {
   const [cycle, setCycle] = useState(DEFAULT_CYCLE);
   const pathname = usePathname();
   const [title, sub] = titleFor(pathname, user.role);
-  const openTickets = TICKETS.filter((t) => t.statusz !== 'Lezárt').length;
   const roleLabel = user.role === 'admin'
     ? 'NIÜ admin'
     : `TéT attasé${user.orszag ? ' · ' + user.orszag : ''}`;
@@ -120,11 +122,11 @@ export default function AppShell({
                 }}>
                   <span style={{ width: 16, textAlign: 'center', fontSize: 13 }}>{n.icon}</span>
                   {n.label}
-                  {n.href === '/kommunikacio' && (
-                    <span style={{
+                  {n.href === '/kommunikacio' && olvasatlan > 0 && (
+                    <span aria-label={`${olvasatlan} olvasatlan ticket`} style={{
                       marginLeft: 'auto', background: '#b3261e', color: '#fff', fontSize: 10,
                       fontWeight: 600, padding: '1px 6px', borderRadius: 9,
-                    }}>{openTickets}</span>
+                    }}>{olvasatlan}</span>
                   )}
                 </Link>
               );

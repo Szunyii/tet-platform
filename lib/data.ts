@@ -1,4 +1,4 @@
-// Demóadatok a TéT Platform doksiból (14 poszt, 3 kategória, 14 szempont, ticketek)
+// Demóadatok a TéT Platform doksiból (14 poszt, 3 kategória, 14 szempont)
 
 export const FIELDS = [
   'Mesterséges intelligencia',
@@ -220,65 +220,6 @@ export const POSTS: Post[] = [
     esemenyek: [{ n: 'Agrishow előkészítő', t: 'Workshop', d: '2026-12-03', rel: 'Közepes' }],
     politika: { irany: 'Semleges', kockazat: 'Közepes', megj: 'A szövetségi és tartományi szabályozás eltér, a szerződéskötés hosszú.' },
     tanulsag: 'A tartományi ügynökségek (pl. FAPESP) gyorsabbak, mint a szövetségi csatorna – ott kell kezdeni.',
-  },
-];
-
-export const TICKET_TYPES = ['Adatkérés', 'Feladatkiosztás', 'Riport-visszajelzés', 'Egyeztetés'];
-
-export interface TicketMsg { ki: string; role: string; ido: string; own: boolean; txt: string }
-export interface Ticket {
-  id: string; targy: string; orszag: string; attase: string; tipus: string;
-  prio: string; statusz: string; hatarido: string; nyitva: string; msgs: TicketMsg[];
-}
-
-export const TICKETS: Ticket[] = [
-  {
-    id: 'TKT-2041', targy: 'Félvezető-beszállítói lista pontosítása a koreai matchmakinghez', orszag: 'Koreai Köztársaság', attase: 'Farkas Judit', tipus: 'Adatkérés', prio: 'Magas', statusz: 'Válaszra vár', hatarido: '2026-08-28', nyitva: '6 napja',
-    msgs: [
-      { ki: 'Sipos Katalin', role: 'NIÜ · XPAND', ido: '08-19 09:12', own: true, txt: 'A K-Semicon Match előtt kérnénk egy szűkített listát: 8–10 koreai beszállító, akiknél reális a magyar belépés. A CRM-ben lévő 34 kontaktból melyik a valóban aktív?' },
-      { ki: 'Farkas Judit', role: 'TéT · Szöul', ido: '08-20 14:40', own: false, txt: 'A 34-ből 11 aktív, ebből 8-nál volt idén személyes találkozó. A listát a riport 2. blokkjához csatolom, hogy az aggregált kimutatásban is látszódjon.' },
-      { ki: 'Sipos Katalin', role: 'NIÜ · XPAND', ido: '08-24 11:05', own: true, txt: 'Rendben. Kérlek, a nyitottsági pontszámot is tedd mellé, mert a delegációs sorrendet ez alapján állítjuk.' },
-    ],
-  },
-  {
-    id: 'TKT-2038', targy: '2026 Q2 riport 3. és 5. blokkja hiányos', orszag: 'Törökország', attase: 'Deák Orsolya', tipus: 'Riport-visszajelzés', prio: 'Magas', statusz: 'Nyitott', hatarido: '2026-08-30', nyitva: '9 napja',
-    msgs: [
-      { ki: 'Barna Gergő', role: 'NIÜ · Riportkezelés', ido: '08-16 10:02', own: true, txt: 'A beadott riportból hiányzik a pályázati és az esemény blokk. A TÜBITAK 2509 határidejét mindenképp rögzítsd, mert az aggregált kimutatásba ez kerül be.' },
-    ],
-  },
-  {
-    id: 'TKT-2035', targy: 'Exportkontroll hatása a NIST-együttműködésre – jogi állásfoglalás', orszag: 'Amerikai Egyesült Államok', attase: 'Kovács Dániel', tipus: 'Egyeztetés', prio: 'Közepes', statusz: 'Folyamatban', hatarido: '2026-09-04', nyitva: '12 napja',
-    msgs: [
-      { ki: 'Kovács Dániel', role: 'TéT · Washington', ido: '08-13 16:30', own: false, txt: 'A NIST-tel tervezett közös mérési projektnél az új exportkontroll-lista érintheti a mérőeszközök kivitelét. Kérek jogi állásfoglalást, mielőtt aláírjuk az MoU-t.' },
-      { ki: 'Halmi Réka', role: 'NIÜ · Jogi', ido: '08-18 09:44', own: true, txt: 'Átnéztük, a mérésügyi rész nem érintett, a félvezető-tesztberendezések viszont igen. A szűkített MoU-tervezetet küldjük a héten.' },
-    ],
-  },
-  {
-    id: 'TKT-2030', targy: 'Delegációs program véglegesítése – Abu-Dzabi, ADIPEC', orszag: 'Egyesült Arab Emírségek', attase: 'Pintér Levente', tipus: 'Feladatkiosztás', prio: 'Közepes', statusz: 'Folyamatban', hatarido: '2026-09-12', nyitva: '15 napja',
-    msgs: [
-      { ki: 'Sipos Katalin', role: 'NIÜ · XPAND', ido: '08-10 13:20', own: true, txt: 'Hat magyar cég jelezte a részvételt. Kérem a helyszíni program vázlatát, három B2B blokkal.' },
-      { ki: 'Pintér Levente', role: 'TéT · Abu-Dzabi', ido: '08-14 08:05', own: false, txt: 'Két blokk biztos, a harmadikhoz a Khalifa University visszajelzésére várok. A delegációs jelentést eseményenként töltöm majd.' },
-    ],
-  },
-  {
-    id: 'TKT-2026', targy: 'Kvantum-workshop közös szervezése Bernnel és Londonnal', orszag: 'Svájc', attase: 'Illés Gábor', tipus: 'Egyeztetés', prio: 'Alacsony', statusz: 'Nyitott', hatarido: '2026-10-01', nyitva: '21 napja',
-    msgs: [
-      { ki: 'Illés Gábor', role: 'TéT · Bern', ido: '08-04 11:15', own: false, txt: 'Az EMPA és az NPL is nyitott egy közös őszi workshopra. Balogh Péterrel egyeztetünk, de kellene egy NIÜ-oldali költségkeret.' },
-    ],
-  },
-  {
-    id: 'TKT-2019', targy: 'Havi információmegosztás elmaradása – Q2', orszag: 'Brazília', attase: 'Fekete Tamás', tipus: 'Riport-visszajelzés', prio: 'Magas', statusz: 'Nyitott', hatarido: '2026-08-29', nyitva: '25 napja',
-    msgs: [
-      { ki: 'Barna Gergő', role: 'NIÜ · Riportkezelés', ido: '07-31 15:50', own: true, txt: 'A 4. szempont (információmegosztás rendszeressége) havi adatbevitel, három hónapja nincs rögzítés. Kérem a pótlást, különben a monitoringban automatikusan 1-es pont kerül be.' },
-    ],
-  },
-  {
-    id: 'TKT-2012', targy: 'India: tartományi célzás – melyik három államra fókuszáljunk?', orszag: 'India', attase: 'Molnár Eszter', tipus: 'Adatkérés', prio: 'Közepes', statusz: 'Lezárt', hatarido: '2026-08-01', nyitva: 'lezárva 08-06',
-    msgs: [
-      { ki: 'Sipos Katalin', role: 'NIÜ · XPAND', ido: '07-22 10:00', own: true, txt: 'Az agrártechnológiai fókuszhoz kérünk három javasolt tartományt, indoklással.' },
-      { ki: 'Molnár Eszter', role: 'TéT · Újdelhi', ido: '07-29 07:35', own: false, txt: 'Maharashtra, Gujarat és Telangana. Mindháromnál van működő tartományi innovációs ügynökség és konkrét vízgazdálkodási igény.' },
-      { ki: 'Sipos Katalin', role: 'NIÜ · XPAND', ido: '08-06 09:10', own: true, txt: 'Elfogadva, bekerült a Q3 tervbe. Lezárom a ticketet.' },
-    ],
   },
 ];
 
