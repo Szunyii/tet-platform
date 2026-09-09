@@ -80,7 +80,8 @@ export function TicketBeszelgetes({
       </ol>
       {lezart ? (
         <p className="border-t bg-muted/30 p-3 text-sm text-muted-foreground" role="status">
-          A ticket lezárva{ticket.lezarvaAt ? ` ${formatDatum(ticket.lezarvaAt)}` : ''}. Lezárt ticketbe nem lehet írni.
+          {/* A formatDatum kimenete ponttal végződik („2026. 09. 09."), ezért dátum esetén nem teszünk ki még egyet. */}
+          A ticket lezárva{ticket.lezarvaAt ? ` ${formatDatum(ticket.lezarvaAt)}` : '.'} Lezárt ticketbe nem lehet írni.
         </p>
       ) : (
         // A `key` a ticketváltáskor újra mountolja az űrlapot: a vázlat és az esetleges
