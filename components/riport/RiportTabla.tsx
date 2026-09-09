@@ -2,6 +2,7 @@ import { PaperclipIcon } from 'lucide-react';
 import Link from 'next/link';
 import type { RiportListItem } from '../../db/queries/riport';
 import { formatDatum, formatNaptariDatum } from '../../lib/datum';
+import { cn } from '../../lib/utils';
 import { Badge } from '../ui/badge';
 import { buttonVariants } from '../ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
@@ -23,7 +24,7 @@ export function RiportTabla({
           {vanSzuro ? 'Nincs a szűrőknek megfelelő bejegyzés.' : 'Még nincs bejegyzés.'}
         </p>
         {!vanSzuro && (
-          <Link href="/uj-riport" className={buttonVariants()}>
+          <Link href="/uj-riport" className={cn(buttonVariants())}>
             Első bejegyzés
           </Link>
         )}

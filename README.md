@@ -53,7 +53,7 @@ Ezután nyisd meg: http://localhost:3000
 - `lib/ticket-szotar.ts` – ticket típusok, prioritások, státuszok, szűrők
 - `components/riport/` – a bejegyzés űrlap, lista és részlet komponensei
 - `app/(app)/kommunikacio/components/` – a ticketlista, beszélgetés, adatlap és új-ticket dialógus
-- `components/form/` – megosztott form-minta (`useMuveletForm`, `MezoHiba`)
+- `components/form/` – megosztott form-minta (`useMuveletForm`, `MezoHiba`, `MuveletDialog`)
 - `components/AppShell.tsx` – sidebar, fejléc (bejelentkezett felhasználó, kijelentkezés), ciklusváltó (React context)
 - `public/tet-world-map.js` – `<tet-world-map>` webkomponens (d3 + world-atlas, CDN-ről töltődik)
 
@@ -73,4 +73,6 @@ Megjegyzés: a térkép internetkapcsolatot igényel (d3, topojson és a world-a
   maradnak); a lista lapozás nélküli.
 - Felhasználó törlésekor a hozzá címzett ticketek az üzeneteikkel együtt törlődnek (FK cascade);
   a törölt nyitó/szerző neve pillanatképként megmarad az üzeneteken.
+- A Kommunikáció menü olvasatlan-számlálója kliens-oldali navigációnál a következő ticket-műveletig
+  vagy teljes betöltésig késhet (a /kommunikacio oldal maga szinkronizálja).
 # tet-platform

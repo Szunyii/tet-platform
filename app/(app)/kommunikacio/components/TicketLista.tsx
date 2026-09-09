@@ -43,7 +43,7 @@ export function TicketLista({
             key={k}
             href={listaUrl(k, kivalasztottId ?? undefined)}
             aria-current={k === szuro ? 'true' : undefined}
-            className={buttonVariants({ variant: k === szuro ? 'default' : 'outline', size: 'sm' })}
+            className={cn(buttonVariants({ variant: k === szuro ? 'default' : 'outline', size: 'sm' }))}
           >
             {SZUROK[k]}
           </Link>

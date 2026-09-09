@@ -10,7 +10,6 @@ export const TIPUSOK = {
   egyeztetes: 'Egyeztetés',
 } as const;
 export type TipusKulcs = keyof typeof TIPUSOK;
-export const TIPUS_KULCSOK = Object.keys(TIPUSOK) as TipusKulcs[];
 
 export const PRIORITASOK = {
   magas: 'Magas',
@@ -18,7 +17,6 @@ export const PRIORITASOK = {
   alacsony: 'Alacsony',
 } as const;
 export type PrioKulcs = keyof typeof PRIORITASOK;
-export const PRIO_KULCSOK = Object.keys(PRIORITASOK) as PrioKulcs[];
 
 export const STATUSZOK = {
   nyitott: 'Nyitott',

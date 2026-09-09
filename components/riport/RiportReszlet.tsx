@@ -3,6 +3,7 @@ import Link from 'next/link';
 import type { RiportDetail } from '../../db/queries/riport';
 import { formatDatum, formatNaptariDatum } from '../../lib/datum';
 import { formatMeret, kategoriaByKulcs } from '../../lib/riport-szotar';
+import { cn } from '../../lib/utils';
 import type { MuveletState } from '../form/useMuveletForm';
 import { Badge } from '../ui/badge';
 import { buttonVariants } from '../ui/button';
@@ -38,7 +39,7 @@ export function RiportReszlet({
           <div className="flex gap-2">
             <Link
               href={`/riportok/${riport.id}/szerkesztes`}
-              className={buttonVariants({ variant: 'outline' })}
+              className={cn(buttonVariants({ variant: 'outline' }))}
             >
               Szerkesztés
             </Link>

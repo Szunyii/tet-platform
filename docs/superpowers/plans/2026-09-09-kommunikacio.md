@@ -2129,6 +2129,7 @@ A záró QA (11 lépés, admin + két attasé, 1280×800 és 1600×900) a forgat
 
 - `fix(kommunikacio): dupla pont a lezárt-jelzésben` – „A ticket lezárva 2026. 09. 09.**.** Lezárt ticketbe…": a `formatDatum` kimenete már ponttal végződik.
 - `fix(kommunikacio): a ticketlista sorai ne link-stílusúak legyenek` – a teljes sor egy `Link`, ezért a globális `a` szabálytól a tárgy kék lett, és hoverre az egész sor aláhúzódott.
+- `fix(ui): buttonVariants mindig cn()-ben` – a záró review talált egy harmadik hibát: a `buttonVariants()` (cva) `cn()` (tailwind-merge) nélkül konkatenál, ezért `outline` variánsnál a base `border-transparent` felülírta a variáns `border-border`-jét, és a gomb keret nélkül renderelődött. Minden nyers `Link + buttonVariants(...)` hívást `cn(...)`-be csomagoltunk (a `TicketLista` szűrő-chipjei, a `RiportReszlet` „Szerkesztés" gombja és két további találat: `app/(app)/riportok/page.tsx`, `RiportTabla.tsx`); emellett a `NotFoundContent` immár feleslegessé vált `!text-primary-foreground hover:!no-underline` felülírásait (a globális `a` szabály `@layer base`-ben van, nem kell `!important`) és a `lib/ticket-szotar.ts` halott `TIPUS_KULCSOK`/`PRIO_KULCSOK` exportjait is töröltük.
 
 Megfigyelt, szándékos viselkedések (nem hibák):
 

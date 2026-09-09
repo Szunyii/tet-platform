@@ -6,6 +6,7 @@ import { buttonVariants } from '../../../components/ui/button';
 import { listOrszagok, listRiportok } from '../../../db/queries/riport';
 import { szuroErtekek, szuroFromSearchParams, type SearchParams } from '../../../lib/riport-szuro';
 import { requireSession } from '../../../lib/session';
+import { cn } from '../../../lib/utils';
 
 export const metadata: Metadata = { title: 'Riportok' };
 
@@ -25,7 +26,7 @@ export default async function RiportokPage({ searchParams }: { searchParams: Pro
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3">
         <p className="text-sm text-muted-foreground">{sorok.length} bejegyzés</p>
-        <Link href="/uj-riport" className={`ml-auto ${buttonVariants()}`}>
+        <Link href="/uj-riport" className={cn('ml-auto', buttonVariants())}>
           Új bejegyzés
         </Link>
       </div>
