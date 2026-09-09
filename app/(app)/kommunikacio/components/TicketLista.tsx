@@ -7,7 +7,12 @@ import { PRIORITASOK, SZURO_KULCSOK, SZUROK, type TicketSzuro } from '../../../.
 import { cn } from '../../../../lib/utils';
 import { prioSzegely, TipusBadge } from './TicketJelzesek';
 
-/** `/kommunikacio` URL a szűrővel (aktiv = alapértelmezett, nem kerül az URL-be) és a kiválasztott tickettel. */
+/**
+ * `/kommunikacio` URL a szűrővel (aktiv = alapértelmezett, nem kerül az URL-be) és a
+ * kiválasztott tickettel. A `t`-t szándékosan megtartjuk akkor is, ha az adott ticket nem
+ * felel meg az új szűrőnek: az oldal így nyitva tartja a beszélgetést, csak a sor nem
+ * lesz kiemelve a listában.
+ */
 function listaUrl(szuro: TicketSzuro, t?: string): string {
   const p = new URLSearchParams();
   if (szuro !== 'aktiv') p.set('sz', szuro);
@@ -31,7 +36,7 @@ export function TicketLista({
   ma: string;
 }) {
   return (
-    <Card className="flex min-w-0 flex-col gap-0 overflow-hidden py-0">
+    <Card className="flex min-w-0 flex-col gap-0 py-0">
       <nav aria-label="Szűrő" className="flex flex-wrap gap-1.5 border-b p-3">
         {SZURO_KULCSOK.map((k) => (
           <Link
@@ -46,7 +51,11 @@ export function TicketLista({
       </nav>
       {sorok.length === 0 ? (
         <p className="p-4 text-sm text-muted-foreground">
-          {szuro === 'mind' ? 'Még nincs ticket.' : 'Nincs a szűrőnek megfelelő ticket.'}
+          {szuro === 'mind'
+            ? 'Még nincs ticket.'
+            : szuro === 'aktiv'
+              ? 'Nincs aktív ticket.'
+              : 'Nincs aktív, magas prioritású ticket.'}
         </p>
       ) : (
         <ul className="flex max-h-[68vh] flex-col overflow-auto">
@@ -59,25 +68,37 @@ export function TicketLista({
                 <Link
                   href={listaUrl(szuro, t.id)}
                   aria-current={aktiv ? 'page' : undefined}
-                  className={cn('block px-3 py-2.5 hover:bg-muted/60', aktiv && 'bg-accent')}
+                  className={cn(
+                    'block px-3 py-2.5 outline-none hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+                    aktiv && 'bg-primary/10 ring-1 ring-inset ring-primary/20',
+                  )}
                 >
                   <div className="flex items-center gap-2">
                     {t.olvasatlan && (
-                      <span className="size-2 shrink-0 rounded-full bg-primary" role="img" aria-label="Olvasatlan" />
+                      <>
+                        <span aria-hidden className="size-2 shrink-0 rounded-full bg-primary" />
+                        <span className="sr-only">Olvasatlan</span>
+                      </>
                     )}
                     <TipusBadge tipus={t.tipus} />
                     {/* A prioritást a bal szegély színe mutatja; felolvasónak szöveg is kell. */}
                     <span className="sr-only">{PRIORITASOK[t.prio]} prioritás</span>
                     {t.hatarido && (
                       <span
-                        className={cn('ml-auto font-mono text-[11px]', lejart ? 'text-destructive' : 'text-muted-foreground')}
-                        title={lejart ? 'Lejárt határidő' : 'Határidő'}
+                        className={cn(
+                          'ml-auto whitespace-nowrap font-mono text-[11px]',
+                          lejart ? 'text-destructive' : 'text-muted-foreground',
+                        )}
                       >
+                        <span className="sr-only">{lejart ? 'Lejárt határidő: ' : 'Határidő: '}</span>
                         {formatNaptariDatum(t.hatarido)}
                       </span>
                     )}
                   </div>
-                  <p className={cn('mt-1 text-[13px] leading-snug', t.olvasatlan ? 'font-semibold' : 'font-medium')}>
+                  <p
+                    className={cn('mt-1 line-clamp-2 text-[13px] leading-snug', t.olvasatlan ? 'font-semibold' : 'font-medium')}
+                    title={t.targy}
+                  >
                     {t.targy}
                   </p>
                   <p className="mt-0.5 text-xs text-muted-foreground">

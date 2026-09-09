@@ -25,7 +25,7 @@ export function MuveletDialog({
   cim,
   leiras,
   gomb,
-  folyamatban = 'Mentés…',
+  gombFolyamatban = 'Mentés…',
   formAction,
   errors,
   children,
@@ -37,7 +37,7 @@ export function MuveletDialog({
   leiras: ReactNode;
   gomb: string;
   /** A gomb felirata beküldés közben. */
-  folyamatban?: string;
+  gombFolyamatban?: string;
   formAction: (formData: FormData) => void;
   errors: MezoHibak;
   children: ReactNode;
@@ -66,7 +66,7 @@ export function MuveletDialog({
               Mégse
             </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? folyamatban : gomb}
+              {pending ? gombFolyamatban : gomb}
             </Button>
           </DialogFooter>
         </form>
