@@ -28,10 +28,12 @@ export interface UjTicketInput {
 export type ParseUjTicketResult = { ok: true; data: UjTicketInput } | { ok: false; errors: MezoHibak };
 export type ParseUzenetResult = { ok: true; szoveg: string } | { ok: false; errors: MezoHibak };
 
-function parseSzoveg(fd: FormData, errors: MezoHibak): string {
-  const szoveg = mezo(fd, 'szoveg');
-  if (!szoveg) errors.szoveg = 'Az üzenet kötelező.';
-  else if (szoveg.length > UZENET_MAX) errors.szoveg = `Az üzenet legfeljebb ${UZENET_MAX} karakter.`;
+// A `kulcs` a mező neve és a hiba kulcsa is: a válasz-űrlap és az új-ticket dialógus egy
+// oldalon él, az id-k (és így a hibakulcsok) nem ütközhetnek – a válasz mezőneve `valasz`.
+function parseSzoveg(fd: FormData, errors: MezoHibak, kulcs: 'szoveg' | 'valasz' = 'szoveg'): string {
+  const szoveg = mezo(fd, kulcs);
+  if (!szoveg) errors[kulcs] = 'Az üzenet kötelező.';
+  else if (szoveg.length > UZENET_MAX) errors[kulcs] = `Az üzenet legfeljebb ${UZENET_MAX} karakter.`;
   return szoveg;
 }
 
@@ -84,7 +86,7 @@ export function parseUjTicketForm(fd: FormData, jeloltek: readonly CimzettJelolt
 
 export function parseUzenetForm(fd: FormData): ParseUzenetResult {
   const errors: MezoHibak = {};
-  const szoveg = parseSzoveg(fd, errors);
+  const szoveg = parseSzoveg(fd, errors, 'valasz');
   if (Object.keys(errors).length > 0) return { ok: false, errors };
   return { ok: true, szoveg };
 }

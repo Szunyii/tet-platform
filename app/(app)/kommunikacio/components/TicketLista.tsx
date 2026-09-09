@@ -3,7 +3,7 @@ import { buttonVariants } from '../../../../components/ui/button';
 import { Card } from '../../../../components/ui/card';
 import type { TicketListItem } from '../../../../db/queries/ticket';
 import { formatNaptariDatum } from '../../../../lib/datum';
-import { PRIORITASOK, SZURO_KULCSOK, SZUROK, type TicketSzuro } from '../../../../lib/ticket-szotar';
+import { lejartE, PRIORITASOK, SZURO_KULCSOK, SZUROK, type TicketSzuro } from '../../../../lib/ticket-szotar';
 import { cn } from '../../../../lib/utils';
 import { prioSzegely, TipusBadge } from './TicketJelzesek';
 
@@ -61,8 +61,7 @@ export function TicketLista({
         <ul className="flex max-h-[68vh] flex-col overflow-auto">
           {sorok.map((t) => {
             const aktiv = t.id === kivalasztottId;
-            // Naptári nap string-összehasonlítás (YYYY-MM-DD), nincs időzóna-csúszás.
-            const lejart = Boolean(t.hatarido && t.hatarido < ma && t.statusz !== 'lezart');
+            const lejart = lejartE(t.hatarido, t.statusz, ma);
             return (
               <li key={t.id} className={cn('border-b border-l-[3px] last:border-b-0', prioSzegely(t.prio))}>
                 <Link

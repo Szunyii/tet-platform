@@ -1,7 +1,7 @@
 'use client';
 
 import { unstable_rethrow } from 'next/navigation';
-import { useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
 import { toast } from 'sonner';
 import type { MuveletState } from '../../../../components/form/useMuveletForm';
 import {
@@ -32,6 +32,9 @@ export function TicketStatuszGombok({
 }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
+  // A dialógus záródásakor ide megy vissza a fókusz: a Lezárás gomb ilyenkor már nem
+  // létezik (Újranyitásra cserélődött), ezért nem a triggerre, hanem a gombsávra mutatunk.
+  const gombok = useRef<HTMLDivElement>(null);
 
   // Az action elutasítását (hálózat, elavult action id) nem dobjuk tovább – toast lesz belőle;
   // a Next control-flow kivételeit (redirect/notFound) viszont tovább kell dobni.
@@ -54,20 +57,22 @@ export function TicketStatuszGombok({
 
   if (lezart) {
     return (
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        disabled={pending}
-        onClick={() => futtat(ujranyitAction, 'Ticket újranyitva.', 'Újranyitás sikertelen.')}
-      >
-        {pending ? 'Újranyitás…' : 'Újranyitás'}
-      </Button>
+      <div ref={gombok}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={pending}
+          onClick={() => futtat(ujranyitAction, 'Ticket újranyitva.', 'Újranyitás sikertelen.')}
+        >
+          {pending ? 'Újranyitás…' : 'Újranyitás'}
+        </Button>
+      </div>
     );
   }
 
   return (
-    <>
+    <div ref={gombok}>
       <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)}>
         Lezárás
       </Button>
@@ -82,7 +87,7 @@ export function TicketStatuszGombok({
           setOpen(next);
         }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent finalFocus={gombok}>
           <AlertDialogHeader>
             <AlertDialogTitle>Ticket lezárása</AlertDialogTitle>
             <AlertDialogDescription>
@@ -100,6 +105,6 @@ export function TicketStatuszGombok({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 }

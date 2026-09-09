@@ -55,6 +55,11 @@ export interface CimzettJelolt {
  */
 export type UzenetSzerep = 'admin' | 'attase';
 
+/** Lejárt-e a határidő: naptári nap string-összehasonlítás (YYYY-MM-DD), lezárt ticketnél soha. */
+export function lejartE(hatarido: string | null, statusz: StatuszKulcs, ma: string): boolean {
+  return Boolean(hatarido && hatarido < ma && statusz !== 'lezart');
+}
+
 export function isTipusKulcs(v: string): v is TipusKulcs {
   return Object.prototype.hasOwnProperty.call(TIPUSOK, v);
 }

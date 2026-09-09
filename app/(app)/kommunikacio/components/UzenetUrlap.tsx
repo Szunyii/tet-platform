@@ -19,16 +19,17 @@ export function UzenetUrlap({ action, kuldoNev }: { action: FormAction; kuldoNev
   const errors = state.errors ?? {};
   return (
     <form action={formAction} className="flex flex-col gap-2 border-t bg-muted/30 p-3" noValidate>
-      <Label htmlFor="szoveg" className="sr-only">
+      <Label htmlFor="valasz" className="sr-only">
         Válasz
       </Label>
       <Textarea
-        id="szoveg"
-        name="szoveg"
+        id="valasz"
+        name="valasz"
         value={szoveg}
         onChange={(e) => setSzoveg(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && !pending) {
+          // IME-alatt (pl. japán/kínai bevitel) az Enter a jelöltet erősíti meg, nem küld.
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && !pending && !e.nativeEvent.isComposing) {
             e.preventDefault();
             e.currentTarget.form?.requestSubmit();
           }
@@ -37,9 +38,9 @@ export function UzenetUrlap({ action, kuldoNev }: { action: FormAction; kuldoNev
         rows={3}
         placeholder="Válasz írása… (Ctrl+Enter a küldéshez)"
         className="bg-background"
-        {...hibaAttr(errors, 'szoveg')}
+        {...hibaAttr(errors, 'valasz')}
       />
-      <MezoHiba mezo="szoveg" errors={errors} />
+      <MezoHiba mezo="valasz" errors={errors} />
       <MezoHiba mezo="form" errors={errors} alert />
       <div className="flex items-center gap-2">
         <span className="text-xs text-muted-foreground">Válaszol: {kuldoNev}</span>

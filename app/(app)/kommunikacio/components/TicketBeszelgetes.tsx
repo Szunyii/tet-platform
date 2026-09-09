@@ -23,11 +23,11 @@ export function TicketBeszelgetes({
   nezoNev: string;
   kuldesAction: FormAction;
 }) {
-  const vege = useRef<HTMLDivElement>(null);
+  const lista = useRef<HTMLOListElement>(null);
   // Új üzenetnél (és ticketváltásnál) az üzenetlista aljára görgetünk – csak a listán belül,
   // az oldal görgetési pozícióját nem bántjuk.
   useEffect(() => {
-    const el = vege.current?.parentElement;
+    const el = lista.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [ticket.id, ticket.uzenetek.length]);
 
@@ -44,7 +44,13 @@ export function TicketBeszelgetes({
           {ticket.orszag} · {ticket.cimzettNev}
         </p>
       </header>
-      <ol className="flex max-h-[46vh] flex-col gap-3 overflow-auto p-4" aria-label="Üzenetek">
+      {/* Görgethető régió: billentyűzettel is fókuszálható, hogy a nyilakkal olvasható legyen. */}
+      <ol
+        ref={lista}
+        tabIndex={0}
+        aria-label="Üzenetek"
+        className="flex max-h-[46vh] flex-col gap-3 overflow-auto p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+      >
         {ticket.uzenetek.map((u) => {
           const sajat = u.szerzoSzerep === nezoSzerep;
           return (
@@ -71,14 +77,15 @@ export function TicketBeszelgetes({
             </li>
           );
         })}
-        <div ref={vege} aria-hidden />
       </ol>
       {lezart ? (
         <p className="border-t bg-muted/30 p-3 text-sm text-muted-foreground" role="status">
           A ticket lezárva{ticket.lezarvaAt ? ` ${formatDatum(ticket.lezarvaAt)}` : ''}. Lezárt ticketbe nem lehet írni.
         </p>
       ) : (
-        <UzenetUrlap action={kuldesAction} kuldoNev={nezoNev} />
+        // A `key` a ticketváltáskor újra mountolja az űrlapot: a vázlat és az esetleges
+        // hibaüzenet nem szivárog át a következő beszélgetésbe.
+        <UzenetUrlap key={ticket.id} action={kuldesAction} kuldoNev={nezoNev} />
       )}
     </Card>
   );

@@ -3,6 +3,7 @@ import type { MuveletState } from '../../../../components/form/useMuveletForm';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/card';
 import type { TicketDetail } from '../../../../db/queries/ticket';
 import { formatDatum, formatNaptariDatum } from '../../../../lib/datum';
+import { lejartE } from '../../../../lib/ticket-szotar';
 import { cn } from '../../../../lib/utils';
 import { PrioJelzes, StatuszBadge, TipusBadge } from './TicketJelzesek';
 import { TicketStatuszGombok } from './TicketStatuszGombok';
@@ -30,11 +31,13 @@ export function TicketAdatlap({
   lezarAction: () => Promise<MuveletState>;
   ujranyitAction: () => Promise<MuveletState>;
 }) {
-  const lejart = Boolean(ticket.hatarido && ticket.hatarido < ma && ticket.statusz !== 'lezart');
+  const lejart = lejartE(ticket.hatarido, ticket.statusz, ma);
   return (
     <Card className="gap-3 py-4">
       <CardHeader className="px-4">
-        <CardTitle className="text-[13px]">Ticket adatlap</CardTitle>
+        <CardTitle role="heading" aria-level={3} className="text-[13px]">
+          Ticket adatlap
+        </CardTitle>
       </CardHeader>
       <CardContent className="px-4">
         <dl className="flex flex-col gap-3">
