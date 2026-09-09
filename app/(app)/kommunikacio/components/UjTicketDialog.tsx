@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { hibaAttr, MezoHiba } from '../../../../components/form/MezoHiba';
 import { MuveletDialog } from '../../../../components/form/MuveletDialog';
 import { useMuveletForm } from '../../../../components/form/useMuveletForm';
@@ -10,6 +10,8 @@ import { Label } from '../../../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
 import { Textarea } from '../../../../components/ui/textarea';
 import {
+  isPrioKulcs,
+  isTipusKulcs,
   PRIORITASOK,
   TARGY_MAX,
   TIPUSOK,
@@ -54,6 +56,8 @@ function Valaszto({
   items,
   placeholder,
   errors,
+  required = false,
+  disabled = false,
 }: {
   id: string;
   cimke: string;
@@ -62,21 +66,23 @@ function Valaszto({
   items: Record<string, string>;
   placeholder: string;
   errors: MezoHibak;
+  required?: boolean;
+  disabled?: boolean;
 }) {
-  const invalid = Boolean(errors[id]);
   return (
     <div className="flex flex-col gap-1.5">
       <Label id={`${id}-label`} htmlFor={id}>
         {cimke}
       </Label>
-      <Select name={id} value={value === '' ? null : value} onValueChange={(v) => onChange(v ?? '')} items={items}>
-        <SelectTrigger
-          id={id}
-          aria-labelledby={`${id}-label ${id}`}
-          aria-invalid={invalid || undefined}
-          aria-describedby={invalid ? `${id}-hiba` : undefined}
-          className="w-full"
-        >
+      <Select
+        name={id}
+        value={value === '' ? null : value}
+        onValueChange={(v) => onChange(v ?? '')}
+        items={items}
+        required={required}
+        disabled={disabled}
+      >
+        <SelectTrigger id={id} aria-labelledby={`${id}-label ${id}`} {...hibaAttr(errors, id)} className="w-full">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
@@ -112,7 +118,10 @@ function UjTicketModal({
   const [targy, setTargy] = useState('');
   const [szoveg, setSzoveg] = useState('');
 
-  const cimzettItems = Object.fromEntries(jeloltek.map((j) => [j.id, `${j.nev} · ${j.orszag}`]));
+  const cimzettItems = useMemo(
+    () => Object.fromEntries(jeloltek.map((j) => [j.id, `${j.nev} · ${j.orszag}`])),
+    [jeloltek],
+  );
 
   return (
     <MuveletDialog
@@ -139,25 +148,30 @@ function UjTicketModal({
         items={cimzettItems}
         placeholder="Válassz attasét"
         errors={errors}
+        required
+        disabled={jeloltek.length === 0}
       />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Valaszto
           id="tipus"
           cimke="Típus"
           value={tipus}
-          onChange={(v) => setTipus(v as TipusKulcs | '')}
+          onChange={(v) => setTipus(isTipusKulcs(v) ? v : '')}
           items={TIPUSOK}
           placeholder="Válassz típust"
           errors={errors}
+          required
         />
+        {/* A prioritásnak mindig van értéke (alapértelmezés: közepes), így a placeholder sosem látszik. */}
         <Valaszto
           id="prio"
           cimke="Prioritás"
           value={prio}
-          onChange={(v) => setPrio((v || 'kozepes') as PrioKulcs)}
+          onChange={(v) => setPrio(isPrioKulcs(v) ? v : 'kozepes')}
           items={PRIORITASOK}
           placeholder="Prioritás"
           errors={errors}
+          required
         />
       </div>
       <div className="flex flex-col gap-1.5">
@@ -166,6 +180,8 @@ function UjTicketModal({
           id="hatarido"
           name="hatarido"
           type="date"
+          min="2000-01-01"
+          max="2100-12-31"
           value={hatarido}
           onChange={(e) => setHatarido(e.target.value)}
           {...hibaAttr(errors, 'hatarido')}
