@@ -6,7 +6,7 @@ import { Label } from '../../../../components/ui/label';
 import type { FelhasznaloSor } from '../../../../db/queries/felhasznalo';
 import { setJelszoAction } from '../actions';
 import { hibaAttr, MezoHiba } from '../../../../components/form/MezoHiba';
-import { MuveletDialog } from './MuveletDialog';
+import { MuveletDialog } from '../../../../components/form/MuveletDialog';
 import { useMuveletForm } from '../../../../components/form/useMuveletForm';
 
 export function JelszoDialog({

@@ -1,7 +1,8 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { Button } from '../../../../components/ui/button';
+import type { MezoHibak } from '../../lib/urlap';
+import { Button } from '../ui/button';
 import {
   Dialog,
   DialogContent,
@@ -9,9 +10,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../../../../components/ui/dialog';
-import type { MezoHibak } from '../../../../lib/felhasznalo-validacio';
-import { MezoHiba } from '../../../../components/form/MezoHiba';
+} from '../ui/dialog';
+import { MezoHiba } from './MezoHiba';
 
 /**
  * Közös dialógus-keret a form-műveletekhez: fejléc, <form action>, űrlap-szintű hiba,
