@@ -86,3 +86,29 @@ export function formatNaptariDatum(d: string): string {
   const [ev, ho, nap] = d.split('-');
   return `${ev}. ${ho}. ${nap}.`;
 }
+
+const HU_DATUM_IDO = new Intl.DateTimeFormat('hu-HU', {
+  timeZone: IDOZONA,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+
+/** Dátum és idő magyar formában (pl. „2026. 09. 09. 14:32"), Europe/Budapest szerint. */
+export function formatDatumIdo(d: Date): string {
+  return HU_DATUM_IDO.format(d);
+}
+
+const ISO_NAP = new Intl.DateTimeFormat('en-CA', {
+  timeZone: IDOZONA,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
+/** A mai naptári nap `YYYY-MM-DD` alakban, Europe/Budapest szerint (határidő-összevetéshez). */
+export function maiNaptariNap(): string {
+  return ISO_NAP.format(new Date());
+}
