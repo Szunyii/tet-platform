@@ -241,8 +241,9 @@ Megosztottak, mert az új és a szerkesztő route is használja.
   vezérelt (React 19 reset), a kategória, a kulcsszavak és a fájlok is state-ben.
   Beküldés alatt gomb letiltva + „Mentés…”. Hibánál a hook az első hibás mezőre
   fókuszál (a mező id-ja = a hiba kulcsa; a kategória-rács és a kulcsszó-választó
-  fókuszálható gyökérelemet kap ezzel az id-val). A fájlválasztás hiba után nem
-  marad meg: ezt a hibaüzenet jelzi. Mezőhibák: `MezoHiba` + `hibaAttr`. Gombok:
+  fókuszálható gyökérelemet kap ezzel az id-val). A kiválasztott fájlok hibás
+  beküldés után is megmaradnak (a rejtett file-input minden render után
+  `DataTransfer`-rel visszatöltődik). Mezőhibák: `MezoHiba` + `hibaAttr`. Gombok:
   „Mégse” (vissza), „Bejegyzés beadása” / „Módosítások mentése”.
 - `KategoriaValaszto.tsx` – 6 kártya rácsban (ikon, címke, egysoros leírás),
   rádió-szemantika (`role="radiogroup"`, billentyűzettel léptethető), a
@@ -287,7 +288,7 @@ konténerben.
 ## Hibakezelés
 
 - Validációs hiba: mezőnként, magyar üzenettel, űrlap-állapot megmarad
-  (fájlok kivételével, jelezve).
+  (a kiválasztott fájlokkal együtt).
 - Túl nagy kérés: a kliens előellenőrzés kiszűri; ha mégis 413 (vagy más hálózati
   hiba) jön, nincs külön üzenet, a `useMuveletForm` általános űrlap-szintű hibája
   jelenik meg: „A művelet nem futott le. Ellenőrizd a kapcsolatot, és próbáld újra.”
@@ -304,7 +305,10 @@ pipa, a kiválasztást keret + ring jelzi; nincs drag-and-drop zóna, a csatolm�
 natív fájlválasztóval megy; a listában a tárgy a link, nem a teljes sor (a11y); a
 `KATEGORIAK`-ban `rovid` és `szin` van, az ikonok a komponensben; a `parseRiportForm` második
 paramétere a meglévő csatolmányok id-listája (nem a darabszámuk); a letöltő route
-`Content-Disposition` fejléce RFC 5987 `filename*` + ASCII `filename` fallback.
+`Content-Disposition` fejléce RFC 5987 `filename*` + ASCII `filename` fallback; a
+kiválasztott fájlok hibás beküldés után is megmaradnak (a spec eredetileg ennek
+ellenkezőjét írta), a `CsatolmanyMezo` a rejtett file-inputot minden render után
+`DataTransfer`-rel visszatölti.
 A tervezett shadcn komponensek közül csak a `collapsible` került be, mellé a `combobox`
 és a függősége, az `input-group`; a `popover`, `command`, `calendar`, `tooltip` és
 `skeleton` nem kellett.

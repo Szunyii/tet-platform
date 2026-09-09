@@ -10,7 +10,7 @@ import type { MuveletState } from '../../../components/form/useMuveletForm';
 
 export type RiportFormState = MuveletState;
 
-const NINCS_ORSZAG = 'A fiókodhoz nincs ország rendelve, ezért nem adhatsz be bejegyzést. Kérd az admint.';
+const NINCS_ORSZAG = 'A fiókodhoz nincs ország rendelve, ezért nem adhatsz be bejegyzést.';
 
 export async function createRiportAction(_prev: RiportFormState, formData: FormData): Promise<RiportFormState> {
   const session = await requireSession();

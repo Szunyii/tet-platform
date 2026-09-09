@@ -38,6 +38,7 @@ export async function updateRiportAction(
   }
   revalidatePath('/riportok');
   revalidatePath(`/riportok/${id}`);
+  revalidatePath(`/riportok/${id}/szerkesztes`);
   redirect(`/riportok/${id}`);
 }
 
@@ -53,5 +54,6 @@ export async function deleteRiportAction(id: string): Promise<RiportFormState> {
     return { errors: { form: 'Törlés sikertelen, próbáld újra.' } };
   }
   revalidatePath('/riportok');
+  revalidatePath(`/riportok/${id}`);
   redirect('/riportok');
 }

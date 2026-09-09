@@ -3,6 +3,7 @@
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { hibaAttr, MezoHiba } from '../form/MezoHiba';
+import { HELYSZIN_MAX } from '../../lib/riport-szotar';
 import type { MezoHibak } from '../../lib/urlap';
 
 export function EsemenyMezok({
@@ -40,7 +41,7 @@ export function EsemenyMezok({
           id="esemenyHelyszin"
           name="esemenyHelyszin"
           required
-          maxLength={200}
+          maxLength={HELYSZIN_MAX}
           autoComplete="off"
           placeholder="pl. Szöul, COEX"
           value={helyszin}

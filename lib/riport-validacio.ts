@@ -144,9 +144,12 @@ export function csatolmanyElocheck(fajlok: File[], meglevoDb: number): string | 
   const { maxDarab, maxMeret } = CSATOLMANY_LIMIT;
   if (meglevoDb + fajlok.length > maxDarab) return `Legfeljebb ${maxDarab} csatolmány lehet egy bejegyzésen.`;
   for (const f of fajlok) {
-    if (f.size === 0) return `Üres fájl: ${nevHibahoz(f.name)}.`;
-    if (!mimeFromFajlnev(f.name)) return `Nem engedélyezett fájltípus: ${nevHibahoz(f.name)}.`;
-    if (f.size > maxMeret) return `Túl nagy fájl: ${nevHibahoz(f.name)} (max. ${formatMeret(maxMeret)}).`;
+    // Ugyanazzal a tisztított névvel dolgozunk, mint a `parseFajlok`, hogy az előcheck és a
+    // szerver-oldali ellenőrzés (kiterjesztés, hibaüzenet) egybevágjon.
+    const nev = tisztitFajlnev(f.name);
+    if (f.size === 0) return `Üres fájl: ${nevHibahoz(nev)}.`;
+    if (!mimeFromFajlnev(nev)) return `Nem engedélyezett fájltípus: ${nevHibahoz(nev)}.`;
+    if (f.size > maxMeret) return `Túl nagy fájl: ${nevHibahoz(nev)} (max. ${formatMeret(maxMeret)}).`;
   }
   return null;
 }

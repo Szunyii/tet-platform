@@ -3,20 +3,17 @@
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import { unstable_rethrow } from 'next/navigation';
+import type { MuveletState } from '../../../components/form/useMuveletForm';
 import { auth } from '../../../lib/auth';
 import {
   parseJelszo,
   parseSzerkesztes,
   parseUjFelhasznalo,
-  type MezoHibak,
   type Szerepkor,
 } from '../../../lib/felhasznalo-validacio';
 import { requireAdmin } from '../../../lib/session';
 
-export interface MuveletState {
-  ok?: boolean;
-  errors?: MezoHibak;
-}
+export type { MuveletState };
 
 /** A Better Auth `user` rekord általunk írt mezői (createUser / adminUpdateUser `data`). */
 interface FelhasznaloAdatok {
