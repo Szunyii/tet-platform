@@ -65,11 +65,12 @@ export type TicketCreate = UjTicketInput & { nyito: Szerzo };
 // válasza a másiknak nem olvasatlan – elfogadott egyszerűsítés.
 function olvasatlanSql(nezo: Nezo): SQL<number> {
   return sql<number>`exists (
-    select 1 from ${ticketUzenet} u
-    where u.ticket_id = ${ticket.id}
-      and u.szerzo_szerep <> ${nezo.role}
-      and u.created_at > coalesce(
-        (select o.latott_at from ${ticketOlvasas} o where o.ticket_id = ${ticket.id} and o.user_id = ${nezo.userId}),
+    select 1 from ${ticketUzenet}
+    where ${ticketUzenet.ticketId} = ${ticket.id}
+      and ${ticketUzenet.szerzoSzerep} <> ${nezo.role}
+      and ${ticketUzenet.createdAt} > coalesce(
+        (select ${ticketOlvasas.latottAt} from ${ticketOlvasas}
+          where ${ticketOlvasas.ticketId} = ${ticket.id} and ${ticketOlvasas.userId} = ${nezo.userId}),
         0
       )
   )`;
@@ -142,11 +143,16 @@ export function listTicketek(nezo: Nezo, szuro: TicketSzuro): TicketListItem[] {
 }
 
 /**
- * Egy ticket az üzeneteivel. NEM ellenőrzi a láthatóságot (a hívó `canViewTicket`-tel
- * teszi); a `nezo` az olvasatlan-jelzéshez kell.
+ * Egy ticket az üzeneteivel. A lekérdezés maga is kikényszeríti a láthatóságot (attasé
+ * csak a hozzá címzettet kapja meg, idegen ticketre `null`); a hívók emellett továbbra is
+ * futtatják a `canViewTicket` / `canWriteTicket` ellenőrzést, hogy a jogosultsági modell
+ * explicit maradjon. A `nezo` az olvasatlan-oszlophoz is kell.
  */
 export function getTicket(id: string, nezo: Nezo): TicketDetail | null {
   const nyito = alias(user, 'nyito');
+  const felt: SQL[] = [eq(ticket.id, id)];
+  const l = lathato(nezo);
+  if (l) felt.push(l);
   const sor = db
     .select({
       ...listOszlopok(nezo),
@@ -157,7 +163,7 @@ export function getTicket(id: string, nezo: Nezo): TicketDetail | null {
     .from(ticket)
     .innerJoin(user, eq(ticket.cimzettId, user.id))
     .leftJoin(nyito, eq(ticket.nyitoId, nyito.id))
-    .where(eq(ticket.id, id))
+    .where(and(...felt))
     .get();
   if (!sor) return null;
   const uzenetek = db
@@ -217,7 +223,8 @@ function statuszKuldoSzerint(szerep: UzenetSzerep): StatuszKulcs {
 
 /**
  * Új üzenet + státusz + updatedAt egy tranzakcióban. Lezárt vagy hiányzó ticketre dob
- * (az action előtte `canWriteTicket`-tel ellenőriz; ez a versenyhelyzet elleni védőháló).
+ * (az action előtte `canWriteTicket`-tel ellenőriz; ez az elavult kliens-állapot elleni
+ * védőháló: a lezárás előtt renderelt űrlapról érkező beküldés).
  * A küldő számára rögtön olvasottnak jelöli a ticketet (azonos időbélyeg, szigorú `>`
  * az olvasatlan-feltételben, így a saját üzenet nem olvasatlan).
  */
@@ -247,14 +254,19 @@ export function addUzenet(ticketId: string, szerzo: Szerzo, szoveg: string): voi
   });
 }
 
+/** Idempotens: a már lezárt ticketre nem fut update, így a lezarvaAt és az updatedAt nem íródik felül. */
 export function closeTicket(id: string): void {
-  db.update(ticket).set({ statusz: 'lezart', lezarvaAt: new Date() }).where(eq(ticket.id, id)).run();
+  db.update(ticket)
+    .set({ statusz: 'lezart', lezarvaAt: new Date() })
+    .where(and(eq(ticket.id, id), ne(ticket.statusz, 'lezart')))
+    .run();
 }
 
 /**
  * Újranyitás: a legutolsó üzenet küldője szerinti állapot; ha csak a nyitó üzenet van,
  * `nyitott`. (Azonos ezredmásodpercen belüli két üzenetnél az id-tiebreak véletlen –
  * emberi tempójú beszélgetésnél nem fordul elő, és a következő üzenet korrigálja.)
+ * Idempotens: csak lezárt ticketet nyit újra, így a kétszeri beküldés nem bumpolja az updatedAt-ot.
  */
 export function reopenTicket(id: string): void {
   db.transaction((tx) => {
@@ -267,7 +279,10 @@ export function reopenTicket(id: string): void {
       .all();
     const statusz: StatuszKulcs =
       utolsok.length <= 1 ? 'nyitott' : statuszKuldoSzerint(utolsok[0].szerep as UzenetSzerep);
-    tx.update(ticket).set({ statusz, lezarvaAt: null }).where(eq(ticket.id, id)).run();
+    tx.update(ticket)
+      .set({ statusz, lezarvaAt: null })
+      .where(and(eq(ticket.id, id), eq(ticket.statusz, 'lezart')))
+      .run();
   });
 }
 
@@ -281,7 +296,7 @@ export function jelolOlvasottnak(ticketId: string, userId: string, mikor = new D
 
 /** Olvasatlan, NEM lezárt ticketek száma a néző számára (menü-számláló). */
 export function countOlvasatlan(nezo: Nezo): number {
-  const felt: SQL[] = [ne(ticket.statusz, 'lezart'), sql`${olvasatlanSql(nezo)} = 1`];
+  const felt: SQL[] = [ne(ticket.statusz, 'lezart'), olvasatlanSql(nezo)];
   const l = lathato(nezo);
   if (l) felt.push(l);
   const sor = db.select({ n: count() }).from(ticket).where(and(...felt)).get();
