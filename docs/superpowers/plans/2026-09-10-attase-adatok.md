@@ -810,3 +810,12 @@ git commit -m "feat(felhasznalok): Telefon oszlop a listában, dokumentáció
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
+
+## Megvalósítási eltérések
+
+A kódblokkok az eredeti tervet mutatják; a review-k nyomán a végleges kód ezekben tér el:
+
+- **Task 2 (validátor).** A terület ezreselválasztóit nem távolítjuk el válogatás nélkül: a `TERULET_RE` csak 3-jegyű csoportok között enged szóközt, NBSP-t (U+00A0), keskeny NBSP-t (U+202F) vagy pontot, így a `2.02` hibát ad, nem lesz belőle 202. A `TERULET_MAX` konstans elmaradt (a regex 9 jegyre korlátoz). A `TELEFON_RE` legalább egy számjegyet megkövetel (`()` vagy `-` önmagában nem megy át). A `validPosztSzoveg` a címkét a `POSZT_CIMKE` mapből veszi, nem `cimke` paraméterből. A kapcsolattartási e-mail hossza `EMAIL_MAX` (254) karakterre korlátozott (validátor + input `maxLength`).
+- **Task 4 (dialógusok).** A `MuveletDialog` minden dialógusnál `max-h-[calc(100dvh-2rem)] overflow-y-auto`-t kap (kis képernyőn különben a lábléc elérhetetlen, mert a Base UI zárolja a body görgetést). A `useMuveletForm` az első hibás mezőt DOM-sorrendben fókuszálja (`CSS.escape`-elt szelektorlista), ezért a Task 4 5. lépésében telefon + terület hibánál a fókusz a `telefon` mezőre kerül. A „km²" a mező címkéjében van („Terület (km²)"), nem utótagként a mező mellett; a Fiók blokk nem `fieldset`, csak az Elérhetőség és a TéT poszt. Az új felhasználó e-mail címkéje „E-mail cím (bejelentkezés)". Pénznem placeholder: „dél-koreai von (KRW)".
+- **Task 5 (dokumentáció).** A CLAUDE.md rögzíti, hogy az `adminUpdateUser` `data`-jában a `null` törli a mezőt, az `undefined` érintetlenül hagyja, és hogy a Drizzle adapter a séma property-kulcsával párosít (`fieldName` nem kell).
+- **Környezet.** A böngészős próbák a felhasználó futó dev szerverén (3000) történtek; a Next 16 ugyanabban a könyvtárban nem enged második dev szervert.

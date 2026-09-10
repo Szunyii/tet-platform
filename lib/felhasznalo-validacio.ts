@@ -88,6 +88,8 @@ function validOrszag(raw: string, szerepkor: Szerepkor | null, errors: MezoHibak
 }
 
 export const TELEFON_MAX = 40;
+/** RFC 5321 gyakorlati felső korlát; a főváros/pénznem/telefon mintájára a kapcsolat-e-mailt is határoljuk. */
+export const EMAIL_MAX = 254;
 // Legalább egy számjegyet követel, hogy pl. a '()' vagy '-' önmagában ne menjen át.
 const TELEFON_RE = /^(?=.*\d)[0-9+\-/() ]+$/;
 const TERULET_HIBA = 'A terület pozitív egész szám legyen (km²).';
@@ -145,6 +147,10 @@ function validTelefon(raw: string, errors: MezoHibak): string | null {
 /** Kapcsolattartási e-mail (a bejelentkezési e-mailtől független), kisbetűsítve. */
 function validKapcsolatEmail(raw: string, errors: MezoHibak): string | null {
   if (!raw) return null;
+  if (raw.length > EMAIL_MAX) {
+    errors.kapcsolatEmail = `Az e-mail cím legfeljebb ${EMAIL_MAX} karakter.`;
+    return null;
+  }
   if (!EMAIL_RE.test(raw)) {
     errors.kapcsolatEmail = 'Érvénytelen e-mail cím.';
     return null;

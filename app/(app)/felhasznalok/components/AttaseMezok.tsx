@@ -5,7 +5,7 @@ import { hibaAttr, MezoHiba } from '../../../../components/form/MezoHiba';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
 import type { MezoHibak } from '../../../../lib/urlap';
-import { TELEFON_MAX, type Szerepkor } from '../../../../lib/felhasznalo-validacio';
+import { EMAIL_MAX, TELEFON_MAX, type Szerepkor } from '../../../../lib/felhasznalo-validacio';
 
 /** A dialógusok vezérelt attasé-mezői (mind string: az űrlap nyers értéke). */
 export interface AttaseMezoErtekek {
@@ -69,6 +69,7 @@ export function AttaseMezok({
               id="kapcsolatEmail"
               name="kapcsolatEmail"
               type="email"
+              maxLength={EMAIL_MAX}
               autoComplete="off"
               value={ertekek.kapcsolatEmail}
               onChange={set('kapcsolatEmail')}
