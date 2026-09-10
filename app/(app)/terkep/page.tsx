@@ -14,8 +14,10 @@ export default async function TerkepPage({
   const most = aktualisEv();
   const o = (await searchParams).o;
   const kezdoKod = typeof o === 'string' && orszagByKod(o) ? o : null;
+  // A key a ?o= változásakor (vissza/előre, oldalsáv) újramountolja a nézetet, hogy a kezdő kiválasztás frissüljön.
   return (
     <TerkepNezet
+      key={kezdoKod ?? ''}
       adatok={listTerkepAdat(most)}
       aktualisEv={most}
       sajatKod={session.orszag}

@@ -36,12 +36,14 @@ export default function WorldMap({ adatok, metric, iparag, selected, onSelect }:
   );
 
   useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
     const handler = (e: Event) => {
       const d = (e as CustomEvent<{ kod?: string }>).detail;
       if (d?.kod) onSelect(d.kod);
     };
-    document.addEventListener('tet-country-select', handler);
-    return () => document.removeEventListener('tet-country-select', handler);
+    el.addEventListener('tet-country-select', handler);
+    return () => el.removeEventListener('tet-country-select', handler);
   }, [onSelect]);
 
   useEffect(() => {

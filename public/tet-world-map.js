@@ -12,14 +12,19 @@
     }
     return worldPromise;
   }
+  var D3_TIMEOUT_MS = 15000;
+  /* Korlátos várakozás a CDN-ről töltődő d3/topojson-ra; lejárat után elutasít, nem pollol örökké. */
   function waitForD3() {
-    return new Promise(function (res) {
+    return new Promise(function (res, rej) {
+      var kezdet = Date.now();
       (function tick() {
         if (window.d3 && window.topojson) return res();
+        if (Date.now() - kezdet > D3_TIMEOUT_MS) return rej(new Error('d3 timeout'));
         setTimeout(tick, 60);
       })();
     });
   }
+  var HIBA_SZOVEG = 'A térkép nem tölthető be (nincs internetkapcsolat a d3/world-atlas CDN-hez).';
 
   var NINCS_SZIN = '#eceff3', HALVANY = '#e3e7ec', SEMLEGES = '#5f6b7a';
   var ALLAPOT_SORREND = ['friss', 'elavult', 'nincs'];
@@ -35,6 +40,8 @@
     '.c.post:hover{stroke:#10151d;stroke-width:1.1px}' +
     '.c.sel{stroke:#10151d;stroke-width:1.6px}' +
     '.pin{cursor:pointer}' +
+    '.pin.sel circle:first-child{stroke:#10151d;stroke-width:2px}' +
+    '.hiba{padding:24px 16px;color:#6b7684;font-size:12.5px;text-align:center}' +
     '.tip{position:absolute;pointer-events:none;opacity:0;transition:opacity .12s;background:#10151d;color:#fff;' +
     'padding:8px 10px;border-radius:5px;max-width:230px;z-index:5;box-shadow:0 6px 18px rgba(0,0,0,.28);transform:translate(-50%,-100%)}' +
     '.tip b{display:block;font-weight:600;font-size:12.5px;margin-bottom:3px}' +
@@ -59,7 +66,10 @@
     set data(v) {
       try {
         var o = typeof v === 'string' ? JSON.parse(v || '{}') : (v || {});
-        this._data = o.orszagok || [];
+        this._data = (o.orszagok || []).map(function (r) {
+          r.iparagak = Array.isArray(r.iparagak) ? r.iparagak : [];
+          return r;
+        });
         this._szinek = o.szinek || { iparag: {}, allapot: {} };
       } catch (e) {
         this._data = []; this._szinek = { iparag: {}, allapot: {} };
@@ -90,6 +100,9 @@
         self._build();
         self._ready = true;
         self._paint();
+      }).catch(function () {
+        var h = document.createElement('div'); h.className = 'hiba'; h.textContent = HIBA_SZOVEG;
+        self._root.appendChild(h);
       });
     }
     _build() {
@@ -135,7 +148,7 @@
       if (!r) { this._tip.innerHTML = '<b>' + esc(name) + '</b><span>Nincs kihelyezett TéT attasé</span>'; return; }
       this._tip.innerHTML = '<b>' + esc(r.nev) + '</b>' +
         '<span>' + esc(r.attase || 'nincs aktív attasé') + '</span>' +
-        '<span>' + (ALLAPOT_CIMKE[r.allapot] || '') + (r.ev ? ' · ' + r.ev : '') + '</span>' +
+        '<span>' + (ALLAPOT_CIMKE[r.allapot] || '') + (r.ev ? ' · ' + esc(r.ev) : '') + '</span>' +
         (r.iparagak.length ? '<span>Kiemelt iparág: ' + esc(r.iparagak[0]) + '</span>' : '');
     }
     _pick(r) {
@@ -162,7 +175,8 @@
             .on('click', function (ev, d) { self._pick(d); });
           return g;
         }
-      ).attr('transform', function (d) { var p = self._proj(d.lonlat); return 'translate(' + p[0] + ',' + p[1] + ')'; })
+      ).attr('class', function (d) { return 'pin' + (d.kod === self._sel ? ' sel' : ''); })
+        .attr('transform', function (d) { var p = self._proj(d.lonlat); return 'translate(' + p[0] + ',' + p[1] + ')'; })
         .select('circle').attr('fill', function (d) { return self._fill(d); });
       this._drawLegend();
     }

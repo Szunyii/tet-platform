@@ -19,16 +19,6 @@ export function catAvg(p: Post, kat: number): number {
   return s / c.length;
 }
 
-// Országjelentésből számolt mutatók (nem adminisztratív, hanem tartalmi)
-export function nyitottsag(p: Post): number {
-  if (!p.intezmenyek.length) return 0;
-  return p.intezmenyek.reduce((s, i) => s + i.ny, 0) / p.intezmenyek.length;
-}
-
-export const RISK_COLORS: Record<string, string> = {
-  Alacsony: '#0f7a68', Közepes: '#a86a00', Magas: '#b3261e',
-};
-
 export function fmt(v: number): string {
   return v.toFixed(1).replace('.', ',');
 }

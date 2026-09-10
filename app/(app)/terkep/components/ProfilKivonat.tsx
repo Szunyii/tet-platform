@@ -1,5 +1,6 @@
 'use client';
 
+import { X } from 'lucide-react';
 import Link from 'next/link';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { AllapotBadge } from '../../../../components/orszagprofil/AllapotBadge';
@@ -19,7 +20,7 @@ export function ProfilKivonat({
   const C = MEZO_CIMKEK.alapadatok;
   const poszt = [
     o.poszt?.fovaros,
-    o.poszt?.terulet !== null && o.poszt?.terulet !== undefined ? sz(o.poszt.terulet, ' km²') : null,
+    o.poszt?.terulet != null ? sz(o.poszt.terulet, ' km²') : null,
     o.poszt?.penznem,
   ].filter(Boolean).join(' · ');
   return (
@@ -33,7 +34,7 @@ export function ProfilKivonat({
             </CardDescription>
           </div>
           <Button type="button" variant="ghost" size="icon" className="ml-auto" aria-label="Bezárás" onClick={onClose}>
-            ×
+            <X className="size-4" />
           </Button>
         </div>
         <div className="mt-2 flex flex-wrap gap-1.5">
