@@ -2353,7 +2353,7 @@ import { ALLAPOT_CIMKE, ALLAPOT_SZINEK, ALLAPOTOK } from '../../../../lib/orszag
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../components/ui/card';
 
 export function TerkepUres({ adatok, onSelect }: { adatok: TerkepOrszag[]; onSelect: (kod: string) => void }) {
-  const legutobbi = adatok.filter((o) => o.frissitve).sort((a, b) => (b.frissitve ?? '').localeCompare(a.frissitve ?? '')).slice(0, 6);
+  const legutobbi = adatok.filter((o) => o.frissitveMs !== null).sort((a, b) => (b.frissitveMs ?? 0) - (a.frissitveMs ?? 0)).slice(0, 6);
   return (
     <Card>
       <CardHeader>
@@ -2395,7 +2395,7 @@ export function TerkepUres({ adatok, onSelect }: { adatok: TerkepOrszag[]; onSel
 }
 ```
 
-A `frissitve` formázott dátum (`formatDatum`, „2026. 09. 10.") rendezéshez a `localeCompare` elég, mert az alak fix hosszú, év-hó-nap sorrendű.
+A rendezés a `frissitveMs` (ezredmásodperc) mezőn történik, a `frissitve` csak megjelenítésre szolgál.
 
 - [ ] **Step 4: `app/(app)/terkep/components/ProfilKivonat.tsx`**
 
@@ -2412,13 +2412,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { BLOKK_KULCSOK, MEZO_CIMKEK } from '../../../../lib/orszagprofil-szotar';
 import { cn } from '../../../../lib/utils';
 
-const HU = new Intl.NumberFormat('hu-HU');
-const sz = (n: number | null, utotag = '') => (n === null ? '–' : `${HU.format(n)}${utotag}`);
+import { formatSzam as sz } from '../../../../lib/szam';
 
 export function ProfilKivonat({ o, szerkeszthet, aktualisEv, onClose }: { o: TerkepOrszag; szerkeszthet: boolean; aktualisEv: number; onClose: () => void }) {
   const a = o.alapadatok;
   const C = MEZO_CIMKEK.alapadatok;
-  const poszt = [o.poszt?.fovaros, o.poszt?.terulet !== null && o.poszt?.terulet !== undefined ? `${HU.format(o.poszt.terulet)} km²` : null, o.poszt?.penznem].filter(Boolean).join(' · ');
+  const poszt = [o.poszt?.fovaros, o.poszt?.terulet !== null && o.poszt?.terulet !== undefined ? sz(o.poszt.terulet, ' km²') : null, o.poszt?.penznem].filter(Boolean).join(' · ');
   return (
     <Card>
       <CardHeader>
