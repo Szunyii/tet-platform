@@ -9,6 +9,7 @@ import {
   parseJelszo,
   parseSzerkesztes,
   parseUjFelhasznalo,
+  type AttaseAdatok,
   type Szerepkor,
 } from '../../../lib/felhasznalo-validacio';
 import { requireAdmin } from '../../../lib/session';
@@ -16,9 +17,8 @@ import { requireAdmin } from '../../../lib/session';
 export type { MuveletState };
 
 /** A Better Auth `user` rekord általunk írt mezői (createUser / adminUpdateUser `data`). */
-interface FelhasznaloAdatok {
+interface FelhasznaloAdatok extends AttaseAdatok {
   name?: string;
-  orszag: string | null;
   role?: Szerepkor;
 }
 
@@ -77,7 +77,7 @@ export async function createFelhasznaloAction(
   await requireAdmin();
   const parsed = parseUjFelhasznalo(formData);
   if (!parsed.ok) return { errors: parsed.errors };
-  const { nev, email, jelszo, szerepkor, orszag } = parsed.data;
+  const { nev, email, jelszo, szerepkor, ...adatok } = parsed.data;
   try {
     await auth.api.createUser({
       headers: await headers(),
@@ -86,7 +86,7 @@ export async function createFelhasznaloAction(
         email,
         password: jelszo,
         role: szerepkor,
-        data: { orszag } satisfies FelhasznaloAdatok,
+        data: adatok satisfies FelhasznaloAdatok,
       },
     });
   } catch (err) {
@@ -103,16 +103,17 @@ export async function updateFelhasznaloAction(
   const me = await requireAdmin();
   const parsed = parseSzerkesztes(formData);
   if (!parsed.ok) return { errors: parsed.errors };
-  const { nev, szerepkor, orszag } = parsed.data;
+  const { nev, szerepkor, ...adatok } = parsed.data;
   if (userId === me.userId && szerepkor !== 'admin') {
     return { errors: { szerepkor: 'Saját admin szerepkörödet nem veheted el.' } };
   }
   try {
-    // Egyetlen hívás (név, ország, szerepkör együtt): az adminUpdateUser a data.role-t
-    // maga ellenőrzi és menti, így nincs részlegesen mentett állapot.
+    // Egyetlen hívás (név, poszt-adatok, elérhetőségek, szerepkör együtt): az
+    // adminUpdateUser a data.role-t maga ellenőrzi és menti, így nincs részlegesen
+    // mentett állapot. A null értékek törlik a mezőt (adminra váltásnál a poszt-adatokat).
     await auth.api.adminUpdateUser({
       headers: await headers(),
-      body: { userId, data: { name: nev, orszag, role: szerepkor } satisfies FelhasznaloAdatok },
+      body: { userId, data: { name: nev, role: szerepkor, ...adatok } satisfies FelhasznaloAdatok },
     });
   } catch (err) {
     return hiba(err, 'adminUpdateUser');

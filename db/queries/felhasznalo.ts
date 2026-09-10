@@ -1,14 +1,13 @@
 import 'server-only';
 import { db } from '../index';
 import { user } from '../schema';
-import type { Szerepkor } from '../../lib/felhasznalo-validacio';
+import type { AttaseAdatok, Szerepkor } from '../../lib/felhasznalo-validacio';
 
-export interface FelhasznaloSor {
+export interface FelhasznaloSor extends AttaseAdatok {
   id: string;
   nev: string;
   email: string;
   szerepkor: Szerepkor;
-  orszag: string | null;
   tiltott: boolean;
   letrehozva: Date;
 }
@@ -27,6 +26,11 @@ export function listFelhasznalok(): FelhasznaloSor[] {
       email: user.email,
       role: user.role,
       orszag: user.orszag,
+      fovaros: user.fovaros,
+      terulet: user.terulet,
+      penznem: user.penznem,
+      telefon: user.telefon,
+      kapcsolatEmail: user.kapcsolatEmail,
       banned: user.banned,
       banExpires: user.banExpires,
       createdAt: user.createdAt,
@@ -39,6 +43,11 @@ export function listFelhasznalok(): FelhasznaloSor[] {
       email: r.email,
       szerepkor: r.role === 'admin' ? ('admin' as const) : ('attase' as const),
       orszag: r.orszag ?? null,
+      fovaros: r.fovaros ?? null,
+      terulet: r.terulet ?? null,
+      penznem: r.penznem ?? null,
+      telefon: r.telefon ?? null,
+      kapcsolatEmail: r.kapcsolatEmail ?? null,
       // A Better Auth a lejárt banExpires-t nem tekinti tiltásnak.
       tiltott: Boolean(r.banned) && (!r.banExpires || r.banExpires.getTime() > now),
       letrehozva: r.createdAt,
