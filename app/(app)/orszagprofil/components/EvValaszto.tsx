@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Label } from '../../../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
 
-/** Évválasztó a szerkesztő fejlécében: `?ev=` navigáció (csak nem üres értékek). */
+/** Évválasztó a szerkesztő és az olvasó oldal fejlécében: `?ev=` navigáció (csak nem üres értékek). */
 export function EvValaszto({ evek, ertek }: { evek: number[]; ertek: number }) {
   const router = useRouter();
   const pathname = usePathname();

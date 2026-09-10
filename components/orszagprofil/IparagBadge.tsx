@@ -5,6 +5,7 @@ import { IPARAG_SZINEK, type Iparag } from '../../lib/orszagprofil-szotar';
 export function IparagBadge({ iparag }: { iparag: Iparag }) {
   const szin = IPARAG_SZINEK[iparag];
   // Inline style szándékosan: a szín a térképpel közös szótárból jön, nem Tailwind-tokenből.
+  // Az app ma csak világos témájú; ha lesz sötét mód, ezekhez a színekhez `dark:` felülírás kell.
   return (
     <Badge variant="outline" style={{ color: szin, borderColor: `${szin}55`, background: `${szin}14` }}>
       {iparag}

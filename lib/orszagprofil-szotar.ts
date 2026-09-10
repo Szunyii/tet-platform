@@ -58,7 +58,11 @@ export const ALLAPOT_CIMKE: Record<Allapot, string> = {
   elavult: 'Elavult profil',
   nincs: 'Nincs profil',
 };
-export const ALLAPOT_SZINEK: Record<Allapot, string> = { friss: '#2f7d32', elavult: '#b45309', nincs: '#9aa3ad' };
+export const ALLAPOT_SZINEK: Record<Allapot, string> = { friss: '#2f7d32', elavult: '#b45309', nincs: '#6b7280' };
+/** A legfrissebb profil-év → állapot; a profil oldal és a térkép-adat ugyanezt számolja. */
+export function profilAllapot(ev: number | null, most: number): Allapot {
+  return ev === null ? 'nincs' : ev === most ? 'friss' : 'elavult';
+}
 
 export const RENDEZVENY_TIPUSOK = [
   { kulcs: 'szakkiallitas', cimke: 'Szakkiállítás' },

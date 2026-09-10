@@ -6,7 +6,8 @@ import { formatDatum } from '../../lib/datum';
 import { orszagByKod } from '../../lib/orszagok';
 import { tiltottE } from '../../lib/felhasznalo-tiltas';
 import {
-  BLOKK_KULCSOK, normalizalBlokk, type Alapadatok, type Allapot, type BlokkKulcs, type Iparag, type ProfilBlokkok,
+  BLOKK_KULCSOK, normalizalBlokk, profilAllapot,
+  type Alapadatok, type Allapot, type BlokkKulcs, type Iparag, type ProfilBlokkok,
 } from '../../lib/orszagprofil-szotar';
 
 export interface Profil {
@@ -63,6 +64,19 @@ export function listEvek(kod: string): number[] {
     .orderBy(desc(orszagprofil.ev))
     .all()
     .map((r) => r.ev);
+}
+
+/** Az ország aktív (nem tiltott) attaséja név szerint az első; a profil oldal fejléce. */
+export function getAttaseNev(kod: string): string | null {
+  const now = Date.now();
+  const u = db
+    .select({ nev: user.name, banned: user.banned, banExpires: user.banExpires })
+    .from(user)
+    .where(and(eq(user.role, 'attase'), eq(user.orszag, kod)))
+    .orderBy(user.name)
+    .all()
+    .find((x) => !tiltottE(x, now));
+  return u?.nev ?? null;
 }
 
 export interface TerkepOrszag {
@@ -132,7 +146,7 @@ export function listTerkepAdat(aktualisEv: number): TerkepOrszag[] {
       attase: a?.nev ?? null,
       poszt: a ? { fovaros: a.fovaros ?? null, terulet: a.terulet ?? null, penznem: a.penznem ?? null } : null,
       ev: prof?.ev ?? null,
-      allapot: !prof ? 'nincs' : prof.ev === aktualisEv ? 'friss' : 'elavult',
+      allapot: profilAllapot(prof?.ev ?? null, aktualisEv),
       iparagak: prof?.blokkok.kfiRendszer?.kiemeltIparagak ?? [],
       osszegzes: prof?.blokkok.magyarErtekeles?.osszegzes ?? '',
       frissitve: prof ? formatDatum(prof.updatedAt) : null,
