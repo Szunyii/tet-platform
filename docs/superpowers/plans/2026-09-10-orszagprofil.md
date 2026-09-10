@@ -1103,9 +1103,9 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 import { mezo, type MezoHibak } from './urlap';
 import {
   EV_MIN, GAZDASAGI_AGAZATOK, IPARAGAK, KFI_PRIORITASOK, MEZO_CIMKEK, OSSZEGZES_MAX, RENDEZVENY_MAX,
-  RENDEZVENY_TIPUSOK, ROVID_MAX, SZOVEG_MAX, TAGSAGOK, TOP_VALLALAT_MAX,
-  type Alapadatok, type BlokkKulcs, type Intezmenyek, type Kapcsolatok, type KfiRendszer,
-  type MagyarErtekeles, type ProfilBlokkok, type Programok, type Rendezveny, type RendezvenyTipus,
+  ROVID_MAX, SZOVEG_MAX, TAGSAGOK, TOP_VALLALAT_MAX, rendezvenyTipus,
+  type Alapadatok, type BlokkKulcs, type MezoCimke, type Intezmenyek, type Kapcsolatok, type KfiRendszer,
+  type MagyarErtekeles, type ProfilBlokkok, type Programok, type Rendezveny,
   type Rendezvenyek, type Vallalati,
 } from './orszagprofil-szotar';
 
@@ -1114,7 +1114,8 @@ export type ValidalasEredmeny<K extends BlokkKulcs> =
   | { ok: false; errors: MezoHibak };
 
 function cimke(blokk: BlokkKulcs, kulcs: string): string {
-  return MEZO_CIMKEK[blokk][kulcs]?.cimke ?? kulcs;
+  // A MEZO_CIMKEK típusa mezőnév szerint szigorú; itt stringgel indexelünk, ezért laza nézet.
+  return (MEZO_CIMKEK[blokk] as Partial<Record<string, MezoCimke>>)[kulcs]?.cimke ?? kulcs;
 }
 
 function szoveg(fd: FormData, blokk: BlokkKulcs, kulcs: string, max: number, errors: MezoHibak): string {
@@ -1230,8 +1231,6 @@ function programok(fd: FormData): ValidalasEredmeny<'programok'> {
   return Object.keys(errors).length ? { ok: false, errors } : { ok: true, ertek };
 }
 
-const TIPUS_KULCSOK = RENDEZVENY_TIPUSOK.map((t) => t.kulcs) as readonly string[];
-
 function rendezvenyek(fd: FormData): ValidalasEredmeny<'rendezvenyek'> {
   const errors: MezoHibak = {};
   const sorok: Rendezveny[] = [];
@@ -1246,8 +1245,7 @@ function rendezvenyek(fd: FormData): ValidalasEredmeny<'rendezvenyek'> {
     if (nev.length > ROVID_MAX) errors[p + 'nev'] = `A név legfeljebb ${ROVID_MAX} karakter.`;
     if (idopont.length > ROVID_MAX) errors[p + 'idopont'] = `Az időpont legfeljebb ${ROVID_MAX} karakter.`;
     if (megjegyzes.length > ROVID_MAX) errors[p + 'megjegyzes'] = `A megjegyzés legfeljebb ${ROVID_MAX} karakter.`;
-    const tipus = (TIPUS_KULCSOK.includes(tipusRaw) ? tipusRaw : 'forum') as RendezvenyTipus;
-    sorok.push({ nev, tipus, idopont, megjegyzes });
+    sorok.push({ nev, tipus: rendezvenyTipus(tipusRaw), idopont, megjegyzes });
   }
   const ertek: Rendezvenyek = { lista: sorok };
   return Object.keys(errors).length ? { ok: false, errors } : { ok: true, ertek };
@@ -1846,9 +1844,9 @@ export function EvValaszto({ evek, ertek }: { evek: number[]; ertek: number }) {
 }
 ```
 
-- [ ] **Step 5: `evParam` a szótárba**
+- [ ] **Step 5: `evParam` a szótárba** (a Task 2-ben már elkészült – ellenőrizd, hogy megvan, és lépj tovább)
 
-`lib/orszagprofil-szotar.ts` végére (tiszta függvény, a nézet és a szerkesztő page is használja):
+`lib/orszagprofil-szotar.ts` végén (tiszta függvény, a nézet és a szerkesztő page is használja):
 
 ```ts
 /** `?ev=` search param → négyjegyű egész, különben az alapértelmezett. */
@@ -2031,10 +2029,12 @@ export function BlokkNezet<K extends BlokkKulcs>({ kulcs, tartalom }: { kulcs: K
   );
 }
 
+// A MEZO_CIMKEK mezőnév szerint szigorúan típusos, ezért a `C` minden ágban a szűkített
+// blokk-kulccsal jön (a switch előtt unió lenne, és nem lehetne mezőre indexelni).
 function mezok(kulcs: BlokkKulcs, t: ProfilBlokkok[BlokkKulcs]): ReactNode {
-  const C = MEZO_CIMKEK[kulcs];
   switch (kulcs) {
     case 'alapadatok': {
+      const C = MEZO_CIMKEK.alapadatok;
       const b = t as ProfilBlokkok['alapadatok'];
       return (
         <>
@@ -2050,6 +2050,7 @@ function mezok(kulcs: BlokkKulcs, t: ProfilBlokkok[BlokkKulcs]): ReactNode {
       );
     }
     case 'kfiRendszer': {
+      const C = MEZO_CIMKEK.kfiRendszer;
       const b = t as ProfilBlokkok['kfiRendszer'];
       return (
         <>
@@ -2071,12 +2072,14 @@ function mezok(kulcs: BlokkKulcs, t: ProfilBlokkok[BlokkKulcs]): ReactNode {
       );
     }
     case 'intezmenyek': {
+      const C = MEZO_CIMKEK.intezmenyek;
       const b = t as ProfilBlokkok['intezmenyek'];
       return (['iranyitoSzervek', 'egyetemek', 'kutatokozpontok', 'infrastrukturak'] as const).map((k) => (
         <Sor key={k} cimke={C[k].cimke}><Szoveg v={b[k]} /></Sor>
       ));
     }
     case 'vallalati': {
+      const C = MEZO_CIMKEK.vallalati;
       const b = t as ProfilBlokkok['vallalati'];
       return (
         <>
@@ -2098,6 +2101,7 @@ function mezok(kulcs: BlokkKulcs, t: ProfilBlokkok[BlokkKulcs]): ReactNode {
       );
     }
     case 'programok': {
+      const C = MEZO_CIMKEK.programok;
       const b = t as ProfilBlokkok['programok'];
       return (['palyazatok', 'tamogatasiProgramok', 'finanszirozasiEszkozok', 'nemzetkoziReszvetel'] as const).map((k) => (
         <Sor key={k} cimke={C[k].cimke}><Szoveg v={b[k]} /></Sor>
@@ -2125,12 +2129,14 @@ function mezok(kulcs: BlokkKulcs, t: ProfilBlokkok[BlokkKulcs]): ReactNode {
       );
     }
     case 'kapcsolatok': {
+      const C = MEZO_CIMKEK.kapcsolatok;
       const b = t as ProfilBlokkok['kapcsolatok'];
       return (['euMultilateralis', 'partnerorszagok', 'egyezmeny', 'ketoldalu', 'mobilitas'] as const).map((k) => (
         <Sor key={k} cimke={C[k].cimke}><Szoveg v={b[k]} /></Sor>
       ));
     }
     case 'magyarErtekeles': {
+      const C = MEZO_CIMKEK.magyarErtekeles;
       const b = t as ProfilBlokkok['magyarErtekeles'];
       return (['osszegzes', 'egyuttmukodesiLehetosegek', 'joGyakorlatok', 'diplomaciaiPrioritasok'] as const).map((k) => (
         <Sor key={k} cimke={C[k].cimke}><Szoveg v={b[k]} /></Sor>
