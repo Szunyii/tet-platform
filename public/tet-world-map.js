@@ -1,5 +1,9 @@
 /* <tet-world-map> — TéT posztok világtérképe. d3-geo + world-atlas TopoJSON.
-   Attribútumok: data (JSON tömb), metric ("focus"|"risk"|"open"), field (szűrő), selected (ország neve) */
+   Attribútumok: data (JSON: { orszagok: [...], szinek: { iparag: {...}, allapot: {...} } }),
+   metric ("iparag"|"allapot"), iparag (szűrő), selected (ország kódja).
+   Az orszagok elemei: { kod, nev, geo, lonlat, attase, ev, allapot, iparagak }. A geo a
+   world-atlas országneve; üres, ha a 110m atlaszban nincs poligon (pl. Szingapúr) – ekkor
+   csak pin rajzolódik. A színtáblák a lib/orszagprofil-szotar.ts-ből jönnek, itt nincs lista. */
 (function () {
   var worldPromise = null;
   function loadWorld() {
@@ -17,21 +21,9 @@
     });
   }
 
-  var FIELD_COLORS = {
-    'Mesterséges intelligencia': '#1f4e9c',
-    'Kvantumtechnológia': '#6b46c1',
-    'Biotechnológia és élettudomány': '#0f7a68',
-    'Félvezetők és mikroelektronika': '#b45309',
-    'Energetika és fenntarthatóság': '#2f7d32',
-    'Űrtechnológia': '#0e7490',
-    'Agrár- és élelmiszertechnológia': '#8a6d1f',
-    'Digitális egészségügy': '#a8326f',
-    'Anyagtudomány': '#525c6b',
-    'Mobilitás és autonóm rendszerek': '#9a3412'
-  };
-  var SEQ = ['#e6ecf5', '#c3d3e9', '#96b3d8', '#5f87bd', '#2f5d9e', '#1b3a6b'];
-  var RISK_COLORS = { 'Alacsony': '#0f7a68', 'Közepes': '#a86a00', 'Magas': '#b3261e' };
-  var RISK_ORDER = ['Alacsony', 'Közepes', 'Magas'];
+  var NINCS_SZIN = '#eceff3', HALVANY = '#e3e7ec', SEMLEGES = '#5f6b7a';
+  var ALLAPOT_SORREND = ['friss', 'elavult', 'nincs'];
+  var ALLAPOT_CIMKE = { friss: 'idei profil', elavult: 'elavult profil', nincs: 'nincs profil' };
 
   var W = 960, H = 505;
 
@@ -51,23 +43,38 @@
     '.lg div{display:flex;align-items:center;gap:6px;color:#454f5e;font-size:11px}' +
     '.lg i{width:11px;height:11px;border-radius:2px;display:block}';
 
-  var TetWorldMap = function () {};
-  TetWorldMap = class extends HTMLElement {
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  var TetWorldMap = class extends HTMLElement {
     constructor() {
       super();
-      this._data = []; this._metric = 'focus'; this._field = ''; this._sel = ''; this._ready = false;
+      this._data = []; this._szinek = { iparag: {}, allapot: {} };
+      this._metric = 'iparag'; this._iparag = ''; this._sel = ''; this._ready = false;
     }
-    static get observedAttributes() { return ['data', 'metric', 'field', 'selected']; }
-    set data(v) { try { this._data = typeof v === 'string' ? JSON.parse(v || '[]') : (v || []); } catch (e) { this._data = []; } this._paint(); }
+    static get observedAttributes() { return ['data', 'metric', 'iparag', 'selected']; }
+    set data(v) {
+      try {
+        var o = typeof v === 'string' ? JSON.parse(v || '{}') : (v || {});
+        this._data = o.orszagok || [];
+        this._szinek = o.szinek || { iparag: {}, allapot: {} };
+      } catch (e) {
+        this._data = []; this._szinek = { iparag: {}, allapot: {} };
+      }
+      this._paint();
+    }
     get data() { return this._data; }
-    set metric(v) { this._metric = v || 'focus'; this._paint(); }
-    set field(v) { this._field = v || ''; this._paint(); }
+    set metric(v) { this._metric = v || 'iparag'; this._paint(); }
+    set iparag(v) { this._iparag = v || ''; this._paint(); }
     set selected(v) { this._sel = v || ''; this._paint(); }
     attributeChangedCallback(n, o, v) {
       if (o === v) return;
       if (n === 'data') this.data = v;
       else if (n === 'metric') this.metric = v;
-      else if (n === 'field') this.field = v;
+      else if (n === 'iparag') this.iparag = v;
       else if (n === 'selected') this.selected = v;
     }
     connectedCallback() {
@@ -100,60 +107,59 @@
       var self = this;
       this._paths = this._g.selectAll('path').data(this._feats).join('path')
         .attr('d', path).attr('class', 'c')
-        .on('mousemove', function (ev, d) { self._hover(ev, d.properties.name); })
+        .on('mousemove', function (ev, d) { self._hover(ev, self._rec(d.properties.name), d.properties.name); })
         .on('mouseleave', function () { self._tip.style.opacity = 0; })
-        .on('click', function (ev, d) { self._pick(d.properties.name); });
+        .on('click', function (ev, d) { self._pick(self._rec(d.properties.name)); });
       this._root.appendChild(svg.node());
       this._root.appendChild(this._legend);
       this._svg = svg;
     }
+    /* Poligon-név → rekord. Üres geo (nincs poligon az atlaszban) sosem találhat. */
     _rec(name) {
+      if (!name) return null;
       for (var i = 0; i < this._data.length; i++) if (this._data[i].geo === name) return this._data[i];
       return null;
     }
-    _dim(r) { return !!(this._field && r && r.fokusz.indexOf(this._field) === -1); }
+    _dim(r) { return !!(this._iparag && r && r.iparagak.indexOf(this._iparag) === -1); }
     _fill(r) {
-      if (!r) return '#eceff3';
-      if (this._dim(r)) return '#e3e7ec';
-      if (this._metric === 'focus') return FIELD_COLORS[r.fokusz[0]] || '#1f4e9c';
-      if (this._metric === 'risk') return RISK_COLORS[r.kockazat] || '#eceff3';
-      var v = Math.max(0, Math.min(1, ((r.nyitottsag || 0) - 1) / 4));
-      return SEQ[Math.max(0, Math.min(SEQ.length - 1, Math.round(v * (SEQ.length - 1))))];
+      if (!r) return NINCS_SZIN;
+      if (this._dim(r)) return HALVANY;
+      if (this._metric === 'allapot') return this._szinek.allapot[r.allapot] || NINCS_SZIN;
+      return r.iparagak.length ? (this._szinek.iparag[r.iparagak[0]] || SEMLEGES) : SEMLEGES;
     }
-    _hover(ev, name) {
-      var r = this._rec(name);
+    _hover(ev, r, name) {
       var box = this.getBoundingClientRect();
       this._tip.style.left = (ev.clientX - box.left) + 'px';
       this._tip.style.top = (ev.clientY - box.top - 12) + 'px';
       this._tip.style.opacity = 1;
-      if (!r) { this._tip.innerHTML = '<b>' + name + '</b><span>Nincs kihelyezett TéT attasé</span>'; return; }
-      this._tip.innerHTML = '<b>' + r.orszag + '</b><span>' + r.attase + ' · ' + r.varos + '</span>' +
-        '<span>Fókusz: ' + r.fokusz.join(', ') + '</span>' +
-        '<span>' + r.ciklus + ' országjelentés · ' + r.utolso + '</span>' +
-        '<span>Szabályozási kockázat: ' + r.kockazat + ' · nyitottság ' + (r.nyitottsag || 0).toFixed(1) + '/5</span>';
+      if (!r) { this._tip.innerHTML = '<b>' + esc(name) + '</b><span>Nincs kihelyezett TéT attasé</span>'; return; }
+      this._tip.innerHTML = '<b>' + esc(r.nev) + '</b>' +
+        '<span>' + esc(r.attase || 'nincs aktív attasé') + '</span>' +
+        '<span>' + (ALLAPOT_CIMKE[r.allapot] || '') + (r.ev ? ' · ' + r.ev : '') + '</span>' +
+        (r.iparagak.length ? '<span>Kiemelt iparág: ' + esc(r.iparagak[0]) + '</span>' : '');
     }
-    _pick(name) {
-      var r = this._rec(name);
+    _pick(r) {
       if (!r) return;
-      this.dispatchEvent(new CustomEvent('tet-country-select', { bubbles: true, composed: true, detail: r }));
+      this.dispatchEvent(new CustomEvent('tet-country-select', { bubbles: true, composed: true, detail: { kod: r.kod } }));
     }
     _paint() {
       if (!this._ready) return;
-      var self = this, d3 = window.d3;
+      var self = this;
       this._paths.attr('fill', function (d) { return self._fill(self._rec(d.properties.name)); })
         .attr('class', function (d) {
           var r = self._rec(d.properties.name);
-          return 'c' + (r ? ' post' : '') + (r && r.geo === self._sel ? ' sel' : '');
+          return 'c' + (r ? ' post' : '') + (r && r.kod === self._sel ? ' sel' : '');
         });
-      var pins = this._data.filter(function (r) { return r.pin; });
-      this._pins.selectAll('g').data(pins, function (d) { return d.geo; }).join(
+      /* Minden rekordhoz pin – a poligon nélküli országoknak (üres geo) csak ez látszik. */
+      var pins = this._data;
+      this._pins.selectAll('g').data(pins, function (d) { return d.kod; }).join(
         function (enter) {
           var g = enter.append('g').attr('class', 'pin');
           g.append('circle').attr('r', 5.5).attr('stroke', '#fff').attr('stroke-width', 1.4);
           g.append('circle').attr('r', 1.8).attr('fill', '#fff');
-          g.on('mousemove', function (ev, d) { self._hover(ev, d.geo); })
+          g.on('mousemove', function (ev, d) { self._hover(ev, d, d.nev); })
             .on('mouseleave', function () { self._tip.style.opacity = 0; })
-            .on('click', function (ev, d) { self._pick(d.geo); });
+            .on('click', function (ev, d) { self._pick(d); });
           return g;
         }
       ).attr('transform', function (d) { var p = self._proj(d.lonlat); return 'translate(' + p[0] + ',' + p[1] + ')'; })
@@ -161,20 +167,17 @@
       this._drawLegend();
     }
     _drawLegend() {
-      var html = '', i;
-      if (this._metric === 'focus') {
+      var self = this, html = '', i;
+      if (this._metric === 'iparag') {
         var used = [];
-        this._data.forEach(function (r) { if (used.indexOf(r.fokusz[0]) === -1) used.push(r.fokusz[0]); });
+        this._data.forEach(function (r) { if (r.iparagak.length && used.indexOf(r.iparagak[0]) === -1) used.push(r.iparagak[0]); });
         used.sort();
-        for (i = 0; i < used.length; i++) html += '<div><i style="background:' + (FIELD_COLORS[used[i]] || '#1f4e9c') + '"></i>' + used[i] + '</div>';
-      } else if (this._metric === 'risk') {
-        for (i = 0; i < RISK_ORDER.length; i++) html += '<div><i style="background:' + RISK_COLORS[RISK_ORDER[i]] + '"></i>' + RISK_ORDER[i] + ' kockázat</div>';
+        for (i = 0; i < used.length; i++) html += '<div><i style="background:' + (self._szinek.iparag[used[i]] || SEMLEGES) + '"></i>' + esc(used[i]) + '</div>';
+        html += '<div><i style="background:' + SEMLEGES + '"></i>nincs kiemelt iparág</div>';
       } else {
-        html += '<div style="color:#6b7684">zárkózott (1/5)</div>';
-        for (i = 0; i < SEQ.length; i++) html += '<div><i style="background:' + SEQ[i] + '"></i></div>';
-        html += '<div style="color:#6b7684">nyitott (5/5)</div>';
+        for (i = 0; i < ALLAPOT_SORREND.length; i++) html += '<div><i style="background:' + (self._szinek.allapot[ALLAPOT_SORREND[i]] || NINCS_SZIN) + '"></i>' + ALLAPOT_CIMKE[ALLAPOT_SORREND[i]] + '</div>';
       }
-      html += '<div style="margin-left:auto"><i style="background:#eceff3;border:1px solid #dde1e7"></i>nincs poszt</div>';
+      html += '<div style="margin-left:auto"><i style="background:' + NINCS_SZIN + ';border:1px solid #dde1e7"></i>nincs poszt</div>';
       this._legend.innerHTML = html;
     }
   };

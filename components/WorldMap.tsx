@@ -2,38 +2,43 @@
 
 import Script from 'next/script';
 import { useEffect, useMemo, useRef } from 'react';
-import { POSTS, type Post } from '../lib/data';
-import { nyitottsag } from '../lib/score';
+import type { TerkepOrszag } from '../db/queries/orszagprofil';
+import { ALLAPOT_SZINEK, IPARAG_SZINEK } from '../lib/orszagprofil-szotar';
 
-// A <tet-world-map> webkomponens (public/tet-world-map.js) d3-geo alapú;
-// a d3 és topojson CDN-ről töltődik, a komponens megvárja őket.
+// A <tet-world-map> webkomponens (public/tet-world-map.js) d3-geo alapú; a d3 és a
+// topojson CDN-ről töltődik, a komponens megvárja őket. Az adatot és a színtáblákat egy
+// JSON attribútumban kapja, így a JS fájlban nincs hardcode-olt lista.
+// A TerkepOrszag csak típusként jön a server-only modulból (`import type`), a kliens
+// bundle-ba DB-kód nem kerül.
 
-export type MapMetric = 'focus' | 'risk' | 'open';
+export type MapMetric = 'iparag' | 'allapot';
 
 interface Props {
+  adatok: TerkepOrszag[];
   metric: MapMetric;
-  field: string;
+  iparag: string;
   selected: string;
-  onSelect: (p: Post) => void;
+  onSelect: (kod: string) => void;
 }
 
-export default function WorldMap({ metric, field, selected, onSelect }: Props) {
+export default function WorldMap({ adatok, metric, iparag, selected, onSelect }: Props) {
   const ref = useRef<HTMLElement>(null);
 
   const dataJson = useMemo(
-    () => JSON.stringify(POSTS.map((p) => ({
-      ...p, kockazat: p.politika.kockazat, nyitottsag: nyitottsag(p), pin: true,
-    }))),
-    [],
+    () => JSON.stringify({
+      orszagok: adatok.map((o) => ({
+        kod: o.kod, nev: o.nev, geo: o.geo, lonlat: o.lonlat, attase: o.attase,
+        ev: o.ev, allapot: o.allapot, iparagak: o.iparagak,
+      })),
+      szinek: { iparag: IPARAG_SZINEK, allapot: ALLAPOT_SZINEK },
+    }),
+    [adatok],
   );
 
   useEffect(() => {
     const handler = (e: Event) => {
-      const d = (e as CustomEvent).detail;
-      if (d && d.geo) {
-        const post = POSTS.find((p) => p.geo === d.geo);
-        if (post) onSelect(post);
-      }
+      const d = (e as CustomEvent<{ kod?: string }>).detail;
+      if (d?.kod) onSelect(d.kod);
     };
     document.addEventListener('tet-country-select', handler);
     return () => document.removeEventListener('tet-country-select', handler);
@@ -44,9 +49,9 @@ export default function WorldMap({ metric, field, selected, onSelect }: Props) {
     if (!el) return;
     el.setAttribute('data', dataJson);
     el.setAttribute('metric', metric);
-    el.setAttribute('field', field);
+    el.setAttribute('iparag', iparag);
     el.setAttribute('selected', selected);
-  }, [dataJson, metric, field, selected]);
+  }, [dataJson, metric, iparag, selected]);
 
   return (
     <>
