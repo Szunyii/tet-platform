@@ -37,7 +37,7 @@ interface SzamSzabaly {
 function szam(fd: FormData, blokk: BlokkKulcs, kulcs: string, sz: SzamSzabaly, errors: MezoHibak): number | null {
   const raw = mezo(fd, kulcs);
   if (!raw) return null;
-  const norm = raw.replace(/[   ]/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.');
+  const norm = raw.replace(/[\u0020\u00A0\u202F]/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.');
   const leiras = sz.tizedes === 0 ? 'egész szám' : `szám, legfeljebb ${sz.tizedes} tizedesjeggyel`;
   if (!/^-?\d+(\.\d+)?$/.test(norm)) {
     errors[kulcs] = `${cimke(blokk, kulcs)}: ${leiras} legyen.`;
