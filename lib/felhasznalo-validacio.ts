@@ -5,6 +5,8 @@
  * kötött hibáké (a server action-ök használják). A szöveg-tisztítás (láthatatlan és
  * vezérlőkarakterek) a közös `lib/urlap.ts` `mezo()`-jából jön. Az e-mail trim + kisbetű
  * (a Better Auth is kisbetűsít); a jelszót szándékosan nem trimmeljük.
+ * A poszt-adatok (főváros, terület, pénznem) csak attasénál értelmezettek, adminnál
+ * hiba nélkül null-ok; a telefon és a kapcsolattartási e-mail mindkét szerepkörnél opcionális.
  */
 import { mezo, type MezoHibak } from './urlap';
 
@@ -19,18 +21,27 @@ export const SZEREPKOR_CIMKE: Record<Szerepkor, string> = {
 /** Mezőnév → hibaüzenet. A `form` kulcs az űrlap-szintű hibáé. A típus a közös `lib/urlap.ts`-ből jön. */
 export type { MezoHibak };
 
-export interface UjFelhasznaloInput {
+/** A poszt országának adatai (csak attasénál) és az attasé elérhetőségei (mindkét szerepkörnél). */
+export interface AttaseAdatok {
+  orszag: string | null;
+  fovaros: string | null;
+  /** km², pozitív egész. */
+  terulet: number | null;
+  penznem: string | null;
+  telefon: string | null;
+  kapcsolatEmail: string | null;
+}
+
+export interface UjFelhasznaloInput extends AttaseAdatok {
   nev: string;
   email: string;
   jelszo: string;
   szerepkor: Szerepkor;
-  orszag: string | null;
 }
 
-export interface SzerkesztesInput {
+export interface SzerkesztesInput extends AttaseAdatok {
   nev: string;
   szerepkor: Szerepkor;
-  orszag: string | null;
 }
 
 export type ParseResult<T> = { ok: true; data: T } | { ok: false; errors: MezoHibak };
@@ -76,6 +87,78 @@ function validOrszag(raw: string, szerepkor: Szerepkor | null, errors: MezoHibak
   return raw;
 }
 
+export const TELEFON_MAX = 40;
+export const TERULET_MAX = 999_999_999;
+const TELEFON_RE = /^[0-9+\-/() ]+$/;
+const TERULET_HIBA = 'A terület pozitív egész szám legyen (km²).';
+
+/** Opcionális, ≤100 karakteres poszt-szöveg (főváros, pénznem); csak attasénál értelmezett. */
+function validPosztSzoveg(
+  raw: string,
+  szerepkor: Szerepkor | null,
+  kulcs: 'fovaros' | 'penznem',
+  cimke: string,
+  errors: MezoHibak,
+): string | null {
+  if (szerepkor !== 'attase' || !raw) return null;
+  if (raw.length > 100) {
+    errors[kulcs] = `A ${cimke} legfeljebb 100 karakter.`;
+    return null;
+  }
+  return raw;
+}
+
+/** Terület km²-ben: pozitív egész; a szóköz és a pont ezreselválasztóként megengedett. */
+function validTerulet(raw: string, szerepkor: Szerepkor | null, errors: MezoHibak): number | null {
+  if (szerepkor !== 'attase' || !raw) return null;
+  const tiszta = raw.replace(/[ .]/g, '');
+  if (!/^\d{1,9}$/.test(tiszta)) {
+    errors.terulet = TERULET_HIBA;
+    return null;
+  }
+  const n = Number(tiszta);
+  if (n < 1 || n > TERULET_MAX) {
+    errors.terulet = TERULET_HIBA;
+    return null;
+  }
+  return n;
+}
+
+function validTelefon(raw: string, errors: MezoHibak): string | null {
+  if (!raw) return null;
+  if (raw.length > TELEFON_MAX) {
+    errors.telefon = `A telefonszám legfeljebb ${TELEFON_MAX} karakter.`;
+    return null;
+  }
+  if (!TELEFON_RE.test(raw)) {
+    errors.telefon = 'A telefonszám csak számjegyet, szóközt és + - / ( ) jelet tartalmazhat.';
+    return null;
+  }
+  return raw;
+}
+
+/** Kapcsolattartási e-mail (a bejelentkezési e-mailtől független), kisbetűsítve. */
+function validKapcsolatEmail(raw: string, errors: MezoHibak): string | null {
+  if (!raw) return null;
+  if (!EMAIL_RE.test(raw)) {
+    errors.kapcsolatEmail = 'Érvénytelen e-mail cím.';
+    return null;
+  }
+  return raw;
+}
+
+/** Az AttaseAdatok mezői egy menetben; a poszt-adatok adminnál hiba nélkül null-ok. */
+function parseAttaseAdatok(fd: FormData, szerepkor: Szerepkor | null, errors: MezoHibak): AttaseAdatok {
+  return {
+    orszag: validOrszag(mezo(fd, 'orszag'), szerepkor, errors),
+    fovaros: validPosztSzoveg(mezo(fd, 'fovaros'), szerepkor, 'fovaros', 'főváros', errors),
+    terulet: validTerulet(mezo(fd, 'terulet'), szerepkor, errors),
+    penznem: validPosztSzoveg(mezo(fd, 'penznem'), szerepkor, 'penznem', 'pénznem', errors),
+    telefon: validTelefon(mezo(fd, 'telefon'), errors),
+    kapcsolatEmail: validKapcsolatEmail(mezo(fd, 'kapcsolatEmail').toLowerCase(), errors),
+  };
+}
+
 export function parseUjFelhasznalo(fd: FormData): ParseResult<UjFelhasznaloInput> {
   const errors: MezoHibak = {};
   const nev = mezo(fd, 'nev');
@@ -86,9 +169,9 @@ export function parseUjFelhasznalo(fd: FormData): ParseResult<UjFelhasznaloInput
   else if (!EMAIL_RE.test(email)) errors.email = 'Érvénytelen e-mail cím.';
   validJelszo(jelszo, errors);
   const szerepkor = validSzerepkor(mezo(fd, 'szerepkor'), errors);
-  const orszag = validOrszag(mezo(fd, 'orszag'), szerepkor, errors);
+  const adatok = parseAttaseAdatok(fd, szerepkor, errors);
   if (Object.keys(errors).length > 0 || !szerepkor) return { ok: false, errors };
-  return { ok: true, data: { nev, email, jelszo, szerepkor, orszag } };
+  return { ok: true, data: { nev, email, jelszo, szerepkor, ...adatok } };
 }
 
 export function parseSzerkesztes(fd: FormData): ParseResult<SzerkesztesInput> {
@@ -96,9 +179,9 @@ export function parseSzerkesztes(fd: FormData): ParseResult<SzerkesztesInput> {
   const nev = mezo(fd, 'nev');
   validNev(nev, errors);
   const szerepkor = validSzerepkor(mezo(fd, 'szerepkor'), errors);
-  const orszag = validOrszag(mezo(fd, 'orszag'), szerepkor, errors);
+  const adatok = parseAttaseAdatok(fd, szerepkor, errors);
   if (Object.keys(errors).length > 0 || !szerepkor) return { ok: false, errors };
-  return { ok: true, data: { nev, szerepkor, orszag } };
+  return { ok: true, data: { nev, szerepkor, ...adatok } };
 }
 
 export function parseJelszo(fd: FormData): ParseResult<{ jelszo: string }> {
