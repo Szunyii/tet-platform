@@ -116,3 +116,8 @@ export function maiNaptariNap(): string {
   for (const x of ISO_NAP.formatToParts(new Date())) p[x.type] = x.value;
   return `${p.year}-${p.month}-${p.day}`;
 }
+
+/** Az aktuális naptári év Europe/Budapest szerint (a profil beadási éve). */
+export function aktualisEv(): number {
+  return Number(maiNaptariNap().slice(0, 4));
+}
