@@ -4,6 +4,7 @@ import { alias } from 'drizzle-orm/sqlite-core';
 import { db } from '../index';
 import { ticket, ticketOlvasas, ticketUzenet, user } from '../schema';
 import type { AppRole } from '../../lib/session';
+import { tiltottE } from '../../lib/felhasznalo-tiltas';
 import type {
   CimzettJelolt,
   PrioKulcs,
@@ -317,7 +318,7 @@ export function listCimzettJeloltek(): CimzettJelolt[] {
     })
     .from(user)
     .all()
-    .filter((u) => u.role !== 'admin' && u.orszag && !(u.banned && (!u.banExpires || u.banExpires.getTime() > most)))
+    .filter((u) => u.role !== 'admin' && u.orszag && !tiltottE(u, most))
     .map((u) => ({ id: u.id, nev: u.nev, orszag: u.orszag as string }))
     .sort((a, b) => a.nev.localeCompare(b.nev, 'hu'));
 }

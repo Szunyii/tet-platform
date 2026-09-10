@@ -2,6 +2,7 @@ import 'server-only';
 import { db } from '../index';
 import { user } from '../schema';
 import type { AttaseAdatok, Szerepkor } from '../../lib/felhasznalo-validacio';
+import { tiltottE } from '../../lib/felhasznalo-tiltas';
 
 export interface FelhasznaloSor extends AttaseAdatok {
   id: string;
@@ -48,8 +49,7 @@ export function listFelhasznalok(): FelhasznaloSor[] {
       penznem: r.penznem ?? null,
       telefon: r.telefon ?? null,
       kapcsolatEmail: r.kapcsolatEmail ?? null,
-      // A Better Auth a lejárt banExpires-t nem tekinti tiltásnak.
-      tiltott: Boolean(r.banned) && (!r.banExpires || r.banExpires.getTime() > now),
+      tiltott: tiltottE(r, now),
       letrehozva: r.createdAt,
     }))
     .sort((a, b) => a.nev.localeCompare(b.nev, 'hu'));

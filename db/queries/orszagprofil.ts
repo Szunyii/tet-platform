@@ -4,6 +4,7 @@ import { db } from '../index';
 import { orszagprofil, user } from '../schema';
 import { formatDatum } from '../../lib/datum';
 import { orszagByKod } from '../../lib/orszagok';
+import { tiltottE } from '../../lib/felhasznalo-tiltas';
 import {
   BLOKK_KULCSOK, normalizalBlokk, type Alapadatok, type Allapot, type BlokkKulcs, type Iparag, type ProfilBlokkok,
 } from '../../lib/orszagprofil-szotar';
@@ -22,9 +23,13 @@ export interface Profil {
 function sorbol(r: typeof orszagprofil.$inferSelect, szerzoNev: string | null): Profil {
   const blokkok: Partial<ProfilBlokkok> = {};
   const mentett: BlokkKulcs[] = [];
+  // Korrelált generikus: a K köti össze az oszlopot és a blokk-típust, így nem kell cast.
+  const tegye = <K extends BlokkKulcs>(k: K) => {
+    blokkok[k] = normalizalBlokk(k, r[k]);
+  };
   for (const k of BLOKK_KULCSOK) {
     if (r[k] != null) {
-      (blokkok as Record<BlokkKulcs, unknown>)[k] = normalizalBlokk(k, r[k]);
+      tegye(k);
       mentett.push(k);
     }
   }
@@ -72,6 +77,7 @@ export interface TerkepOrszag {
   iparagak: Iparag[];
   osszegzes: string;
   frissitve: string | null;
+  frissitveMs: number | null;
   alapadatok: Alapadatok | null;
   mentettDb: number;
   rendezvenyDb: number;
@@ -79,7 +85,9 @@ export interface TerkepOrszag {
 
 /**
  * A térkép és a panel adata: minden ország, ahol aktív attasé van vagy van profil, a
- * legfrissebb profiljával. Két lekérdezés + JS-összefésülés (néhány tucat sor).
+ * legfrissebb profiljával. Két lekérdezés + JS-összefésülés. Az orszagprofil tábla
+ * országok × évek méretű, minden sorát beolvassuk – ezen a skálán (néhány tucat ország,
+ * néhány év) ez rendben van.
  */
 export function listTerkepAdat(aktualisEv: number): TerkepOrszag[] {
   const now = Date.now();
@@ -90,8 +98,9 @@ export function listTerkepAdat(aktualisEv: number): TerkepOrszag[] {
     })
     .from(user)
     .where(eq(user.role, 'attase'))
+    .orderBy(user.name)
     .all()
-    .filter((u) => u.orszag && !(Boolean(u.banned) && (!u.banExpires || u.banExpires.getTime() > now)));
+    .filter((u) => u.orszag && !tiltottE(u, now));
 
   // Országonként a legnagyobb év sora. (Az év szerint csökkenő listából az első előfordulás
   // országonként; a max(ev)-es al-lekérdezéses join helyett, mert a Drizzle az aliasolt
@@ -104,16 +113,19 @@ export function listTerkepAdat(aktualisEv: number): TerkepOrszag[] {
     profilok.push(p);
   }
 
-  const kodok = new Set<string>();
-  for (const a of attasek) if (a.orszag) kodok.add(a.orszag);
-  for (const p of profilok) kodok.add(p.orszagKod);
+  // Országkód → első (név szerint rendezett) attasé, ill. legfrissebb profil.
+  const attaseKodhoz = new Map<string, (typeof attasek)[number]>();
+  for (const a of attasek) if (a.orszag && !attaseKodhoz.has(a.orszag)) attaseKodhoz.set(a.orszag, a);
+  const profilKodhoz = new Map(profilok.map((p) => [p.orszagKod, p] as const));
+
+  const kodok = new Set<string>([...attaseKodhoz.keys(), ...profilKodhoz.keys()]);
 
   const eredmeny: TerkepOrszag[] = [];
   for (const kod of kodok) {
     const o = orszagByKod(kod);
     if (!o) continue;
-    const a = attasek.find((x) => x.orszag === kod) ?? null;
-    const p = profilok.find((x) => x.orszagKod === kod) ?? null;
+    const a = attaseKodhoz.get(kod) ?? null;
+    const p = profilKodhoz.get(kod) ?? null;
     const prof = p ? sorbol(p, null) : null;
     eredmeny.push({
       kod, nev: o.nev, geo: o.geo, lonlat: o.lonlat,
@@ -124,6 +136,7 @@ export function listTerkepAdat(aktualisEv: number): TerkepOrszag[] {
       iparagak: prof?.blokkok.kfiRendszer?.kiemeltIparagak ?? [],
       osszegzes: prof?.blokkok.magyarErtekeles?.osszegzes ?? '',
       frissitve: prof ? formatDatum(prof.updatedAt) : null,
+      frissitveMs: prof ? prof.updatedAt.getTime() : null,
       alapadatok: prof?.blokkok.alapadatok ?? null,
       mentettDb: prof?.mentett.length ?? 0,
       rendezvenyDb: prof?.blokkok.rendezvenyek?.lista.length ?? 0,
@@ -132,7 +145,11 @@ export function listTerkepAdat(aktualisEv: number): TerkepOrszag[] {
   return eredmeny.sort((x, y) => x.nev.localeCompare(y.nev, 'hu'));
 }
 
-/** Egy blokk mentése: a sor létrejön, ha nincs, majd csak az adott oszlop frissül. */
+/**
+ * Egy blokk mentése: a sor létrejön, ha nincs, majd csak az adott oszlop frissül (az
+ * updated_at-ot a séma $onUpdate-je állítja). A `tartalom: ProfilBlokkok[K]` szignatúra köti
+ * az érték típusát az oszlophoz – a Drizzle a számított `[blokk]` kulcsnál csak a nevet nézi.
+ */
 export function upsertBlokk<K extends BlokkKulcs>(
   kod: string,
   ev: number,
@@ -144,7 +161,7 @@ export function upsertBlokk<K extends BlokkKulcs>(
     .values({ id: crypto.randomUUID(), orszagKod: kod, ev, szerzoId, [blokk]: tartalom })
     .onConflictDoUpdate({
       target: [orszagprofil.orszagKod, orszagprofil.ev],
-      set: { [blokk]: tartalom, szerzoId, updatedAt: new Date() },
+      set: { [blokk]: tartalom, szerzoId },
     })
     .run();
 }
