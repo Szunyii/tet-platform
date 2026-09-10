@@ -44,7 +44,8 @@ const NAV: { href: string; icon: string; label: string; adminOnly?: boolean }[] 
 const ADMIN_ONLY_HREFS = NAV.filter((n) => n.adminOnly).map((n) => n.href);
 
 const TITLES: Record<string, [string, string]> = {
-  '/terkep': ['Országprofil', 'A TéT attaséktól beérkező országjelentések térképen és teljes tartalommal'],
+  '/terkep': ['Országprofil', 'A TéT attasé-posztok térképen, a beküldött országprofilok kivonatával'],
+  '/orszagprofil': ['Országprofil', 'Az ország KFI körképe és alapadatai, évenkénti attasé-beadással'],
   '/riportok': ['Riportok', 'A TéT hálózat információs bejegyzései kategóriák és kulcsszavak szerint'],
   '/uj-riport': ['Új bejegyzés', 'Kategória, tárgy, leírás, kulcsszavak – rendezvénynél dátum és helyszín'],
   '/kommunikacio': ['Kommunikáció', 'Ticket + üzenetszál az adminok és a TéT attasék között'],

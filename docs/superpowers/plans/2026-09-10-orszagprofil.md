@@ -2649,4 +2649,15 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 
 ## Megvalósítási eltérések
 
-(Az implementáció során ide kerülnek a tervtől való eltérések és indokaik.)
+A subagent-driven végrehajtás review-köreiből származó, tervtől eltérő döntések:
+
+- **Országszótár**: 171 sor a tervezett 168 helyett – Szingapúr, Málta, Bahrein `geo: ''`-vel (a 110m atlaszban nincs poligonjuk, a térképen csak pin). A tömb magyar collation szerint rendezve. Az átíró script a `ticket.orszag` pillanatkép-oszlopot is kódra írja.
+- **`NativeSelect`** (`components/form/NativeSelect.tsx`): natív `<select>` a shadcn `Input` osztályaival; a felhasználó-dialógus ország-mezője és a rendezvény-típus választó használja. A `listOrszagok()` az admin riport-szűrőhöz név szerint rendez.
+- **Szótár**: `MEZO_CIMKEK` mezőnév szerint szigorúan típusos (`{ [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], MezoCimke> }`); a normalizáló és a validátor táblás (`NORMALIZALOK`, `VALIDALOK`), cast és `default:` ág nélkül; `uresBlokk = NORMALIZALOK[k]({})`; `szurtLista`, `rendezvenyTipus`, `profilAllapot`, `SZAM_MAX_HOSSZ`, `evParam` helperek a szótárban. `ALLAPOT_SZINEK.nincs` `#6b7280` (kontraszt a jelvényen).
+- **Lekérdezések**: a legfrissebb év országonként JS-ben (ORDER BY ev DESC + első sor kódonként), mert a Drizzle az aliasolt `max(ev)` subquery-t minősítetlenül írta a JOIN-ba (`ambiguous column name`). `tiltottE` közös helper (`lib/felhasznalo-tiltas.ts`) három query-modulban. `TerkepOrszag.frissitveMs` a rendezéshez, `getAttaseNev(kod)` a profil-oldal fejlécéhez.
+- **Action**: a `canEditProfil` hibája **form-szintű** hiba (`NINCS_JOG`), nem 404 – az elavult kliens-állapot (évváltás, admin átírja az attasé országát) különben az egész szerkesztő oldalt lecserélné; az ismeretlen kód/blokk marad 404.
+- **Form-építőelemek**: `leiroAttr` (súgó + hiba `aria-describedby`), `Mezo` `cn()`; `BlokkForm` exportálja a `BlokkMezokProps`/`useBlokkAllapot` közös vázat a 8 mező-fájlnak.
+- **Szerkesztő oldal**: a 8 blokk-form `<Fragment key={ev}>`-ben – az App Router állapot-kulcsa nem tartalmazza a search paramokat, `key` nélkül az admin évváltáskor az előző év kliens-állapotát mentené az új évre. Attasénak egyetlen évnél „Év: 2026" szöveg select helyett.
+- **Profil oldal**: admin a nézett évet szerkeszti (`szerkesztEv`), attasénál „Szerkesztés (2026)" felirat, ha a nézett év más; attasé neve a fejlécben; `BlokkNezet` `NEZETEK` táblával; `lib/szam.ts` `formatSzam`.
+- **Térkép**: a pinek a rekordot adják át (`_hover`/`_pick`), így a poligon nélküli országok is kapnak tooltipet és kiválasztást; `esc()` minden innerHTML-be kerülő adatra; `?o=` változásra `key` remount; d3-betöltés korlátos várakozással és hibaüzenettel; `lib/score.ts` halott `nyitottsag`/`RISK_COLORS` törölve.
+- **Teszt user**: a `teszt.attase@niu.hu` jelszava nem a memóriában rögzített; a böngészős ellenőrzések a `masodik.attase@niu.hu` (JP) fiókkal futottak.
