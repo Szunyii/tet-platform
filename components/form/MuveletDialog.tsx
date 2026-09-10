@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react';
 import type { MezoHibak } from '../../lib/urlap';
+import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
 import {
   Dialog,
@@ -28,6 +29,7 @@ export function MuveletDialog({
   gombFolyamatban = 'Mentés…',
   formAction,
   errors,
+  szeles = false,
   children,
 }: {
   open: boolean;
@@ -40,6 +42,8 @@ export function MuveletDialog({
   gombFolyamatban?: string;
   formAction: (formData: FormData) => void;
   errors: MezoHibak;
+  /** Szélesebb dialógus (sm:max-w-lg) a többoszlopos űrlapokhoz. */
+  szeles?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -53,7 +57,7 @@ export function MuveletDialog({
         onOpenChange(next);
       }}
     >
-      <DialogContent showCloseButton={!pending}>
+      <DialogContent showCloseButton={!pending} className={cn(szeles && 'sm:max-w-lg')}>
         <DialogHeader>
           <DialogTitle>{cim}</DialogTitle>
           <DialogDescription>{leiras}</DialogDescription>
