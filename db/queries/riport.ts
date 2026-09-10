@@ -3,6 +3,7 @@ import { and, desc, eq, gte, inArray, lt, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '../index';
 import { riport, riportCsatolmany, user } from '../schema';
 import { kovetkezoNapKezdete, napKezdete } from '../../lib/datum';
+import { orszagNev } from '../../lib/orszagok';
 import type { KategoriaKulcs } from '../../lib/riport-szotar';
 import type { RiportInput } from '../../lib/riport-validacio';
 
@@ -233,12 +234,12 @@ export function getCsatolmanyMeta(id: string): (CsatolmanyMeta & { riportId: str
   );
 }
 
-/** Az admin ország-szűrőjéhez: a bejegyzésekben előforduló országok, magyar sorrendben. */
+/** Az admin ország-szűrőjéhez: a bejegyzésekben előforduló országkódok, magyar név szerint rendezve. */
 export function listOrszagok(): string[] {
   return db
     .selectDistinct({ orszag: riport.orszag })
     .from(riport)
     .all()
     .map((r) => r.orszag)
-    .sort((a, b) => a.localeCompare(b, 'hu'));
+    .sort((a, b) => orszagNev(a).localeCompare(orszagNev(b), 'hu'));
 }

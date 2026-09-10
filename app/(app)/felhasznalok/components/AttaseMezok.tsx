@@ -2,6 +2,7 @@
 
 import type { ChangeEvent, ReactNode } from 'react';
 import { hibaAttr, MezoHiba } from '../../../../components/form/MezoHiba';
+import { NativeSelect } from '../../../../components/form/NativeSelect';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
 import type { MezoHibak } from '../../../../lib/urlap';
@@ -83,13 +84,12 @@ export function AttaseMezok({
         <Blokk cim="TéT poszt">
           <div className="grid gap-3 sm:grid-cols-2">
             <Mezo id="orszag" cimke="Ország" errors={errors}>
-              <select
+              <NativeSelect
                 id="orszag"
                 name="orszag"
                 required
                 value={ertekek.orszag}
                 onChange={set('orszag')}
-                className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive"
                 {...hibaAttr(errors, 'orszag')}
               >
                 <option value="">Válassz országot…</option>
@@ -98,7 +98,7 @@ export function AttaseMezok({
                     {o.nev}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </Mezo>
             <Mezo id="fovaros" cimke="Főváros" errors={errors}>
               <Input
