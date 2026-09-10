@@ -88,42 +88,47 @@ function validOrszag(raw: string, szerepkor: Szerepkor | null, errors: MezoHibak
 }
 
 export const TELEFON_MAX = 40;
-export const TERULET_MAX = 999_999_999;
-const TELEFON_RE = /^[0-9+\-/() ]+$/;
+// Legalább egy számjegyet követel, hogy pl. a '()' vagy '-' önmagában ne menjen át.
+const TELEFON_RE = /^(?=.*\d)[0-9+\-/() ]+$/;
 const TERULET_HIBA = 'A terület pozitív egész szám legyen (km²).';
+
+// Ezreselválasztó: szóköz, NBSP, keskeny NBSP vagy pont, csak 3-as csoportok között
+// ('377 975', '17.098.246'); a tizedes pont ('2.02') így hibát ad, nem torzul 202-vé.
+const TERULET_RE = /^\d{1,9}$|^\d{1,3}(?:[   .]\d{3}){1,2}$/;
+
+const POSZT_CIMKE = { fovaros: 'főváros', penznem: 'pénznem' } as const;
 
 /** Opcionális, ≤100 karakteres poszt-szöveg (főváros, pénznem); csak attasénál értelmezett. */
 function validPosztSzoveg(
   raw: string,
   szerepkor: Szerepkor | null,
-  kulcs: 'fovaros' | 'penznem',
-  cimke: string,
+  kulcs: keyof typeof POSZT_CIMKE,
   errors: MezoHibak,
 ): string | null {
   if (szerepkor !== 'attase' || !raw) return null;
   if (raw.length > 100) {
-    errors[kulcs] = `A ${cimke} legfeljebb 100 karakter.`;
+    errors[kulcs] = `A ${POSZT_CIMKE[kulcs]} legfeljebb 100 karakter.`;
     return null;
   }
   return raw;
 }
 
-/** Terület km²-ben: pozitív egész; a szóköz és a pont ezreselválasztóként megengedett. */
+/** Terület km²-ben: pozitív egész; szóköz/NBSP/pont ezreselválasztóként, csak 3-as csoportokban. */
 function validTerulet(raw: string, szerepkor: Szerepkor | null, errors: MezoHibak): number | null {
   if (szerepkor !== 'attase' || !raw) return null;
-  const tiszta = raw.replace(/[ .]/g, '');
-  if (!/^\d{1,9}$/.test(tiszta)) {
+  if (!TERULET_RE.test(raw)) {
     errors.terulet = TERULET_HIBA;
     return null;
   }
-  const n = Number(tiszta);
-  if (n < 1 || n > TERULET_MAX) {
+  const n = Number(raw.replace(/[   .]/g, ''));
+  if (n < 1) {
     errors.terulet = TERULET_HIBA;
     return null;
   }
   return n;
 }
 
+/** Telefon: mindkét szerepkörnél opcionális; legalább egy számjegy kell, csak megengedett jelekkel. */
 function validTelefon(raw: string, errors: MezoHibak): string | null {
   if (!raw) return null;
   if (raw.length > TELEFON_MAX) {
@@ -151,9 +156,9 @@ function validKapcsolatEmail(raw: string, errors: MezoHibak): string | null {
 function parseAttaseAdatok(fd: FormData, szerepkor: Szerepkor | null, errors: MezoHibak): AttaseAdatok {
   return {
     orszag: validOrszag(mezo(fd, 'orszag'), szerepkor, errors),
-    fovaros: validPosztSzoveg(mezo(fd, 'fovaros'), szerepkor, 'fovaros', 'főváros', errors),
+    fovaros: validPosztSzoveg(mezo(fd, 'fovaros'), szerepkor, 'fovaros', errors),
     terulet: validTerulet(mezo(fd, 'terulet'), szerepkor, errors),
-    penznem: validPosztSzoveg(mezo(fd, 'penznem'), szerepkor, 'penznem', 'pénznem', errors),
+    penznem: validPosztSzoveg(mezo(fd, 'penznem'), szerepkor, 'penznem', errors),
     telefon: validTelefon(mezo(fd, 'telefon'), errors),
     kapcsolatEmail: validKapcsolatEmail(mezo(fd, 'kapcsolatEmail').toLowerCase(), errors),
   };
