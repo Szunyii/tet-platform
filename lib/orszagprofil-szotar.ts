@@ -184,7 +184,8 @@ function szoveg(v: unknown): string {
 function szam(v: unknown): number | null {
   return typeof v === 'number' && Number.isFinite(v) ? v : null;
 }
-function lista<T extends string>(v: unknown, engedett: readonly T[]): T[] {
+/** Ismeretlen elemek kiszűrve, duplikátumok nélkül; `v` bármi lehet (JSON-ból vagy `fd.getAll()`-ból jövő tömb is). */
+export function szurtLista<T extends string>(v: unknown, engedett: readonly T[]): T[] {
   if (!Array.isArray(v)) return [];
   const eng = engedett as readonly string[];
   return Array.from(new Set(v.filter((x): x is T => typeof x === 'string' && eng.includes(x))));
@@ -202,13 +203,13 @@ const NORMALIZALOK: { [K in BlokkKulcs]: (r: Record<string, unknown>) => ProfilB
   alapadatok: (r) => ({
     lakossag: szam(r.lakossag), gdp: szam(r.gdp), gdpEgyFore: szam(r.gdpEgyFore),
     gdpNovekedes: szam(r.gdpNovekedes), adatEv: szam(r.adatEv), forras: szoveg(r.forras),
-    tagsagok: lista(r.tagsagok, TAGSAGOK), tagsagEgyeb: szoveg(r.tagsagEgyeb),
-    agazatok: lista(r.agazatok, GAZDASAGI_AGAZATOK), agazatEgyeb: szoveg(r.agazatEgyeb),
+    tagsagok: szurtLista(r.tagsagok, TAGSAGOK), tagsagEgyeb: szoveg(r.tagsagEgyeb),
+    agazatok: szurtLista(r.agazatok, GAZDASAGI_AGAZATOK), agazatEgyeb: szoveg(r.agazatEgyeb),
   }),
   kfiRendszer: (r) => ({
     teljesitmeny: szoveg(r.teljesitmeny), gerd: szam(r.gerd), strategia: szoveg(r.strategia),
-    prioritasok: lista(r.prioritasok, KFI_PRIORITASOK), prioritasEgyeb: szoveg(r.prioritasEgyeb),
-    kiemeltIparagak: lista(r.kiemeltIparagak, IPARAGAK), iparagEgyeb: szoveg(r.iparagEgyeb),
+    prioritasok: szurtLista(r.prioritasok, KFI_PRIORITASOK), prioritasEgyeb: szoveg(r.prioritasEgyeb),
+    kiemeltIparagak: szurtLista(r.kiemeltIparagak, IPARAGAK), iparagEgyeb: szoveg(r.iparagEgyeb),
     erossegek: szoveg(r.erossegek), kihivasok: szoveg(r.kihivasok),
   }),
   intezmenyek: (r) => ({
@@ -216,7 +217,7 @@ const NORMALIZALOK: { [K in BlokkKulcs]: (r: Record<string, unknown>) => ProfilB
     kutatokozpontok: szoveg(r.kutatokozpontok), infrastrukturak: szoveg(r.infrastrukturak),
   }),
   vallalati: (r) => ({
-    kiemeltAgazatok: lista(r.kiemeltAgazatok, IPARAGAK), agazatEgyeb: szoveg(r.agazatEgyeb),
+    kiemeltAgazatok: szurtLista(r.kiemeltAgazatok, IPARAGAK), agazatEgyeb: szoveg(r.agazatEgyeb),
     topVallalatok: szovegLista(r.topVallalatok, TOP_VALLALAT_MAX), startupok: szoveg(r.startupok),
     klaszterek: szoveg(r.klaszterek), technologiatranszfer: szoveg(r.technologiatranszfer),
   }),
