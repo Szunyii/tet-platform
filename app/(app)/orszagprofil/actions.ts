@@ -14,20 +14,26 @@ import { mezo } from '../../../lib/urlap';
 
 export type { MuveletState };
 
+const NINCS_JOG = 'Nincs jogosultságod ehhez a profilhoz.';
+
 /**
  * Egy blokk mentése. Rejtett mezők: kod, ev, blokk. Sorrend: session → kód/blokk létezik
- * → jog → validálás → upsert. Jogosultsági és „nem létezik" hiba egyaránt 404, mint a
- * riportnál: nem áruljuk el, mi van a másik oldalon.
+ * → jog → validálás → upsert. Az ismeretlen országkód/blokk-kulcs 404 (mint a
+ * `requireAdmin()`-nál: ez csak manipulált kéréssel jöhet létre). A jogosultsági hiba
+ * viszont űrlap-szintű hiba, nem 404: a szerkesztő oldal nyitva tartása közben is
+ * érvénytelenné válhat (évváltás Európa/Budapest éjfélkor, vagy admin átírja az attasé
+ * országát/szerepkörét) – a 404 az egész oldalt lecserélné, elveszítve a még nem mentett
+ * blokkokat.
  */
 export async function mentBlokkAction(_prev: MuveletState, formData: FormData): Promise<MuveletState> {
   const session = await requireSession();
   const kod = mezo(formData, 'kod');
   const blokk = mezo(formData, 'blokk');
-  const ev = Number(mezo(formData, 'ev'));
+  const ev = Number.parseInt(mezo(formData, 'ev'), 10);
   if (!orszagByKod(kod)) notFound();
   if (!isBlokkKulcs(blokk)) notFound();
   const most = aktualisEv();
-  if (!canEditProfil(session, kod, ev, most)) notFound();
+  if (!canEditProfil(session, kod, ev, most)) return { errors: { form: NINCS_JOG } };
 
   const eredmeny = validalBlokk(blokk, formData, most);
   // A szerkesztő oldalon 8 blokk van egy DOM-ban, a mező id-ja ezért `<blokk>.<mezo>`
