@@ -25,8 +25,8 @@ Ezután nyisd meg: http://localhost:3000
 ### Bejelentkezés és felhasználók
 
 - Minden oldal bejelentkezést kér (`proxy.ts` + `lib/session.ts`). Belépés: `/login`, a seed admin adataival.
-- Admin a `/felhasznalok` oldalon hoz létre TéT attasé fiókokat (név, e-mail, kezdő jelszó, ország), szerkeszt, jelszót állít vissza, tilt és töröl. Nyilvános regisztráció nincs.
-- Szerepkörök: `admin` (NIÜ) és `attase`; az attasé fiókon kötelező az ország (`user.orszag`).
+- Admin a `/felhasznalok` oldalon hoz létre TéT attasé fiókokat (név, e-mail, kezdő jelszó, ország; opcionálisan főváros, terület km², pénznem, telefon, kapcsolattartási e-mail), szerkeszt, jelszót állít vissza, tilt és töröl. Nyilvános regisztráció nincs.
+- Szerepkörök: `admin` (NIÜ) és `attase`; az attasé fiókon kötelező az ország (`user.orszag`), a poszt-adatok (főváros, terület, pénznem) csak attasénál tölthetők és adminra váltáskor törlődnek; telefon és kapcsolattartási e-mail mindkét szerepkörnél megadható.
 
 ## Képernyők
 

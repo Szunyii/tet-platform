@@ -28,6 +28,7 @@ export function FelhasznaloTabla({
             <TableHead>E-mail</TableHead>
             <TableHead>Szerepkör</TableHead>
             <TableHead>Ország</TableHead>
+            <TableHead>Telefon</TableHead>
             <TableHead>Állapot</TableHead>
             <TableHead>Létrehozva</TableHead>
             <TableHead className="w-12"><span className="sr-only">Műveletek</span></TableHead>
@@ -47,6 +48,9 @@ export function FelhasznaloTabla({
                 </Badge>
               </TableCell>
               <TableCell>{f.orszag ?? <span className="text-muted-foreground">–</span>}</TableCell>
+              <TableCell className="whitespace-nowrap">
+                {f.telefon ?? <span className="text-muted-foreground">–</span>}
+              </TableCell>
               <TableCell>
                 {f.tiltott ? <Badge variant="destructive">Tiltott</Badge> : <Badge variant="outline">Aktív</Badge>}
               </TableCell>
