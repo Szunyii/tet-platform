@@ -7,6 +7,10 @@
 export interface Orszag {
   kod: string;
   nev: string;
+  /**
+   * world-atlas 110m térképnév (`properties.name`); üres string, ha a 110m atlaszban nincs
+   * poligonja (kis állam) – ilyenkor csak a pin jelenik meg.
+   */
   geo: string;
   /** [hosszúság, szélesség] */
   lonlat: [number, number];
@@ -14,7 +18,10 @@ export interface Orszag {
 
 export const ORSZAG_KOD_RE = /^[A-Z]{2}$/;
 
-/** Magyar név szerint rendezve (a select ebben a sorrendben listáz). */
+/**
+ * Magyar név szerint rendezve (a select ebben a sorrendben listáz). A `geo: ''` sorok (SG, MT,
+ * BH) a 110m atlaszban poligon nélküli kis államok: a térképen csak pin.
+ */
 export const ORSZAGOK: readonly Orszag[] = [
   { kod: 'AF', nev: 'Afganisztán', geo: 'Afghanistan', lonlat: [69.17, 34.53] },
   { kod: 'AL', nev: 'Albánia', geo: 'Albania', lonlat: [19.82, 41.33] },
@@ -26,6 +33,7 @@ export const ORSZAGOK: readonly Orszag[] = [
   { kod: 'AT', nev: 'Ausztria', geo: 'Austria', lonlat: [16.37, 48.21] },
   { kod: 'AZ', nev: 'Azerbajdzsán', geo: 'Azerbaijan', lonlat: [49.87, 40.41] },
   { kod: 'BS', nev: 'Bahama-szigetek', geo: 'Bahamas', lonlat: [-77.34, 25.06] },
+  { kod: 'BH', nev: 'Bahrein', geo: '', lonlat: [50.58, 26.23] },
   { kod: 'BD', nev: 'Banglades', geo: 'Bangladesh', lonlat: [90.41, 23.81] },
   { kod: 'BY', nev: 'Belarusz', geo: 'Belarus', lonlat: [27.57, 53.9] },
   { kod: 'BE', nev: 'Belgium', geo: 'Belgium', lonlat: [4.35, 50.85] },
@@ -121,6 +129,7 @@ export const ORSZAGOK: readonly Orszag[] = [
   { kod: 'MY', nev: 'Malajzia', geo: 'Malaysia', lonlat: [101.69, 3.14] },
   { kod: 'MW', nev: 'Malawi', geo: 'Malawi', lonlat: [33.79, -13.96] },
   { kod: 'ML', nev: 'Mali', geo: 'Mali', lonlat: [-8.0, 12.65] },
+  { kod: 'MT', nev: 'Málta', geo: '', lonlat: [14.51, 35.9] },
   { kod: 'MA', nev: 'Marokkó', geo: 'Morocco', lonlat: [-6.85, 34.02] },
   { kod: 'MR', nev: 'Mauritánia', geo: 'Mauritania', lonlat: [-15.98, 18.09] },
   { kod: 'MX', nev: 'Mexikó', geo: 'Mexico', lonlat: [-99.13, 19.43] },
@@ -160,6 +169,7 @@ export const ORSZAGOK: readonly Orszag[] = [
   { kod: 'SA', nev: 'Szaúd-Arábia', geo: 'Saudi Arabia', lonlat: [46.72, 24.69] },
   { kod: 'SN', nev: 'Szenegál', geo: 'Senegal', lonlat: [-17.44, 14.69] },
   { kod: 'RS', nev: 'Szerbia', geo: 'Serbia', lonlat: [20.46, 44.79] },
+  { kod: 'SG', nev: 'Szingapúr', geo: '', lonlat: [103.82, 1.35] },
   { kod: 'SY', nev: 'Szíria', geo: 'Syria', lonlat: [36.29, 33.51] },
   { kod: 'SK', nev: 'Szlovákia', geo: 'Slovakia', lonlat: [17.11, 48.15] },
   { kod: 'SI', nev: 'Szlovénia', geo: 'Slovenia', lonlat: [14.51, 46.06] },

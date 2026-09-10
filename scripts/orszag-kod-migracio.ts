@@ -1,12 +1,13 @@
 /**
- * Egyszeri, idempotens adat-átírás: a user.orszag és a riport.orszag szabadszöveges
- * országneveit ISO-kódra cseréli a lib/orszagok.ts szótár alapján. Ami már kód, azt
- * kihagyja; a nem párosíthatót kilistázza és érintetlenül hagyja.
+ * Egyszeri, idempotens adat-átírás: a user.orszag, a riport.orszag és a ticket.orszag
+ * szabadszöveges országneveit ISO-kódra cseréli a lib/orszagok.ts szótár alapján. Ami már
+ * kód, azt kihagyja; a nem párosíthatót kilistázza és érintetlenül hagyja. (A riport és a
+ * ticket updated_at-ja az $onUpdate miatt frissül – elfogadható.)
  * Futtatás: npx tsx scripts/orszag-kod-migracio.ts
  */
 import { eq } from 'drizzle-orm';
 import { db } from '../db';
-import { riport, user } from '../db/schema';
+import { riport, ticket, user } from '../db/schema';
 import { ORSZAGOK, ORSZAG_KOD_RE, orszagByKod } from '../lib/orszagok';
 
 const ALIAS: Record<string, string> = {
@@ -54,6 +55,16 @@ for (const r of db.select({ id: riport.id, orszag: riport.orszag }).from(riport)
     continue;
   }
   db.update(riport).set({ orszag: kod }).where(eq(riport.id, r.id)).run();
+  atirt++;
+}
+for (const t of db.select({ id: ticket.id, orszag: ticket.orszag }).from(ticket).all()) {
+  const kod = kodra(t.orszag);
+  if (kod === null) continue;
+  if (!kod) {
+    parositatlan.push(`ticket ${t.id}: "${t.orszag}"`);
+    continue;
+  }
+  db.update(ticket).set({ orszag: kod }).where(eq(ticket.id, t.id)).run();
   atirt++;
 }
 console.log(`Átírva: ${atirt} sor. Párosítatlan: ${parositatlan.length}`);
