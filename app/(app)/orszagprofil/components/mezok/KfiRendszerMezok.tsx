@@ -4,7 +4,7 @@ import { CimkeValaszto } from '../../../../../components/form/CimkeValaszto';
 import { RovidMezo, SzovegMezo } from '../../../../../components/form/Mezo';
 import { SzamMezo } from '../../../../../components/form/SzamMezo';
 import {
-  IPARAGAK, KFI_PRIORITASOK, MEZO_CIMKEK, ROVID_MAX, SZOVEG_MAX, type KfiRendszer,
+  IPARAGAK, KFI_PRIORITASOK, MEZO_CIMKEK, ROVID_MAX, SZAM_MAX_HOSSZ, SZOVEG_MAX, type KfiRendszer,
 } from '../../../../../lib/orszagprofil-szotar';
 import { BlokkForm, mezoId, szamStr, useBlokkAllapot, type BlokkMezokProps } from '../BlokkForm';
 
@@ -21,7 +21,7 @@ export function KfiRendszerMezok({
         <>
           <SzovegMezo id={mezoId(B, 'teljesitmeny')} name="teljesitmeny" cimke={C.teljesitmeny.cimke} sugo={C.teljesitmeny.sugo} value={e.teljesitmeny} onChange={set('teljesitmeny')} max={SZOVEG_MAX} errors={errors} />
           <div className="grid gap-4 sm:grid-cols-2">
-            <SzamMezo id={mezoId(B, 'gerd')} name="gerd" cimke={C.gerd.cimke} value={e.gerd} onChange={set('gerd')} errors={errors} utotag="%" />
+            <SzamMezo id={mezoId(B, 'gerd')} name="gerd" cimke={C.gerd.cimke} value={e.gerd} onChange={set('gerd')} errors={errors} maxHossz={SZAM_MAX_HOSSZ} utotag="%" />
             <RovidMezo id={mezoId(B, 'strategia')} name="strategia" cimke={C.strategia.cimke} sugo={C.strategia.sugo} value={e.strategia} onChange={set('strategia')} max={ROVID_MAX} errors={errors} />
           </div>
           <CimkeValaszto id={mezoId(B, 'prioritasok')} name="prioritasok" cimke={C.prioritasok.cimke} items={KFI_PRIORITASOK} value={e.prioritasok} onChange={set('prioritasok')} errors={errors}

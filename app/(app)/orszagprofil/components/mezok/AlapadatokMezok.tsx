@@ -3,7 +3,7 @@
 import { CimkeValaszto } from '../../../../../components/form/CimkeValaszto';
 import { RovidMezo } from '../../../../../components/form/Mezo';
 import { SzamMezo } from '../../../../../components/form/SzamMezo';
-import { GAZDASAGI_AGAZATOK, MEZO_CIMKEK, ROVID_MAX, TAGSAGOK, type Alapadatok } from '../../../../../lib/orszagprofil-szotar';
+import { GAZDASAGI_AGAZATOK, MEZO_CIMKEK, ROVID_MAX, SZAM_MAX_HOSSZ, TAGSAGOK, type Alapadatok } from '../../../../../lib/orszagprofil-szotar';
 import { BlokkForm, mezoId, szamStr, useBlokkAllapot, type BlokkMezokProps } from '../BlokkForm';
 
 const C = MEZO_CIMKEK.alapadatok;
@@ -22,11 +22,11 @@ export function AlapadatokMezok({
       {(errors) => (
         <>
           <div className="grid gap-4 sm:grid-cols-2">
-            <SzamMezo id={mezoId(B, 'lakossag')} name="lakossag" cimke={C.lakossag.cimke} value={e.lakossag} onChange={set('lakossag')} errors={errors} utotag="fő" />
-            <SzamMezo id={mezoId(B, 'gdp')} name="gdp" cimke={C.gdp.cimke} value={e.gdp} onChange={set('gdp')} errors={errors} utotag="mrd USD" />
-            <SzamMezo id={mezoId(B, 'gdpEgyFore')} name="gdpEgyFore" cimke={C.gdpEgyFore.cimke} value={e.gdpEgyFore} onChange={set('gdpEgyFore')} errors={errors} utotag="USD" />
-            <SzamMezo id={mezoId(B, 'gdpNovekedes')} name="gdpNovekedes" cimke={C.gdpNovekedes.cimke} value={e.gdpNovekedes} onChange={set('gdpNovekedes')} errors={errors} utotag="%" />
-            <SzamMezo id={mezoId(B, 'adatEv')} name="adatEv" cimke={C.adatEv.cimke} sugo={C.adatEv.sugo} value={e.adatEv} onChange={set('adatEv')} errors={errors} />
+            <SzamMezo id={mezoId(B, 'lakossag')} name="lakossag" cimke={C.lakossag.cimke} value={e.lakossag} onChange={set('lakossag')} errors={errors} maxHossz={SZAM_MAX_HOSSZ} utotag="fő" />
+            <SzamMezo id={mezoId(B, 'gdp')} name="gdp" cimke={C.gdp.cimke} value={e.gdp} onChange={set('gdp')} errors={errors} maxHossz={SZAM_MAX_HOSSZ} utotag="mrd USD" />
+            <SzamMezo id={mezoId(B, 'gdpEgyFore')} name="gdpEgyFore" cimke={C.gdpEgyFore.cimke} value={e.gdpEgyFore} onChange={set('gdpEgyFore')} errors={errors} maxHossz={SZAM_MAX_HOSSZ} utotag="USD" />
+            <SzamMezo id={mezoId(B, 'gdpNovekedes')} name="gdpNovekedes" cimke={C.gdpNovekedes.cimke} value={e.gdpNovekedes} onChange={set('gdpNovekedes')} errors={errors} maxHossz={SZAM_MAX_HOSSZ} utotag="%" />
+            <SzamMezo id={mezoId(B, 'adatEv')} name="adatEv" cimke={C.adatEv.cimke} sugo={C.adatEv.sugo} value={e.adatEv} onChange={set('adatEv')} errors={errors} maxHossz={SZAM_MAX_HOSSZ} />
             <RovidMezo id={mezoId(B, 'forras')} name="forras" cimke={C.forras.cimke} sugo={C.forras.sugo} value={e.forras} onChange={set('forras')} max={ROVID_MAX} errors={errors} />
           </div>
           <CimkeValaszto id={mezoId(B, 'tagsagok')} name="tagsagok" cimke={C.tagsagok.cimke} items={TAGSAGOK} value={e.tagsagok} onChange={set('tagsagok')} errors={errors}

@@ -31,8 +31,9 @@ export function useApp(): AppState {
 
 // Csak megjelenítés: az adminOnly a menüpontot rejti el, a valódi védelem a page/action
 // requireAdmin() hívása (lib/session.ts).
-const NAV: { href: string; icon: string; label: string; adminOnly?: boolean }[] = [
-  { href: '/terkep', icon: '◍', label: 'Országprofil' },
+// Az alHrefek további útvonal-prefixek, amelyeken a menüpont aktív (pl. /orszagprofil/* → Országprofil).
+const NAV: { href: string; icon: string; label: string; adminOnly?: boolean; alHrefek?: string[] }[] = [
+  { href: '/terkep', icon: '◍', label: 'Országprofil', alHrefek: ['/orszagprofil'] },
   { href: '/riportok', icon: '▦', label: 'Riportok' },
   { href: '/uj-riport', icon: '✎', label: 'Új bejegyzés' },
   { href: '/kommunikacio', icon: '✉', label: 'Kommunikáció' },
@@ -129,7 +130,7 @@ export default function AppShell({
           </div>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '12px 10px' }}>
             {NAV.filter((n) => !n.adminOnly || user.role === 'admin').map((n) => {
-              const on = isActive(pathname, n.href);
+              const on = isActive(pathname, n.href) || (n.alHrefek ?? []).some((h) => isActive(pathname, h));
               return (
                 <Link key={n.href} href={n.href} aria-current={on ? 'page' : undefined} style={{
                   display: 'flex', alignItems: 'center', gap: 10, padding: '9px 11px',

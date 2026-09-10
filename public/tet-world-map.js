@@ -1,9 +1,12 @@
 /* <tet-world-map> — TéT posztok világtérképe. d3-geo + world-atlas TopoJSON.
-   Attribútumok: data (JSON: { orszagok: [...], szinek: { iparag: {...}, allapot: {...} } }),
+   Attribútumok: data (JSON: { orszagok: [...], szinek: { iparag: {...}, allapot: {...} },
+   allapotok: [...] (a jelmagyarázat sorrendje), cimkek: { allapot: {...} } }),
    metric ("iparag"|"allapot"), iparag (szűrő), selected (ország kódja).
    Az orszagok elemei: { kod, nev, geo, lonlat, attase, ev, allapot, iparagak }. A geo a
    world-atlas országneve; üres, ha a 110m atlaszban nincs poligon (pl. Szingapúr) – ekkor
-   csak pin rajzolódik. A színtáblák a lib/orszagprofil-szotar.ts-ből jönnek, itt nincs lista. */
+   csak pin rajzolódik. A színtáblák, az állapot-sorrend és a címkék a lib/orszagprofil-szotar.ts-ből
+   jönnek, itt nincs hardcode-olt színtábla vagy címke-lista. Minden adatból jövő szöveg esc()-en
+   megy át (a színkonstansok nem). */
 (function () {
   var worldPromise = null;
   function loadWorld() {
@@ -27,8 +30,6 @@
   var HIBA_SZOVEG = 'A térkép nem tölthető be (nincs internetkapcsolat a d3/world-atlas CDN-hez).';
 
   var NINCS_SZIN = '#eceff3', HALVANY = '#e3e7ec', SEMLEGES = '#5f6b7a';
-  var ALLAPOT_SORREND = ['friss', 'elavult', 'nincs'];
-  var ALLAPOT_CIMKE = { friss: 'idei profil', elavult: 'elavult profil', nincs: 'nincs profil' };
 
   var W = 960, H = 505;
 
@@ -59,7 +60,7 @@
   var TetWorldMap = class extends HTMLElement {
     constructor() {
       super();
-      this._data = []; this._szinek = { iparag: {}, allapot: {} };
+      this._data = []; this._szinek = { iparag: {}, allapot: {} }; this._allapotok = []; this._cimkek = { allapot: {} };
       this._metric = 'iparag'; this._iparag = ''; this._sel = ''; this._ready = false;
     }
     static get observedAttributes() { return ['data', 'metric', 'iparag', 'selected']; }
@@ -71,8 +72,10 @@
           return r;
         });
         this._szinek = o.szinek || { iparag: {}, allapot: {} };
+        this._allapotok = Array.isArray(o.allapotok) ? o.allapotok : [];
+        this._cimkek = o.cimkek || { allapot: {} };
       } catch (e) {
-        this._data = []; this._szinek = { iparag: {}, allapot: {} };
+        this._data = []; this._szinek = { iparag: {}, allapot: {} }; this._allapotok = []; this._cimkek = { allapot: {} };
       }
       this._paint();
     }
@@ -148,7 +151,7 @@
       if (!r) { this._tip.innerHTML = '<b>' + esc(name) + '</b><span>Nincs kihelyezett TéT attasé</span>'; return; }
       this._tip.innerHTML = '<b>' + esc(r.nev) + '</b>' +
         '<span>' + esc(r.attase || 'nincs aktív attasé') + '</span>' +
-        '<span>' + (ALLAPOT_CIMKE[r.allapot] || '') + (r.ev ? ' · ' + esc(r.ev) : '') + '</span>' +
+        '<span>' + esc(this._cimkek.allapot[r.allapot] || '') + (r.ev ? ' · ' + esc(r.ev) : '') + '</span>' +
         (r.iparagak.length ? '<span>Kiemelt iparág: ' + esc(r.iparagak[0]) + '</span>' : '');
     }
     _pick(r) {
@@ -189,7 +192,7 @@
         for (i = 0; i < used.length; i++) html += '<div><i style="background:' + (self._szinek.iparag[used[i]] || SEMLEGES) + '"></i>' + esc(used[i]) + '</div>';
         html += '<div><i style="background:' + SEMLEGES + '"></i>nincs kiemelt iparág</div>';
       } else {
-        for (i = 0; i < ALLAPOT_SORREND.length; i++) html += '<div><i style="background:' + (self._szinek.allapot[ALLAPOT_SORREND[i]] || NINCS_SZIN) + '"></i>' + ALLAPOT_CIMKE[ALLAPOT_SORREND[i]] + '</div>';
+        for (i = 0; i < self._allapotok.length; i++) html += '<div><i style="background:' + (self._szinek.allapot[self._allapotok[i]] || NINCS_SZIN) + '"></i>' + esc(self._cimkek.allapot[self._allapotok[i]] || self._allapotok[i]) + '</div>';
       }
       html += '<div style="margin-left:auto"><i style="background:' + NINCS_SZIN + ';border:1px solid #dde1e7"></i>nincs poszt</div>';
       this._legend.innerHTML = html;

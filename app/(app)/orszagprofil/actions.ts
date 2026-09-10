@@ -29,7 +29,9 @@ export async function mentBlokkAction(_prev: MuveletState, formData: FormData): 
   const session = await requireSession();
   const kod = mezo(formData, 'kod');
   const blokk = mezo(formData, 'blokk');
-  const ev = Number.parseInt(mezo(formData, 'ev'), 10);
+  // Szigorú: csak négyjegyű egész; minden más NaN → canEditProfil hamis → űrlap-szintű hiba.
+  const evRaw = mezo(formData, 'ev');
+  const ev = /^\d{4}$/.test(evRaw) ? Number(evRaw) : NaN;
   if (!orszagByKod(kod)) notFound();
   if (!isBlokkKulcs(blokk)) notFound();
   const most = aktualisEv();

@@ -42,7 +42,7 @@
 | `db/queries/orszagprofil.ts` | létrehoz | `getProfil`, `listEvek`, `listTerkepAdat`, `upsertBlokk`, `TerkepOrszag` |
 | `lib/orszagprofil-validacio.ts` | létrehoz | `validalBlokk` blokkonként |
 | `app/(app)/orszagprofil/actions.ts` | létrehoz | `mentBlokkAction` |
-| `components/form/CimkeValaszto.tsx`, `EgyebMezo.tsx`, `SzamMezo.tsx`, `Mezo.tsx` | létrehoz | általános form-építőelemek |
+| `components/form/CimkeValaszto.tsx`, `SzamMezo.tsx`, `Mezo.tsx`, `NativeSelect.tsx` | létrehoz | általános form-építőelemek (az `EgyebMezo.tsx` nem külön fájl: a `CimkeValaszto` `egyeb` propja fedi) |
 | `app/(app)/orszagprofil/components/BlokkForm.tsx`, `RendezvenySorok.tsx`, `mezok/*.tsx` (8 fájl), `EvValaszto.tsx` | létrehoz | szerkesztő kártyák |
 | `components/orszagprofil/BlokkNezet.tsx`, `IparagBadge.tsx`, `AllapotBadge.tsx` | létrehoz | olvasó nézet elemei |
 | `app/(app)/orszagprofil/[kod]/page.tsx`, `[kod]/szerkesztes/page.tsx` | létrehoz | teljes nézet, szerkesztés |
@@ -2660,4 +2660,5 @@ A subagent-driven végrehajtás review-köreiből származó, tervtől eltérő 
 - **Szerkesztő oldal**: a 8 blokk-form `<Fragment key={ev}>`-ben – az App Router állapot-kulcsa nem tartalmazza a search paramokat, `key` nélkül az admin évváltáskor az előző év kliens-állapotát mentené az új évre. Attasénak egyetlen évnél „Év: 2026" szöveg select helyett.
 - **Profil oldal**: admin a nézett évet szerkeszti (`szerkesztEv`), attasénál „Szerkesztés (2026)" felirat, ha a nézett év más; attasé neve a fejlécben; `BlokkNezet` `NEZETEK` táblával; `lib/szam.ts` `formatSzam`.
 - **Térkép**: a pinek a rekordot adják át (`_hover`/`_pick`), így a poligon nélküli országok is kapnak tooltipet és kiválasztást; `esc()` minden innerHTML-be kerülő adatra; `?o=` változásra `key` remount; d3-betöltés korlátos várakozással és hibaüzenettel; `lib/score.ts` halott `nyitottsag`/`RISK_COLORS` törölve.
+- **Kisebb eltérések**: `EgyebMezo.tsx` nem külön fájl, a `CimkeValaszto` `egyeb` propja fedi; a térkép metrika-váltója `Tabs` a `ToggleGroup` helyett; a `revalidatePath` konkrét útvonalakkal (`/terkep`, profil és szerkesztő oldal), nem layout-szinten; a profil-oldal állapot-jelvénye az ország legfrissebb profil-évét mutatja (mint a térkép), a nézett évet a szöveges sor írja; a térkép JSON-ja az állapot-sorrendet és -címkéket (`ALLAPOTOK`, `ALLAPOT_CIMKE`) is viszi, a JS-ben nincs címke-lista; a sidebar „Országprofil" menüpontja `alHrefek`-kel az `/orszagprofil/*` útvonalon is aktív; `SzamMezo` `maxHossz` propot kap a domain-konstans importja helyett; az action az `ev`-et szigorúan (négyjegyű) parse-olja.
 - **Teszt user**: a `teszt.attase@niu.hu` jelszava nem a memóriában rögzített; a böngészős ellenőrzések a `masodik.attase@niu.hu` (JP) fiókkal futottak.

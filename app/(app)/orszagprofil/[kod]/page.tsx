@@ -40,7 +40,10 @@ export default async function OrszagprofilPage({
   const attaseNev = getAttaseNev(kod);
   const szerkesztEv = canEditProfil(session, kod, ev, most) ? ev : most;
   const szerkeszthet = canEditProfil(session, kod, szerkesztEv, most);
-  const allapot = profilAllapot(profil?.ev ?? null, most);
+  // A jelvény az ország LEGFRISSEBB profil-évének állapotát mutatja (mint a térkép), nem a
+  // nézett évét; a nézett évet a szöveges sor írja.
+  const legfrissebbEv = evek[0] ?? null;
+  const allapot = profilAllapot(legfrissebbEv, most);
   // Korrelált generikus: a K köti össze a kulcsot és a blokk-típust (a map-ben unió lenne).
   const blokk = <K extends BlokkKulcs>(k: K) => <BlokkNezet key={k} kulcs={k} tartalom={profil?.blokkok[k] ?? null} />;
 
@@ -51,7 +54,7 @@ export default async function OrszagprofilPage({
           <h2 className="text-lg font-semibold">{orszag.nev}</h2>
           <p className="text-sm text-muted-foreground">{attaseNev ? `Attasé: ${attaseNev}` : 'Nincs aktív attasé'}</p>
         </div>
-        <AllapotBadge allapot={allapot} ev={profil?.ev ?? null} />
+        <AllapotBadge allapot={allapot} ev={legfrissebbEv} />
         {evek.length > 1 && <EvValaszto evek={evek} ertek={ev} />}
         <div className="ml-auto flex gap-2">
           <Link href={`/terkep?o=${kod}`} className={cn(buttonVariants({ variant: 'outline' }))}>Vissza a térképre</Link>

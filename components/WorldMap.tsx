@@ -3,11 +3,12 @@
 import Script from 'next/script';
 import { useEffect, useMemo, useRef } from 'react';
 import type { TerkepOrszag } from '../db/queries/orszagprofil';
-import { ALLAPOT_SZINEK, IPARAG_SZINEK } from '../lib/orszagprofil-szotar';
+import { ALLAPOT_CIMKE, ALLAPOT_SZINEK, ALLAPOTOK, IPARAG_SZINEK } from '../lib/orszagprofil-szotar';
 
 // A <tet-world-map> webkomponens (public/tet-world-map.js) d3-geo alapú; a d3 és a
-// topojson CDN-ről töltődik, a komponens megvárja őket. Az adatot és a színtáblákat egy
-// JSON attribútumban kapja, így a JS fájlban nincs hardcode-olt lista.
+// topojson CDN-ről töltődik, a komponens megvárja őket. Az adatot, a színtáblákat, az
+// állapot-sorrendet és -címkéket egy JSON attribútumban kapja, így a JS fájlban nincs
+// hardcode-olt színtábla vagy címke-lista.
 // A TerkepOrszag csak típusként jön a server-only modulból (`import type`), a kliens
 // bundle-ba DB-kód nem kerül.
 
@@ -31,6 +32,8 @@ export default function WorldMap({ adatok, metric, iparag, selected, onSelect }:
         ev: o.ev, allapot: o.allapot, iparagak: o.iparagak,
       })),
       szinek: { iparag: IPARAG_SZINEK, allapot: ALLAPOT_SZINEK },
+      allapotok: ALLAPOTOK,
+      cimkek: { allapot: ALLAPOT_CIMKE },
     }),
     [adatok],
   );
