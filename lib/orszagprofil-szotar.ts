@@ -69,6 +69,12 @@ export type RendezvenyTipus = (typeof RENDEZVENY_TIPUSOK)[number]['kulcs'];
 export function rendezvenyTipusCimke(k: RendezvenyTipus): string {
   return RENDEZVENY_TIPUSOK.find((t) => t.kulcs === k)?.cimke ?? k;
 }
+/** Ismeretlen vagy hiányzó érték esetén `'forum'`; a normalizáló és a validátor is ezt használja. */
+export function rendezvenyTipus(v: unknown): RendezvenyTipus {
+  return (RENDEZVENY_TIPUSOK as readonly { kulcs: string; cimke: string }[]).some((t) => t.kulcs === v)
+    ? (v as RendezvenyTipus)
+    : 'forum';
+}
 
 export const SZOVEG_MAX = 4000;
 export const ROVID_MAX = 200;
@@ -172,27 +178,6 @@ export interface ProfilBlokkok {
   magyarErtekeles: MagyarErtekeles;
 }
 
-/** Üres alapértékek blokkonként; a normalizálás és az üres űrlap ebből indul. */
-export function uresBlokk<K extends BlokkKulcs>(kulcs: K): ProfilBlokkok[K] {
-  const b: ProfilBlokkok = {
-    alapadatok: {
-      lakossag: null, gdp: null, gdpEgyFore: null, gdpNovekedes: null, adatEv: null, forras: '',
-      tagsagok: [], tagsagEgyeb: '', agazatok: [], agazatEgyeb: '',
-    },
-    kfiRendszer: {
-      teljesitmeny: '', gerd: null, strategia: '', prioritasok: [], prioritasEgyeb: '',
-      kiemeltIparagak: [], iparagEgyeb: '', erossegek: '', kihivasok: '',
-    },
-    intezmenyek: { iranyitoSzervek: '', egyetemek: '', kutatokozpontok: '', infrastrukturak: '' },
-    vallalati: { kiemeltAgazatok: [], agazatEgyeb: '', topVallalatok: [], startupok: '', klaszterek: '', technologiatranszfer: '' },
-    programok: { palyazatok: '', tamogatasiProgramok: '', finanszirozasiEszkozok: '', nemzetkoziReszvetel: '' },
-    rendezvenyek: { lista: [] },
-    kapcsolatok: { euMultilateralis: '', partnerorszagok: '', egyezmeny: '', ketoldalu: '', mobilitas: '' },
-    magyarErtekeles: { osszegzes: '', egyuttmukodesiLehetosegek: '', joGyakorlatok: '', diplomaciaiPrioritasok: '' },
-  };
-  return b[kulcs];
-}
-
 function szoveg(v: unknown): string {
   return typeof v === 'string' ? v : '';
 }
@@ -209,89 +194,73 @@ function szovegLista(v: unknown, max: number): string[] {
 }
 
 /**
- * A DB-ből olvasott JSON blokk normalizálása: a hiányzó vagy rossz típusú almező az üres
- * alapértéket kapja, a listákból az ismeretlen opció kiesik. Így egy később bevezetett
- * mező nem töri el a régi sort.
+ * Blokkonkénti normalizáló: a hiányzó vagy rossz típusú almező az üres alapértéket kapja,
+ * a listákból az ismeretlen opció kiesik. Így egy később bevezetett mező nem töri el a régi
+ * sort. Üres bemenetre (`{}`) ugyanez adja a blokk üres alapértékét.
+ */
+const NORMALIZALOK: { [K in BlokkKulcs]: (r: Record<string, unknown>) => ProfilBlokkok[K] } = {
+  alapadatok: (r) => ({
+    lakossag: szam(r.lakossag), gdp: szam(r.gdp), gdpEgyFore: szam(r.gdpEgyFore),
+    gdpNovekedes: szam(r.gdpNovekedes), adatEv: szam(r.adatEv), forras: szoveg(r.forras),
+    tagsagok: lista(r.tagsagok, TAGSAGOK), tagsagEgyeb: szoveg(r.tagsagEgyeb),
+    agazatok: lista(r.agazatok, GAZDASAGI_AGAZATOK), agazatEgyeb: szoveg(r.agazatEgyeb),
+  }),
+  kfiRendszer: (r) => ({
+    teljesitmeny: szoveg(r.teljesitmeny), gerd: szam(r.gerd), strategia: szoveg(r.strategia),
+    prioritasok: lista(r.prioritasok, KFI_PRIORITASOK), prioritasEgyeb: szoveg(r.prioritasEgyeb),
+    kiemeltIparagak: lista(r.kiemeltIparagak, IPARAGAK), iparagEgyeb: szoveg(r.iparagEgyeb),
+    erossegek: szoveg(r.erossegek), kihivasok: szoveg(r.kihivasok),
+  }),
+  intezmenyek: (r) => ({
+    iranyitoSzervek: szoveg(r.iranyitoSzervek), egyetemek: szoveg(r.egyetemek),
+    kutatokozpontok: szoveg(r.kutatokozpontok), infrastrukturak: szoveg(r.infrastrukturak),
+  }),
+  vallalati: (r) => ({
+    kiemeltAgazatok: lista(r.kiemeltAgazatok, IPARAGAK), agazatEgyeb: szoveg(r.agazatEgyeb),
+    topVallalatok: szovegLista(r.topVallalatok, TOP_VALLALAT_MAX), startupok: szoveg(r.startupok),
+    klaszterek: szoveg(r.klaszterek), technologiatranszfer: szoveg(r.technologiatranszfer),
+  }),
+  programok: (r) => ({
+    palyazatok: szoveg(r.palyazatok), tamogatasiProgramok: szoveg(r.tamogatasiProgramok),
+    finanszirozasiEszkozok: szoveg(r.finanszirozasiEszkozok), nemzetkoziReszvetel: szoveg(r.nemzetkoziReszvetel),
+  }),
+  rendezvenyek: (r) => {
+    const nyersLista = Array.isArray(r.lista) ? r.lista : [];
+    return {
+      lista: nyersLista
+        .filter((x): x is Record<string, unknown> => typeof x === 'object' && x !== null)
+        .map((x) => ({
+          nev: szoveg(x.nev),
+          tipus: rendezvenyTipus(x.tipus),
+          idopont: szoveg(x.idopont),
+          megjegyzes: szoveg(x.megjegyzes),
+        }))
+        .filter((x) => x.nev !== '')
+        .slice(0, RENDEZVENY_MAX),
+    };
+  },
+  kapcsolatok: (r) => ({
+    euMultilateralis: szoveg(r.euMultilateralis), partnerorszagok: szoveg(r.partnerorszagok),
+    egyezmeny: szoveg(r.egyezmeny), ketoldalu: szoveg(r.ketoldalu), mobilitas: szoveg(r.mobilitas),
+  }),
+  magyarErtekeles: (r) => ({
+    osszegzes: szoveg(r.osszegzes), egyuttmukodesiLehetosegek: szoveg(r.egyuttmukodesiLehetosegek),
+    joGyakorlatok: szoveg(r.joGyakorlatok), diplomaciaiPrioritasok: szoveg(r.diplomaciaiPrioritasok),
+  }),
+};
+
+/**
+ * A DB-ből olvasott JSON blokk normalizálása a `NORMALIZALOK` táblával; ismeretlen `kulcs`
+ * nem fordulhat elő, mert a `BlokkKulcs` uniót a `NORMALIZALOK` kimerítően fedi.
  */
 export function normalizalBlokk<K extends BlokkKulcs>(kulcs: K, nyers: unknown): ProfilBlokkok[K] {
   const r = (typeof nyers === 'object' && nyers !== null ? nyers : {}) as Record<string, unknown>;
-  switch (kulcs) {
-    case 'alapadatok': {
-      const b: Alapadatok = {
-        lakossag: szam(r.lakossag), gdp: szam(r.gdp), gdpEgyFore: szam(r.gdpEgyFore),
-        gdpNovekedes: szam(r.gdpNovekedes), adatEv: szam(r.adatEv), forras: szoveg(r.forras),
-        tagsagok: lista(r.tagsagok, TAGSAGOK), tagsagEgyeb: szoveg(r.tagsagEgyeb),
-        agazatok: lista(r.agazatok, GAZDASAGI_AGAZATOK), agazatEgyeb: szoveg(r.agazatEgyeb),
-      };
-      return b as ProfilBlokkok[K];
-    }
-    case 'kfiRendszer': {
-      const b: KfiRendszer = {
-        teljesitmeny: szoveg(r.teljesitmeny), gerd: szam(r.gerd), strategia: szoveg(r.strategia),
-        prioritasok: lista(r.prioritasok, KFI_PRIORITASOK), prioritasEgyeb: szoveg(r.prioritasEgyeb),
-        kiemeltIparagak: lista(r.kiemeltIparagak, IPARAGAK), iparagEgyeb: szoveg(r.iparagEgyeb),
-        erossegek: szoveg(r.erossegek), kihivasok: szoveg(r.kihivasok),
-      };
-      return b as ProfilBlokkok[K];
-    }
-    case 'intezmenyek': {
-      const b: Intezmenyek = {
-        iranyitoSzervek: szoveg(r.iranyitoSzervek), egyetemek: szoveg(r.egyetemek),
-        kutatokozpontok: szoveg(r.kutatokozpontok), infrastrukturak: szoveg(r.infrastrukturak),
-      };
-      return b as ProfilBlokkok[K];
-    }
-    case 'vallalati': {
-      const b: Vallalati = {
-        kiemeltAgazatok: lista(r.kiemeltAgazatok, IPARAGAK), agazatEgyeb: szoveg(r.agazatEgyeb),
-        topVallalatok: szovegLista(r.topVallalatok, TOP_VALLALAT_MAX), startupok: szoveg(r.startupok),
-        klaszterek: szoveg(r.klaszterek), technologiatranszfer: szoveg(r.technologiatranszfer),
-      };
-      return b as ProfilBlokkok[K];
-    }
-    case 'programok': {
-      const b: Programok = {
-        palyazatok: szoveg(r.palyazatok), tamogatasiProgramok: szoveg(r.tamogatasiProgramok),
-        finanszirozasiEszkozok: szoveg(r.finanszirozasiEszkozok), nemzetkoziReszvetel: szoveg(r.nemzetkoziReszvetel),
-      };
-      return b as ProfilBlokkok[K];
-    }
-    case 'rendezvenyek': {
-      const tipusok = RENDEZVENY_TIPUSOK.map((t) => t.kulcs) as readonly RendezvenyTipus[];
-      const nyersLista = Array.isArray(r.lista) ? r.lista : [];
-      const b: Rendezvenyek = {
-        lista: nyersLista
-          .filter((x): x is Record<string, unknown> => typeof x === 'object' && x !== null)
-          .map((x) => ({
-            nev: szoveg(x.nev),
-            tipus: lista([x.tipus], tipusok)[0] ?? 'forum',
-            idopont: szoveg(x.idopont),
-            megjegyzes: szoveg(x.megjegyzes),
-          }))
-          .filter((x) => x.nev !== '')
-          .slice(0, RENDEZVENY_MAX),
-      };
-      return b as ProfilBlokkok[K];
-    }
-    case 'kapcsolatok': {
-      const b: Kapcsolatok = {
-        euMultilateralis: szoveg(r.euMultilateralis), partnerorszagok: szoveg(r.partnerorszagok),
-        egyezmeny: szoveg(r.egyezmeny), ketoldalu: szoveg(r.ketoldalu), mobilitas: szoveg(r.mobilitas),
-      };
-      return b as ProfilBlokkok[K];
-    }
-    case 'magyarErtekeles': {
-      const b: MagyarErtekeles = {
-        osszegzes: szoveg(r.osszegzes), egyuttmukodesiLehetosegek: szoveg(r.egyuttmukodesiLehetosegek),
-        joGyakorlatok: szoveg(r.joGyakorlatok), diplomaciaiPrioritasok: szoveg(r.diplomaciaiPrioritasok),
-      };
-      return b as ProfilBlokkok[K];
-    }
-    default: {
-      const kimerito: never = kulcs;
-      return uresBlokk(kimerito);
-    }
-  }
+  return NORMALIZALOK[kulcs](r);
+}
+
+/** Üres alapértékek blokkonként (a normalizáló üres bemenetre adott értéke); az üres űrlap ebből indul. */
+export function uresBlokk<K extends BlokkKulcs>(kulcs: K): ProfilBlokkok[K] {
+  return NORMALIZALOK[kulcs]({});
 }
 
 /** Mezőcímkék és súgó: az űrlap és az olvasó nézet ugyanezt írja. Kulcs = a mező neve. */
@@ -299,7 +268,7 @@ export interface MezoCimke {
   cimke: string;
   sugo?: string;
 }
-export const MEZO_CIMKEK: Record<BlokkKulcs, Record<string, MezoCimke>> = {
+export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], MezoCimke> } = {
   alapadatok: {
     lakossag: { cimke: 'Lakosság (fő)' },
     gdp: { cimke: 'GDP (milliárd USD)' },
