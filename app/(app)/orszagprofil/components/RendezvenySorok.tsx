@@ -10,7 +10,7 @@ import {
   RENDEZVENY_MAX, RENDEZVENY_TIPUSOK, ROVID_MAX, rendezvenyTipus, type Rendezveny,
 } from '../../../../lib/orszagprofil-szotar';
 
-const URES: Rendezveny = { nev: '', tipus: 'konferencia', idopont: '', megjegyzes: '' };
+const URES: Rendezveny = { nev: '', tipus: RENDEZVENY_TIPUSOK[0].kulcs, idopont: '', megjegyzes: '' };
 
 /**
  * Hozzáadható/törölhető rendezvény-sorok; mezőnevek `rendezveny.<i>.<mezo>`, id-k
@@ -54,7 +54,8 @@ export function RendezvenySorok({
             <MezoHiba mezo={id(i, 'megjegyzes')} errors={errors} />
           </div>
           <div className="sm:col-span-2">
-            <Button type="button" variant="outline" size="sm" onClick={() => onChange(value.filter((_, j) => j !== i))}>
+            <Button type="button" variant="outline" size="sm" aria-label={`${i + 1}. rendezvény törlése`}
+              onClick={() => onChange(value.filter((_, j) => j !== i))}>
               Sor törlése
             </Button>
           </div>

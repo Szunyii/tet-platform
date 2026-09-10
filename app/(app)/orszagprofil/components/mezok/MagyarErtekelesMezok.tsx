@@ -1,19 +1,16 @@
 'use client';
 
-import { useState } from 'react';
 import { SzovegMezo } from '../../../../../components/form/Mezo';
-import type { FormAction } from '../../../../../components/form/useMuveletForm';
 import { MEZO_CIMKEK, OSSZEGZES_MAX, SZOVEG_MAX, type MagyarErtekeles } from '../../../../../lib/orszagprofil-szotar';
-import { BlokkForm, mezoId } from '../BlokkForm';
+import { BlokkForm, mezoId, useBlokkAllapot, type BlokkMezokProps } from '../BlokkForm';
 
 const C = MEZO_CIMKEK.magyarErtekeles;
 const B = 'magyarErtekeles';
 
 export function MagyarErtekelesMezok({
   kod, ev, initial, mentve, action,
-}: { kod: string; ev: number; initial: MagyarErtekeles; mentve: string | null; action: FormAction }) {
-  const [e, setE] = useState(initial);
-  const set = <K extends keyof typeof e>(k: K) => (v: (typeof e)[K]) => setE((p) => ({ ...p, [k]: v }));
+}: BlokkMezokProps<MagyarErtekeles>) {
+  const [e, set] = useBlokkAllapot(initial);
   return (
     <BlokkForm kod={kod} ev={ev} blokk={B} mentve={mentve} action={action}>
       {(errors) => (

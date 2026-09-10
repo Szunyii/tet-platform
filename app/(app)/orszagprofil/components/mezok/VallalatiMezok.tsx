@@ -1,23 +1,20 @@
 'use client';
 
-import { useState } from 'react';
 import { CimkeValaszto } from '../../../../../components/form/CimkeValaszto';
 import { SzovegMezo } from '../../../../../components/form/Mezo';
-import type { FormAction } from '../../../../../components/form/useMuveletForm';
 import {
   IPARAGAK, MEZO_CIMKEK, ROVID_MAX, SZOVEG_MAX, TOP_VALLALAT_MAX, type Vallalati,
 } from '../../../../../lib/orszagprofil-szotar';
-import { BlokkForm, mezoId } from '../BlokkForm';
+import { BlokkForm, mezoId, useBlokkAllapot, type BlokkMezokProps } from '../BlokkForm';
 
 const C = MEZO_CIMKEK.vallalati;
 const B = 'vallalati';
 
 export function VallalatiMezok({
   kod, ev, initial, mentve, action,
-}: { kod: string; ev: number; initial: Vallalati; mentve: string | null; action: FormAction }) {
+}: BlokkMezokProps<Vallalati>) {
   // A top vállalatok soronként egy név: a textarea-ban '\n'-nel elválasztva, a validátor bontja.
-  const [e, setE] = useState({ ...initial, topVallalatok: initial.topVallalatok.join('\n') });
-  const set = <K extends keyof typeof e>(k: K) => (v: (typeof e)[K]) => setE((p) => ({ ...p, [k]: v }));
+  const [e, set] = useBlokkAllapot({ ...initial, topVallalatok: initial.topVallalatok.join('\n') });
   return (
     <BlokkForm kod={kod} ev={ev} blokk={B} mentve={mentve} action={action}>
       {(errors) => (

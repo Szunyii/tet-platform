@@ -1,23 +1,20 @@
 'use client';
 
-import { useState } from 'react';
 import { CimkeValaszto } from '../../../../../components/form/CimkeValaszto';
 import { RovidMezo, SzovegMezo } from '../../../../../components/form/Mezo';
 import { SzamMezo } from '../../../../../components/form/SzamMezo';
-import type { FormAction } from '../../../../../components/form/useMuveletForm';
 import {
   IPARAGAK, KFI_PRIORITASOK, MEZO_CIMKEK, ROVID_MAX, SZOVEG_MAX, type KfiRendszer,
 } from '../../../../../lib/orszagprofil-szotar';
-import { BlokkForm, mezoId, szamStr } from '../BlokkForm';
+import { BlokkForm, mezoId, szamStr, useBlokkAllapot, type BlokkMezokProps } from '../BlokkForm';
 
 const C = MEZO_CIMKEK.kfiRendszer;
 const B = 'kfiRendszer';
 
 export function KfiRendszerMezok({
   kod, ev, initial, mentve, action,
-}: { kod: string; ev: number; initial: KfiRendszer; mentve: string | null; action: FormAction }) {
-  const [e, setE] = useState({ ...initial, gerd: szamStr(initial.gerd) });
-  const set = <K extends keyof typeof e>(k: K) => (v: (typeof e)[K]) => setE((p) => ({ ...p, [k]: v }));
+}: BlokkMezokProps<KfiRendszer>) {
+  const [e, set] = useBlokkAllapot({ ...initial, gerd: szamStr(initial.gerd) });
   return (
     <BlokkForm kod={kod} ev={ev} blokk={B} mentve={mentve} action={action}>
       {(errors) => (

@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { MezoHiba } from '../../../../components/form/MezoHiba';
 import { useMuveletForm, type FormAction } from '../../../../components/form/useMuveletForm';
 import { Button } from '../../../../components/ui/button';
@@ -46,6 +46,19 @@ export function BlokkForm({ kod, ev, blokk, mentve, action, children }: BlokkFor
       </form>
     </Card>
   );
+}
+
+/** A blokk mező-komponensek közös propjai: a BlokkForm propjai a saját blokk/children nélkül + a kezdőérték. */
+export type BlokkMezokProps<T> = Omit<BlokkFormProps, 'blokk' | 'children'> & { initial: T };
+
+/**
+ * A blokk vezérelt állapota egy objektumban + mezőnkénti setter-gyár (`set('mezo')`). A hívó
+ * a már űrlap-alakra hozott objektumot adja (számok `szamStr`-rel, listák '\n'-nel összefűzve).
+ */
+export function useBlokkAllapot<T extends object>(initial: T) {
+  const [e, setE] = useState(initial);
+  const set = <K extends keyof T>(k: K) => (v: T[K]) => setE((p) => ({ ...p, [k]: v }));
+  return [e, set] as const;
 }
 
 /**

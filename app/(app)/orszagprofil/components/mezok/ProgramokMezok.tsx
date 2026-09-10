@@ -1,19 +1,16 @@
 'use client';
 
-import { useState } from 'react';
 import { SzovegMezo } from '../../../../../components/form/Mezo';
-import type { FormAction } from '../../../../../components/form/useMuveletForm';
 import { MEZO_CIMKEK, SZOVEG_MAX, type Programok } from '../../../../../lib/orszagprofil-szotar';
-import { BlokkForm, mezoId } from '../BlokkForm';
+import { BlokkForm, mezoId, useBlokkAllapot, type BlokkMezokProps } from '../BlokkForm';
 
 const C = MEZO_CIMKEK.programok;
 const B = 'programok';
 
 export function ProgramokMezok({
   kod, ev, initial, mentve, action,
-}: { kod: string; ev: number; initial: Programok; mentve: string | null; action: FormAction }) {
-  const [e, setE] = useState(initial);
-  const set = <K extends keyof typeof e>(k: K) => (v: (typeof e)[K]) => setE((p) => ({ ...p, [k]: v }));
+}: BlokkMezokProps<Programok>) {
+  const [e, set] = useBlokkAllapot(initial);
   return (
     <BlokkForm kod={kod} ev={ev} blokk={B} mentve={mentve} action={action}>
       {(errors) => (

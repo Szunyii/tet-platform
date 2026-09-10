@@ -1,25 +1,22 @@
 'use client';
 
-import { useState } from 'react';
 import { CimkeValaszto } from '../../../../../components/form/CimkeValaszto';
 import { RovidMezo } from '../../../../../components/form/Mezo';
 import { SzamMezo } from '../../../../../components/form/SzamMezo';
-import type { FormAction } from '../../../../../components/form/useMuveletForm';
 import { GAZDASAGI_AGAZATOK, MEZO_CIMKEK, ROVID_MAX, TAGSAGOK, type Alapadatok } from '../../../../../lib/orszagprofil-szotar';
-import { BlokkForm, mezoId, szamStr } from '../BlokkForm';
+import { BlokkForm, mezoId, szamStr, useBlokkAllapot, type BlokkMezokProps } from '../BlokkForm';
 
 const C = MEZO_CIMKEK.alapadatok;
 const B = 'alapadatok';
 
 export function AlapadatokMezok({
   kod, ev, initial, mentve, action,
-}: { kod: string; ev: number; initial: Alapadatok; mentve: string | null; action: FormAction }) {
-  const [e, setE] = useState({
+}: BlokkMezokProps<Alapadatok>) {
+  const [e, set] = useBlokkAllapot({
     ...initial,
     lakossag: szamStr(initial.lakossag), gdp: szamStr(initial.gdp), gdpEgyFore: szamStr(initial.gdpEgyFore),
     gdpNovekedes: szamStr(initial.gdpNovekedes), adatEv: szamStr(initial.adatEv),
   });
-  const set = <K extends keyof typeof e>(k: K) => (v: (typeof e)[K]) => setE((p) => ({ ...p, [k]: v }));
   return (
     <BlokkForm kod={kod} ev={ev} blokk={B} mentve={mentve} action={action}>
       {(errors) => (
