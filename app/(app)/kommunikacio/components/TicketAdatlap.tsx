@@ -3,6 +3,7 @@ import type { MuveletState } from '../../../../components/form/useMuveletForm';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/card';
 import type { TicketDetail } from '../../../../db/queries/ticket';
 import { formatDatum, formatNaptariDatum } from '../../../../lib/datum';
+import { orszagNev } from '../../../../lib/orszagok';
 import { lejartE } from '../../../../lib/ticket-szotar';
 import { cn } from '../../../../lib/utils';
 import { PrioJelzes, StatuszBadge, TipusBadge } from './TicketJelzesek';
@@ -61,7 +62,7 @@ export function TicketAdatlap({
             )}
           </Sor>
           <Sor cimke="Érintett poszt">
-            {ticket.orszag} · {ticket.cimzettNev}
+            {orszagNev(ticket.orszag)} · {ticket.cimzettNev}
           </Sor>
           <Sor cimke="Nyitotta">
             {ticket.nyitoNev ?? <span className="text-muted-foreground">törölt felhasználó</span>} ·{' '}

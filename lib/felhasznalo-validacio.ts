@@ -5,9 +5,11 @@
  * kötött hibáké (a server action-ök használják). A szöveg-tisztítás (láthatatlan és
  * vezérlőkarakterek) a közös `lib/urlap.ts` `mezo()`-jából jön. Az e-mail trim + kisbetű
  * (a Better Auth is kisbetűsít); a jelszót szándékosan nem trimmeljük.
- * A poszt-adatok (főváros, terület, pénznem) csak attasénál értelmezettek, adminnál
- * hiba nélkül null-ok; a telefon és a kapcsolattartási e-mail mindkét szerepkörnél opcionális.
+ * Az ország a lib/orszagok.ts szótár ISO-kódja. A poszt-adatok (ország, főváros, terület,
+ * pénznem) csak attasénál értelmezettek, adminnál hiba nélkül null-ok; a telefon és a
+ * kapcsolattartási e-mail mindkét szerepkörnél opcionális.
  */
+import { orszagByKod } from './orszagok';
 import { mezo, type MezoHibak } from './urlap';
 
 export const SZEREPKOROK = ['admin', 'attase'] as const;
@@ -73,15 +75,15 @@ function validSzerepkor(raw: string, errors: MezoHibak): Szerepkor | null {
   return null;
 }
 
-/** Attasénál kötelező; adminnál (és érvénytelen szerepkörnél) eldobjuk, hiba nélkül. */
+/** Attasénál kötelező, a szótár ISO-kódja; adminnál (és érvénytelen szerepkörnél) eldobjuk, hiba nélkül. */
 function validOrszag(raw: string, szerepkor: Szerepkor | null, errors: MezoHibak): string | null {
   if (szerepkor !== 'attase') return null;
   if (!raw) {
     errors.orszag = 'TéT attasénál az ország kötelező.';
     return null;
   }
-  if (raw.length > 100) {
-    errors.orszag = 'Az ország legfeljebb 100 karakter.';
+  if (!orszagByKod(raw)) {
+    errors.orszag = 'Válassz országot a listából.';
     return null;
   }
   return raw;

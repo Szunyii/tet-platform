@@ -6,8 +6,9 @@ import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
 import type { MezoHibak } from '../../../../lib/urlap';
 import { EMAIL_MAX, TELEFON_MAX, type Szerepkor } from '../../../../lib/felhasznalo-validacio';
+import { ORSZAGOK } from '../../../../lib/orszagok';
 
-/** A dialógusok vezérelt attasé-mezői (mind string: az űrlap nyers értéke). */
+/** A dialógusok vezérelt attasé-mezői (mind string: az űrlap nyers értéke; az ország ISO-kód). */
 export interface AttaseMezoErtekek {
   orszag: string;
   fovaros: string;
@@ -43,7 +44,7 @@ export function AttaseMezok({
   szerepkor: Szerepkor;
   errors: MezoHibak;
 }) {
-  const set = (kulcs: keyof AttaseMezoErtekek) => (e: ChangeEvent<HTMLInputElement>) =>
+  const set = (kulcs: keyof AttaseMezoErtekek) => (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     onChange({ ...ertekek, [kulcs]: e.target.value });
 
   return (
@@ -82,17 +83,22 @@ export function AttaseMezok({
         <Blokk cim="TéT poszt">
           <div className="grid gap-3 sm:grid-cols-2">
             <Mezo id="orszag" cimke="Ország" errors={errors}>
-              <Input
+              <select
                 id="orszag"
                 name="orszag"
                 required
-                maxLength={100}
-                autoComplete="off"
-                placeholder="pl. Dél-Korea"
                 value={ertekek.orszag}
                 onChange={set('orszag')}
+                className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive"
                 {...hibaAttr(errors, 'orszag')}
-              />
+              >
+                <option value="">Válassz országot…</option>
+                {ORSZAGOK.map((o) => (
+                  <option key={o.kod} value={o.kod}>
+                    {o.nev}
+                  </option>
+                ))}
+              </select>
             </Mezo>
             <Mezo id="fovaros" cimke="Főváros" errors={errors}>
               <Input

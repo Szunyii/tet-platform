@@ -5,6 +5,7 @@ import type { FormAction } from '../../../../components/form/useMuveletForm';
 import { Card } from '../../../../components/ui/card';
 import type { TicketDetail } from '../../../../db/queries/ticket';
 import { formatDatum, formatDatumIdo } from '../../../../lib/datum';
+import { orszagNev } from '../../../../lib/orszagok';
 import type { UzenetSzerep } from '../../../../lib/ticket-szotar';
 import { cn } from '../../../../lib/utils';
 import { Monogram, StatuszBadge } from './TicketJelzesek';
@@ -41,7 +42,7 @@ export function TicketBeszelgetes({
         </div>
         <h2 className="mt-1.5 text-[15px] leading-snug font-semibold">{ticket.targy}</h2>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          {ticket.orszag} · {ticket.cimzettNev}
+          {orszagNev(ticket.orszag)} · {ticket.cimzettNev}
         </p>
       </header>
       {/* Görgethető régió: billentyűzettel is fókuszálható, hogy a nyilakkal olvasható legyen. */}

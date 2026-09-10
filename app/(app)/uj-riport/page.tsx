@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { RiportForm } from '../../../components/riport/RiportForm';
+import { orszagNev } from '../../../lib/orszagok';
 import { requireSession } from '../../../lib/session';
 import { createRiportAction } from './actions';
 
@@ -31,7 +32,7 @@ export default async function UjRiportPage() {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">
-        A bejegyzés a(z) <span className="font-medium text-foreground">{session.orszag}</span> poszthoz kerül, a te
+        A bejegyzés a(z) <span className="font-medium text-foreground">{orszagNev(session.orszag)}</span> poszthoz kerül, a te
         neveddel.
       </p>
       <RiportForm mode="create" action={createRiportAction} />

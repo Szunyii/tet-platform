@@ -9,6 +9,7 @@ import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
 import { Textarea } from '../../../../components/ui/textarea';
+import { orszagNev } from '../../../../lib/orszagok';
 import {
   isPrioKulcs,
   isTipusKulcs,
@@ -119,7 +120,7 @@ function UjTicketModal({
   const [szoveg, setSzoveg] = useState('');
 
   const cimzettItems = useMemo(
-    () => Object.fromEntries(jeloltek.map((j) => [j.id, `${j.nev} · ${j.orszag}`])),
+    () => Object.fromEntries(jeloltek.map((j) => [j.id, `${j.nev} · ${orszagNev(j.orszag)}`])),
     [jeloltek],
   );
 

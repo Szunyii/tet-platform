@@ -2,6 +2,7 @@ import { PaperclipIcon } from 'lucide-react';
 import Link from 'next/link';
 import type { RiportListItem } from '../../db/queries/riport';
 import { formatDatum, formatNaptariDatum } from '../../lib/datum';
+import { orszagNev } from '../../lib/orszagok';
 import { cn } from '../../lib/utils';
 import { Badge } from '../ui/badge';
 import { buttonVariants } from '../ui/button';
@@ -68,7 +69,7 @@ export function RiportTabla({
                 )}
               </TableCell>
               <TableCell>
-                <div>{r.orszag}</div>
+                <div>{orszagNev(r.orszag)}</div>
                 {admin && <div className="text-xs text-muted-foreground">{r.szerzoNev}</div>}
               </TableCell>
               <TableCell>

@@ -10,6 +10,7 @@ import {
 import type { FelhasznaloSor } from '../../../../db/queries/felhasznalo';
 import { formatDatum } from '../../../../lib/datum';
 import { SZEREPKOR_CIMKE } from '../../../../lib/felhasznalo-validacio';
+import { orszagNev } from '../../../../lib/orszagok';
 import { FelhasznaloMuveletek } from './FelhasznaloMuveletek';
 
 export function FelhasznaloTabla({
@@ -47,7 +48,7 @@ export function FelhasznaloTabla({
                   {SZEREPKOR_CIMKE[f.szerepkor]}
                 </Badge>
               </TableCell>
-              <TableCell>{f.orszag ?? <span className="text-muted-foreground">–</span>}</TableCell>
+              <TableCell>{f.orszag ? orszagNev(f.orszag) : <span className="text-muted-foreground">–</span>}</TableCell>
               <TableCell className="whitespace-nowrap">
                 {f.telefon ?? <span className="text-muted-foreground">–</span>}
               </TableCell>

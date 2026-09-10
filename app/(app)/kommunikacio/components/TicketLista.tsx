@@ -3,6 +3,7 @@ import { buttonVariants } from '../../../../components/ui/button';
 import { Card } from '../../../../components/ui/card';
 import type { TicketListItem } from '../../../../db/queries/ticket';
 import { formatNaptariDatum } from '../../../../lib/datum';
+import { orszagNev } from '../../../../lib/orszagok';
 import { lejartE, PRIORITASOK, SZURO_KULCSOK, SZUROK, type TicketSzuro } from '../../../../lib/ticket-szotar';
 import { cn } from '../../../../lib/utils';
 import { prioSzegely, TipusBadge } from './TicketJelzesek';
@@ -104,7 +105,7 @@ export function TicketLista({
                     {t.targy}
                   </p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {admin && `${t.orszag} · ${t.cimzettNev} · `}
+                    {admin && `${orszagNev(t.orszag)} · ${t.cimzettNev} · `}
                     {t.uzenetSzam} üzenet
                   </p>
                 </Link>

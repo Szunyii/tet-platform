@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { createContext, useActionState, useContext, useState, type ReactNode } from 'react';
 import type { LogoutState } from '../app/(app)/actions';
 import { CYCLES, DEADLINE, DEFAULT_CYCLE } from '../lib/data';
+import { orszagNev } from '../lib/orszagok';
 import { ini } from '../lib/score';
 import type { AppSession } from '../lib/session';
 
@@ -112,7 +113,7 @@ export default function AppShell({
   const [title, sub] = titleFor(pathname, user.role);
   const roleLabel = user.role === 'admin'
     ? 'NIÜ admin'
-    : `TéT attasé${user.orszag ? ' · ' + user.orszag : ''}`;
+    : `TéT attasé${user.orszag ? ' · ' + orszagNev(user.orszag) : ''}`;
 
   return (
     <AppContext.Provider value={{ user, cycle, setCycle, olvasatlan, setOlvasatlan }}>

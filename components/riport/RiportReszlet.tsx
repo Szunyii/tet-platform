@@ -2,6 +2,7 @@ import { PaperclipIcon } from 'lucide-react';
 import Link from 'next/link';
 import type { RiportDetail } from '../../db/queries/riport';
 import { formatDatum, formatNaptariDatum } from '../../lib/datum';
+import { orszagNev } from '../../lib/orszagok';
 import { formatMeret, kategoriaByKulcs } from '../../lib/riport-szotar';
 import { cn } from '../../lib/utils';
 import type { MuveletState } from '../form/useMuveletForm';
@@ -32,7 +33,7 @@ export function RiportReszlet({
         </div>
         <h2 className="text-xl leading-snug font-semibold">{riport.targy}</h2>
         <p className="text-sm text-muted-foreground">
-          {riport.szerzoNev} · {riport.orszag} · beadva {formatDatum(riport.createdAt)}
+          {riport.szerzoNev} · {orszagNev(riport.orszag)} · beadva {formatDatum(riport.createdAt)}
           {modositva && ` · módosítva ${formatDatum(riport.updatedAt)}`}
         </p>
         {szerkeszthet && (

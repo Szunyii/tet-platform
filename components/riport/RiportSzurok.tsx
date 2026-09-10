@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
+import { orszagNev } from '../../lib/orszagok';
 import { KATEGORIAK, KULCSSZAVAK } from '../../lib/riport-szotar';
 import type { SzuroErtekek } from '../../lib/riport-szuro';
 import { Button } from '../ui/button';
@@ -170,7 +171,7 @@ export function RiportSzurok({
           id="szuro-orszag"
           cimke="Ország"
           ertek={ertekek.orszag}
-          opciok={orszagok.map((o) => ({ ertek: o, cimke: o }))}
+          opciok={orszagok.map((o) => ({ ertek: o, cimke: orszagNev(o) }))}
           onChange={(v) => frissit({ orszag: v })}
           className="w-44"
         />
