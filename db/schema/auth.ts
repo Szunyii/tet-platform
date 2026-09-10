@@ -21,6 +21,13 @@ export const user = sqliteTable("user", {
   banReason: text("ban_reason"),
   banExpires: integer("ban_expires", { mode: "timestamp_ms" }),
   orszag: text("orszag"),
+  // Attasé poszt-adatai (csak attasénál töltött) és elérhetőségei. Better Auth
+  // additionalFields (lib/auth.ts); az admin UI írja őket.
+  fovaros: text("fovaros"),
+  terulet: integer("terulet"),
+  penznem: text("penznem"),
+  telefon: text("telefon"),
+  kapcsolatEmail: text("kapcsolat_email"),
 });
 
 export const session = sqliteTable(

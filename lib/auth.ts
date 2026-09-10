@@ -25,6 +25,13 @@ export const auth = betterAuth({
       // TéT attasé posztjának országa. Adminnál üres. Csak az admin API írhatja (input: false),
       // a felhasználó saját maga nem módosíthatja az /update-user végponton.
       orszag: { type: 'string', required: false, input: false },
+      // A poszt országának adatai (csak attasénál) és az attasé elérhetőségei (mindkét
+      // szerepkörnél). Ugyanaz az elv: input: false, az admin UI írja.
+      fovaros: { type: 'string', required: false, input: false },
+      terulet: { type: 'number', required: false, input: false },
+      penznem: { type: 'string', required: false, input: false },
+      telefon: { type: 'string', required: false, input: false },
+      kapcsolatEmail: { type: 'string', required: false, input: false },
     },
   },
   plugins: [
