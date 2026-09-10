@@ -8,12 +8,15 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { useState } from 'react';
 import type { MezoHibak } from '../../lib/urlap';
-import { hibaAttr, MezoHiba } from './MezoHiba';
+import { hibaAttr, leiroAttr, MezoHiba } from './MezoHiba';
 
 /**
  * Többes választás fix listából (Combobox chips) + opcionális „egyéb" szabadszöveg. A
  * kiválasztott értékek egyenként rejtett inputban mennek (`name` többször) → a validátor
  * `fd.getAll(name)`-mel olvassa. A beviteli mező id-ja = `id` (ide fókuszál a hook).
+ *
+ * A `name`-et szándékosan NEM kapja meg maga a `<Combobox>` – a Base UI akkor saját rejtett
+ * inputokat is renderelne, és az értékek duplán mennének be a submitba.
  */
 export function CimkeValaszto<T extends string>({
   id, name, cimke, sugo, items, value, onChange, errors, egyeb,
@@ -28,7 +31,7 @@ export function CimkeValaszto<T extends string>({
   return (
     <div className="flex flex-col gap-1.5">
       <Label id={`${id}-label`} htmlFor={id}>{cimke}</Label>
-      {sugo && <p className="text-xs text-muted-foreground">{sugo}</p>}
+      {sugo && <p id={`${id}-sugo`} className="text-xs text-muted-foreground">{sugo}</p>}
       {value.map((v) => <input key={v} type="hidden" name={name} value={v} />)}
       <Combobox multiple items={items} value={value} onValueChange={(v) => onChange(v as T[])} onOpenChange={setNyitva}>
         <ComboboxChips ref={anchor} id={`${id}-doboz`} tabIndex={-1} className="cursor-text">
@@ -44,7 +47,7 @@ export function CimkeValaszto<T extends string>({
                   id={id}
                   placeholder={kivalasztott.length === 0 ? 'Válassz a listából…' : ''}
                   aria-labelledby={`${id}-label`}
-                  {...hibaAttr(errors, id)}
+                  {...leiroAttr(errors, id, Boolean(sugo))}
                   onKeyDown={(e) => { if (e.key === 'Escape' && !nyitva) e.preventBaseUIHandler(); }}
                 />
               </>

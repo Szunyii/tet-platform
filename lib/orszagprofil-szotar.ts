@@ -78,6 +78,8 @@ export function rendezvenyTipus(v: unknown): RendezvenyTipus {
 
 export const SZOVEG_MAX = 4000;
 export const ROVID_MAX = 200;
+/** A számmezők nyers szövegének hossza; a legszigorúbb szabály (lakosság ezreselválasztókkal) is belefér. */
+export const SZAM_MAX_HOSSZ = 20;
 export const OSSZEGZES_MAX = 500;
 export const TOP_VALLALAT_MAX = 10;
 export const RENDEZVENY_MAX = 10;

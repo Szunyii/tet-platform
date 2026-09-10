@@ -18,3 +18,9 @@ export function MezoHiba({ mezo, errors, alert = false }: { mezo: string; errors
 export function hibaAttr(errors: MezoHibak, mezo: string) {
   return errors[mezo] ? { 'aria-invalid': true as const, 'aria-describedby': `${mezo}-hiba` } : {};
 }
+
+/** aria-invalid + aria-describedby: a súgó (`<mezo>-sugo`, ha van) és a hiba (`<mezo>-hiba`, ha van) együtt. */
+export function leiroAttr(errors: MezoHibak, mezo: string, vanSugo = false) {
+  const ids = [vanSugo && `${mezo}-sugo`, errors[mezo] && `${mezo}-hiba`].filter(Boolean).join(' ');
+  return { ...(errors[mezo] ? { 'aria-invalid': true as const } : {}), ...(ids ? { 'aria-describedby': ids } : {}) };
+}

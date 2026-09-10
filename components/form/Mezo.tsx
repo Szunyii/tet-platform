@@ -4,8 +4,9 @@ import type { ReactNode } from 'react';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
+import { cn } from '../../lib/utils';
 import type { MezoHibak } from '../../lib/urlap';
-import { hibaAttr, MezoHiba } from './MezoHiba';
+import { leiroAttr, MezoHiba } from './MezoHiba';
 
 /**
  * Címke + opcionális súgó + mező + hibaüzenet; a hiba kulcsa a mező id-ja. Konvenció az
@@ -18,7 +19,7 @@ export function Mezo({
   id: string; cimke: string; sugo?: string; errors: MezoHibak; children: ReactNode; className?: string;
 }) {
   return (
-    <div className={className ?? 'flex flex-col gap-1.5'}>
+    <div className={cn('flex flex-col gap-1.5', className)}>
       <Label id={`${id}-label`} htmlFor={id}>{cimke}</Label>
       {sugo && <p id={`${id}-sugo`} className="text-xs text-muted-foreground">{sugo}</p>}
       {children}
@@ -29,15 +30,15 @@ export function Mezo({
 
 /** Többsoros szövegmező (vezérelt). */
 export function SzovegMezo({
-  id, name, cimke, sugo, value, onChange, max, errors, sorok = 4,
+  id, name, cimke, sugo, value, onChange, max, errors, sorok = 4, placeholder,
 }: {
   id: string; name: string; cimke: string; sugo?: string; value: string; onChange: (v: string) => void;
-  max: number; errors: MezoHibak; sorok?: number;
+  max: number; errors: MezoHibak; sorok?: number; placeholder?: string;
 }) {
   return (
     <Mezo id={id} cimke={cimke} sugo={sugo} errors={errors}>
-      <Textarea id={id} name={name} rows={sorok} maxLength={max} value={value}
-        onChange={(e) => onChange(e.target.value)} {...hibaAttr(errors, id)} />
+      <Textarea id={id} name={name} rows={sorok} maxLength={max} placeholder={placeholder} value={value}
+        onChange={(e) => onChange(e.target.value)} {...leiroAttr(errors, id, Boolean(sugo))} />
     </Mezo>
   );
 }
@@ -52,7 +53,7 @@ export function RovidMezo({
   return (
     <Mezo id={id} cimke={cimke} sugo={sugo} errors={errors}>
       <Input id={id} name={name} maxLength={max} autoComplete="off" placeholder={placeholder} value={value}
-        onChange={(e) => onChange(e.target.value)} {...hibaAttr(errors, id)} />
+        onChange={(e) => onChange(e.target.value)} {...leiroAttr(errors, id, Boolean(sugo))} />
     </Mezo>
   );
 }
