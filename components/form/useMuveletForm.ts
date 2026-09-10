@@ -23,8 +23,8 @@ export type FormAction = (prev: MuveletState, formData: FormData) => Promise<Muv
  * - Ha az action hívása elutasítással tér vissza (hálózati hiba, újraindított szerver, elavult
  *   action id), nem dobjuk tovább – az az egész oldalt hibaképernyőre vinné –, hanem űrlap-
  *   szintű hibát adunk. A Next control-flow kivételeit (redirect/notFound) tovább kell dobni.
- * - Sikertelen beküldés után a fókusz az első hibás mezőre ugrik (a mező id-ja = a hiba
- *   kulcsa), így billentyűzettel és felolvasóval is észlelhető a hiba.
+ * - Sikertelen beküldés után a fókusz a DOM-sorrendben első hibás mezőre ugrik (a mező
+ *   id-ja = a hiba kulcsa), így billentyűzettel és felolvasóval is észlelhető a hiba.
  * Visszaad: [state, formAction, pending].
  */
 export function useMuveletForm(action: FormAction, siker?: string, onKesz?: () => void) {
@@ -49,8 +49,13 @@ export function useMuveletForm(action: FormAction, siker?: string, onKesz?: () =
   const [state] = result;
 
   useEffect(() => {
-    const elso = state.errors && Object.keys(state.errors).find((k) => k !== 'form');
-    if (elso) document.getElementById(elso)?.focus();
+    // DOM-sorrend szerint az első hibás mező (nem a hibaobjektum kulcssorrendje); a `form`
+    // kulcs űrlap-szintű, arra nem fókuszálunk.
+    const kulcsok = Object.keys(state.errors ?? {}).filter((k) => k !== 'form');
+    const elso = kulcsok.length
+      ? document.querySelector<HTMLElement>(kulcsok.map((k) => `#${CSS.escape(k)}`).join(','))
+      : null;
+    elso?.focus();
   }, [state]);
 
   return result;

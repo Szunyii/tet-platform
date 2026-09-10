@@ -57,7 +57,11 @@ export function MuveletDialog({
         onOpenChange(next);
       }}
     >
-      <DialogContent showCloseButton={!pending} className={cn(szeles && 'sm:max-w-lg')}>
+      {/* Kis képernyőn a hosszú űrlap különben nem görgethető: a Base UI zárolja a body görgetést. */}
+      <DialogContent
+        showCloseButton={!pending}
+        className={cn('max-h-[calc(100dvh-2rem)] overflow-y-auto', szeles && 'sm:max-w-lg')}
+      >
         <DialogHeader>
           <DialogTitle>{cim}</DialogTitle>
           <DialogDescription>{leiras}</DialogDescription>
