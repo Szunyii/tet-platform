@@ -344,7 +344,7 @@ szöveg.
 
 Csak a `useApp()`-ot, a `useTerkepAllapot`-ot, a `rangsor`/`csoportok`/`tartomany` számítását
 (`useMemo`) és az elrendezést tartja: térkép-kártya (fejléc + `VilagTerkep`) és `TerkepPanel`.
-A `page.tsx` változatlanul `key={kezdoKod}`-dal rendereli; az év szándékosan nincs a key-ben.
+A `page.tsx` **nem** ad `key`-t a nézetnek: a `?o=` változását a `useTerkepAllapot` kezeli render közben (a kijelölés a kezdő kódra vált, a mutató, a szűrő és az összehasonlítás-halmaz megmarad).
 
 ## Adatfolyam
 
@@ -413,3 +413,10 @@ Nincs tesztkeretrendszer. Elvárt lépések:
   hely (`HoverAllapot.magassag`); `+`/`−` törli az aktív régiót; pinek külön `<g data-pinek>`
   rétegben; a sraffozás `<pattern>`-je `scale(1/k)`; átlátszó `<rect>` az `<svg>` alján a tooltip
   törléséhez a gömbön kívül.
+- **Task 5 minőségi review nyomán**: a `useTerkepAllapot` a `?o=` (kezdoKod) változására render
+  közben frissíti a kijelölést (előző érték tárolva), ezért a `page.tsx` nem ad `key`-t – így a
+  „Teljes profil" → „Vissza a térképre" út nem dobja el az összehasonlítás-halmazt és a mutatót;
+  a hook `vsTele`-t is ad, `VS_MIN = 2` a `VS_MAX = 4` mellett, `vs` `readonly`, a mutató-kulcs
+  állapota `MutatoKulcs` típusú; a csík chipje `outline` változat, a × gomb fókuszgyűrűvel (`h-6`,
+  `overflow-visible`); a tooltip arra az oldalra kerül, ahol több a hely (nincs fix küszöb); a
+  jelmagyarázat kategorikus ágon is a mutató címével kezd.

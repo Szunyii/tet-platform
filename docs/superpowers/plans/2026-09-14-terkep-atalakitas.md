@@ -588,9 +588,6 @@ import type { Mutato, Rangsor } from '../../../../lib/terkep-mutatok';
  */
 export interface HoverAllapot { nev: string; o: TerkepOrszag | null; x: number; y: number; magassag: number }
 
-/** Ennél kisebb y-nál nincs hely a kurzor fölött (a tooltip legfeljebb ~140 px magas): a kurzor alá kerül. */
-const FLIP_Y = 150;
-
 /** A mutató sora: számszerűnél érték + helyezés (ha a rangsorban van), kategorikusnál a kategória. */
 function mutatoSor(o: TerkepOrszag, mutato: Mutato, rangsor: Rangsor | null): string | null {
   if (mutato.tipus === 'szam') {
@@ -607,9 +604,9 @@ function mutatoSor(o: TerkepOrszag, mutato: Mutato, rangsor: Rangsor | null): st
 export function TerkepTooltip({ hover, mutato, rangsor }: { hover: HoverAllapot; mutato: Mutato; rangsor: Rangsor | null }) {
   const { o } = hover;
   const sor = o ? mutatoSor(o, mutato, rangsor) : null;
-  // A kártya `overflow-hidden`, ezért a térkép tetejénél a kurzor fölé rajzolt tooltip levágódna: ott
-  // alá kerül – de csak ha alatta tényleg van hely (alacsony térképen inkább fent marad).
-  const lent = hover.y < FLIP_Y && hover.magassag - hover.y > FLIP_Y;
+  // A kártya `overflow-hidden`, ezért a tooltip arra az oldalra kerül, ahol több a hely: a kurzor
+  // fölé, ha ott legalább annyi hely van, mint alatta, különben alá.
+  const lent = hover.magassag - hover.y > hover.y;
   return (
     <div
       role="tooltip"
@@ -688,9 +685,9 @@ export function Jelmagyarazat({ mutato, tartomany, csoportok, iparag }: {
             {mutato.skala === 'log' && <span className="ml-1 font-normal text-muted-foreground">(logaritmikus skála)</span>}
           </span>
           {tartomany && (
-            <span className="flex items-center gap-2 font-mono">
+            <span className="flex min-w-0 items-center gap-2 font-mono">
               <span>{formatSzam(tartomany.min, mutato.utotag)}</span>
-              <span className="h-2 w-32 rounded-sm" style={{ background: `linear-gradient(90deg, ${SKALA_SZINEK.join(', ')})` }} />
+              <span className="h-2 w-32 shrink rounded-sm" style={{ background: `linear-gradient(90deg, ${SKALA_SZINEK.join(', ')})` }} />
               <span>{formatSzam(tartomany.max, mutato.utotag)}</span>
             </span>
           )}
@@ -699,6 +696,7 @@ export function Jelmagyarazat({ mutato, tartomany, csoportok, iparag }: {
         </>
       ) : (
         <>
+          <span className="font-semibold text-foreground">{mutato.cimke}</span>
           {csoportok.map((cs) => (
             <span key={cs.kategoria ?? '__nincs'} className="flex items-center gap-1.5"><Negyzet szin={cs.szin} /> {cs.cimke}</span>
           ))}
@@ -1092,18 +1090,24 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - [ ] **Step 1: `useTerkepAllapot.ts`**
 
 ```ts
+'use client';
+
 import { useCallback, useState } from 'react';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
-import { ALAP_MUTATO, mutatoByKulcs, type Mutato } from '../../../../lib/terkep-mutatok';
+import { ALAP_MUTATO, mutatoByKulcs, type Mutato, type MutatoKulcs } from '../../../../lib/terkep-mutatok';
 
+/** Ennyi országtól látszik az összehasonlító tábla. */
+export const VS_MIN = 2;
 /** Legfeljebb ennyi ország lehet az összehasonlításban. */
 export const VS_MAX = 4;
 
 export interface TerkepAllapot {
   /** Egyes kijelölés (a kivonat országa). */
   kod: string | null;
-  /** Összehasonlítás-halmaz a hozzáadás sorrendjében. */
-  vs: string[];
+  /** Összehasonlítás-halmaz a hozzáadás sorrendjében; ne mutáld. */
+  vs: readonly string[];
+  /** `vs.length >= VS_MAX` – a hozzáadás-gombok letiltásához. */
+  vsTele: boolean;
   mutato: Mutato;
   /** Iparág-szűrő, '' = nincs. */
   iparag: string;
@@ -1114,22 +1118,31 @@ export interface TerkepAllapot {
   vsHozzaad: (kod: string) => void;
   vsKivesz: (kod: string) => void;
   vsTorol: () => void;
-  /** A kijelölést törli, így (vs.length >= 2 esetén) az összehasonlító panel látszik. */
+  /** A kijelölést törli, így (vs.length >= VS_MIN esetén) az összehasonlító panel látszik. */
   osszehasonlit: () => void;
 }
 
 /**
  * A térkép-oldal kliens-állapota. A panel sorrendje a hívóban: `kod` → kivonat, különben
- * `vs.length >= 2` → összehasonlítás, különben rangsor. Évváltáskor (új `adatok`) a nem létező
- * kijelölés és halmaz-elemek render közben kikerülnek (a „prop változásra állapot igazítása" minta).
+ * `vs.length >= VS_MIN` → összehasonlítás, különben rangsor. Évváltáskor (új `adatok`) a nem
+ * létező kijelölés és halmaz-elemek render közben kikerülnek, a `?o=` (kezdoKod) változására a
+ * kijelölés frissül, a többi állapot marad – ez a React „prop változásra állapot igazítása" mintája,
+ * ezért a page NEM ad `key`-t a nézetnek. A visszaadott objektum renderenként új (nem memoizálható).
  */
 export function useTerkepAllapot(adatok: TerkepOrszag[], kezdoKod: string | null): TerkepAllapot {
   const letezik = (k: string) => adatok.some((o) => o.kod === k);
-  const [kod, setKod] = useState<string | null>(kezdoKod && letezik(kezdoKod) ? kezdoKod : null);
-  const [vs, setVs] = useState<string[]>([]);
-  const [mutatoKulcs, setMutatoKulcsState] = useState<string>(ALAP_MUTATO);
+  const [kod, setKod] = useState<string | null>(() => (kezdoKod && letezik(kezdoKod) ? kezdoKod : null));
+  const [vs, setVs] = useState<readonly string[]>([]);
+  const [mutatoKulcs, setMutatoKulcsState] = useState<MutatoKulcs>(ALAP_MUTATO);
   const [iparag, setIparag] = useState('');
 
+  // Új `?o=` (pl. „Vissza a térképre" a profil oldalról): a kijelölés a kezdő kódra vált; ha a
+  // paraméter eltűnik, a meglévő kijelölés marad.
+  const [elozoKezdo, setElozoKezdo] = useState(kezdoKod);
+  if (kezdoKod !== elozoKezdo) {
+    setElozoKezdo(kezdoKod);
+    if (kezdoKod && letezik(kezdoKod)) setKod(kezdoKod);
+  }
   if (kod && !letezik(kod)) setKod(null);
   const vsElo = vs.filter(letezik);
   if (vsElo.length !== vs.length) setVs(vsElo);
@@ -1143,7 +1156,7 @@ export function useTerkepAllapot(adatok: TerkepOrszag[], kezdoKod: string | null
   const osszehasonlit = useCallback(() => setKod(null), []);
 
   return {
-    kod, vs, mutato: mutatoByKulcs(mutatoKulcs), iparag,
+    kod, vs, vsTele: vs.length >= VS_MAX, mutato: mutatoByKulcs(mutatoKulcs), iparag,
     kivalaszt, bezar, setMutatoKulcs, setIparag, vsHozzaad, vsKivesz, vsTorol, osszehasonlit,
   };
 }
@@ -1158,6 +1171,7 @@ import { X } from 'lucide-react';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { Badge } from '../../../../components/ui/badge';
 import { Button } from '../../../../components/ui/button';
+import { VS_MIN } from './useTerkepAllapot';
 
 /** A panel tetején: az összehasonlítás-halmaz chipjei és az „Összehasonlítás (n)" gomb. */
 export function OsszehasonlitasCsik({ orszagok, onKivesz, onOsszehasonlit }: {
@@ -1170,11 +1184,12 @@ export function OsszehasonlitasCsik({ orszagok, onKivesz, onOsszehasonlit }: {
     <div className="flex flex-wrap items-center gap-1.5 rounded-lg border bg-muted/40 px-2.5 py-2 text-xs">
       <span className="text-muted-foreground">Összehasonlítás:</span>
       {orszagok.map((o) => (
-        <Badge key={o.kod} variant="secondary" className="gap-1 pr-1">
+        // h-6 + overflow-visible: a Badge alapból h-5 és overflow-hidden, ami levágná a gomb fókuszgyűrűjét.
+        <Badge key={o.kod} variant="outline" className="h-6 gap-1 overflow-visible bg-background pr-1">
           {o.nev}
           <button
             type="button"
-            className="rounded-full p-0.5 hover:bg-foreground/10"
+            className="rounded-full p-0.5 outline-none hover:bg-foreground/10 focus-visible:ring-3 focus-visible:ring-ring/50"
             aria-label={`${o.nev} kivétele`}
             onClick={() => onKivesz(o.kod)}
           >
@@ -1182,7 +1197,7 @@ export function OsszehasonlitasCsik({ orszagok, onKivesz, onOsszehasonlit }: {
           </button>
         </Badge>
       ))}
-      {orszagok.length >= 2 ? (
+      {orszagok.length >= VS_MIN ? (
         <Button type="button" size="xs" className="ml-auto" onClick={onOsszehasonlit}>
           Összehasonlítás ({orszagok.length})
         </Button>
@@ -1282,10 +1297,11 @@ export function RangsorPanel({ mutato, rangsor, csoportok, tartomany, szamlalo, 
   /** A fejléc számláló szövege (pl. „14 ország adattal · 4 adat nélkül"). */
   szamlalo: string;
   vs: readonly string[];
+  /** A halmaz tele (VS_MAX): a „+" gombok letiltva. */
+  vsTele: boolean;
   onKivalaszt: (kod: string) => void;
   onVsToggle: (kod: string) => void;
 }) {
-  const vsTele = vs.length >= VS_MAX;
   // A sáv ugyanazt a (lineáris vagy symlog) arányt használja, mint a térkép színe.
   const sav = mutato.tipus === 'szam' && tartomany ? arany(mutato, tartomany) : () => 1;
   const sor = (o: TerkepOrszag, extra: { hely?: number; sav?: number; ertek?: string } = {}) => (
@@ -1587,10 +1603,10 @@ import { OsszehasonlitasCsik } from './OsszehasonlitasCsik';
 import { OsszehasonlitasPanel } from './OsszehasonlitasPanel';
 import { ProfilKivonat } from './ProfilKivonat';
 import { RangsorPanel } from './RangsorPanel';
-import { VS_MAX, type TerkepAllapot } from './useTerkepAllapot';
+import { VS_MIN, type TerkepAllapot } from './useTerkepAllapot';
 
 /**
- * A térkép melletti panel: `kod` → kivonat (fölötte a csík, ha van halmaz); különben `vs` ≥ 2 →
+ * A térkép melletti panel: `kod` → kivonat (fölötte a csík, ha van halmaz); különben `vs` ≥ VS_MIN →
  * összehasonlítás; különben rangsor (fölötte a csík, ha 1 elem van a halmazban).
  */
 export function TerkepPanel({ adatok, allapot, rangsor, csoportok, tartomany, szamlalo, ev, most, valasztEvAction }: {
@@ -1605,10 +1621,9 @@ export function TerkepPanel({ adatok, allapot, rangsor, csoportok, tartomany, sz
   valasztEvAction: (formData: FormData) => Promise<void>;
 }) {
   const { user } = useApp();
-  const { kod, vs, mutato } = allapot;
+  const { kod, vs, vsTele, mutato } = allapot;
   const sel = kod ? adatok.find((o) => o.kod === kod) ?? null : null;
   const vsOrszagok = vs.map((k) => adatok.find((o) => o.kod === k)).filter((o): o is TerkepOrszag => !!o);
-  const vsTele = vs.length >= VS_MAX;
   const jeloltLista = useMemo(() => jeloltek(adatok, vs, mutato), [adatok, vs, mutato]);
   const onVsToggle = (k: string) => (vs.includes(k) ? allapot.vsKivesz(k) : allapot.vsHozzaad(k));
   const csik = vs.length > 0 && (
@@ -1635,7 +1650,7 @@ export function TerkepPanel({ adatok, allapot, rangsor, csoportok, tartomany, sz
       </>
     );
   }
-  if (vsOrszagok.length >= 2) {
+  if (vsOrszagok.length >= VS_MIN) {
     return (
       <OsszehasonlitasPanel
         orszagok={vsOrszagok}
@@ -1658,6 +1673,7 @@ export function TerkepPanel({ adatok, allapot, rangsor, csoportok, tartomany, sz
         tartomany={tartomany}
         szamlalo={szamlalo}
         vs={vs}
+        vsTele={vsTele}
         onKivalaszt={allapot.kivalaszt}
         onVsToggle={onVsToggle}
       />
@@ -1686,6 +1702,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 
 **Files:**
 - Rewrite: `app/(app)/terkep/components/TerkepNezet.tsx`
+- Modify: `app/(app)/terkep/page.tsx` (a `key={kezdoKod}` kikerül)
 - Delete: `app/(app)/terkep/components/TerkepUres.tsx`, `components/WorldMap.tsx`, `public/tet-world-map.js`
 
 - [ ] **Step 1: `TerkepNezet.tsx` teljes tartalma**
@@ -1823,6 +1840,27 @@ export function TerkepNezet({
 }
 ```
 
+- [ ] **Step 1b: `page.tsx` – nincs `key`**
+
+A `useTerkepAllapot` maga reagál a `?o=` változására (a kijelölés frissül, a mutató, a szűrő és az
+összehasonlítás-halmaz megmarad – pl. „Teljes profil" → „Vissza a térképre" után), ezért a `key`
+és a hozzá tartozó komment kikerül. A `return` blokk új alakja:
+
+```tsx
+  // A ?o= változását (vissza/előre, oldalsáv, „Vissza a térképre") a useTerkepAllapot kezeli
+  // render közben: a kijelölés frissül, a mutató, a szűrő és az összehasonlítás-halmaz megmarad.
+  // Ezért nincs key – az évváltásnál is a hook igazítja az állapotot, ha az ország eltűnik.
+  return (
+    <TerkepNezet
+      adatok={listTerkepAdat(ev)}
+      ev={ev}
+      most={most}
+      kezdoKod={kezdoKod}
+      valasztEvAction={valasztEvAction}
+    />
+  );
+```
+
 - [ ] **Step 2: A régi térkép törlése**
 
 ```bash
@@ -1866,7 +1904,7 @@ Expected: 0 típushiba, a build zöld. Ha a build nem létező `app/...` modulra
 - [ ] **Step 6: Commit**
 
 ```bash
-git add "app/(app)/terkep/components/TerkepNezet.tsx"
+git add "app/(app)/terkep/components/TerkepNezet.tsx" "app/(app)/terkep/page.tsx"
 git commit -m "feat(terkep): TerkepNezet mutató-választóval, VilagTerkep és TerkepPanel bekötése; régi webkomponens törölve
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
@@ -1903,7 +1941,7 @@ A `Route-ok: \`/terkep\` (…)` zárójeles részt cseréld erre (a `/orszagprof
 A `- A \`/terkep\` page a \`TerkepNezet\`-et \`key={kezdoKod}\`-dal rendereli…` pontot cseréld:
 
 ```
-- A `/terkep` page a `TerkepNezet`-et `key={kezdoKod}`-dal rendereli, hogy a `?o=` változásakor (vissza/előre, oldalsáv) a kezdő kiválasztás frissüljön; az év szándékosan nincs a key-ben, a `useTerkepAllapot` render közben törli a kijelölést és a halmaz nem létező elemeit, ha az ország eltűnik az új év adataiból. A mutató, a szűrő és az összehasonlítás-halmaz kliens-állapot, nem URL-paraméter.
+- A `/terkep` page **nem** ad `key`-t a `TerkepNezet`-nek: a `?o=` változását (vissza/előre, oldalsáv, „Vissza a térképre") a `useTerkepAllapot` kezeli render közben (a kijelölés a kezdő kódra vált, a mutató, a szűrő és az összehasonlítás-halmaz megmarad), és ugyanígy törli a kijelölést és a halmaz nem létező elemeit, ha az ország eltűnik az új év adataiból. A mutató, a szűrő és az összehasonlítás-halmaz kliens-állapot, nem URL-paraméter.
 ```
 
 - [ ] **Step 4: README.md**
@@ -1939,3 +1977,4 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - **Task 2 (minőségi review nyomán):** a számszerű mutató `skala: 'linearis' | 'log'` mezőt kapott; GDP, GDP/fő és lakosság symlog skálán színeződik (lineárisan a nagyságrendi különbség miatt szinte minden ország az első fokozatba esne). Új `arany(m, t)` adja a 0–1 arányt, a `szinSkala(m, t)` erre épül (mindig `rgb()` string), a rangsor sávja is ezt használja. A számszerű `cimke`-k rövidek, egység nélkül (a `MEZO_CIMKEK` címkéi már tartalmazták az egységet, és az `utotag` duplázta volna: „GDP (milliárd USD): 4 200 mrd USD"). `MUTATO_TABLA` kimerítő kulcs-térkép, `SZAM_MUTATOK`/`KATEGORIA_MUTATOK` export, `Tartomany` típus. `csoportok` a `sorrend`-ben nem szereplő kategóriát a „nincs" csoportba teszi (az `orszagSzin`-nel egyezően). `TERKEP_SZINEK.halvany` `#ced5dd` (az eredeti `#e3e7ec` a szárazföldtől megkülönböztethetetlen volt, ΔE ≈ 1). A Task 3–10 kódja ehhez igazítva.
 - **Task 3 (minőségi review nyomán):** a `TerkepTooltip` a térkép tetejéhez közel (y < 150 px) a kurzor alá kerül (a kártya `overflow-hidden` levágná); a `Jelmagyarazat` `iparag` propot kap és aktív szűrőnél „nem felel meg a szűrőnek" sort mutat (`halvany`), `max-h-[45%] overflow-y-auto`, a sraffozás sűrűsége a térkép `<pattern>`-jével azonos, explicit `keret` prop, `Tartomany` típus; a `useVilagAtlasz` `'use client'` és „ne mutáld" megjegyzés; új `geoNev(geo)` a `lib/orszagok.ts`-ben, a poszt nélküli poligon tooltipje magyar nevet mutat (a Task 4 `TerkepRetegek`-je ezt hívja, a tooltip x-vágása 120 px); régió-gombok `default`/`outline`.
 - **Task 4 (minőségi review nyomán):** a `regioTranszform` maga tartja be a k ≥ 1 és a `translateExtent` korlátot (a `zoom.transform` nem alkalmaz constrain-t – az „Amerika" nézet 209 egységgel lelógott és az első húzásnál ugrott); a **jelmagyarázat a térkép alá, normál folyásba** került (lebegve elnyelte Dél-Amerika egérműveleteit), így nincs `max-h`/görgetés; a betöltő/hiba helykitöltő `aspect-[960/505]` (nincs layout-ugrás); a tooltip csak akkor fordul a kurzor alá, ha alatta is van hely (`HoverAllapot.magassag`); a `+`/`−` gomb törli az aktív régiót; a pinek külön `<g data-pinek>` rétegben, a sugár-effect csak `adatok` változásra fut; a sraffozás `<pattern>`-je a zoom-kezelőben `scale(1/k)`-val visszaskálázva; átlátszó `<rect>` az `<svg>` alján törli a tooltipet a gömbön kívüli sávban; a jelmagyarázat sraffja `135deg` (a `<pattern>` irányával azonos), `backgroundColor`; `NEV_GEO_SZERINT: ReadonlyMap`.
+- **Task 5 (minőségi review nyomán):** a `useTerkepAllapot` a `?o=` (kezdoKod) változására render közben frissíti a kijelölést (előző érték tárolva), ezért a `page.tsx` **nem** ad `key`-t a nézetnek – a „Teljes profil" → „Vissza a térképre" út nem dobja el a mutatót, a szűrőt és az összehasonlítás-halmazt (Task 9 Step 1b). A hook `vsTele`-t ad (Task 6/8 ezt kapja propként), `VS_MIN = 2`, `vs` `readonly`, `useState<MutatoKulcs>`, lusta kezdőérték, `'use client'`. A csík chipje `outline` változat (a `secondary` a `bg-muted/40` sávon nem látszott), a × gomb `focus-visible` gyűrűvel, a Badge `h-6 overflow-visible`. A tooltip a tágasabb oldalra kerül (`magassag - y > y`), nincs fix küszöb; a jelmagyarázat kategorikus ágon is a mutató címével kezd, a gradiens-sor `min-w-0`/`shrink`.
