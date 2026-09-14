@@ -132,3 +132,14 @@ modulban; a `listEvek` törölhető, ha nem marad hívója). Szöveg nincs profi
   (2026)" ugyanígy. Kézzel `/orszagprofil/JP/szerkesztes` 2025-ös cookie-val → 404.
 - Érvénytelen cookie (`tet-ev=abc` vagy 1999) → aktuális év.
 - Monitoring cím követi a fejlécet.
+
+## Eltérések a megvalósításban
+
+- `listTerkepAdat(ev)` – a `most` paraméter nem kell, az állapot az `ev`-hez viszonyít (`profilAllapot(profilEv, viszonyitasiEv)`).
+- `ALLAPOT_CIMKE.friss` = „Adott évi profil" (nem „Az évi profil"), a térkép számlálója „N profil (2025)".
+- A fejléc selectje nem `disabled` a váltás alatt, hanem `useOptimistic`-kal azonnal az új évet mutatja és `aria-busy`; a hiba `unstable_rethrow` után csak logolódik.
+- `parseEv` közös parser a helperben és az actionben; az attasé évlistája `EV_MIN..most`-ra szűrve; admin lista `Math.max(0, …)` védelemmel.
+- `SzerkesztesGomb` kapott `feliratMost` propot (a form-ág felirata nem függ a nézett év állapotától), a form-gomb `KuldGomb` (`useFormStatus`, pending). A térkép a jogot `canEditProfil`-lal számolja a `useApp().user`-ből, a `TerkepNezet` nem kap `sajatKod`/`admin` propot.
+- A `/terkep` `key`-ében az év nincs benne: évváltáskor a kiválasztás, a fül és a szűrő megmarad, a `TerkepNezet` render közben törli a kiválasztást, ha az ország eltűnik.
+- Profil oldal üres évnél: ha van korábbi profil (a jelvény „Elavult profil · 2025"), a szöveg megnevezi és egy form-gomb („Ugrás a(z) 2025. évi profilra", `valasztEvAction`) átvált rá – automatikus visszaesés továbbra sincs.
+- `mentBlokkAction` és a CLAUDE.md: egyetlen `revalidatePath('/', 'layout')` (korábbi feature), a `lib/` kivétel-lista bővült a `lib/valasztott-ev.ts`-sel.

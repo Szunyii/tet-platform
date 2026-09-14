@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: 'Országprofil' };
 export default async function TerkepPage({
   searchParams,
 }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const session = await requireSession();
+  await requireSession();
   const most = aktualisEv();
   const ev = await getValasztottEv(most);
   const o = (await searchParams).o;
@@ -26,8 +26,6 @@ export default async function TerkepPage({
       adatok={listTerkepAdat(ev)}
       ev={ev}
       most={most}
-      sajatKod={session.orszag}
-      admin={session.role === 'admin'}
       kezdoKod={kezdoKod}
       valasztEvAction={valasztEvAction}
     />

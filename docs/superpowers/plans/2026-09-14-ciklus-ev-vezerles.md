@@ -32,7 +32,7 @@
 - Modify: `app/(app)/layout.tsx`
 - Modify: `components/AppShell.tsx`
 
-- [ ] **Step 1: Helper**
+- [x] **Step 1: Helper**
 
 `lib/valasztott-ev.ts`:
 
@@ -63,7 +63,7 @@ export const getValasztottEv = cache(async (most: number): Promise<number> => {
 });
 ```
 
-- [ ] **Step 2: Server action**
+- [x] **Step 2: Server action**
 
 `app/(app)/actions.ts` – bővítsd az importokat és add hozzá az actiont a `logoutAction` után:
 
@@ -112,7 +112,7 @@ export async function valasztEvAction(formData: FormData): Promise<void> {
 }
 ```
 
-- [ ] **Step 3: Layout**
+- [x] **Step 3: Layout**
 
 `app/(app)/layout.tsx` teljes új tartalma:
 
@@ -164,7 +164,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 }
 ```
 
-- [ ] **Step 4: AppShell**
+- [x] **Step 4: AppShell**
 
 `components/AppShell.tsx` módosításai:
 
@@ -244,12 +244,12 @@ Fejléc select:
 
 A sidebar „Aktív ciklus: {ev}" sora változatlan. A monitoring oldal (`const { ev } = useApp()`) változatlanul fordul.
 
-- [ ] **Step 5: Típusellenőrzés és grep**
+- [x] **Step 5: Típusellenőrzés és grep**
 
 Run: `npx tsc --noEmit` → nincs hiba.
 Run: `grep -rn "setEv\|aktualisEv=" components app --include='*.tsx'` → csak a `TerkepNezet`/`ProfilKivonat`/`terkep/page.tsx` `aktualisEv` propja (Task 2 cseréli), `setEv` sehol.
 
-- [ ] **Step 6: Böngészős ellenőrzés**
+- [x] **Step 6: Böngészős ellenőrzés**
 
 `B=~/.claude/skills/gstack/browse/dist/browse`, admin bejelentkezés (`$B goto http://localhost:3000/login`, `$B fill` + `$B click`).
 
@@ -270,7 +270,7 @@ Expected: `Aktív ciklus: 2026` (érvénytelen év → aktuális év). Ugyanez `
 6. Attasé (`masodik.attase@niu.hu`, új böngésző-session: `$B goto http://localhost:3000/login` után előbb kijelentkezés a fejléc gombjával): opciók `["2026","2025"]`.
 7. `$B console --errors` → üres.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add lib/valasztott-ev.ts "app/(app)/actions.ts" "app/(app)/layout.tsx" components/AppShell.tsx
@@ -291,7 +291,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Modify: `app/(app)/terkep/components/TerkepNezet.tsx`
 - Modify: `app/(app)/terkep/components/ProfilKivonat.tsx`
 
-- [ ] **Step 1: Lekérdezés évnézetre**
+- [x] **Step 1: Lekérdezés évnézetre**
 
 `db/queries/orszagprofil.ts` – a `listTerkepAdat` docblockja és szignatúrája, valamint a profil-válogató ciklus:
 
@@ -323,11 +323,11 @@ export function listTerkepAdat(ev: number): TerkepOrszag[] {
 
 és az állapot sora: `allapot: profilAllapot(prof?.ev ?? null, ev),`. Az `aktualisEv` paraméter-név minden előfordulása `ev`-re cserélve a függvényben.
 
-- [ ] **Step 2: Címke**
+- [x] **Step 2: Címke**
 
 `lib/orszagprofil-szotar.ts` `ALLAPOT_CIMKE`: `friss: 'Idei profil'` → `friss: 'Az évi profil'` (az `AllapotBadge` docblock példáját is: „Az évi profil · 2026").
 
-- [ ] **Step 3: SzerkesztesGomb**
+- [x] **Step 3: SzerkesztesGomb**
 
 `components/orszagprofil/SzerkesztesGomb.tsx`:
 
@@ -373,7 +373,7 @@ export function SzerkesztesGomb({
 
 (Nem `'use client'`: kliens komponensből is renderelhető, mert nincs benne hook; a `Button` és a `Link` kliens-kompatibilis.)
 
-- [ ] **Step 4: Térkép page**
+- [x] **Step 4: Térkép page**
 
 `app/(app)/terkep/page.tsx` teljes új tartalma:
 
@@ -413,7 +413,7 @@ export default async function TerkepPage({
 }
 ```
 
-- [ ] **Step 5: TerkepNezet**
+- [x] **Step 5: TerkepNezet**
 
 `app/(app)/terkep/components/TerkepNezet.tsx`: az importokból a `Link` és a `buttonVariants` kikerül (ha más nem használja – ellenőrizd), és bejön:
 
@@ -470,7 +470,7 @@ A `ProfilKivonat` hívása:
 />
 ```
 
-- [ ] **Step 6: ProfilKivonat**
+- [x] **Step 6: ProfilKivonat**
 
 `app/(app)/terkep/components/ProfilKivonat.tsx`: import `SzerkesztesGomb` (`'../../../../components/orszagprofil/SzerkesztesGomb'`); szignatúra:
 
@@ -501,11 +501,11 @@ A „nincs profil" szöveg: `Ehhez az évhez még nincs országprofil.` A footer
 />
 ```
 
-- [ ] **Step 7: Típusellenőrzés**
+- [x] **Step 7: Típusellenőrzés**
 
 Run: `npx tsc --noEmit` → nincs hiba. (A profil és a szerkesztő oldal még `?ev=`-vel dolgozik, az a Task 3; a `?ev=` nélküli szerkesztő-link ott az aktuális évre esik, tehát a Task 2 önmagában is működik.)
 
-- [ ] **Step 8: Böngészős ellenőrzés**
+- [x] **Step 8: Böngészős ellenőrzés**
 
 Admin:
 1. `$B goto http://localhost:3000/terkep` (2026): a panel szövege „N poszt · 2 profil (2026)"; JP kattintás → „Az évi profil · 2026"; KR → „Az évi profil · 2026".
@@ -516,7 +516,7 @@ Attasé (JP):
 4. `/terkep` 2026-ban: „Saját országprofil" link. Fejléc 2025-re → a gomb „Saját országprofil (2026)" form-gomb; kattintás → a fejléc 2026-ra vált és a `/orszagprofil/JP/szerkesztes` nyílik. `$B js "document.querySelector('header select').value"` → `2026`.
 5. `$B console --errors` → üres.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add db/queries/orszagprofil.ts lib/orszagprofil-szotar.ts components/orszagprofil/SzerkesztesGomb.tsx components/orszagprofil/AllapotBadge.tsx "app/(app)/terkep/page.tsx" "app/(app)/terkep/components/TerkepNezet.tsx" "app/(app)/terkep/components/ProfilKivonat.tsx"
@@ -537,7 +537,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Modify: `lib/orszagprofil-szotar.ts` (`evParam` törlése)
 - Modify: `CLAUDE.md`, `README.md`
 
-- [ ] **Step 1: Lekérdezés**
+- [x] **Step 1: Lekérdezés**
 
 `db/queries/orszagprofil.ts`: importáld a `lte`-t (`import { and, desc, eq, lte } from 'drizzle-orm';`), a `listEvek` helyére:
 
@@ -555,7 +555,7 @@ export function getUtolsoEv(kod: string, ev: number): number | null {
 }
 ```
 
-- [ ] **Step 2: Profil oldal**
+- [x] **Step 2: Profil oldal**
 
 `app/(app)/orszagprofil/[kod]/page.tsx` teljes új tartalma:
 
@@ -637,7 +637,7 @@ export default async function OrszagprofilPage({ params }: { params: Promise<{ k
 }
 ```
 
-- [ ] **Step 3: Szerkesztő**
+- [x] **Step 3: Szerkesztő**
 
 `app/(app)/orszagprofil/[kod]/szerkesztes/page.tsx`:
 
@@ -678,19 +678,19 @@ Az `evek` sor törlődik; a fejléc sorában az `EvValaszto` feltételes helyett
 
 A `<Fragment key={ev}>` kommentje: „key={ev}: az App Router a cookie-ból jövő évet nem veszi az állapot-kulcsba, így évváltásnál a 8 blokk kliens-állapota (a beírt, nem mentett értékek) különben átcsúszna a másik évre."
 
-- [ ] **Step 4: Takarítás**
+- [x] **Step 4: Takarítás**
 
 - `rm "app/(app)/orszagprofil/components/EvValaszto.tsx"`.
 - `lib/orszagprofil-szotar.ts`: az `evParam` függvény és docblockja törlődik.
 - `db/queries/orszagprofil.ts`: a `listEvek` törölve (Step 1 helyére került a `getUtolsoEv`).
 - Run: `grep -rn "evParam\|listEvek\|EvValaszto\|?ev=\|searchParams).ev" app components lib db --include='*.ts' --include='*.tsx'` → üres.
 
-- [ ] **Step 5: Típusellenőrzés és build**
+- [x] **Step 5: Típusellenőrzés és build**
 
 Run: `npx tsc --noEmit` → nincs hiba.
 Run: `npm run build` → sikeres. (Ha nem létező `app/...` modulra panaszkodik, `rm .next/dev/types/validator.ts` és újra.)
 
-- [ ] **Step 6: Böngészős ellenőrzés**
+- [x] **Step 6: Böngészős ellenőrzés**
 
 Admin:
 1. Fejléc 2025: `$B goto http://localhost:3000/orszagprofil/KR` → „Nincs profil" jelvény, „Ehhez az évhez (2025) még nincs országprofil.", Szerkesztés gomb link. `$B goto http://localhost:3000/orszagprofil/JP` → „Az évi profil · 2025", „2025. évi profil · …". `$B goto http://localhost:3000/orszagprofil/JP/szerkesztes` → „Év: 2025", a 2025-ös alapadatok az űrlapban.
@@ -702,14 +702,14 @@ Attasé (JP):
 5. `/orszagprofil/KR` attaséként → nincs Szerkesztés gomb.
 6. `$B console --errors` → üres. Végül állítsd a fejlécet 2026-ra.
 
-- [ ] **Step 7: CLAUDE.md és README**
+- [x] **Step 7: CLAUDE.md és README**
 
 `CLAUDE.md`:
 - **UI shell** bekezdés: a layout-mondatban az `evek` leírását cseréld: „…és a fejléc ciklusválasztóját (`ev`: a `tet-ev` httpOnly cookie-ból `lib/valasztott-ev.ts` `getValasztottEv(most)`-tal, érvénytelen → aktuális év; `evek`: admin `EV_MIN..aktuális év`, attasé DB profil-évek + aktuális + a választott)." A context-mondat: „Az AppShell context-je (`useApp()`: `user`, `ev`, `olvasatlan`, `setOlvasatlan`) csak a provideren belül használható; az `ev` a szerverről jön (nincs kliens-állapot), a fejléc selectje a `valasztEvAction`-t hívja (`app/(app)/actions.ts`: session, validálás, cookie, `revalidatePath('/', 'layout')`, opcionális `kod`-dal a szerkesztőre irányít), ezért a térkép, a profil és a szerkesztő oldal is ezt az évet mutatja."
 - **Országprofil** bekezdés: `listEvek` helyett `getUtolsoEv(kod, ev)`; `listTerkepAdat(ev)` leírása: „országonként a legnagyobb év ≤ `ev` profilja, `allapot` az `ev`-hez viszonyítva"; az `evParam` említése törölve; a Route-ok részben: `/terkep` és `/orszagprofil/[kod]` „a fejléc évét mutatja (cookie), `?ev=` nincs"; a profil oldal `AllapotBadge`-e „a legnagyobb profil-év ≤ nézett év állapota"; a Szerkesztés gomb: „`components/orszagprofil/SzerkesztesGomb`: szerkeszthető év → link, csak az aktuális év szerkeszthető → form-gomb a `valasztEvAction`-nel (cookie az aktuális évre + redirect), felirat „Szerkesztés (2026)"; a szerkesztő: „az év a cookie-ból, `EvValaszto` nincs; jog-hiba 404". Az „Amire figyelni kell" listában a `<Fragment key={ev}>` pont: „search param" helyett „cookie-ból jövő év". Az `ALLAPOT_CIMKE.friss` = „Az évi profil".
 - `README.md` 63. sor: „ciklusválasztó (a választott év `tet-ev` cookie-ban, a térkép és az országprofil is ezt mutatja)".
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add db/queries/orszagprofil.ts "app/(app)/orszagprofil/[kod]/page.tsx" "app/(app)/orszagprofil/[kod]/szerkesztes/page.tsx" lib/orszagprofil-szotar.ts CLAUDE.md README.md
@@ -718,3 +718,9 @@ git commit -m "feat(orszagprofil): a profil és a szerkesztő a választott év 
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
+
+---
+
+## Megvalósítási eltérések (a review-k után, végleges kód)
+
+Lásd a spec „Eltérések a megvalósításban" szakaszát. Röviden: `useOptimistic` + `aria-busy` a fejléc selectjén (`disabled` helyett), `unstable_rethrow` a catch-ben; `parseEv` közös; évlisták szűrése/védelme a layoutban; `KuldGomb` (`useFormStatus`) a form-gombokhoz; `feliratMost` prop; a térkép jog-számítása `canEditProfil` + `useApp().user`, a `sajatKod`/`admin` prop megszűnt; a `/terkep` `key`-ében nincs év (render közbeni `setKod(null)`); `getUtolsoEv` csak üres évnél fut; üres évnél „Ugrás a(z) N. évi profilra" gomb; README route-tábla és CLAUDE.md `lib/` kivétel-lista frissítve.

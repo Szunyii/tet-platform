@@ -33,8 +33,8 @@ Ezután nyisd meg: http://localhost:3000
 | Útvonal | Képernyő |
 | --- | --- |
 | `/` | Átirányítás az Országprofil (`/terkep`) képernyőre |
-| `/terkep` | Térkép és országprofil-kivonat (DB-s profilok, d3-geo világtérkép; színezés kiemelt iparág vagy profil-állapot szerint, iparág-szűrő, `?o=<kod>` előre kiválaszt) |
-| `/orszagprofil/[kod]` | Teljes országprofil, évválasztóval (`?ev=`); bárki olvashatja |
+| `/terkep` | Térkép és országprofil-kivonat a fejlécben választott ciklus évének nézetében (DB-s profilok, d3-geo világtérkép; színezés kiemelt iparág vagy profil-állapot szerint, iparág-szűrő, `?o=<kod>` előre kiválaszt) |
+| `/orszagprofil/[kod]` | Teljes országprofil a fejlécben választott ciklus évére (`tet-ev` cookie); bárki olvashatja |
 | `/orszagprofil/[kod]/szerkesztes` | Profil szerkesztése blokkonként (attasé: saját ország, idei év; admin: bármely ország, 2020-tól az idei évig) |
 | `/riportok` | Információs bejegyzések listája szűrőkkel (attasé: saját, admin: mind) |
 | `/riportok/[id]` | Bejegyzés részletei, csatolmány-letöltés |

@@ -18,18 +18,19 @@ import { TerkepUres } from './TerkepUres';
 const MIND = '__mind';
 
 export function TerkepNezet({
-  adatok, ev, most, sajatKod, admin, kezdoKod, valasztEvAction,
+  adatok, ev, most, kezdoKod, valasztEvAction,
 }: {
   adatok: TerkepOrszag[];
-  /** A választott (nézett) év és az aktuális év. */
+  /** A választott (nézett) év. */
   ev: number;
+  /** Az aktuális év (a nem szerkeszthető évnézetből ide vált a SzerkesztesGomb). */
   most: number;
-  sajatKod: string | null;
-  admin: boolean;
   kezdoKod: string | null;
   valasztEvAction: (formData: FormData) => Promise<void>;
 }) {
+  // A session a contextből: a jog-számítás (canEditProfil) és a „Saját országprofil" gomb is ebből dolgozik.
   const { user } = useApp();
+  const sajatKod = user.role === 'attase' ? user.orszag : null;
   const [metric, setMetric] = useState<MapMetric>('iparag');
   const [iparag, setIparag] = useState('');
   const [kod, setKod] = useState<string | null>(
@@ -73,7 +74,7 @@ export function TerkepNezet({
           <span className="ml-auto text-xs text-muted-foreground">
             {erintett !== null ? `${erintett} ország emeli ki ezt az iparágat` : `${adatok.length} poszt · ${friss} profil (${ev})`}
           </span>
-          {sajatKod && !admin && (
+          {sajatKod && (
             <SzerkesztesGomb
               kod={sajatKod}
               most={most}

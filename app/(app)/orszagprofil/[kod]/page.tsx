@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { AllapotBadge } from '../../../../components/orszagprofil/AllapotBadge';
 import { BlokkNezet } from '../../../../components/orszagprofil/BlokkNezet';
+import { KuldGomb } from '../../../../components/orszagprofil/KuldGomb';
 import { SzerkesztesGomb } from '../../../../components/orszagprofil/SzerkesztesGomb';
 import { buttonVariants } from '../../../../components/ui/button';
 import { getAttaseNev, getProfil, getUtolsoEv } from '../../../../db/queries/orszagprofil';
@@ -35,8 +36,9 @@ export default async function OrszagprofilPage({ params }: { params: Promise<{ k
   const ev = await getValasztottEv(most);
   const profil = getProfil(kod, ev);
   const attaseNev = getAttaseNev(kod);
-  // A jelvény az évnézet szabályával (mint a térkép): a legnagyobb profil-év ≤ ev állapota az ev-hez képest.
-  const utolsoEv = getUtolsoEv(kod, ev);
+  // A jelvény az évnézet szabályával (mint a térkép): a legnagyobb profil-év ≤ ev állapota az ev-hez
+  // képest. Ha az évre van profil, az a legnagyobb; csak üres évnél kell külön lekérdezés.
+  const utolsoEv = profil ? profil.ev : getUtolsoEv(kod, ev);
   const allapot = profilAllapot(utolsoEv, ev);
   // Korrelált generikus: a K köti össze a kulcsot és a blokk-típust (a map-ben unió lenne).
   const blokk = <K extends BlokkKulcs>(k: K) => <BlokkNezet key={k} kulcs={k} tartalom={profil?.blokkok[k] ?? null} />;
@@ -67,7 +69,19 @@ export default async function OrszagprofilPage({ params }: { params: Promise<{ k
           {profil.szerzo ? ` · ${profil.szerzo.nev}` : ''} · {profil.mentett.length}/{BLOKK_KULCSOK.length} blokk kitöltve
         </p>
       ) : (
-        <p className="text-sm text-muted-foreground">Ehhez az évhez ({ev}) még nincs országprofil.</p>
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-sm text-muted-foreground">
+            Ehhez az évhez ({ev}) még nincs országprofil.
+            {utolsoEv !== null && ` A legutóbbi mentett profil a ${utolsoEv}. évi.`}
+          </p>
+          {/* Nincs automatikus visszaesés a korábbi évre (a jelvény arra vonatkozik): a váltás a felhasználó döntése. */}
+          {utolsoEv !== null && (
+            <form action={valasztEvAction}>
+              <input type="hidden" name="ev" value={utolsoEv} />
+              <KuldGomb variant="outline">Ugrás a(z) {utolsoEv}. évi profilra</KuldGomb>
+            </form>
+          )}
+        </div>
       )}
       {BLOKK_KULCSOK.map(blokk)}
     </div>
