@@ -32,7 +32,7 @@ function Keret({ cim, link, children }: { cim: string; link: { href: string; fel
       <div style={{ color: CIM, fontWeight: 600 }}>{cim}</div>
       <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>{children}</div>
       <Link href={link.href} style={{ display: 'inline-block', marginTop: 6, color: LINK, textDecoration: 'none', fontWeight: 500 }}>
-        {link.felirat} →
+        {link.felirat} <span aria-hidden>→</span>
       </Link>
     </div>
   );
