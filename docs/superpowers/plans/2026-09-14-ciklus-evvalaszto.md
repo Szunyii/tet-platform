@@ -31,7 +31,7 @@ Egy taskban, mert a típusváltás (`cycle: string` → `ev: number`) csak együ
 - Modify: `components/AppShell.tsx`
 - Modify: `app/(app)/monitoring/page.tsx:9,19`
 
-- [ ] **Step 1: Új lekérdezés**
+- [x] **Step 1: Új lekérdezés**
 
 `db/queries/orszagprofil.ts`, közvetlenül a `listEvek` függvény után:
 
@@ -47,7 +47,7 @@ export function listProfilEvek(): number[] {
 }
 ```
 
-- [ ] **Step 2: Lekérdezés ellenőrzése eldobható scripttel**
+- [x] **Step 2: Lekérdezés ellenőrzése eldobható scripttel**
 
 `scripts/_x.ts`:
 
@@ -60,7 +60,7 @@ Run: `NODE_OPTIONS="--conditions=react-server" npx tsx scripts/_x.ts`
 Expected: `[2026,2025]` (a helyi QA-adat szerint; ha más évek vannak a DB-ben, csökkenő, ismétlés nélküli lista).
 Utána: `rm scripts/_x.ts`.
 
-- [ ] **Step 3: Layout**
+- [x] **Step 3: Layout**
 
 `app/(app)/layout.tsx` teljes új tartalma:
 
@@ -98,7 +98,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 }
 ```
 
-- [ ] **Step 4: AppShell – import, context-típus, propok, állapot**
+- [x] **Step 4: AppShell – import, context-típus, propok, állapot**
 
 `components/AppShell.tsx` módosítások:
 
@@ -174,7 +174,7 @@ Fejléc select:
 </label>
 ```
 
-- [ ] **Step 5: Monitoring fogyasztó**
+- [x] **Step 5: Monitoring fogyasztó**
 
 `app/(app)/monitoring/page.tsx`:
 
@@ -188,7 +188,7 @@ const { ev } = useApp();
 <h3>Hálózati rangsor · {ev}</h3>
 ```
 
-- [ ] **Step 6: Típusellenőrzés és grep**
+- [x] **Step 6: Típusellenőrzés és grep**
 
 Run: `npx tsc --noEmit`
 Expected: nincs hiba.
@@ -196,7 +196,7 @@ Expected: nincs hiba.
 Run: `grep -rn "cycle\|CYCLES\|DEFAULT_CYCLE" app components --include='*.ts' --include='*.tsx'`
 Expected: üres.
 
-- [ ] **Step 7: Böngészős ellenőrzés**
+- [x] **Step 7: Böngészős ellenőrzés**
 
 A gstack böngészővel (`B=~/.claude/skills/gstack/browse/dist/browse`), a dev szerver a 3000-en:
 
@@ -208,7 +208,7 @@ A gstack böngészővel (`B=~/.claude/skills/gstack/browse/dist/browse`), a dev 
    Expected: `$B text` tartalmazza „Hálózati rangsor · 2025” és „Aktív ciklus: 2025”.
 5. `$B console --errors`: üres.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add db/queries/orszagprofil.ts "app/(app)/layout.tsx" components/AppShell.tsx "app/(app)/monitoring/page.tsx"
@@ -227,7 +227,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Modify: `CLAUDE.md` (UI shell bekezdés)
 - Modify: `README.md:63`
 
-- [ ] **Step 1: Layout revalidálás a profil-mentő actionben**
+- [x] **Step 1: Layout revalidálás a profil-mentő actionben**
 
 `app/(app)/orszagprofil/actions.ts`, a meglévő három `revalidatePath` hívás után, a `return { ok: true };` elé:
 
@@ -237,7 +237,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
   revalidatePath('/', 'layout');
 ```
 
-- [ ] **Step 2: Demó-konstansok törlése**
+- [x] **Step 2: Demó-konstansok törlése**
 
 `lib/data.ts`: töröld ezt a két sort:
 
@@ -248,7 +248,7 @@ export const DEFAULT_CYCLE = '2026 Q2';
 
 A `DEADLINE`, `SCORE_THRESHOLD`, `ME_ID` marad.
 
-- [ ] **Step 3: Típusellenőrzés és build**
+- [x] **Step 3: Típusellenőrzés és build**
 
 Run: `npx tsc --noEmit`
 Expected: nincs hiba.
@@ -256,7 +256,7 @@ Expected: nincs hiba.
 Run: `npm run build`
 Expected: sikeres build. (Ha nem létező `app/...` modulra panaszkodik, `rm .next/dev/types/validator.ts` és újra – lásd CLAUDE.md.)
 
-- [ ] **Step 4: CLAUDE.md**
+- [x] **Step 4: CLAUDE.md**
 
 Az **UI shell** bekezdésben ezt a mondatot:
 
@@ -282,7 +282,7 @@ erre:
 Az AppShell context-je (`useApp()`: `user`, `ev`, `setEv`, `olvasatlan`, `setOlvasatlan`) csak a provideren belül használható; a kiválasztott `ev` kliens-oldali kontextus (alapértéke az aktuális év, a listából kikerülő év az aktuálisra áll vissza), egyelőre csak a monitoring cím és a sidebar „Aktív ciklus" sora használja – a térkép és a profil oldalak évkezelése ettől független. A `mentBlokkAction` ezért a layoutot is revalidálja.
 ```
 
-- [ ] **Step 5: README**
+- [x] **Step 5: README**
 
 `README.md` 63. sor:
 
@@ -290,7 +290,7 @@ Az AppShell context-je (`useApp()`: `user`, `ev`, `setEv`, `olvasatlan`, `setOlv
 - `components/AppShell.tsx` – sidebar, fejléc (bejelentkezett felhasználó, kijelentkezés), ciklusválasztó (React context, az évek a DB országprofil-éveiből + aktuális év)
 ```
 
-- [ ] **Step 6: Böngészős ellenőrzés a revalidálásra**
+- [x] **Step 6: Böngészős ellenőrzés a revalidálásra**
 
 A gstack böngészővel, adminként bejelentkezve (mint a Task 1 Step 7):
 
@@ -311,7 +311,7 @@ console.log('törölve');
 
 (Az évet cseréld arra, amit a 1. pontban használtál.)
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add "app/(app)/orszagprofil/actions.ts" lib/data.ts CLAUDE.md README.md
@@ -319,3 +319,12 @@ git commit -m "chore(ciklus): layout revalidálás profil-mentéskor, demó CYCL
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
+
+---
+
+## Megvalósítási eltérések (a review-k után, végleges kód)
+
+- **AppShell render-közbeni igazítás** (`components/AppShell.tsx`): a terv `if (!evek.includes(ev)) setEv(aktualisEv);` sora `if (!evek.includes(ev) && ev !== aktualisEv) setEv(aktualisEv);` lett. A React render-fázisú `setState` megkerüli az azonos-érték bailoutot, ezért a tervbeli forma végtelen render-ciklusba futott volna, ha a hívó olyan `evek`-et adna, amiben nincs benne az aktuális év. A komment is pontosabb: nem prop-változás-figyelés (mint az `olvasatlan`-nál), hanem invariáns-fenntartás. A fejléc `evek.map((e) => …)` map-változója `y` lett, hogy ne olvasson eseményparaméternek.
+- **`mentBlokkAction` revalidálás** (`app/(app)/orszagprofil/actions.ts`): a terv négy hívása (`/terkep`, a két profil-útvonal és `('/', 'layout')`) egyetlen `revalidatePath('/', 'layout')`-ra csökkent, mert a layout-tag minden route implicit tagjében szerepel, tehát a másik hármat lefedi (a ticket-actionök ugyanezt a mintát követik).
+- **CLAUDE.md**: az Országprofil bekezdés lekérdezés-listája is megkapta a `listProfilEvek`-et, és az UI shell bekezdés az egyetlen layout-revalidálást írja le.
+- A Task 1 review által nyitva hagyott, tudatosan nem javított pontok: az `aktualisEv` prop-név egybeesik a `lib/datum` függvénynévvel (az AppShell nem importálja); a fejléc `<select>` a régi `.input` osztályon maradt (az egész fejléc még inline-style, a `NativeSelect` külön feladat); `listEvek`/`listProfilEvek` névpár; a lekérdezés nem szűr `EV_MIN` alá (íráskor a `canEditProfil` kényszeríti a tartományt).

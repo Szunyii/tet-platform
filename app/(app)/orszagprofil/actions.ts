@@ -51,11 +51,10 @@ export async function mentBlokkAction(_prev: MuveletState, formData: FormData): 
     console.error('[orszagprofil] upsertBlokk sikertelen:', err);
     return { errors: { form: 'Mentés sikertelen, próbáld újra.' } };
   }
-  revalidatePath('/terkep');
-  revalidatePath(`/orszagprofil/${kod}`);
-  revalidatePath(`/orszagprofil/${kod}/szerkesztes`);
-  // A fejléc ciklusválasztója (layout) a DB profil-éveiből épül: új év első mentése után
-  // kliens-oldali navigációnál is frissüljön.
+  // A '/' + 'layout' tag minden route implicit tagjében szerepel, ezért a térkép, a profil
+  // és a szerkesztő oldal mellett a fejléc ciklusválasztóját (layout, a DB profil-éveiből)
+  // is frissíti – új év első mentése után kliens-oldali navigációnál is. (Ugyanez a minta,
+  // mint a ticket-actionöknél.)
   revalidatePath('/', 'layout');
   return { ok: true };
 }
