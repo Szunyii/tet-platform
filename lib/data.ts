@@ -223,6 +223,5 @@ export const POSTS: Post[] = [
   },
 ];
 
-export const DEADLINE = '2026-08-31';
 export const SCORE_THRESHOLD = 3.5;
 export const ME_ID = 5; // attasé nézetben: Farkas Judit (Szöul)

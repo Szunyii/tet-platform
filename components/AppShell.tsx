@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { unstable_rethrow, usePathname } from 'next/navigation';
 import { createContext, useActionState, useContext, useOptimistic, useState, useTransition, type ReactNode } from 'react';
 import type { LogoutState } from '../app/(app)/actions';
-import { DEADLINE } from '../lib/data';
 import { orszagNev } from '../lib/orszagok';
 import { ini } from '../lib/score';
 import type { AppSession } from '../lib/session';
@@ -175,16 +174,6 @@ export default function AppShell({
               );
             })}
           </nav>
-          <div style={{
-            marginTop: 'auto', padding: '14px 18px', borderTop: '1px solid #232c39',
-            fontSize: 11, color: '#8d97a5', lineHeight: 1.6,
-          }}>
-            <div style={{ color: '#c3cbd6', fontWeight: 600, fontSize: 11.5 }}>Aktív ciklus: {ev}</div>
-            <div>Beadási határidő: {DEADLINE}</div>
-            <div style={{ marginTop: 8, padding: '6px 8px', background: '#1b2330', borderRadius: 4, color: '#7f8a99' }}>
-              Demóadatok – 14 poszt, 14 értékelési szempont
-            </div>
-          </div>
         </aside>
 
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
