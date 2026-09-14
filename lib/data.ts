@@ -223,8 +223,6 @@ export const POSTS: Post[] = [
   },
 ];
 
-export const CYCLES = ['2025 Q4', '2026 Q1', '2026 Q2', '2026 Q3'];
-export const DEFAULT_CYCLE = '2026 Q2';
 export const DEADLINE = '2026-08-31';
 export const SCORE_THRESHOLD = 3.5;
 export const ME_ID = 5; // attasé nézetben: Farkas Judit (Szöul)

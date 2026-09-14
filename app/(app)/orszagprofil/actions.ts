@@ -54,5 +54,8 @@ export async function mentBlokkAction(_prev: MuveletState, formData: FormData): 
   revalidatePath('/terkep');
   revalidatePath(`/orszagprofil/${kod}`);
   revalidatePath(`/orszagprofil/${kod}/szerkesztes`);
+  // A fejléc ciklusválasztója (layout) a DB profil-éveiből épül: új év első mentése után
+  // kliens-oldali navigációnál is frissüljön.
+  revalidatePath('/', 'layout');
   return { ok: true };
 }
