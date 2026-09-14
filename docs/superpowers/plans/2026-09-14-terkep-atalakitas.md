@@ -405,7 +405,7 @@ import {
 function o(kod: string, nev: string, r: Partial<TerkepOrszag> = {}): TerkepOrszag {
   return {
     kod, nev, geo: nev, lonlat: [0, 0], attase: null, poszt: null, ev: 2026, allapot: 'friss',
-    iparagak: [], osszegzes: '', frissitve: null, frissitveMs: null, alapadatok: null,
+    iparagak: [], osszegzes: '', alapadatok: null,
     mentettDb: 0, rendezvenyDb: 0, gerd: null, prioritasok: [], ...r,
   };
 }
@@ -1450,7 +1450,7 @@ function Sor({ cimke, kiemelt, orszagok, plusz, children }: {
       <TableHead scope="row" className={cn(CIMKE_OSZLOP, 'h-auto py-2 font-medium', kiemelt ? 'text-foreground' : 'text-muted-foreground')} style={hatter}>
         {cimke}
       </TableHead>
-      {orszagok.map((o) => <TableCell key={o.kod} className="align-top whitespace-normal">{children(o)}</TableCell>)}
+      {orszagok.map((o) => <TableCell key={o.kod} className="max-w-44 align-top whitespace-normal">{children(o)}</TableCell>)}
       {plusz && <TableCell />}
     </TableRow>
   );
@@ -1533,9 +1533,9 @@ export function OsszehasonlitasPanel({ orszagok, jeloltek, mutato, onKivalaszt, 
               {(o) => (o.iparagak.length ? <span className="flex flex-wrap gap-1">{o.iparagak.map((i) => <IparagBadge key={i} iparag={i} />)}</span> : '–')}
             </Sor>
             {SZAM_MUTATOK.map((m) => {
-              // Félkövér csak valódi összevetésnél: legalább két ország értékével (egyetlen érték nem „legnagyobb”).
+              // Félkövér csak valódi összevetésnél: legalább két különböző értéknél (egyetlen érték vagy döntetlen nem „legnagyobb”).
               const ertekek = orszagok.map((o) => m.ertek(o)).filter((v): v is number => v !== null);
-              const legjobb = ertekek.length >= 2 ? Math.max(...ertekek) : null;
+              const legjobb = new Set(ertekek).size >= 2 ? Math.max(...ertekek) : null;
               return (
                 <Sor key={m.kulcs} cimke={m.cimke} kiemelt={m.kulcs === mutato.kulcs} orszagok={orszagok} plusz={plusz}>
                   {(o) => {
@@ -2135,3 +2135,4 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - **Task 8 utó-finomítás (re-review nyomán):** a kivonat mutató-sávja csak értékkel színezett (érték nélkül a halvány „nincs adat" a színen 4,07:1 kontrasztú lett volna), a `title` a helyezés meglétéhez igazodik (`helyezett`), a toggle-gombon nincs `aria-pressed` (a változó felirat viszi az állapotot – egy minta a `RangsorPanel` gombjával); az összehasonlító tábla sor-kommentje a hover hiányát magyarázza, `cn` variadikus formában.
 - **Task 9:** a böngészős ellenőrzés adminnal és attaséval rendben (build zöld, konzolhiba nincs, CDN-kérés nincs, 179 path, zoom/régió/tooltip/rangsor/szűrő/kivonat/összehasonlítás 2 oszloppal). A 3. oszlop és a „+ Ország" választó a lokális DB-vel (2 térképes ország: KR, JP) nem próbálható – a választó ilyenkor helyesen el sem jelenik; ezt egy ideiglenes harmadik attaséval a záró ellenőrzés fedi le.
 - **Task 9 (minőségi review nyomán):** az összehasonlító `Table` `w-auto` (a `w-full` + auto elrendezés két oszlopot ~800 px-re szórt), a leírás „a térkép mutatójának sora kiemelve" része csak számszerű mutatónál, félkövér csak ha legalább két országnak van értéke; a `Jelmagyarazat` a betöltő/hiba állapotban is renderelődik (nincs ~33 px ugrás); `role="img"` magyarázó komment; a `page.tsx` kommentje pontosítva: a `key` elhagyása az évváltásnál számít (a page mountolva marad), a `?o=` route-váltással érkezik, amikor a nézet amúgy is újramountol – a mutató/szűrő/halmaz egy route-váltást nem él túl (a Task 5-ös eltérés ezt túlígérte).
+- **Záró csiszolás (a záró review-k nyomán):** a `TerkepOrszag` használatlan `frissitve`/`frissitveMs` mezői (a régi üres-panel rendezéséhez kellettek) kikerültek a `listTerkepAdat`-ból; az összehasonlító tábla celláin `max-w-44` (a fejléc-cella korlátja auto elrendezésben nem fogta a tartalmas oszlopot), döntetlennél nincs félkövér (`new Set(ertekek).size >= 2`); CLAUDE.md országprofil-mondat frissítve. A 3 oszlopos tábla és a „+ Ország" választó egy ideiglenes (utána törölt) harmadik attaséval böngészőben ellenőrizve: tábla 791 px a 1310 px-es kártyában, oszlopok egymás mellett, sticky címke-oszlop 900 px-en, GERD-sor kiemelve, félkövér csak a két-értékes sorokban, konzolhiba nincs.

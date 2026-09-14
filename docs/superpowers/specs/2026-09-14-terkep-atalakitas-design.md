@@ -444,3 +444,5 @@ Nincs tesztkeretrendszer. Elvárt lépések:
   csak számszerű mutatónál; félkövér csak legalább két értéknél; jelmagyarázat a betöltő állapotban
   is; a `key` elhagyásának indoka pontosítva (évváltás; a „Vissza a térképre" route-váltás
   újramountol, a Task 5-ös bullet ezt túlígérte).
+- **Záró csiszolás**: a `TerkepOrszag` `frissitve`/`frissitveMs` mezői megszűntek (nincs fogyasztójuk);
+  tábla-cellák `max-w-44`; döntetlennél nincs félkövér.
