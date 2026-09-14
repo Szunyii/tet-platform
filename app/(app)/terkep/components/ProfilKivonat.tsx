@@ -44,6 +44,8 @@ export function ProfilKivonat({
   ].filter(Boolean).join(' · ');
   // A térképen választott számszerű mutató értéke és helyezése (a szűrt rangsorban); undefined = kategorikus mutató.
   const ertek = mutato.tipus === 'szam' ? ertekEsHely(o, mutato, rangsor) : undefined;
+  // Van-e helyezése (a szűrő által kizárt ország nincs a rangsorban, de értéke lehet).
+  const helyezett = !!rangsor?.sorok.some((s) => s.o.kod === o.kod);
   return (
     <Card>
       <CardHeader>
@@ -68,13 +70,19 @@ export function ProfilKivonat({
       <CardContent className="flex flex-col gap-4">
         {ertek !== undefined && (
           // Inline style szándékosan: a sáv színe a térkép skálájának legvilágosabb fokozata (mint az
-          // összehasonlító tábla kiemelt sora) – ez köti a sort a térkép aktuális színezéséhez.
-          <p className="rounded-md px-2 py-1 text-sm text-foreground" style={{ background: SKALA_SZINEK[0] }}>
+          // összehasonlító tábla kiemelt sora) – ez köti a sort a térkép aktuális színezéséhez. Érték
+          // nélkül nincs sáv: a térkép sem színezi az országot, és a halvány szöveg a színen nem olvasható.
+          <p className="rounded-md px-2 py-1 text-sm text-foreground" style={ertek === null ? undefined : { background: SKALA_SZINEK[0] }}>
             <span>{mutato.cimke}: </span>
             {ertek === null ? (
               <span className="text-muted-foreground">nincs adat</span>
             ) : (
-              <span className="font-mono font-medium" title="Érték és helyezés a jelenlegi szűrés szerinti rangsorban">{ertek}</span>
+              <span
+                className="font-mono font-medium"
+                title={helyezett ? 'Érték és helyezés a jelenlegi szűrés szerinti rangsorban' : 'Érték – a szűrés miatt az ország nincs a rangsorban'}
+              >
+                {ertek}
+              </span>
             )}
           </p>
         )}
@@ -118,7 +126,6 @@ export function ProfilKivonat({
         <Button
           type="button"
           variant="outline"
-          aria-pressed={benneVs}
           disabled={!benneVs && vsTele}
           onClick={onVs}
         >

@@ -27,12 +27,13 @@ function Sor({ cimke, kiemelt, orszagok, plusz, children }: {
   plusz: boolean;
   children: (o: TerkepOrszag) => ReactNode;
 }) {
-  // Inline style szándékosan: a kiemelés színe a térkép skálájából jön, és inline-ként a sor hover-hátterét is felülírja
-  // (a Tailwind `bg-muted/60` a `hover:bg-muted/50` alatt eltűnt volna). A sticky címke-cellára is kell, mert az saját háttérrel fed.
+  // Inline style szándékosan: a kiemelés színe a térkép skálájából jön. A sorok nem interaktívak, ezért nincs
+  // hover-szín (a sticky címke-cella saját, átlátszatlan háttere nem tudná követni); a kiemelés a címke-cellára
+  // is kell, mert az fedi a sor hátterét.
   const hatter = kiemelt ? { background: KIEMELT_HATTER } : undefined;
   return (
     <TableRow className="hover:bg-transparent" style={hatter}>
-      <TableHead scope="row" className={cn(CIMKE_OSZLOP, `h-auto py-2 font-medium ${kiemelt ? 'text-foreground' : 'text-muted-foreground'}`)} style={hatter}>
+      <TableHead scope="row" className={cn(CIMKE_OSZLOP, 'h-auto py-2 font-medium', kiemelt ? 'text-foreground' : 'text-muted-foreground')} style={hatter}>
         {cimke}
       </TableHead>
       {orszagok.map((o) => <TableCell key={o.kod} className="align-top whitespace-normal">{children(o)}</TableCell>)}
