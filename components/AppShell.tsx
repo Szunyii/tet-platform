@@ -147,7 +147,7 @@ export default function AppShell({
       <div style={{ display: 'flex', minHeight: '100vh' }}>
         <aside style={{
           width: 238, flex: '0 0 238px', background: '#131a24', color: '#e7ebf1',
-          display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh',
+          display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh', overflowY: 'auto',
         }}>
           <div style={{ padding: '18px 18px 16px', borderBottom: '1px solid #232c39' }}>
             <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: '.02em' }}>NIÜ · TéT Platform</div>
@@ -181,7 +181,7 @@ export default function AppShell({
             {oldalsavAlja}
             <div style={{ padding: '14px 18px', borderTop: '1px solid #232c39' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                <div style={{
+                <div aria-hidden style={{
                   width: 29, height: 29, borderRadius: '50%', background: '#1b3a6b', color: '#fff', flex: '0 0 29px',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600,
                 }}>{ini(user.name)}</div>
