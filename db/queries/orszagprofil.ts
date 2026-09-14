@@ -108,12 +108,13 @@ export interface TerkepOrszag {
 }
 
 /**
- * A térkép és a panel adata: minden ország, ahol aktív attasé van vagy van profil, a
- * legfrissebb profiljával. Két lekérdezés + JS-összefésülés. Az orszagprofil tábla
- * országok × évek méretű, minden sorát beolvassuk – ezen a skálán (néhány tucat ország,
- * néhány év) ez rendben van.
+ * A térkép és a panel adata a választott `ev` nézetében: minden ország, ahol aktív attasé van
+ * vagy van profil, országonként a legnagyobb év ≤ ev profiljával. Az `allapot` az `ev`-hez
+ * viszonyít: van profil az évre → friss, csak régebbi → elavult, semmi → nincs (ev = aktuális
+ * évnél ez a korábbi viselkedés). Két lekérdezés + JS-összefésülés; az orszagprofil tábla
+ * országok × évek méretű, minden sorát beolvassuk – ezen a skálán rendben van.
  */
-export function listTerkepAdat(aktualisEv: number): TerkepOrszag[] {
+export function listTerkepAdat(ev: number): TerkepOrszag[] {
   const now = Date.now();
   const attasek = db
     .select({
@@ -126,13 +127,13 @@ export function listTerkepAdat(aktualisEv: number): TerkepOrszag[] {
     .all()
     .filter((u) => u.orszag && !tiltottE(u, now));
 
-  // Országonként a legnagyobb év sora. (Az év szerint csökkenő listából az első előfordulás
-  // országonként; a max(ev)-es al-lekérdezéses join helyett, mert a Drizzle az aliasolt
-  // sql-oszlopot a join-feltételben minősítés nélkül írja ki, és az SQLite-nak ambiguous.)
+  // Országonként a legnagyobb, ev-nél nem nagyobb év sora. (Az év szerint csökkenő listából
+  // az első előfordulás országonként; a max(ev)-es al-lekérdezéses join helyett, mert a
+  // Drizzle az aliasolt sql-oszlopot a join-feltételben minősítés nélkül írja ki.)
   const profilok: (typeof orszagprofil.$inferSelect)[] = [];
   const lattuk = new Set<string>();
   for (const p of db.select().from(orszagprofil).orderBy(desc(orszagprofil.ev)).all()) {
-    if (lattuk.has(p.orszagKod)) continue;
+    if (p.ev > ev || lattuk.has(p.orszagKod)) continue;
     lattuk.add(p.orszagKod);
     profilok.push(p);
   }
@@ -156,7 +157,7 @@ export function listTerkepAdat(aktualisEv: number): TerkepOrszag[] {
       attase: a?.nev ?? null,
       poszt: a ? { fovaros: a.fovaros ?? null, terulet: a.terulet ?? null, penznem: a.penznem ?? null } : null,
       ev: prof?.ev ?? null,
-      allapot: profilAllapot(prof?.ev ?? null, aktualisEv),
+      allapot: profilAllapot(prof?.ev ?? null, ev),
       iparagak: prof?.blokkok.kfiRendszer?.kiemeltIparagak ?? [],
       osszegzes: prof?.blokkok.magyarErtekeles?.osszegzes ?? '',
       frissitve: prof ? formatDatum(prof.updatedAt) : null,

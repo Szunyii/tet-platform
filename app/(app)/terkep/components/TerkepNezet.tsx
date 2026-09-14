@@ -1,16 +1,14 @@
 'use client';
 
-import Link from 'next/link';
 import { useCallback, useState } from 'react';
 import WorldMap, { type MapMetric } from '../../../../components/WorldMap';
-import { buttonVariants } from '../../../../components/ui/button';
+import { SzerkesztesGomb } from '../../../../components/orszagprofil/SzerkesztesGomb';
 import { Card, CardContent, CardHeader } from '../../../../components/ui/card';
 import { Label } from '../../../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '../../../../components/ui/tabs';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { IPARAGAK, type Iparag } from '../../../../lib/orszagprofil-szotar';
-import { cn } from '../../../../lib/utils';
 import { ProfilKivonat } from './ProfilKivonat';
 import { TerkepUres } from './TerkepUres';
 
@@ -18,8 +16,17 @@ import { TerkepUres } from './TerkepUres';
 const MIND = '__mind';
 
 export function TerkepNezet({
-  adatok, aktualisEv, sajatKod, admin, kezdoKod,
-}: { adatok: TerkepOrszag[]; aktualisEv: number; sajatKod: string | null; admin: boolean; kezdoKod: string | null }) {
+  adatok, ev, most, sajatKod, admin, kezdoKod, valasztEvAction,
+}: {
+  adatok: TerkepOrszag[];
+  /** A választott (nézett) év és az aktuális év. */
+  ev: number;
+  most: number;
+  sajatKod: string | null;
+  admin: boolean;
+  kezdoKod: string | null;
+  valasztEvAction: (formData: FormData) => Promise<void>;
+}) {
   const [metric, setMetric] = useState<MapMetric>('iparag');
   const [iparag, setIparag] = useState('');
   const [kod, setKod] = useState<string | null>(
@@ -58,12 +65,17 @@ export function TerkepNezet({
             </Select>
           </div>
           <span className="ml-auto text-xs text-muted-foreground">
-            {erintett !== null ? `${erintett} ország emeli ki ezt az iparágat` : `${adatok.length} poszt · ${friss} idei profil`}
+            {erintett !== null ? `${erintett} ország emeli ki ezt az iparágat` : `${adatok.length} poszt · ${friss} profil (${ev})`}
           </span>
           {sajatKod && !admin && (
-            <Link href={`/orszagprofil/${sajatKod}/szerkesztes?ev=${aktualisEv}`} className={cn(buttonVariants({ size: 'sm' }))}>
-              Saját országprofil
-            </Link>
+            <SzerkesztesGomb
+              kod={sajatKod}
+              most={most}
+              szerkeszthetEv={ev === most}
+              szerkeszthetMost
+              action={valasztEvAction}
+              felirat="Saját országprofil"
+            />
           )}
         </CardHeader>
         <CardContent className="p-0">
@@ -72,7 +84,14 @@ export function TerkepNezet({
       </Card>
       <div className="flex min-w-0 max-w-[420px] flex-[1_1_330px] flex-col gap-4">
         {sel ? (
-          <ProfilKivonat o={sel} szerkeszthet={admin || sel.kod === sajatKod} aktualisEv={aktualisEv} onClose={() => setKod(null)} />
+          <ProfilKivonat
+            o={sel}
+            szerkeszthetEv={admin || (sel.kod === sajatKod && ev === most)}
+            szerkeszthetMost={admin || sel.kod === sajatKod}
+            most={most}
+            valasztEvAction={valasztEvAction}
+            onClose={() => setKod(null)}
+          />
         ) : (
           <TerkepUres adatok={adatok} onSelect={onSelect} />
         )}

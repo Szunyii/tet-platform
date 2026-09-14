@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { AllapotBadge } from '../../../../components/orszagprofil/AllapotBadge';
 import { IparagBadge } from '../../../../components/orszagprofil/IparagBadge';
+import { SzerkesztesGomb } from '../../../../components/orszagprofil/SzerkesztesGomb';
 import { Badge } from '../../../../components/ui/badge';
 import { Button, buttonVariants } from '../../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../../../components/ui/card';
@@ -14,8 +15,15 @@ import { cn } from '../../../../lib/utils';
 
 /** A kiválasztott ország profil-kivonata a térkép mellett. */
 export function ProfilKivonat({
-  o, szerkeszthet, aktualisEv, onClose,
-}: { o: TerkepOrszag; szerkeszthet: boolean; aktualisEv: number; onClose: () => void }) {
+  o, szerkeszthetEv, szerkeszthetMost, most, valasztEvAction, onClose,
+}: {
+  o: TerkepOrszag;
+  szerkeszthetEv: boolean;
+  szerkeszthetMost: boolean;
+  most: number;
+  valasztEvAction: (formData: FormData) => Promise<void>;
+  onClose: () => void;
+}) {
   const a = o.alapadatok;
   const C = MEZO_CIMKEK.alapadatok;
   const poszt = [
@@ -46,7 +54,7 @@ export function ProfilKivonat({
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {o.allapot === 'nincs' ? (
-          <p className="text-sm text-muted-foreground">Ehhez az országhoz még nincs országprofil.</p>
+          <p className="text-sm text-muted-foreground">Ehhez az évhez még nincs országprofil.</p>
         ) : (
           <>
             {a && (
@@ -81,11 +89,15 @@ export function ProfilKivonat({
       <CardFooter className="flex flex-wrap gap-2">
         <Link href={`/orszagprofil/${o.kod}`} className={cn(buttonVariants({ variant: 'outline' }))}>Teljes profil</Link>
         <Link href="/kommunikacio" className={cn(buttonVariants({ variant: 'outline' }))}>Üzenet a poszttal</Link>
-        {szerkeszthet && (
-          <Link href={`/orszagprofil/${o.kod}/szerkesztes?ev=${aktualisEv}`} className={cn('ml-auto', buttonVariants())}>
-            {o.allapot === 'nincs' ? 'Profil kitöltése' : 'Szerkesztés'}
-          </Link>
-        )}
+        <SzerkesztesGomb
+          kod={o.kod}
+          most={most}
+          szerkeszthetEv={szerkeszthetEv}
+          szerkeszthetMost={szerkeszthetMost}
+          action={valasztEvAction}
+          felirat={o.allapot === 'nincs' ? 'Profil kitöltése' : 'Szerkesztés'}
+          className="ml-auto"
+        />
       </CardFooter>
     </Card>
   );

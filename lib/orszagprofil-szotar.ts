@@ -54,7 +54,7 @@ export const IPARAG_SZINEK: Record<Iparag, string> = {
 export const ALLAPOTOK = ['friss', 'elavult', 'nincs'] as const;
 export type Allapot = (typeof ALLAPOTOK)[number];
 export const ALLAPOT_CIMKE: Record<Allapot, string> = {
-  friss: 'Idei profil',
+  friss: 'Az évi profil',
   elavult: 'Elavult profil',
   nincs: 'Nincs profil',
 };
