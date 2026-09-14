@@ -48,13 +48,18 @@ export function Jelmagyarazat({ mutato, tartomany, csoportok, iparag }: {
             {mutato.cimke}
             {mutato.skala === 'log' && <span className="ml-1 font-normal text-muted-foreground">(logaritmikus skála)</span>}
           </span>
-          {tartomany && (
+          {tartomany && tartomany.min === tartomany.max ? (
+            // Egyetlen érték: nincs skála, minden adattal rendelkező ország a középső színt kapja (arany → 0,5).
+            <span className="flex items-center gap-1.5 font-mono">
+              <Negyzet szin={SKALA_SZINEK[2]} /> {formatSzam(tartomany.min, mutato.utotag)}
+            </span>
+          ) : tartomany ? (
             <span className="flex min-w-0 items-center gap-2 font-mono">
               <span>{formatSzam(tartomany.min, mutato.utotag)}</span>
               <span className="h-2 w-32 shrink rounded-sm" style={{ background: `linear-gradient(90deg, ${SKALA_SZINEK.join(', ')})` }} />
               <span>{formatSzam(tartomany.max, mutato.utotag)}</span>
             </span>
-          )}
+          ) : null}
           <span className="flex items-center gap-1.5"><Negyzet sraff /> nincs adat</span>
           {kozos}
         </>

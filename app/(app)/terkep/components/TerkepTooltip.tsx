@@ -15,7 +15,8 @@ function mutatoSor(o: TerkepOrszag, mutato: Mutato, rangsor: Rangsor | null): st
   if (mutato.tipus === 'szam') {
     return `${mutato.cimke}: ${ertekEsHely(o, mutato, rangsor) ?? 'nincs adat'}`;
   }
-  if (mutato.kulcs === 'allapot') return null; // az állapot-sor úgyis ott van
+  // Az állapot- és az iparág-sor úgyis ott van a tooltipben (az iparág mutató az első kiemelt iparágat írná ki mégegyszer).
+  if (mutato.kulcs === 'allapot' || mutato.kulcs === 'iparag') return null;
   const k = mutato.kategoria(o);
   return k === null ? mutato.nincsCimke : (mutato.cimkek[k] ?? k);
 }

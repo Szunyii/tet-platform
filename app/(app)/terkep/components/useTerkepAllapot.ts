@@ -44,8 +44,8 @@ export function useTerkepAllapot(adatok: TerkepOrszag[], kezdoKod: string | null
   const [mutatoKulcs, setMutatoKulcsState] = useState<MutatoKulcs>(ALAP_MUTATO);
   const [iparag, setIparag] = useState('');
 
-  // Új `?o=` (pl. „Vissza a térképre" a profil oldalról): a kijelölés a kezdő kódra vált; ha a
-  // paraméter eltűnik, a meglévő kijelölés marad.
+  // Új `?o=` ugyanezen a route-on belül: a kijelölés a kezdő kódra vált; ha a paraméter eltűnik
+  // vagy olyan országra mutat, ami nincs az adatokban, a meglévő kijelölés szándékosan marad.
   // `ujKod`: ha ebben a passban épp a kezdő kódra váltunk, a lenti „nem létező kijelölés" őrző már
   // az új értéket nézze, ne a záródásban maradt régit (különben `setKod(null)` felülírná).
   const [elozoKezdo, setElozoKezdo] = useState(kezdoKod);
