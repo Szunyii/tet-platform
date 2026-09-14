@@ -52,16 +52,16 @@ export function RiportForm({ mode, initial, action }: RiportFormProps) {
   const [torlendo, setTorlendo] = useState<string[]>([]);
 
   const meglevok = initial?.csatolmanyok ?? [];
-  const vanOpcionalis = Boolean(joGyakorlat || kapcsolodoFeladat || fajlok.length || meglevok.length);
   const vanOpcionalisHiba = Boolean(errors.joGyakorlat || errors.kapcsolodoFeladat || errors.csatolmany);
-  const [tovabbiNyitva, setTovabbiNyitva] = useState(vanOpcionalis);
+  // Az opcionális szekció alapból nyitva: a mezők eleve látszanak, a felhasználó becsukhatja.
+  const [tovabbiNyitva, setTovabbiNyitva] = useState(true);
   const datumKotelezo = kategoria ? kategoriaByKulcs(kategoria).datumKotelezo : false;
   // A hozzáadott fájlokat a csatolmanyElocheck maga számolja bele: itt csak a bejegyzésen
   // megmaradó, korábban feltöltött csatolmányok száma megy át.
   const elocheckHiba = csatolmanyElocheck(fajlok, meglevok.length - torlendo.length);
 
-  // Szerverhibánál egyszer kinyitjuk az opcionális szekciót (különben a hiba láthatatlan
-  // maradna); utána a felhasználó szabadon becsukhatja. Render közbeni állapot-igazítás
+  // Ha a felhasználó becsukta, szerverhibánál egyszer újra kinyitjuk az opcionális szekciót
+  // (különben a hiba láthatatlan maradna); utána szabadon becsukhatja. Render közbeni állapot-igazítás
   // (nem useEffect): így a panel már a beküldés utáni commitban nyitva van, és a
   // useMuveletForm fókusz-effektje a `csatolmany` mezőre is rá tud ugrani – egy rejtett
   // (hidden) elem nem fókuszálható.

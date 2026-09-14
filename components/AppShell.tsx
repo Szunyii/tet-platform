@@ -1,12 +1,20 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { unstable_rethrow, usePathname } from 'next/navigation';
-import { createContext, useActionState, useContext, useOptimistic, useState, useTransition, type ReactNode } from 'react';
-import type { LogoutState } from '../app/(app)/actions';
-import { orszagNev } from '../lib/orszagok';
-import { ini } from '../lib/score';
-import type { AppSession } from '../lib/session';
+import Link from "next/link";
+import { unstable_rethrow, usePathname } from "next/navigation";
+import {
+  createContext,
+  useActionState,
+  useContext,
+  useOptimistic,
+  useState,
+  useTransition,
+  type ReactNode,
+} from "react";
+import type { LogoutState } from "../app/(app)/actions";
+import { orszagNev } from "../lib/orszagok";
+import { ini } from "../lib/score";
+import type { AppSession } from "../lib/session";
 
 type LogoutAction = (prev: LogoutState) => Promise<LogoutState>;
 type ValasztEvAction = (formData: FormData) => Promise<void>;
@@ -25,64 +33,117 @@ const AppContext = createContext<AppState | null>(null);
 
 export function useApp(): AppState {
   const ctx = useContext(AppContext);
-  if (!ctx) throw new Error('useApp() csak az AppShell-en belül használható.');
+  if (!ctx) throw new Error("useApp() csak az AppShell-en belül használható.");
   return ctx;
 }
 
 // Csak megjelenítés: az adminOnly a menüpontot rejti el, a valódi védelem a page/action
 // requireAdmin() hívása (lib/session.ts).
 // Az alHrefek további útvonal-prefixek, amelyeken a menüpont aktív (pl. /orszagprofil/* → Országprofil).
-const NAV: { href: string; icon: string; label: string; adminOnly?: boolean; alHrefek?: string[] }[] = [
-  { href: '/terkep', icon: '◍', label: 'Országprofil', alHrefek: ['/orszagprofil'] },
-  { href: '/riportok', icon: '▦', label: 'Riportok' },
-  { href: '/uj-riport', icon: '✎', label: 'Új bejegyzés' },
-  { href: '/kommunikacio', icon: '✉', label: 'Kommunikáció' },
-  { href: '/tudastar', icon: '◫', label: 'Tudástár' },
-  { href: '/monitoring', icon: '◈', label: 'Monitoring és értékelés' },
-  { href: '/felhasznalok', icon: '☺', label: 'Felhasználók', adminOnly: true },
+const NAV: {
+  href: string;
+  icon: string;
+  label: string;
+  adminOnly?: boolean;
+  alHrefek?: string[];
+}[] = [
+  {
+    href: "/terkep",
+    icon: "◍",
+    label: "Országprofil",
+    alHrefek: ["/orszagprofil"],
+  },
+  { href: "/riportok", icon: "▦", label: "Riportok" },
+  { href: "/uj-riport", icon: "✎", label: "Új bejegyzés" },
+  { href: "/kommunikacio", icon: "✉", label: "Kommunikáció" },
+  { href: "/tudastar", icon: "◫", label: "Tudástár ??" },
+  { href: "/monitoring", icon: "◈", label: "Monitoring és értékelés ??" },
+  { href: "/felhasznalok", icon: "☺", label: "Felhasználók", adminOnly: true },
 ];
 
 const ADMIN_ONLY_HREFS = NAV.filter((n) => n.adminOnly).map((n) => n.href);
 
 const TITLES: Record<string, [string, string]> = {
-  '/terkep': ['Országprofil', 'A TéT attasé-posztok térképen, a beküldött országprofilok kivonatával'],
-  '/orszagprofil': ['Országprofil', 'Az ország KFI körképe és alapadatai, évenkénti attasé-beadással'],
-  '/riportok': ['Riportok', 'A TéT hálózat információs bejegyzései kategóriák és kulcsszavak szerint'],
-  '/uj-riport': ['Új bejegyzés', 'Kategória, tárgy, leírás, kulcsszavak – rendezvénynél dátum és helyszín'],
-  '/kommunikacio': ['Kommunikáció', 'Ticket + üzenetszál az adminok és a TéT attasék között'],
-  '/tudastar': ['Tudástár', 'Magyarországról ajánlható programok, partnerek és együttműködési formák'],
-  '/monitoring': ['Monitoring és értékelés', '3 kategória, 14 szempont, rögzített adatforrás-metaadatokkal'],
-  '/felhasznalok': ['Felhasználók', 'Admin és TéT attasé fiókok kezelése'],
+  "/terkep": [
+    "Országprofil",
+    "A TéT attasé-posztok térképen, a beküldött országprofilok kivonatával",
+  ],
+  "/orszagprofil": [
+    "Országprofil",
+    "Az ország KFI körképe és alapadatai, évenkénti attasé-beadással",
+  ],
+  "/riportok": [
+    "Riportok",
+    "A TéT hálózat információs bejegyzései kategóriák és kulcsszavak szerint",
+  ],
+  "/uj-riport": [
+    "Új bejegyzés",
+    "Kategória, tárgy, leírás, kulcsszavak – rendezvénynél dátum és helyszín",
+  ],
+  "/kommunikacio": [
+    "Kommunikáció",
+    "Ticket + üzenetszál az adminok és a TéT attasék között",
+  ],
+  "/tudastar": [
+    "Tudástár",
+    "Magyarországról ajánlható programok, partnerek és együttműködési formák",
+  ],
+  "/monitoring": [
+    "Monitoring és értékelés",
+    "3 kategória, 14 szempont, rögzített adatforrás-metaadatokkal",
+  ],
+  "/felhasznalok": ["Felhasználók", "Admin és TéT attasé fiókok kezelése"],
 };
 
 // Pontos egyezés vagy alútvonal (pl. /riportok/abc → /riportok).
 function isActive(pathname: string, href: string): boolean {
-  return pathname === href || pathname.startsWith(href + '/');
+  return pathname === href || pathname.startsWith(href + "/");
 }
 
 // Pontos egyezés, különben a leghosszabb illeszkedő prefix. Admin-only útvonalnál nem
 // admin usernek a generikus címet adja: a requireAdmin() 404-e az AppShellben renderelődik,
 // és a fejléc nem árulhatja el az oldal létét.
-function titleFor(pathname: string, role: AppSession['role']): [string, string] {
-  if (role !== 'admin' && ADMIN_ONLY_HREFS.some((h) => isActive(pathname, h))) {
-    return ['TéT Platform', ''];
+function titleFor(
+  pathname: string,
+  role: AppSession["role"],
+): [string, string] {
+  if (role !== "admin" && ADMIN_ONLY_HREFS.some((h) => isActive(pathname, h))) {
+    return ["TéT Platform", ""];
   }
   if (TITLES[pathname]) return TITLES[pathname];
   const key = Object.keys(TITLES)
     .filter((k) => isActive(pathname, k))
     .sort((a, b) => b.length - a.length)[0];
-  return key ? TITLES[key] : ['TéT Platform', ''];
+  return key ? TITLES[key] : ["TéT Platform", ""];
 }
 
 function LogoutForm({ action }: { action: LogoutAction }) {
   const [state, formAction, pending] = useActionState(action, {});
   return (
-    <form action={formAction} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+    <form
+      action={formAction}
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        alignItems: "center",
+        gap: 8,
+      }}
+    >
       {state.error && (
-        <span role="alert" style={{ fontSize: 11, color: '#f2a6a0', flexBasis: '100%' }}>{state.error}</span>
+        <span
+          role="alert"
+          style={{ fontSize: 11, color: "#f2a6a0", flexBasis: "100%" }}
+        >
+          {state.error}
+        </span>
       )}
-      <button type="submit" className="btn" style={{ fontSize: 11.5, width: '100%' }} disabled={pending}>
-        {pending ? 'Kijelentkezés…' : 'Kijelentkezés'}
+      <button
+        type="submit"
+        className="btn"
+        style={{ fontSize: 11.5, width: "100%" }}
+        disabled={pending}
+      >
+        {pending ? "Kijelentkezés…" : "Kijelentkezés"}
       </button>
     </form>
   );
@@ -119,11 +180,16 @@ export default function AppShell({
   const [evValtasFut, startEvValtas] = useTransition();
   const valasztEv = (uj: string) => {
     const fd = new FormData();
-    fd.set('ev', uj);
+    fd.set("ev", uj);
     startEvValtas(async () => {
       setOptimistaEv(Number(uj));
       // Hálózati/origin hiba esetén az évváltás egyszerűen nem történik meg; nem dobjuk az error boundary-ig.
-      try { await valasztEvAction(fd); } catch (err) { unstable_rethrow(err); console.error('[ciklus] évváltás sikertelen:', err); }
+      try {
+        await valasztEvAction(fd);
+      } catch (err) {
+        unstable_rethrow(err);
+        console.error("[ciklus] évváltás sikertelen:", err);
+      }
     });
   };
   // A számláló állapotban él, mert a /kommunikacio oldal a saját, frissebb értékével
@@ -138,56 +204,150 @@ export default function AppShell({
   }
   const pathname = usePathname();
   const [title, sub] = titleFor(pathname, user.role);
-  const roleLabel = user.role === 'admin'
-    ? 'NIÜ admin'
-    : `TéT attasé${user.orszag ? ' · ' + orszagNev(user.orszag) : ''}`;
+  const roleLabel =
+    user.role === "admin"
+      ? "NIÜ admin"
+      : `TéT attasé${user.orszag ? " · " + orszagNev(user.orszag) : ""}`;
 
   return (
     <AppContext.Provider value={{ user, ev, olvasatlan, setOlvasatlan }}>
-      <div style={{ display: 'flex', minHeight: '100vh' }}>
-        <aside style={{
-          width: 238, flex: '0 0 238px', background: '#131a24', color: '#e7ebf1',
-          display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh', overflowY: 'auto',
-        }}>
-          <div style={{ padding: '18px 18px 16px', borderBottom: '1px solid #232c39' }}>
-            <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: '.02em' }}>NIÜ · TéT Platform</div>
-            <div style={{ fontSize: 11, color: '#8d97a5', marginTop: 3 }}>Belső munkakörnyezet</div>
+      <div style={{ display: "flex", minHeight: "100vh" }}>
+        <aside
+          style={{
+            width: 238,
+            flex: "0 0 238px",
+            background: "#131a24",
+            color: "#e7ebf1",
+            display: "flex",
+            flexDirection: "column",
+            position: "sticky",
+            top: 0,
+            height: "100vh",
+            overflowY: "auto",
+          }}
+        >
+          <div
+            style={{
+              padding: "18px 18px 16px",
+              borderBottom: "1px solid #232c39",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 13.5,
+                fontWeight: 700,
+                letterSpacing: ".02em",
+              }}
+            >
+              NIÜ · TéT Platform
+            </div>
+            <div style={{ fontSize: 11, color: "#8d97a5", marginTop: 3 }}>
+              Belső munkakörnyezet
+            </div>
           </div>
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '12px 10px' }}>
-            {NAV.filter((n) => !n.adminOnly || user.role === 'admin').map((n) => {
-              const on = isActive(pathname, n.href) || (n.alHrefek ?? []).some((h) => isActive(pathname, h));
-              return (
-                <Link key={n.href} href={n.href} aria-current={on ? 'page' : undefined} style={{
-                  display: 'flex', alignItems: 'center', gap: 10, padding: '9px 11px',
-                  borderRadius: 5, fontSize: 12.5, fontWeight: 500, textDecoration: 'none',
-                  background: on ? '#22304a' : 'transparent', color: on ? '#ffffff' : '#a3adbb',
-                }}>
-                  <span style={{ width: 16, textAlign: 'center', fontSize: 13 }}>{n.icon}</span>
-                  {n.label}
-                  {n.href === '/kommunikacio' && olvasatlan > 0 && (
-                    <>
-                      <span aria-hidden style={{
-                        marginLeft: 'auto', background: '#b3261e', color: '#fff', fontSize: 10,
-                        fontWeight: 600, padding: '1px 6px', borderRadius: 9,
-                      }}>{olvasatlan}</span>
-                      <span className="sr-only">{olvasatlan} olvasatlan ticket</span>
-                    </>
-                  )}
-                </Link>
-              );
-            })}
+          <nav
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              padding: "12px 10px",
+            }}
+          >
+            {NAV.filter((n) => !n.adminOnly || user.role === "admin").map(
+              (n) => {
+                const on =
+                  isActive(pathname, n.href) ||
+                  (n.alHrefek ?? []).some((h) => isActive(pathname, h));
+                return (
+                  <Link
+                    key={n.href}
+                    href={n.href}
+                    aria-current={on ? "page" : undefined}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: "9px 11px",
+                      borderRadius: 5,
+                      fontSize: 12.5,
+                      fontWeight: 500,
+                      textDecoration: "none",
+                      background: on ? "#22304a" : "transparent",
+                      color: on ? "#ffffff" : "#a3adbb",
+                    }}
+                  >
+                    <span
+                      style={{ width: 16, textAlign: "center", fontSize: 13 }}
+                    >
+                      {n.icon}
+                    </span>
+                    {n.label}
+                    {n.href === "/kommunikacio" && olvasatlan > 0 && (
+                      <>
+                        <span
+                          aria-hidden
+                          style={{
+                            marginLeft: "auto",
+                            background: "#b3261e",
+                            color: "#fff",
+                            fontSize: 10,
+                            fontWeight: 600,
+                            padding: "1px 6px",
+                            borderRadius: 9,
+                          }}
+                        >
+                          {olvasatlan}
+                        </span>
+                        <span className="sr-only">
+                          {olvasatlan} olvasatlan ticket
+                        </span>
+                      </>
+                    )}
+                  </Link>
+                );
+              },
+            )}
           </nav>
-          <div style={{ marginTop: 'auto' }}>
+          <div style={{ marginTop: "auto" }}>
             {oldalsavAlja}
-            <div style={{ padding: '14px 18px', borderTop: '1px solid #232c39' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                <div aria-hidden style={{
-                  width: 29, height: 29, borderRadius: '50%', background: '#1b3a6b', color: '#fff', flex: '0 0 29px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600,
-                }}>{ini(user.name)}</div>
+            <div
+              style={{ padding: "14px 18px", borderTop: "1px solid #232c39" }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                <div
+                  aria-hidden
+                  style={{
+                    width: 29,
+                    height: 29,
+                    borderRadius: "50%",
+                    background: "#1b3a6b",
+                    color: "#fff",
+                    flex: "0 0 29px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 11,
+                    fontWeight: 600,
+                  }}
+                >
+                  {ini(user.name)}
+                </div>
                 <div style={{ lineHeight: 1.25, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#e7ebf1', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</div>
-                  <div style={{ fontSize: 10.5, color: '#8d97a5' }}>{roleLabel}</div>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: "#e7ebf1",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {user.name}
+                  </div>
+                  <div style={{ fontSize: 10.5, color: "#8d97a5" }}>
+                    {roleLabel}
+                  </div>
                 </div>
               </div>
               <div style={{ marginTop: 10 }}>
@@ -197,25 +357,78 @@ export default function AppShell({
           </div>
         </aside>
 
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-          <header style={{
-            background: '#fff', borderBottom: '1px solid #dde1e7', padding: '13px 26px',
-            display: 'flex', alignItems: 'center', gap: 20, position: 'sticky', top: 0, zIndex: 20,
-          }}>
+        <div
+          style={{
+            flex: 1,
+            minWidth: 0,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <header
+            style={{
+              background: "#fff",
+              borderBottom: "1px solid #dde1e7",
+              padding: "13px 26px",
+              display: "flex",
+              alignItems: "center",
+              gap: 20,
+              position: "sticky",
+              top: 0,
+              zIndex: 20,
+            }}
+          >
             <div style={{ minWidth: 0 }}>
-              <h1 style={{ margin: 0, fontSize: 16, fontWeight: 600, letterSpacing: '-.01em' }}>{title}</h1>
-              <div style={{ fontSize: 11.5, color: '#6b7684', marginTop: 2 }}>{sub}</div>
+              <h1
+                style={{
+                  margin: 0,
+                  fontSize: 16,
+                  fontWeight: 600,
+                  letterSpacing: "-.01em",
+                }}
+              >
+                {title}
+              </h1>
+              <div style={{ fontSize: 11.5, color: "#6b7684", marginTop: 2 }}>
+                {sub}
+              </div>
             </div>
-            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 14 }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11.5, color: '#6b7684' }}>
+            <div
+              style={{
+                marginLeft: "auto",
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
+              }}
+            >
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 7,
+                  fontSize: 11.5,
+                  color: "#6b7684",
+                }}
+              >
                 Ciklus
-                <select className="input" value={optimistaEv} aria-busy={evValtasFut} onChange={(e) => valasztEv(e.target.value)}>
-                  {evek.map((y) => <option key={y} value={y}>{y}</option>)}
+                <select
+                  className="input"
+                  value={optimistaEv}
+                  aria-busy={evValtasFut}
+                  onChange={(e) => valasztEv(e.target.value)}
+                >
+                  {evek.map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
                 </select>
               </label>
             </div>
           </header>
-          <main style={{ flex: 1, minWidth: 0, padding: '20px 26px 44px' }}>{children}</main>
+          <main style={{ flex: 1, minWidth: 0, padding: "20px 26px 44px" }}>
+            {children}
+          </main>
         </div>
       </div>
     </AppContext.Provider>
