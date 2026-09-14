@@ -345,7 +345,7 @@ szöveg.
 
 Csak a `useApp()`-ot, a `useTerkepAllapot`-ot, a `rangsor`/`csoportok`/`tartomany` számítását
 (`useMemo`) és az elrendezést tartja: térkép-kártya (fejléc + `VilagTerkep`) és `TerkepPanel`.
-A `page.tsx` **nem** ad `key`-t a nézetnek: a `?o=` változását a `useTerkepAllapot` kezeli render közben (a kijelölés a kezdő kódra vált, a mutató, a szűrő és az összehasonlítás-halmaz megmarad).
+A `page.tsx` **nem** ad `key`-t a nézetnek: évváltáskor a `useTerkepAllapot` render közben igazítja az állapotot (a page mountolva marad), a `?o=` változását is a hook kezeli; más route-ról érkezve a nézet újramountol, a kliens-állapot nem él túl route-váltást.
 
 ## Adatfolyam
 
@@ -440,3 +440,7 @@ Nincs tesztkeretrendszer. Elvárt lépések:
   mutató-sora színezett sáv `title`-lel; ikonos „Összehasonlítás"/„Összehasonlításban" toggle
   (`aria-pressed`); `vsValt(kod)` a hookban; a tábla sorai nem hover-színeződnek, a név-gomb
   `max-w-40`, a kiemelt sor címkéje `text-foreground`.
+- **Task 9 minőségi review nyomán**: az összehasonlító tábla `w-auto`; a leírás kiemelt-sor része
+  csak számszerű mutatónál; félkövér csak legalább két értéknél; jelmagyarázat a betöltő állapotban
+  is; a `key` elhagyásának indoka pontosítva (évváltás; a „Vissza a térképre" route-váltás
+  újramountol, a Task 5-ös bullet ezt túlígérte).

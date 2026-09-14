@@ -1979,14 +1979,15 @@ export function TerkepNezet({
 
 - [ ] **Step 1b: `page.tsx` – nincs `key`**
 
-A `useTerkepAllapot` maga reagál a `?o=` változására (a kijelölés frissül, a mutató, a szűrő és az
-összehasonlítás-halmaz megmarad – pl. „Teljes profil" → „Vissza a térképre" után), ezért a `key`
-és a hozzá tartozó komment kikerül. A `return` blokk új alakja:
+A `key` nélkül évváltáskor a hook igazítja az állapotot (a page mountolva marad), és a `?o=`
+változását is a hook kezeli, ha ugyanezen a route-on belül változna; más route-ról érkezve a nézet
+amúgy is újramountol. A `return` blokk új alakja:
 
 ```tsx
-  // A ?o= változását (vissza/előre, oldalsáv, „Vissza a térképre") a useTerkepAllapot kezeli
-  // render közben: a kijelölés frissül, a mutató, a szűrő és az összehasonlítás-halmaz megmarad.
-  // Ezért nincs key – az évváltásnál is a hook igazítja az állapotot, ha az ország eltűnik.
+  // Nincs key: évváltáskor (a page mountolva marad) a useTerkepAllapot render közben igazítja az
+  // állapotot – a kijelölés és az összehasonlítás-halmaz nem létező elemei kikerülnek, a mutató és
+  // a szűrő megmarad –, és a ?o= változását is a hook kezeli, ha ugyanezen a route-on belül
+  // változna. Más route-ról (profil oldal, oldalsáv) érkezve a nézet amúgy is újramountol.
   return (
     <TerkepNezet
       adatok={listTerkepAdat(ev)}
@@ -2078,7 +2079,7 @@ A `Route-ok: \`/terkep\` (…)` zárójeles részt cseréld erre (a `/orszagprof
 A `- A \`/terkep\` page a \`TerkepNezet\`-et \`key={kezdoKod}\`-dal rendereli…` pontot cseréld:
 
 ```
-- A `/terkep` page **nem** ad `key`-t a `TerkepNezet`-nek: a `?o=` változását (vissza/előre, oldalsáv, „Vissza a térképre") a `useTerkepAllapot` kezeli render közben (a kijelölés a kezdő kódra vált, a mutató, a szűrő és az összehasonlítás-halmaz megmarad), és ugyanígy törli a kijelölést és a halmaz nem létező elemeit, ha az ország eltűnik az új év adataiból. A mutató, a szűrő és az összehasonlítás-halmaz kliens-állapot, nem URL-paraméter.
+- A `/terkep` page **nem** ad `key`-t a `TerkepNezet`-nek: évváltáskor (a page mountolva marad) a `useTerkepAllapot` render közben igazítja az állapotot (a kijelölés és a halmaz nem létező elemei kikerülnek, a mutató és a szűrő megmarad), és a `?o=` változását is a hook kezeli render közben (`elozoKezdo`), ha ugyanezen a route-on belül változna. Más route-ról – profil oldal „Vissza a térképre", oldalsáv – érkezve a nézet újramountol, tehát a mutató, a szűrő és az összehasonlítás-halmaz (kliens-állapot, nem URL-paraméter) egy route-váltást nem él túl.
 - Letiltott shadcn/Base UI `Button`-on a `title` sosem jelenik meg (natív `disabled` + `disabled:pointer-events-none`): a magyarázatot máshol kell kiírni (a térképen az `OsszehasonlitasCsik` szövege).
 ```
 
@@ -2121,3 +2122,4 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - **Task 8 (minőségi review nyomán):** a mutató-sor formázása („3,3 % · 1./14") közös `ertekEsHely()` a `lib/terkep-mutatok.ts`-ben (a tooltip és a kivonat is ezt hívja); a kivonat mutató-sora színezett sáv (`SKALA_SZINEK[0]`, mint a tábla kiemelt sora) `title`-lel a helyezés magyarázatához; a lábléc gombja ikonos toggle („+ Összehasonlítás" / „✓ Összehasonlításban", `aria-pressed`); a hozzáad/kivesz szabály a hookban `vsValt(kod)` (a `TerkepPanel` és a `RangsorPanel` ezt kapja); az összehasonlító táblában a sorok `hover:bg-transparent` (a sticky címke-cella nem követte a hover-t), a név-gomb `max-w-40` (motorfüggetlen csonkolás), a kiemelt sor címkéje `text-foreground`.
 - **Task 8 utó-finomítás (re-review nyomán):** a kivonat mutató-sávja csak értékkel színezett (érték nélkül a halvány „nincs adat" a színen 4,07:1 kontrasztú lett volna), a `title` a helyezés meglétéhez igazodik (`helyezett`), a toggle-gombon nincs `aria-pressed` (a változó felirat viszi az állapotot – egy minta a `RangsorPanel` gombjával); az összehasonlító tábla sor-kommentje a hover hiányát magyarázza, `cn` variadikus formában.
 - **Task 9:** a böngészős ellenőrzés adminnal és attaséval rendben (build zöld, konzolhiba nincs, CDN-kérés nincs, 179 path, zoom/régió/tooltip/rangsor/szűrő/kivonat/összehasonlítás 2 oszloppal). A 3. oszlop és a „+ Ország" választó a lokális DB-vel (2 térképes ország: KR, JP) nem próbálható – a választó ilyenkor helyesen el sem jelenik; ezt egy ideiglenes harmadik attaséval a záró ellenőrzés fedi le.
+- **Task 9 (minőségi review nyomán):** az összehasonlító `Table` `w-auto` (a `w-full` + auto elrendezés két oszlopot ~800 px-re szórt), a leírás „a térkép mutatójának sora kiemelve" része csak számszerű mutatónál, félkövér csak ha legalább két országnak van értéke; a `Jelmagyarazat` a betöltő/hiba állapotban is renderelődik (nincs ~33 px ugrás); `role="img"` magyarázó komment; a `page.tsx` kommentje pontosítva: a `key` elhagyása az évváltásnál számít (a page mountolva marad), a `?o=` route-váltással érkezik, amikor a nézet amúgy is újramountol – a mutató/szűrő/halmaz egy route-váltást nem él túl (a Task 5-ös eltérés ezt túlígérte).
