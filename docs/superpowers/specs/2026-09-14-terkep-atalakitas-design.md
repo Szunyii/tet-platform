@@ -236,7 +236,7 @@ Csak a `/terkep` használja, ezért a route alatt marad. Fájlok:
 
 - React-állapot `{ nev: string; o: TerkepOrszag | null; x: number; y: number } | null`, a
   `pointermove` a konténerhez képest számolt koordinátákkal frissíti, `pointerleave` törli.
-- A `TerkepTooltip` `pointer-events: none`, a kurzor fölé pozicionálva, vízszintesen a
+- A `TerkepTooltip` `pointer-events: none`, a kurzor fölé pozicionálva (a térkép tetejéhez közel, y < 150 px, a kurzor alá, mert a kártya `overflow-hidden` levágná), vízszintesen a
   konténeren belül tartva.
 - Tartalom posztos országnál: **név**; attasé (vagy „nincs aktív attasé") · főváros (ha van);
   számszerű mutatónál `cimke: érték · hely./n` (`n` = rangsorolt országok száma; az
@@ -401,3 +401,9 @@ Nincs tesztkeretrendszer. Elvárt lépések:
 - `MUTATO_TABLA` kimerítő kulcs-térkép, `SZAM_MUTATOK`/`KATEGORIA_MUTATOK` export, `Tartomany` típus;
   `csoportok` a `sorrend`-en kívüli kategóriát a „nincs" csoportba teszi; `TERKEP_SZINEK.halvany`
   `#ced5dd` (az eredeti a szárazföldtől megkülönböztethetetlen volt).
+- **Task 3 minőségi review nyomán**: a tooltip a térkép tetejéhez közel (y < 150 px) a kurzor alá
+  kerül; a jelmagyarázat aktív iparág-szűrőnél „nem felel meg a szűrőnek" sort is mutat (`halvany`),
+  legfeljebb a térkép 45 %-a magas és görgethető, a sraffozott minta sűrűsége a térkép `<pattern>`-jével
+  azonos (2 px / 6 px), a négyzet kerete explicit `keret` prop; a poszt nélküli poligon tooltipje a
+  szótár magyar nevét mutatja (`lib/orszagok.ts` `geoNev(geo)`, ismeretlen térképnévnél maga a név);
+  a régió-gombok aktív/inaktív változata `default`/`outline` (nem `secondary`/`outline`).

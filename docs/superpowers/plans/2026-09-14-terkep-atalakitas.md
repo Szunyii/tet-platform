@@ -717,6 +717,7 @@ import { Minus, Plus, RotateCcw } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { Button } from '../../../../components/ui/button';
+import { geoNev } from '../../../../lib/orszagok';
 import {
   orszagSzin, REGIOK, szinSkala, TERKEP_SZINEK, type Csoport, type Mutato, type Rangsor, type Tartomany,
 } from '../../../../lib/terkep-mutatok';
@@ -814,7 +815,7 @@ const TerkepRetegek = memo(function TerkepRetegek({
             strokeWidth={kijelolt ? 1.8 : vsben ? 1.2 : 0.5}
             vectorEffect="non-scaling-stroke"
             className={o ? 'cursor-pointer' : undefined}
-            onPointerMove={(e) => onHover(e, o?.nev ?? p.nev, o)}
+            onPointerMove={(e) => onHover(e, o?.nev ?? geoNev(p.nev), o)}
             onClick={o ? () => onSelect(o.kod) : undefined}
           />
         );
@@ -911,7 +912,8 @@ export function VilagTerkep({
   const onHover = useCallback<HoverFn>((e, nev, o) => {
     const box = wrapRef.current?.getBoundingClientRect();
     if (!box) return;
-    const x = Math.min(Math.max(e.clientX - box.left, 110), box.width - 110);
+    // 120 = a tooltip fél szélessége (max-w-60 → 240 px), hogy ne lógjon ki a konténerből.
+    const x = Math.min(Math.max(e.clientX - box.left, 120), box.width - 120);
     setHover({ nev, o, x, y: e.clientY - box.top });
   }, []);
 
@@ -983,7 +985,7 @@ export function VilagTerkep({
         <Button type="button" variant="outline" size="icon-sm" aria-label="Kicsinyítés" onClick={() => nagyit(1 / 1.5)}><Minus /></Button>
         <Button type="button" variant="outline" size="icon-sm" aria-label="Alaphelyzet" onClick={() => regioValaszt('vilag')}><RotateCcw /></Button>
       </div>
-      <Jelmagyarazat mutato={mutato} tartomany={tartomany} csoportok={csoportok} />
+      <Jelmagyarazat mutato={mutato} tartomany={tartomany} csoportok={csoportok} iparag={iparag} />
       {hover && <TerkepTooltip hover={hover} mutato={mutato} rangsor={rangsor} />}
     </div>
   );
@@ -1860,3 +1862,4 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ## Megvalósítási eltérések
 
 - **Task 2 (minőségi review nyomán):** a számszerű mutató `skala: 'linearis' | 'log'` mezőt kapott; GDP, GDP/fő és lakosság symlog skálán színeződik (lineárisan a nagyságrendi különbség miatt szinte minden ország az első fokozatba esne). Új `arany(m, t)` adja a 0–1 arányt, a `szinSkala(m, t)` erre épül (mindig `rgb()` string), a rangsor sávja is ezt használja. A számszerű `cimke`-k rövidek, egység nélkül (a `MEZO_CIMKEK` címkéi már tartalmazták az egységet, és az `utotag` duplázta volna: „GDP (milliárd USD): 4 200 mrd USD"). `MUTATO_TABLA` kimerítő kulcs-térkép, `SZAM_MUTATOK`/`KATEGORIA_MUTATOK` export, `Tartomany` típus. `csoportok` a `sorrend`-ben nem szereplő kategóriát a „nincs" csoportba teszi (az `orszagSzin`-nel egyezően). `TERKEP_SZINEK.halvany` `#ced5dd` (az eredeti `#e3e7ec` a szárazföldtől megkülönböztethetetlen volt, ΔE ≈ 1). A Task 3–10 kódja ehhez igazítva.
+- **Task 3 (minőségi review nyomán):** a `TerkepTooltip` a térkép tetejéhez közel (y < 150 px) a kurzor alá kerül (a kártya `overflow-hidden` levágná); a `Jelmagyarazat` `iparag` propot kap és aktív szűrőnél „nem felel meg a szűrőnek" sort mutat (`halvany`), `max-h-[45%] overflow-y-auto`, a sraffozás sűrűsége a térkép `<pattern>`-jével azonos, explicit `keret` prop, `Tartomany` típus; a `useVilagAtlasz` `'use client'` és „ne mutáld" megjegyzés; új `geoNev(geo)` a `lib/orszagok.ts`-ben, a poszt nélküli poligon tooltipje magyar nevet mutat (a Task 4 `TerkepRetegek`-je ezt hívja, a tooltip x-vágása 120 px); régió-gombok `default`/`outline`.
