@@ -36,7 +36,7 @@ function OrszagSor({ o, hely, sav, ertek, benne, vsTele, onKivalaszt, onVsToggle
           <span className="min-w-0 flex-1 truncate font-medium" title={o.nev}>{o.nev}</span>
           {ertek !== undefined && <span className="shrink-0 font-mono text-xs text-muted-foreground">{ertek}</span>}
         </button>
-        {/* A letiltott gombon a title nem jelenne meg (natív disabled + pointer-events-none); a korlátot a csík írja ki. */}
+        {/* Letiltott gombon a title nem jelenne meg (natív disabled + pointer-events-none); a korlátot az OsszehasonlitasCsik írja ki. */}
         <Button
           type="button"
           variant="ghost"
@@ -103,7 +103,7 @@ export function RangsorPanel({ mutato, rangsor, csoportok, tartomany, szamlalo, 
               </div>
             )}
           </>
-        ) : csoportok.length === 0 ? (
+        ) : csoportok.every((cs) => cs.orszagok.length === 0) ? (
           nincsTalalat
         ) : (
           csoportok.map((cs) => (

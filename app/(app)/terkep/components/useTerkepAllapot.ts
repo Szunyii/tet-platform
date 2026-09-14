@@ -26,13 +26,11 @@ export interface TerkepAllapot {
   vsHozzaad: (kod: string) => void;
   vsKivesz: (kod: string) => void;
   vsTorol: () => void;
-  /** A kijelölést törli, így (vs.length >= VS_MIN esetén) az összehasonlító panel látszik. */
-  osszehasonlit: () => void;
 }
 
 /**
- * A térkép-oldal kliens-állapota. A panel sorrendje a hívóban: `kod` → kivonat, különben
- * `vs.length >= VS_MIN` → összehasonlítás, különben rangsor. Évváltáskor (új `adatok`) a nem
+ * A térkép-oldal kliens-állapota. A jobb panel a hívóban: `kod` → kivonat, különben rangsor; az
+ * összehasonlító tábla a térkép alatt jelenik meg, ha `vs.length >= VS_MIN`. Évváltáskor (új `adatok`) a nem
  * létező kijelölés és halmaz-elemek render közben kikerülnek, a `?o=` (kezdoKod) változására a
  * kijelölés frissül, a többi állapot marad – ez a React „prop változásra állapot igazítása" mintája,
  * ezért a page NEM ad `key`-t a nézetnek. A visszaadott objektum renderenként új (nem memoizálható).
@@ -67,10 +65,9 @@ export function useTerkepAllapot(adatok: TerkepOrszag[], kezdoKod: string | null
   const vsHozzaad = useCallback((k: string) => setVs((v) => (v.includes(k) || v.length >= VS_MAX ? v : [...v, k])), []);
   const vsKivesz = useCallback((k: string) => setVs((v) => v.filter((x) => x !== k)), []);
   const vsTorol = useCallback(() => setVs([]), []);
-  const osszehasonlit = useCallback(() => setKod(null), []);
 
   return {
     kod, vs, vsTele: vs.length >= VS_MAX, mutato: mutatoByKulcs(mutatoKulcs), iparag,
-    kivalaszt, bezar, setMutatoKulcs, setIparag, vsHozzaad, vsKivesz, vsTorol, osszehasonlit,
+    kivalaszt, bezar, setMutatoKulcs, setIparag, vsHozzaad, vsKivesz, vsTorol,
   };
 }

@@ -10,9 +10,14 @@ import { Button } from '../../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../components/ui/table';
 import { formatSzam } from '../../../../lib/szam';
-import { SZAM_MUTATOK, type Mutato } from '../../../../lib/terkep-mutatok';
+import { SKALA_SZINEK, SZAM_MUTATOK, type Mutato } from '../../../../lib/terkep-mutatok';
 import { cn } from '../../../../lib/utils';
 import { VS_MAX } from './useTerkepAllapot';
+
+/** A kiemelt sor (a térképen választott mutató) háttere: a térkép skálájának legvilágosabb színe. */
+const KIEMELT_HATTER = SKALA_SZINEK[0];
+/** A sorcímke-oszlop keskeny képernyőn is látszik (sticky), ezért saját, átlátszatlan háttere van. */
+const CIMKE_OSZLOP = 'sticky left-0 z-10 w-36 min-w-36 bg-card align-top whitespace-normal';
 
 function Sor({ cimke, kiemelt, orszagok, plusz, children }: {
   cimke: string;
@@ -22,16 +27,24 @@ function Sor({ cimke, kiemelt, orszagok, plusz, children }: {
   plusz: boolean;
   children: (o: TerkepOrszag) => ReactNode;
 }) {
+  // Inline style szándékosan: a kiemelés színe a térkép skálájából jön, és inline-ként a sor hover-hátterét is felülírja
+  // (a Tailwind `bg-muted/60` a `hover:bg-muted/50` alatt eltűnt volna). A sticky címke-cellára is kell, mert az saját háttérrel fed.
+  const hatter = kiemelt ? { background: KIEMELT_HATTER } : undefined;
   return (
-    <TableRow className={cn(kiemelt && 'bg-muted/60')}>
-      <TableCell className="font-medium whitespace-normal text-muted-foreground">{cimke}</TableCell>
+    <TableRow style={hatter}>
+      <TableHead scope="row" className={cn(CIMKE_OSZLOP, 'h-auto py-2 font-medium text-muted-foreground')} style={hatter}>
+        {cimke}
+      </TableHead>
       {orszagok.map((o) => <TableCell key={o.kod} className="align-top whitespace-normal">{children(o)}</TableCell>)}
       {plusz && <TableCell />}
     </TableRow>
   );
 }
 
-/** 2–4 ország adatai egymás mellett; a térképen választott számszerű mutató sora kiemelt, soronként a legnagyobb érték félkövér. */
+/**
+ * 2–4 ország adatai egymás mellett, a térkép alatt, teljes szélességben (a keskeny jobb panelen nem
+ * férne el). A térképen választott számszerű mutató sora kiemelt, soronként a legnagyobb érték félkövér.
+ */
 export function OsszehasonlitasPanel({ orszagok, jeloltek, mutato, onKivalaszt, onKivesz, onHozzaad, onTorol }: {
   /** A halmaz rekordjai a hozzáadás sorrendjében (2–4). */
   orszagok: TerkepOrszag[];
@@ -43,7 +56,7 @@ export function OsszehasonlitasPanel({ orszagok, jeloltek, mutato, onKivalaszt, 
   onHozzaad: (kod: string) => void;
   onTorol: () => void;
 }) {
-  const plusz = orszagok.length < VS_MAX;
+  const plusz = orszagok.length < VS_MAX && jeloltek.length > 0;
   const felirat = (o: TerkepOrszag) =>
     mutato.tipus === 'szam' ? `${o.nev} · ${formatSzam(mutato.ertek(o), mutato.utotag)}` : o.nev;
   return (
@@ -51,19 +64,26 @@ export function OsszehasonlitasPanel({ orszagok, jeloltek, mutato, onKivalaszt, 
       <CardHeader className="flex items-start gap-2">
         <div className="min-w-0">
           <CardTitle>Összehasonlítás</CardTitle>
-          <CardDescription>{orszagok.length} ország · a térkép mutatójának sora kiemelve</CardDescription>
+          <CardDescription>
+            {orszagok.length} ország · a térkép mutatójának sora kiemelve, soronként a legnagyobb érték félkövér
+          </CardDescription>
         </div>
-        <Button type="button" variant="outline" size="sm" className="ml-auto" onClick={onTorol}>Törlés</Button>
+        <Button type="button" variant="outline" size="sm" className="ml-auto" onClick={onTorol}>Összehasonlítás törlése</Button>
       </CardHeader>
-      <CardContent className="overflow-x-auto px-0">
+      <CardContent className="px-0">
         <Table className="text-xs">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-28" />
+              <TableHead className={cn(CIMKE_OSZLOP, 'h-10')} />
               {orszagok.map((o) => (
-                <TableHead key={o.kod} className="min-w-32">
+                <TableHead key={o.kod} className="min-w-36 max-w-44">
                   <span className="flex items-center gap-1">
-                    <button type="button" className="truncate font-semibold text-foreground hover:underline" onClick={() => onKivalaszt(o.kod)}>
+                    <button
+                      type="button"
+                      title={o.nev}
+                      className="min-w-0 truncate rounded-sm font-semibold text-foreground outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+                      onClick={() => onKivalaszt(o.kod)}
+                    >
                       {o.nev}
                     </button>
                     <Button type="button" variant="ghost" size="icon-xs" aria-label={`${o.nev} kivétele`} onClick={() => onKivesz(o.kod)}>
@@ -73,7 +93,7 @@ export function OsszehasonlitasPanel({ orszagok, jeloltek, mutato, onKivalaszt, 
                 </TableHead>
               ))}
               {plusz && (
-                <TableHead className="min-w-40">
+                <TableHead className="min-w-44">
                   <NativeSelect aria-label="Ország hozzáadása" value="" onChange={(e) => { if (e.target.value) onHozzaad(e.target.value); }}>
                     <option value="">+ Ország</option>
                     {jeloltek.map((o) => <option key={o.kod} value={o.kod}>{felirat(o)}</option>)}
