@@ -11,11 +11,13 @@ import { Button, buttonVariants } from '../../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../../../components/ui/card';
 import { BLOKK_KULCSOK, MEZO_CIMKEK } from '../../../../lib/orszagprofil-szotar';
 import { formatSzam as sz } from '../../../../lib/szam';
+import type { Mutato, Rangsor } from '../../../../lib/terkep-mutatok';
 import { cn } from '../../../../lib/utils';
 
 /** A kiválasztott ország profil-kivonata a térkép mellett. */
 export function ProfilKivonat({
   o, szerkeszthetEv, szerkeszthetMost, most, valasztEvAction, onClose,
+  mutato, rangsor, benneVs, vsTele, onVs,
 }: {
   o: TerkepOrszag;
   szerkeszthetEv: boolean;
@@ -23,6 +25,15 @@ export function ProfilKivonat({
   most: number;
   valasztEvAction: (formData: FormData) => Promise<void>;
   onClose: () => void;
+  /** A térképen választott mutató; számszerűnél egy sor az értékkel és a helyezéssel. */
+  mutato: Mutato;
+  rangsor: Rangsor | null;
+  /** Benne van-e az ország az összehasonlításban. */
+  benneVs: boolean;
+  /** Tele a halmaz (4) – ilyenkor a hozzáadás letiltva. */
+  vsTele: boolean;
+  /** Hozzáadás / kivétel (a hívó dönti el `benneVs` alapján). */
+  onVs: () => void;
 }) {
   const a = o.alapadatok;
   const C = MEZO_CIMKEK.alapadatok;
@@ -31,6 +42,12 @@ export function ProfilKivonat({
     o.poszt?.terulet != null ? sz(o.poszt.terulet, ' km²') : null,
     o.poszt?.penznem,
   ].filter(Boolean).join(' · ');
+  let mutatoSor: string | null = null;
+  if (mutato.tipus === 'szam') {
+    const v = mutato.ertek(o);
+    const sor = rangsor?.sorok.find((s) => s.o.kod === o.kod);
+    mutatoSor = v === null ? 'nincs adat' : `${sz(v, mutato.utotag)}${sor && rangsor ? ` · ${sor.hely}./${rangsor.sorok.length}` : ''}`;
+  }
   return (
     <Card>
       <CardHeader>
@@ -53,6 +70,12 @@ export function ProfilKivonat({
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
+        {mutatoSor !== null && (
+          <p className="text-sm">
+            <span className="text-muted-foreground">{mutato.cimke}: </span>
+            <span className={mutatoSor === 'nincs adat' ? 'text-muted-foreground' : 'font-mono'}>{mutatoSor}</span>
+          </p>
+        )}
         {o.allapot === 'nincs' ? (
           <p className="text-sm text-muted-foreground">Ehhez az évhez még nincs országprofil.</p>
         ) : (
@@ -89,6 +112,15 @@ export function ProfilKivonat({
       <CardFooter className="flex flex-wrap gap-2">
         <Link href={`/orszagprofil/${o.kod}`} className={cn(buttonVariants({ variant: 'outline' }))}>Teljes profil</Link>
         <Link href="/kommunikacio" className={cn(buttonVariants({ variant: 'outline' }))}>Üzenet a poszttal</Link>
+        {/* Letiltott gombon a title nem jelenik meg (natív disabled + pointer-events-none); a korlátot a csík írja ki. */}
+        <Button
+          type="button"
+          variant="outline"
+          disabled={!benneVs && vsTele}
+          onClick={onVs}
+        >
+          {benneVs ? 'Kivétel az összehasonlításból' : 'Összehasonlításhoz'}
+        </Button>
         <SzerkesztesGomb
           kod={o.kod}
           most={most}
