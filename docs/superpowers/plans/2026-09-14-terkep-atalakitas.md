@@ -1008,23 +1008,33 @@ export function VilagTerkep({
     select(svg).transition().duration(400).call(z.transform, r.bbox ? regioTranszform(r.bbox) : zoomIdentity);
   };
 
+  // A jelmagyarázat a betöltő/hiba állapotban is ott van, hogy a kártya magassága ne ugorjon a térkép beérkezésekor.
+  const jelmagyarazat = <Jelmagyarazat mutato={mutato} tartomany={tartomany} csoportok={csoportok} iparag={iparag} />;
+
   if (hiba) {
     return (
-      <div className={`flex ${ARANY} items-center justify-center p-6 text-center text-sm text-muted-foreground`}>
-        A térkép nem tölthető be.
+      <div>
+        <div className={`flex ${ARANY} items-center justify-center p-6 text-center text-sm text-muted-foreground`}>
+          A térkép nem tölthető be.
+        </div>
+        {jelmagyarazat}
       </div>
     );
   }
   if (!poligonok) {
     return (
-      <div className={`flex ${ARANY} animate-pulse items-center justify-center text-sm text-muted-foreground`}>
-        Térkép betöltése…
+      <div>
+        <div className={`flex ${ARANY} animate-pulse items-center justify-center text-sm text-muted-foreground`}>
+          Térkép betöltése…
+        </div>
+        {jelmagyarazat}
       </div>
     );
   }
   return (
     <div>
       <div ref={wrapRef} className="relative">
+        {/* role="img": a poligonok és pinek a segítő technológiának nem interaktívak – a billentyűzetes egyenértékes a RangsorPanel (minden ország gomb). */}
         <svg
           ref={svgRef}
           viewBox={`0 0 ${W} ${H}`}
@@ -1067,7 +1077,7 @@ export function VilagTerkep({
         </div>
         {hover && <TerkepTooltip hover={hover} mutato={mutato} rangsor={rangsor} />}
       </div>
-      <Jelmagyarazat mutato={mutato} tartomany={tartomany} csoportok={csoportok} iparag={iparag} />
+      {jelmagyarazat}
     </div>
   );
 }
@@ -1470,13 +1480,13 @@ export function OsszehasonlitasPanel({ orszagok, jeloltek, mutato, onKivalaszt, 
         <div className="min-w-0">
           <CardTitle>Összehasonlítás</CardTitle>
           <CardDescription>
-            {orszagok.length} ország · a térkép mutatójának sora kiemelve, soronként a legnagyobb érték félkövér
+            {orszagok.length} ország{mutato.tipus === 'szam' ? ' · a térkép mutatójának sora kiemelve' : ''} · soronként a legnagyobb érték félkövér
           </CardDescription>
         </div>
         <Button type="button" variant="outline" size="sm" className="ml-auto" onClick={onTorol}>Összehasonlítás törlése</Button>
       </CardHeader>
       <CardContent className="px-0">
-        <Table className="text-xs">
+        <Table className="w-auto text-xs">
           <TableHeader>
             <TableRow>
               <TableHead className={cn(CIMKE_OSZLOP, 'h-10')} />
@@ -1523,7 +1533,9 @@ export function OsszehasonlitasPanel({ orszagok, jeloltek, mutato, onKivalaszt, 
               {(o) => (o.iparagak.length ? <span className="flex flex-wrap gap-1">{o.iparagak.map((i) => <IparagBadge key={i} iparag={i} />)}</span> : '–')}
             </Sor>
             {SZAM_MUTATOK.map((m) => {
-              const legjobb = Math.max(...orszagok.map((o) => m.ertek(o) ?? -Infinity));
+              // Félkövér csak valódi összevetésnél: legalább két ország értékével (egyetlen érték nem „legnagyobb”).
+              const ertekek = orszagok.map((o) => m.ertek(o)).filter((v): v is number => v !== null);
+              const legjobb = ertekek.length >= 2 ? Math.max(...ertekek) : null;
               return (
                 <Sor key={m.kulcs} cimke={m.cimke} kiemelt={m.kulcs === mutato.kulcs} orszagok={orszagok} plusz={plusz}>
                   {(o) => {
