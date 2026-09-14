@@ -33,7 +33,7 @@ Ezután nyisd meg: http://localhost:3000
 | Útvonal | Képernyő |
 | --- | --- |
 | `/` | Átirányítás az Országprofil (`/terkep`) képernyőre |
-| `/terkep` | Térkép és országprofil-kivonat a fejlécben választott ciklus évének nézetében (DB-s profilok, d3-geo világtérkép; színezés kiemelt iparág vagy profil-állapot szerint, iparág-szűrő, `?o=<kod>` előre kiválaszt) |
+| `/terkep` | Térkép és országprofil-kivonat a fejlécben választott ciklus évének nézetében (DB-s profilok, React + d3-geo világtérkép npm-ből, nagyítás és régió-gombok; Mutató-választó: kiemelt iparág, profil-állapot vagy számszerű mutató folytonos színskálával; iparág-szűrő; rangsor-panel; 2–4 ország összehasonlító táblája a térkép alatt; `?o=<kod>` előre kiválaszt) |
 | `/orszagprofil/[kod]` | Teljes országprofil a fejlécben választott ciklus évére (`tet-ev` cookie); bárki olvashatja |
 | `/orszagprofil/[kod]/szerkesztes` | Profil szerkesztése blokkonként (attasé: saját ország, idei év; admin: bármely ország, 2020-tól az idei évig) |
 | `/riportok` | Információs bejegyzések listája szűrőkkel (attasé: saját, admin: mind) |
@@ -62,9 +62,8 @@ Ezután nyisd meg: http://localhost:3000
 - `components/form/` – megosztott form-minta (`useMuveletForm`, `MezoHiba`, `MuveletDialog`, `Mezo`, `SzamMezo`, `CimkeValaszto`, `NativeSelect`)
 - `components/AppShell.tsx` – sidebar (menü, országprofil-állapot kártya, bejelentkezett felhasználó, kijelentkezés), fejléc (oldalcím, ciklusválasztó – a választott év `tet-ev` cookie-ban; a térkép, az országprofil és a szerkesztő is ezt az évet mutatja)
 - `app/(app)/components/OldalsavAllapot.tsx` – az oldalsáv állapot-kártyája (attasé: saját ország, admin: darabszámok a választott ciklusra)
-- `public/tet-world-map.js` – `<tet-world-map>` webkomponens (d3 + world-atlas, CDN-ről töltődik; az adatot és a színtáblákat JSON attribútumban kapja)
-
-Megjegyzés: a térkép internetkapcsolatot igényel (d3, topojson és a world-atlas TopoJSON CDN-ről jön).
+- `lib/terkep-mutatok.ts` – a térkép mutatói (színezés, rangsor, összehasonlítás), színskála, régiók
+- `app/(app)/terkep/components/` – a térkép (`VilagTerkep`, d3-geo + world-atlas npm-ből), a rangsor-, kivonat- és összehasonlító panel
 
 ## Ismert korlátok / következő lépések
 
