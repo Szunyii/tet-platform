@@ -246,7 +246,7 @@ Csak a `/terkep` használja, ezért a route alatt marad. Fájlok:
 
 ### Jelmagyarázat
 
-Lebegő kártya bal alul (`Card`-szerű, fehér, vékony keret, árnyék). Számszerű: a mutató címkéje
+A térkép **alatt**, normál folyásban, vékony felső szegéllyel (nem lebegő kártya: lebegve a bal alsó sarok – Dél-Amerika – országait takarta). Számszerű: a mutató címkéje
 (log skálánál „(logaritmikus skála)" megjegyzéssel), gradiens csík a `SKALA_SZINEK`-ből, alatta `formatSzam(min)` és `formatSzam(max)` az utótaggal,
 majd „nincs adat" (sraffozott négyzet) és „nincs poszt" (`szarazfold`). Ha nincs tartomány
 (egyetlen ország sem ad értéket), csak a két utóbbi. Kategorikus: a `csoportok` színnégyzetei és
@@ -407,3 +407,9 @@ Nincs tesztkeretrendszer. Elvárt lépések:
   azonos (2 px / 6 px), a négyzet kerete explicit `keret` prop; a poszt nélküli poligon tooltipje a
   szótár magyar nevét mutatja (`lib/orszagok.ts` `geoNev(geo)`, ismeretlen térképnévnél maga a név);
   a régió-gombok aktív/inaktív változata `default`/`outline` (nem `secondary`/`outline`).
+- **Task 4 minőségi review nyomán**: a `regioTranszform` k ≥ 1 és `translateExtent` korláttal (a
+  `zoom.transform` nem alkalmaz constrain-t); a jelmagyarázat a térkép alatt, normál folyásban;
+  a betöltő helykitöltő `aspect-[960/505]`; a tooltip csak akkor kerül a kurzor alá, ha alatta is van
+  hely (`HoverAllapot.magassag`); `+`/`−` törli az aktív régiót; pinek külön `<g data-pinek>`
+  rétegben; a sraffozás `<pattern>`-je `scale(1/k)`; átlátszó `<rect>` az `<svg>` alján a tooltip
+  törléséhez a gömbön kívül.

@@ -582,8 +582,11 @@ import { ALLAPOT_CIMKE } from '../../../../lib/orszagprofil-szotar';
 import { formatSzam } from '../../../../lib/szam';
 import type { Mutato, Rangsor } from '../../../../lib/terkep-mutatok';
 
-/** A lebegtetett poligon/pin: `o` null, ha poszt nélküli ország; x/y a térkép-konténerhez képest. */
-export interface HoverAllapot { nev: string; o: TerkepOrszag | null; x: number; y: number }
+/**
+ * A lebegtetett poligon/pin: `o` null, ha poszt nélküli ország; x/y a térkép-konténerhez képest,
+ * `magassag` a konténer magassága (a lefelé fordításhoz).
+ */
+export interface HoverAllapot { nev: string; o: TerkepOrszag | null; x: number; y: number; magassag: number }
 
 /** Ennél kisebb y-nál nincs hely a kurzor fölött (a tooltip legfeljebb ~140 px magas): a kurzor alá kerül. */
 const FLIP_Y = 150;
@@ -604,8 +607,9 @@ function mutatoSor(o: TerkepOrszag, mutato: Mutato, rangsor: Rangsor | null): st
 export function TerkepTooltip({ hover, mutato, rangsor }: { hover: HoverAllapot; mutato: Mutato; rangsor: Rangsor | null }) {
   const { o } = hover;
   const sor = o ? mutatoSor(o, mutato, rangsor) : null;
-  // A kártya `overflow-hidden`, ezért a térkép tetejénél a kurzor fölé rajzolt tooltip levágódna: ott alá kerül.
-  const lent = hover.y < FLIP_Y;
+  // A kártya `overflow-hidden`, ezért a térkép tetejénél a kurzor fölé rajzolt tooltip levágódna: ott
+  // alá kerül – de csak ha alatta tényleg van hely (alacsony térképen inkább fent marad).
+  const lent = hover.y < FLIP_Y && hover.magassag - hover.y > FLIP_Y;
   return (
     <div
       role="tooltip"
@@ -639,16 +643,16 @@ import { formatSzam } from '../../../../lib/szam';
 import { SKALA_SZINEK, TERKEP_SZINEK, type Csoport, type Mutato, type Tartomany } from '../../../../lib/terkep-mutatok';
 
 // Inline style szándékosan: a színek a térképpel közös szótárból (TERKEP_SZINEK, SKALA_SZINEK) jönnek.
-// A sraffozás sűrűsége a térkép <pattern>-jével azonos: 2 px csík 6 px-enként.
+// A sraffozás iránya és sűrűsége a térkép <pattern>-jével azonos: 2 px csík 6 px-enként, „/" irányban.
 function Negyzet({ szin, sraff, keret }: { szin?: string; sraff?: boolean; keret?: boolean }) {
   return (
     <i
       aria-hidden
       className="inline-block size-2.5 shrink-0 rounded-[2px]"
       style={{
-        background: sraff ? undefined : szin,
+        backgroundColor: sraff ? undefined : szin,
         backgroundImage: sraff
-          ? `repeating-linear-gradient(45deg, ${TERKEP_SZINEK.nincsAdat} 0 2px, ${TERKEP_SZINEK.szarazfold} 2px 6px)`
+          ? `repeating-linear-gradient(135deg, ${TERKEP_SZINEK.nincsAdat} 0 2px, ${TERKEP_SZINEK.szarazfold} 2px 6px)`
           : undefined,
         border: keret || sraff ? `1px solid ${TERKEP_SZINEK.gombKontur}` : undefined,
       }}
@@ -657,8 +661,8 @@ function Negyzet({ szin, sraff, keret }: { szin?: string; sraff?: boolean; keret
 }
 
 /**
- * Lebegő jelmagyarázat a térkép bal alsó sarkában: gradiens (számszerű) vagy kategória-lista.
- * Legfeljebb a térkép magasságának 45 %-a, azon túl görgethető (sok kiemelt iparágnál).
+ * Jelmagyarázat a térkép alatt, normál folyásban (nem lebegő kártya, hogy ne takarja a térkép
+ * bal alsó sarkát): gradiens + min/max (számszerű) vagy kategória-lista.
  */
 export function Jelmagyarazat({ mutato, tartomany, csoportok, iparag }: {
   mutato: Mutato;
@@ -676,34 +680,30 @@ export function Jelmagyarazat({ mutato, tartomany, csoportok, iparag }: {
     </>
   );
   return (
-    <div className="absolute bottom-2.5 left-2.5 max-h-[45%] max-w-80 overflow-y-auto rounded-md border bg-background/95 px-2.5 py-2 text-[11px] text-muted-foreground shadow-sm">
+    <div role="group" aria-label="Jelmagyarázat" className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t px-3 py-2 text-[11px] text-muted-foreground">
       {mutato.tipus === 'szam' ? (
         <>
-          <p className="font-semibold text-foreground">
+          <span className="font-semibold text-foreground">
             {mutato.cimke}
             {mutato.skala === 'log' && <span className="ml-1 font-normal text-muted-foreground">(logaritmikus skála)</span>}
-          </p>
+          </span>
           {tartomany && (
-            <>
-              <div className="my-1 h-2 rounded-sm" style={{ background: `linear-gradient(90deg, ${SKALA_SZINEK.join(', ')})` }} />
-              <div className="flex justify-between gap-3 font-mono">
-                <span>{formatSzam(tartomany.min, mutato.utotag)}</span>
-                <span>{formatSzam(tartomany.max, mutato.utotag)}</span>
-              </div>
-            </>
+            <span className="flex items-center gap-2 font-mono">
+              <span>{formatSzam(tartomany.min, mutato.utotag)}</span>
+              <span className="h-2 w-32 rounded-sm" style={{ background: `linear-gradient(90deg, ${SKALA_SZINEK.join(', ')})` }} />
+              <span>{formatSzam(tartomany.max, mutato.utotag)}</span>
+            </span>
           )}
-          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
-            <span className="flex items-center gap-1.5"><Negyzet sraff /> nincs adat</span>
-            {kozos}
-          </div>
+          <span className="flex items-center gap-1.5"><Negyzet sraff /> nincs adat</span>
+          {kozos}
         </>
       ) : (
-        <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+        <>
           {csoportok.map((cs) => (
             <span key={cs.kategoria ?? '__nincs'} className="flex items-center gap-1.5"><Negyzet szin={cs.szin} /> {cs.cimke}</span>
           ))}
           {kozos}
-        </div>
+        </>
       )}
     </div>
   );
@@ -715,7 +715,7 @@ export function Jelmagyarazat({ mutato, tartomany, csoportok, iparag }: {
 Az `orszagNev()` után (az `ORSZAGOK` deklarációja alatt):
 
 ```ts
-const NEV_GEO_SZERINT = new Map(ORSZAGOK.filter((o) => o.geo).map((o) => [o.geo, o.nev] as const));
+const NEV_GEO_SZERINT: ReadonlyMap<string, string> = new Map(ORSZAGOK.filter((o) => o.geo).map((o) => [o.geo, o.nev] as const));
 
 /**
  * A world-atlas térképnév (`properties.name`) magyar neve a szótárból – a térkép poszt nélküli
@@ -775,10 +775,12 @@ import { TerkepTooltip, type HoverAllapot } from './TerkepTooltip';
 import { useVilagAtlasz } from './useVilagAtlasz';
 
 // A térkép: React rendereli az SVG-t, a d3-geo csak a vetületet és a path-okat adja. A zoom
-// (d3-zoom) közvetlenül a DOM-on állítja a <g> transformját és a pinek sugarát – nem React-
-// állapoton át, hogy görgetésenként ne renderelődjön újra ~180 path. A poligonok és a pinek egy
-// memo-komponensben (TerkepRetegek) vannak, hogy a tooltip (hover-állapot) frissülése se
-// renderelje őket újra. A kontúrok `vector-effect: non-scaling-stroke`, hogy nagyításkor ne hízzanak.
+// (d3-zoom) közvetlenül a DOM-on állítja a <g> transformját, a pinek sugarát és a sraffozás
+// csempéjének méretét – nem React-állapoton át, hogy görgetésenként ne renderelődjön újra ~180
+// path. A poligonok és a pinek egy memo-komponensben (TerkepRetegek) vannak, hogy a tooltip
+// (hover-állapot) frissülése se renderelje őket újra. A kontúrok `vector-effect: non-scaling-stroke`,
+// hogy nagyításkor ne hízzanak. A jelmagyarázat a térkép ALATT van, normál folyásban (nem lebegő
+// kártya): lebegve elnyelte a bal alsó sarok – Dél-Amerika – egérműveleteit.
 
 const W = 960;
 const H = 505;
@@ -786,7 +788,8 @@ const PIN_R = 5.5;
 const PIN_BELSO_R = 1.8;
 const ZOOM_MAX = 8;
 const SRAFF_ID = 'terkep-sraff';
-const MIN_MAGASSAG = 'min-h-[420px]';
+/** A betöltő/hiba helykitöltő ugyanolyan arányú, mint a kész SVG, így betöltéskor nem ugrik a layout. */
+const ARANY = 'aspect-[960/505]';
 
 const proj = geoNaturalEarth1().fitExtent([[6, 6], [W - 6, H - 6]], { type: 'Sphere' });
 const path = geoPath(proj);
@@ -797,7 +800,12 @@ interface Poligon { nev: string; d: string }
 
 type HoverFn = (e: ReactPointerEvent<SVGElement>, nev: string, o: TerkepOrszag | null) => void;
 
-/** A régió bbox-ának vetített befoglaló téglalapjára illesztett transzformáció. */
+/**
+ * A régió bbox-ának vetített befoglaló téglalapjára illesztett transzformáció. A `zoom.transform`
+ * NEM alkalmazza a d3 constrain-jét és a scaleExtent-et, ezért a k ≥ 1 és a translateExtent
+ * ([[0, 0], [W, H]]) korlátját itt tartjuk be – különben a nézet lelógna a térképről, és az első
+ * húzásnál ugrana.
+ */
 function regioTranszform(bbox: [[number, number], [number, number]]): ZoomTransform {
   const [[ny, d], [k, e]] = bbox;
   const pontok: [number, number][] = [
@@ -815,14 +823,16 @@ function regioTranszform(bbox: [[number, number], [number, number]]): ZoomTransf
     x1 = Math.max(x1, q[0]);
     y1 = Math.max(y1, q[1]);
   }
-  const kk = Math.min(ZOOM_MAX, 0.9 / Math.max((x1 - x0) / W, (y1 - y0) / H));
-  return zoomIdentity.translate(W / 2 - (kk * (x0 + x1)) / 2, H / 2 - (kk * (y0 + y1)) / 2).scale(kk);
+  const kk = Math.min(ZOOM_MAX, Math.max(1, 0.9 / Math.max((x1 - x0) / W, (y1 - y0) / H)));
+  const tx = Math.min(0, Math.max(W - kk * W, W / 2 - (kk * (x0 + x1)) / 2));
+  const ty = Math.min(0, Math.max(H - kk * H, H / 2 - (kk * (y0 + y1)) / 2));
+  return zoomIdentity.translate(tx, ty).scale(kk);
 }
 
-/** A pinek sugarát a nagyítás reciprokával állítja, hogy a pin képernyőn állandó méretű maradjon. */
-function pinSugar(g: SVGGElement, k: number) {
-  g.querySelectorAll<SVGCircleElement>('circle[data-pin]').forEach((c) => c.setAttribute('r', String(PIN_R / k)));
-  g.querySelectorAll<SVGCircleElement>('circle[data-pin-belso]').forEach((c) => c.setAttribute('r', String(PIN_BELSO_R / k)));
+/** A pin-réteg köreinek sugarát a nagyítás reciprokával állítja, hogy a pin képernyőn állandó méretű maradjon. */
+function pinSugar(pinek: SVGGElement, k: number) {
+  pinek.querySelectorAll<SVGCircleElement>('circle[data-pin]').forEach((c) => c.setAttribute('r', String(PIN_R / k)));
+  pinek.querySelectorAll<SVGCircleElement>('circle[data-pin-belso]').forEach((c) => c.setAttribute('r', String(PIN_BELSO_R / k)));
 }
 
 const TerkepRetegek = memo(function TerkepRetegek({
@@ -868,30 +878,33 @@ const TerkepRetegek = memo(function TerkepRetegek({
           />
         );
       })}
-      {adatok.map((o) => {
-        const p = proj(o.lonlat);
-        if (!p) return null;
-        const kijelolt = o.kod === kivalasztott;
-        return (
-          <g
-            key={o.kod}
-            transform={`translate(${p[0]},${p[1]})`}
-            className="cursor-pointer"
-            onPointerMove={(e) => onHover(e, o.nev, o)}
-            onClick={() => onSelect(o.kod)}
-          >
-            <circle
-              data-pin=""
-              r={PIN_R}
-              fill={szinek.get(o.kod) ?? TERKEP_SZINEK.nincsAdat}
-              stroke={kijelolt ? TERKEP_SZINEK.kontur : TERKEP_SZINEK.hatar}
-              strokeWidth={kijelolt ? 2 : 1.4}
-              vectorEffect="non-scaling-stroke"
-            />
-            <circle data-pin-belso="" r={PIN_BELSO_R} fill={TERKEP_SZINEK.hatar} />
-          </g>
-        );
-      })}
+      {/* Külön réteg, hogy a zoom-kezelő csak ezt pásztázza a sugarak állításához. */}
+      <g data-pinek="">
+        {adatok.map((o) => {
+          const p = proj(o.lonlat);
+          if (!p) return null;
+          const kijelolt = o.kod === kivalasztott;
+          return (
+            <g
+              key={o.kod}
+              transform={`translate(${p[0]},${p[1]})`}
+              className="cursor-pointer"
+              onPointerMove={(e) => onHover(e, o.nev, o)}
+              onClick={() => onSelect(o.kod)}
+            >
+              <circle
+                data-pin=""
+                r={PIN_R}
+                fill={szinek.get(o.kod) ?? TERKEP_SZINEK.nincsAdat}
+                stroke={kijelolt ? TERKEP_SZINEK.kontur : TERKEP_SZINEK.hatar}
+                strokeWidth={kijelolt ? 2 : 1.4}
+                vectorEffect="non-scaling-stroke"
+              />
+              <circle data-pin-belso="" r={PIN_BELSO_R} fill={TERKEP_SZINEK.hatar} />
+            </g>
+          );
+        })}
+      </g>
     </>
   );
 });
@@ -913,6 +926,7 @@ export function VilagTerkep({
   const wrapRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
+  const patternRef = useRef<SVGPatternElement>(null);
   const zoomRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const kRef = useRef(1);
   const [regio, setRegio] = useState<string | null>('vilag');
@@ -928,6 +942,8 @@ export function VilagTerkep({
     return new Map(adatok.map((o) => [o.kod, orszagSzin(o, mutato, iparag, skala)] as const));
   }, [adatok, mutato, iparag, tartomany]);
 
+  const pinReteg = () => gRef.current?.querySelector<SVGGElement>('[data-pinek]') ?? null;
+
   // d3-zoom az <svg>-n; a zoom-esemény a DOM-on dolgozik. Kézi zoom/mozgatás (sourceEvent van)
   // után egyik régió-gomb sem aktív. A clickDistance(4) miatt az apró egérmozgás nem nyeli el a kattintást.
   useEffect(() => {
@@ -939,9 +955,13 @@ export function VilagTerkep({
       .translateExtent([[0, 0], [W, H]])
       .clickDistance(4)
       .on('zoom', (e: D3ZoomEvent<SVGSVGElement, unknown>) => {
-        kRef.current = e.transform.k;
+        const { k } = e.transform;
+        kRef.current = k;
         g.setAttribute('transform', e.transform.toString());
-        pinSugar(g, e.transform.k);
+        const pinek = pinReteg();
+        if (pinek) pinSugar(pinek, k);
+        // A sraffozás csempéje a nagyított <g> terében van: 1/k-val visszaskálázva képernyőn állandó marad.
+        patternRef.current?.setAttribute('patternTransform', `rotate(45) scale(${1 / k})`);
         if (e.sourceEvent) setRegio(null);
       });
     select(svg).call(z);
@@ -952,23 +972,26 @@ export function VilagTerkep({
     };
   }, [poligonok]);
 
-  // Újrarender után (pl. évváltás új pinekkel) a pinek sugara igazodjon az aktuális nagyításhoz.
+  // Új adatnál (évváltás) az újonnan mountolt pinek sugara igazodjon az aktuális nagyításhoz.
   useEffect(() => {
-    if (gRef.current) pinSugar(gRef.current, kRef.current);
-  });
+    const pinek = pinReteg();
+    if (pinek) pinSugar(pinek, kRef.current);
+  }, [adatok]);
 
   const onHover = useCallback<HoverFn>((e, nev, o) => {
     const box = wrapRef.current?.getBoundingClientRect();
     if (!box) return;
     // 120 = a tooltip fél szélessége (max-w-60 → 240 px), hogy ne lógjon ki a konténerből.
     const x = Math.min(Math.max(e.clientX - box.left, 120), box.width - 120);
-    setHover({ nev, o, x, y: e.clientY - box.top });
+    setHover({ nev, o, x, y: e.clientY - box.top, magassag: box.height });
   }, []);
 
   const nagyit = (f: number) => {
     const svg = svgRef.current;
     const z = zoomRef.current;
-    if (svg && z) select(svg).transition().duration(300).call(z.scaleBy, f);
+    if (!svg || !z) return;
+    setRegio(null); // kézi nagyítás: a régió-keret már nem érvényes
+    select(svg).transition().duration(300).call(z.scaleBy, f);
   };
   const regioValaszt = (kulcs: string) => {
     const r = REGIOK.find((x) => x.kulcs === kulcs);
@@ -981,60 +1004,64 @@ export function VilagTerkep({
 
   if (hiba) {
     return (
-      <div className={`flex ${MIN_MAGASSAG} items-center justify-center p-6 text-center text-sm text-muted-foreground`}>
+      <div className={`flex ${ARANY} items-center justify-center p-6 text-center text-sm text-muted-foreground`}>
         A térkép nem tölthető be.
       </div>
     );
   }
   if (!poligonok) {
     return (
-      <div className={`flex ${MIN_MAGASSAG} animate-pulse items-center justify-center text-sm text-muted-foreground`}>
+      <div className={`flex ${ARANY} animate-pulse items-center justify-center text-sm text-muted-foreground`}>
         Térkép betöltése…
       </div>
     );
   }
   return (
-    <div ref={wrapRef} className="relative">
-      <svg
-        ref={svgRef}
-        viewBox={`0 0 ${W} ${H}`}
-        role="img"
-        aria-label="TéT attasé posztok világtérképe"
-        className="block h-auto w-full touch-none select-none"
-        onPointerLeave={() => setHover(null)}
-      >
-        <defs>
-          <pattern id={SRAFF_ID} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-            <rect width="6" height="6" fill={TERKEP_SZINEK.szarazfold} />
-            <rect width="2" height="6" fill={TERKEP_SZINEK.nincsAdat} />
-          </pattern>
-        </defs>
-        <g ref={gRef}>
-          {/* Az óceán-gömb pointermove-ja törli a tooltipet, ha a kurzor a szárazföldről a tengerre ér. */}
-          <path d={GOMB_D} fill={TERKEP_SZINEK.ocean} stroke={TERKEP_SZINEK.gombKontur} strokeWidth={0.8} vectorEffect="non-scaling-stroke" onPointerMove={() => setHover(null)} />
-          <path d={RACS_D} fill="none" stroke={TERKEP_SZINEK.racs} strokeWidth={0.5} vectorEffect="non-scaling-stroke" pointerEvents="none" />
-          <TerkepRetegek
-            poligonok={poligonok}
-            adatok={adatok}
-            rekordGeo={rekordGeo}
-            szinek={szinek}
-            kivalasztott={kivalasztott}
-            osszehasonlitas={osszehasonlitas}
-            onHover={onHover}
-            onSelect={onSelect}
-          />
-        </g>
-      </svg>
-      <div className="absolute top-2.5 left-2.5">
-        <RegioGombok aktiv={regio} onValaszt={regioValaszt} />
-      </div>
-      <div className="absolute top-2.5 right-2.5 flex flex-col gap-1">
-        <Button type="button" variant="outline" size="icon-sm" aria-label="Nagyítás" onClick={() => nagyit(1.5)}><Plus /></Button>
-        <Button type="button" variant="outline" size="icon-sm" aria-label="Kicsinyítés" onClick={() => nagyit(1 / 1.5)}><Minus /></Button>
-        <Button type="button" variant="outline" size="icon-sm" aria-label="Alaphelyzet" onClick={() => regioValaszt('vilag')}><RotateCcw /></Button>
+    <div>
+      <div ref={wrapRef} className="relative">
+        <svg
+          ref={svgRef}
+          viewBox={`0 0 ${W} ${H}`}
+          role="img"
+          aria-label="TéT attasé posztok világtérképe"
+          className="block h-auto w-full touch-none select-none"
+          onPointerLeave={() => setHover(null)}
+        >
+          {/* Átlátszó háttér a gömbön kívüli sávnak is: itt is törli a tooltipet (a gyerekek eseményei felülírják). */}
+          <rect width={W} height={H} fill="transparent" onPointerMove={() => setHover(null)} />
+          <defs>
+            <pattern ref={patternRef} id={SRAFF_ID} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <rect width="6" height="6" fill={TERKEP_SZINEK.szarazfold} />
+              <rect width="2" height="6" fill={TERKEP_SZINEK.nincsAdat} />
+            </pattern>
+          </defs>
+          <g ref={gRef}>
+            {/* Az óceán-gömb pointermove-ja törli a tooltipet, ha a kurzor a szárazföldről a tengerre ér. */}
+            <path d={GOMB_D} fill={TERKEP_SZINEK.ocean} stroke={TERKEP_SZINEK.gombKontur} strokeWidth={0.8} vectorEffect="non-scaling-stroke" onPointerMove={() => setHover(null)} />
+            <path d={RACS_D} fill="none" stroke={TERKEP_SZINEK.racs} strokeWidth={0.5} vectorEffect="non-scaling-stroke" pointerEvents="none" />
+            <TerkepRetegek
+              poligonok={poligonok}
+              adatok={adatok}
+              rekordGeo={rekordGeo}
+              szinek={szinek}
+              kivalasztott={kivalasztott}
+              osszehasonlitas={osszehasonlitas}
+              onHover={onHover}
+              onSelect={onSelect}
+            />
+          </g>
+        </svg>
+        <div className="absolute top-2.5 left-2.5">
+          <RegioGombok aktiv={regio} onValaszt={regioValaszt} />
+        </div>
+        <div className="absolute top-2.5 right-2.5 flex flex-col gap-1">
+          <Button type="button" variant="outline" size="icon-sm" aria-label="Nagyítás" onClick={() => nagyit(1.5)}><Plus /></Button>
+          <Button type="button" variant="outline" size="icon-sm" aria-label="Kicsinyítés" onClick={() => nagyit(1 / 1.5)}><Minus /></Button>
+          <Button type="button" variant="outline" size="icon-sm" aria-label="Alaphelyzet" onClick={() => regioValaszt('vilag')}><RotateCcw /></Button>
+        </div>
+        {hover && <TerkepTooltip hover={hover} mutato={mutato} rangsor={rangsor} />}
       </div>
       <Jelmagyarazat mutato={mutato} tartomany={tartomany} csoportok={csoportok} iparag={iparag} />
-      {hover && <TerkepTooltip hover={hover} mutato={mutato} rangsor={rangsor} />}
     </div>
   );
 }
@@ -1911,3 +1938,4 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 
 - **Task 2 (minőségi review nyomán):** a számszerű mutató `skala: 'linearis' | 'log'` mezőt kapott; GDP, GDP/fő és lakosság symlog skálán színeződik (lineárisan a nagyságrendi különbség miatt szinte minden ország az első fokozatba esne). Új `arany(m, t)` adja a 0–1 arányt, a `szinSkala(m, t)` erre épül (mindig `rgb()` string), a rangsor sávja is ezt használja. A számszerű `cimke`-k rövidek, egység nélkül (a `MEZO_CIMKEK` címkéi már tartalmazták az egységet, és az `utotag` duplázta volna: „GDP (milliárd USD): 4 200 mrd USD"). `MUTATO_TABLA` kimerítő kulcs-térkép, `SZAM_MUTATOK`/`KATEGORIA_MUTATOK` export, `Tartomany` típus. `csoportok` a `sorrend`-ben nem szereplő kategóriát a „nincs" csoportba teszi (az `orszagSzin`-nel egyezően). `TERKEP_SZINEK.halvany` `#ced5dd` (az eredeti `#e3e7ec` a szárazföldtől megkülönböztethetetlen volt, ΔE ≈ 1). A Task 3–10 kódja ehhez igazítva.
 - **Task 3 (minőségi review nyomán):** a `TerkepTooltip` a térkép tetejéhez közel (y < 150 px) a kurzor alá kerül (a kártya `overflow-hidden` levágná); a `Jelmagyarazat` `iparag` propot kap és aktív szűrőnél „nem felel meg a szűrőnek" sort mutat (`halvany`), `max-h-[45%] overflow-y-auto`, a sraffozás sűrűsége a térkép `<pattern>`-jével azonos, explicit `keret` prop, `Tartomany` típus; a `useVilagAtlasz` `'use client'` és „ne mutáld" megjegyzés; új `geoNev(geo)` a `lib/orszagok.ts`-ben, a poszt nélküli poligon tooltipje magyar nevet mutat (a Task 4 `TerkepRetegek`-je ezt hívja, a tooltip x-vágása 120 px); régió-gombok `default`/`outline`.
+- **Task 4 (minőségi review nyomán):** a `regioTranszform` maga tartja be a k ≥ 1 és a `translateExtent` korlátot (a `zoom.transform` nem alkalmaz constrain-t – az „Amerika" nézet 209 egységgel lelógott és az első húzásnál ugrott); a **jelmagyarázat a térkép alá, normál folyásba** került (lebegve elnyelte Dél-Amerika egérműveleteit), így nincs `max-h`/görgetés; a betöltő/hiba helykitöltő `aspect-[960/505]` (nincs layout-ugrás); a tooltip csak akkor fordul a kurzor alá, ha alatta is van hely (`HoverAllapot.magassag`); a `+`/`−` gomb törli az aktív régiót; a pinek külön `<g data-pinek>` rétegben, a sugár-effect csak `adatok` változásra fut; a sraffozás `<pattern>`-je a zoom-kezelőben `scale(1/k)`-val visszaskálázva; átlátszó `<rect>` az `<svg>` alján törli a tooltipet a gömbön kívüli sávban; a jelmagyarázat sraffja `135deg` (a `<pattern>` irányával azonos), `backgroundColor`; `NEV_GEO_SZERINT: ReadonlyMap`.
