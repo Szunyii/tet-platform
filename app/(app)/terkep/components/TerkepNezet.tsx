@@ -1,21 +1,29 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import WorldMap, { type MapMetric } from '../../../../components/WorldMap';
+import { useMemo } from 'react';
 import { useApp } from '../../../../components/AppShell';
 import { SzerkesztesGomb } from '../../../../components/orszagprofil/SzerkesztesGomb';
 import { Card, CardContent, CardHeader } from '../../../../components/ui/card';
 import { Label } from '../../../../components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from '../../../../components/ui/tabs';
+import {
+  Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,
+} from '../../../../components/ui/select';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { canEditProfil } from '../../../../lib/orszagprofil-jog';
-import { IPARAGAK, type Iparag } from '../../../../lib/orszagprofil-szotar';
-import { ProfilKivonat } from './ProfilKivonat';
-import { TerkepUres } from './TerkepUres';
+import { IPARAGAK } from '../../../../lib/orszagprofil-szotar';
+import {
+  csoportok as szamolCsoportok, jeloltek, KATEGORIA_MUTATOK, MUTATOK, rangsor as szamolRangsor, szures, SZAM_MUTATOK,
+  tartomany as szamolTartomany,
+} from '../../../../lib/terkep-mutatok';
+import { OsszehasonlitasPanel } from './OsszehasonlitasPanel';
+import { TerkepPanel } from './TerkepPanel';
+import { useTerkepAllapot, VS_MIN } from './useTerkepAllapot';
+import { VilagTerkep } from './VilagTerkep';
 
 /** A „Mind" opció értéke: a Base UI Select üres stringet nem tud választható értékként kezelni. */
 const MIND = '__mind';
+const MUTATO_ITEMS: Record<string, string> = Object.fromEntries(MUTATOK.map((m) => [m.kulcs, m.cimke]));
+const IPARAG_ITEMS: Record<string, string> = { [MIND]: 'Mind', ...Object.fromEntries(IPARAGAK.map((i) => [i, i])) };
 
 export function TerkepNezet({
   adatok, ev, most, kezdoKod, valasztEvAction,
@@ -31,78 +39,115 @@ export function TerkepNezet({
   // A session a contextből: a jog-számítás (canEditProfil) és a „Saját országprofil" gomb is ebből dolgozik.
   const { user } = useApp();
   const sajatKod = user.role === 'attase' ? user.orszag : null;
-  const [metric, setMetric] = useState<MapMetric>('iparag');
-  const [iparag, setIparag] = useState('');
-  const [kod, setKod] = useState<string | null>(
-    kezdoKod && adatok.some((o) => o.kod === kezdoKod) ? kezdoKod : null,
+  const allapot = useTerkepAllapot(adatok, kezdoKod);
+  const { mutato, iparag, vs } = allapot;
+
+  // A rangsor/csoportok a szűrt halmazon, a tartomány (színskála) szándékosan a szűretlenen.
+  const rangsor = useMemo(() => (mutato.tipus === 'szam' ? szamolRangsor(adatok, mutato, iparag) : null), [adatok, mutato, iparag]);
+  const csoportok = useMemo(() => (mutato.tipus === 'kategoria' ? szamolCsoportok(adatok, mutato, iparag) : []), [adatok, mutato, iparag]);
+  const tartomany = useMemo(() => (mutato.tipus === 'szam' ? szamolTartomany(adatok, mutato) : null), [adatok, mutato]);
+  // Az összehasonlítás-halmaz rekordjai és a „+ Ország" jelöltjei; a `vs` csak tényleges változásnál új példány.
+  const vsOrszagok = useMemo(
+    () => vs.map((k) => adatok.find((o) => o.kod === k)).filter((o): o is TerkepOrszag => !!o),
+    [adatok, vs],
   );
-  // Évváltáskor az adatok újak, a kiválasztás marad; ha a választott ország az új évben
-  // nincs az adatokban, render közben töröljük (a „prop változásra állapot igazítása" minta).
-  if (kod && !adatok.some((o) => o.kod === kod)) setKod(null);
-  const onSelect = useCallback((k: string) => setKod(k), []);
-  const sel = kod ? adatok.find((o) => o.kod === kod) ?? null : null;
-  const friss = adatok.filter((o) => o.allapot === 'friss').length;
-  const erintett = iparag ? adatok.filter((o) => o.iparagak.includes(iparag as Iparag)).length : null;
+  const jeloltLista = useMemo(() => jeloltek(adatok, vs, mutato), [adatok, vs, mutato]);
+  const szamlalo = rangsor
+    ? `${rangsor.sorok.length} ország adattal · ${rangsor.adatNelkul.length} adat nélkül`
+    : iparag
+      ? `${szures(adatok, iparag).length} ország emeli ki ezt az iparágat`
+      : `${adatok.length} poszt · ${adatok.filter((o) => o.allapot === 'friss').length} profil (${ev})`;
 
   return (
-    <div className="flex max-w-[1600px] flex-wrap items-start gap-4">
-      <Card className="min-w-0 flex-[1_1_560px] overflow-hidden">
-        <CardHeader className="flex flex-wrap items-center gap-3">
-          <Tabs value={metric} onValueChange={(v) => setMetric(v as MapMetric)}>
-            <TabsList>
-              <TabsTrigger value="iparag">Kiemelt iparág</TabsTrigger>
-              <TabsTrigger value="allapot">Profil állapota</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <div className="flex items-center gap-2">
-            <Label id="iparag-szuro-label" htmlFor="iparag-szuro">Iparág</Label>
-            {/* A Select onValueChange null-t is adhat (törlés); a „Mind" és a null egyaránt „nincs szűrő". */}
-            <Select
-              value={iparag || MIND}
-              onValueChange={(v) => setIparag(!v || v === MIND ? '' : v)}
-              items={{ [MIND]: 'Mind', ...Object.fromEntries(IPARAGAK.map((i) => [i, i])) }}
-            >
-              <SelectTrigger id="iparag-szuro" aria-labelledby="iparag-szuro-label iparag-szuro" className="w-64">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={MIND}>Mind</SelectItem>
-                {IPARAGAK.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <span className="ml-auto text-xs text-muted-foreground">
-            {erintett !== null ? `${erintett} ország emeli ki ezt az iparágat` : `${adatok.length} poszt · ${friss} profil (${ev})`}
-          </span>
-          {sajatKod && (
-            <SzerkesztesGomb
-              kod={sajatKod}
-              most={most}
-              szerkeszthetEv={canEditProfil(user, sajatKod, ev, most)}
-              szerkeszthetMost={canEditProfil(user, sajatKod, most, most)}
-              action={valasztEvAction}
-              felirat="Saját országprofil"
+    <div className="flex max-w-[1600px] flex-col gap-4">
+      <div className="flex flex-wrap items-start gap-4">
+        <Card className="min-w-0 flex-[1_1_560px] overflow-hidden">
+          <CardHeader className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Label id="mutato-label" htmlFor="mutato">Mutató</Label>
+              <Select value={mutato.kulcs} onValueChange={(v) => allapot.setMutatoKulcs(v ?? '')} items={MUTATO_ITEMS}>
+                <SelectTrigger id="mutato" aria-labelledby="mutato-label mutato" className="w-64">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Kategória</SelectLabel>
+                    {KATEGORIA_MUTATOK.map((m) => <SelectItem key={m.kulcs} value={m.kulcs}>{m.cimke}</SelectItem>)}
+                  </SelectGroup>
+                  <SelectGroup>
+                    <SelectLabel>Számszerű</SelectLabel>
+                    {SZAM_MUTATOK.map((m) => <SelectItem key={m.kulcs} value={m.kulcs}>{m.cimke}</SelectItem>)}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label id="iparag-szuro-label" htmlFor="iparag-szuro">Iparág</Label>
+              {/* A Select onValueChange null-t is adhat (törlés); a „Mind" és a null egyaránt „nincs szűrő". */}
+              <Select value={iparag || MIND} onValueChange={(v) => allapot.setIparag(!v || v === MIND ? '' : v)} items={IPARAG_ITEMS}>
+                <SelectTrigger id="iparag-szuro" aria-labelledby="iparag-szuro-label iparag-szuro" className="w-64">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={MIND}>Mind</SelectItem>
+                  {IPARAGAK.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            {/* A számláló szöveg a rangsor-panel alcíme (nem duplázzuk a fejlécben). */}
+            {sajatKod && (
+              <SzerkesztesGomb
+                kod={sajatKod}
+                most={most}
+                szerkeszthetEv={canEditProfil(user, sajatKod, ev, most)}
+                szerkeszthetMost={canEditProfil(user, sajatKod, most, most)}
+                action={valasztEvAction}
+                felirat="Saját országprofil"
+                className="ml-auto"
+              />
+            )}
+          </CardHeader>
+          <CardContent className="p-0">
+            <VilagTerkep
+              adatok={adatok}
+              mutato={mutato}
+              iparag={iparag}
+              kivalasztott={allapot.kod}
+              osszehasonlitas={vs}
+              tartomany={tartomany}
+              csoportok={csoportok}
+              rangsor={rangsor}
+              onSelect={allapot.kivalaszt}
             />
-          )}
-        </CardHeader>
-        <CardContent className="p-0">
-          <WorldMap adatok={adatok} metric={metric} iparag={iparag} selected={kod ?? ''} onSelect={onSelect} />
-        </CardContent>
-      </Card>
-      <div className="flex min-w-0 max-w-[420px] flex-[1_1_330px] flex-col gap-4">
-        {sel ? (
-          <ProfilKivonat
-            o={sel}
-            szerkeszthetEv={canEditProfil(user, sel.kod, ev, most)}
-            szerkeszthetMost={canEditProfil(user, sel.kod, most, most)}
+          </CardContent>
+        </Card>
+        <div className="flex min-w-0 max-w-[420px] flex-[1_1_330px] flex-col gap-4">
+          <TerkepPanel
+            adatok={adatok}
+            allapot={allapot}
+            vsOrszagok={vsOrszagok}
+            rangsor={rangsor}
+            csoportok={csoportok}
+            tartomany={tartomany}
+            szamlalo={szamlalo}
+            ev={ev}
             most={most}
             valasztEvAction={valasztEvAction}
-            onClose={() => setKod(null)}
           />
-        ) : (
-          <TerkepUres adatok={adatok} onSelect={onSelect} />
-        )}
+        </div>
       </div>
+      {/* Az összehasonlító tábla a térkép alatt, teljes szélességben: 2–4 oszlop a keskeny panelen nem férne el. */}
+      {vsOrszagok.length >= VS_MIN && (
+        <OsszehasonlitasPanel
+          orszagok={vsOrszagok}
+          jeloltek={jeloltLista}
+          mutato={mutato}
+          onKivalaszt={allapot.kivalaszt}
+          onKivesz={allapot.vsKivesz}
+          onHozzaad={allapot.vsHozzaad}
+          onTorol={allapot.vsTorol}
+        />
+      )}
     </div>
   );
 }
