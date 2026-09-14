@@ -9,7 +9,7 @@ import { orszagByKod } from '../../lib/orszagok';
 import { LOGIN_ROUTE } from '../../lib/routes';
 import { requireSession } from '../../lib/session';
 import { mezo } from '../../lib/urlap';
-import { ervenyesValasztottEv, EV_COOKIE } from '../../lib/valasztott-ev';
+import { ervenyesValasztottEv, EV_COOKIE, parseEv } from '../../lib/valasztott-ev';
 
 export interface LogoutState {
   error?: string;
@@ -41,8 +41,7 @@ export async function logoutAction(_prev: LogoutState): Promise<LogoutState> {
 export async function valasztEvAction(formData: FormData): Promise<void> {
   await requireSession();
   const most = aktualisEv();
-  const evRaw = mezo(formData, 'ev');
-  const ev = /^\d{4}$/.test(evRaw) ? Number(evRaw) : NaN;
+  const ev = parseEv(mezo(formData, 'ev'));
   if (!ervenyesValasztottEv(ev, most)) return;
   (await cookies()).set(EV_COOKIE, String(ev), {
     httpOnly: true,

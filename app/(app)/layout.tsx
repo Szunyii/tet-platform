@@ -26,10 +26,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const ev = await getValasztottEv(most);
   // A fejléc ciklusválasztója. Admin: minden év EV_MIN-től az aktuálisig (új év profilját is
   // létre kell tudnia hozni, a szerkesztőnek nincs saját évválasztója). Attasé: a DB-ben létező
-  // profil-évek + az aktuális év. A választott év mindig benne van, hogy a select konzisztens legyen.
+  // profil-évek + az aktuális év, az EV_MIN..most tartományra szűrve, hogy csak olyan évet
+  // ajánljunk fel, amit a valasztEvAction is elfogadna. A választott év mindig benne van
+  // (ev már validált, most mindig szerepel), hogy a select konzisztens legyen.
   const evek = session.role === 'admin'
-    ? Array.from({ length: most - EV_MIN + 1 }, (_, i) => most - i)
-    : [...new Set([most, ev, ...listProfilEvek()])].sort((a, b) => b - a);
+    ? Array.from({ length: Math.max(0, most - EV_MIN + 1) }, (_, i) => most - i)
+    : [...new Set([most, ev, ...listProfilEvek().filter((e) => e >= EV_MIN && e <= most)])].sort((a, b) => b - a);
   return (
     <AppShell
       user={session}

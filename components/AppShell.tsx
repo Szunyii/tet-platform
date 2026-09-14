@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { createContext, useActionState, useContext, useState, useTransition, type ReactNode } from 'react';
+import { createContext, useActionState, useContext, useOptimistic, useState, useTransition, type ReactNode } from 'react';
 import type { LogoutState } from '../app/(app)/actions';
 import { DEADLINE } from '../lib/data';
 import { orszagNev } from '../lib/orszagok';
@@ -109,12 +109,20 @@ export default function AppShell({
   evek: number[];
   children: ReactNode;
 }) {
-  // Évváltás: server action írja a cookie-t és revalidálja a layoutot; a transition alatt a select tiltott.
-  const [evValtas, startEvValtas] = useTransition();
+  // Évváltás: server action írja a cookie-t és revalidálja a layoutot. A kiválasztás a
+  // teljes kör-út alatt (action + revalidálás) késne, ezért useOptimistic-kal a select
+  // azonnal az új évet mutatja; a szerver válasza (a layout újrarenderelése) felülírja a
+  // `ev` propot, az optimista érték pedig ezzel automatikusan visszaáll rendes állapotba.
+  const [optimistaEv, setOptimistaEv] = useOptimistic(ev);
+  const [evValtasFut, startEvValtas] = useTransition();
   const valasztEv = (uj: string) => {
     const fd = new FormData();
     fd.set('ev', uj);
-    startEvValtas(() => valasztEvAction(fd));
+    startEvValtas(async () => {
+      setOptimistaEv(Number(uj));
+      // Hálózati/origin hiba esetén az évváltás egyszerűen nem történik meg; nem dobjuk az error boundary-ig.
+      try { await valasztEvAction(fd); } catch (err) { console.error('[ciklus] évváltás sikertelen:', err); }
+    });
   };
   // A számláló állapotban él, mert a /kommunikacio oldal a saját, frissebb értékével
   // felülírja (a layout a megtekintés-jelölés ELŐTT számol). A szerverről érkező új érték
@@ -191,7 +199,7 @@ export default function AppShell({
             <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 14 }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11.5, color: '#6b7684' }}>
                 Ciklus
-                <select className="input" value={ev} disabled={evValtas} onChange={(e) => valasztEv(e.target.value)}>
+                <select className="input" value={optimistaEv} aria-busy={evValtasFut} onChange={(e) => valasztEv(e.target.value)}>
                   {evek.map((y) => <option key={y} value={y}>{y}</option>)}
                 </select>
               </label>
