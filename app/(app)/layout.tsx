@@ -6,6 +6,7 @@ import { EV_MIN } from '../../lib/orszagprofil-szotar';
 import { requireSession } from '../../lib/session';
 import { getValasztottEv } from '../../lib/valasztott-ev';
 import { logoutAction, valasztEvAction } from './actions';
+import OldalsavAllapot from './components/OldalsavAllapot';
 
 // Minden védett oldal ebben a route groupban van. A requireSession() itt egy helyen
 // kényszeríti ki a bejelentkezést (elavult cookie esetén is: a proxy átengedi, ez
@@ -40,6 +41,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       olvasatlan={olvasatlan}
       ev={ev}
       evek={evek}
+      oldalsavAlja={<OldalsavAllapot session={session} ev={ev} most={most} />}
     >
       {children}
     </AppShell>
