@@ -7,11 +7,11 @@ import { getProfil } from '../../../../../db/queries/orszagprofil';
 import { aktualisEv, formatDatumIdo } from '../../../../../lib/datum';
 import { orszagByKod } from '../../../../../lib/orszagok';
 import { canEditProfil } from '../../../../../lib/orszagprofil-jog';
-import { EV_MIN, evParam, uresBlokk, type BlokkKulcs, type ProfilBlokkok } from '../../../../../lib/orszagprofil-szotar';
+import { uresBlokk, type BlokkKulcs, type ProfilBlokkok } from '../../../../../lib/orszagprofil-szotar';
 import { requireSession } from '../../../../../lib/session';
 import { cn } from '../../../../../lib/utils';
+import { getValasztottEv } from '../../../../../lib/valasztott-ev';
 import { mentBlokkAction } from '../../actions';
-import { EvValaszto } from '../../components/EvValaszto';
 import { AlapadatokMezok } from '../../components/mezok/AlapadatokMezok';
 import { KfiRendszerMezok } from '../../components/mezok/KfiRendszerMezok';
 import { IntezmenyekMezok } from '../../components/mezok/IntezmenyekMezok';
@@ -24,19 +24,18 @@ import { MagyarErtekelesMezok } from '../../components/mezok/MagyarErtekelesMezo
 export const metadata: Metadata = { title: 'Országprofil szerkesztése' };
 
 /**
- * Blokkonkénti szerkesztő. Jogosultsági hiba 404 (attasé: csak a saját országa és az
- * aktuális év; admin: bármely ország EV_MIN és az aktuális év között). Ismeretlen `?ev=`
- * az aktuális évre esik vissza.
+ * Blokkonkénti szerkesztő. Az év a fejléc ciklusválasztójáé (tet-ev cookie). Jogosultsági
+ * hiba 404 (attasé: csak a saját országa és az aktuális év; admin: bármely ország EV_MIN és
+ * az aktuális év között) – attasé múltbeli évnézetből a gombok előbb az aktuális évre váltanak,
+ * így a 404 csak kézzel beírt URL-nél fordul elő.
  */
-export default async function SzerkesztesPage({
-  params, searchParams,
-}: { params: Promise<{ kod: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+export default async function SzerkesztesPage({ params }: { params: Promise<{ kod: string }> }) {
   const session = await requireSession();
   const { kod } = await params;
   const orszag = orszagByKod(kod);
   if (!orszag) notFound();
   const most = aktualisEv();
-  const ev = evParam((await searchParams).ev, most);
+  const ev = await getValasztottEv(most);
   if (!canEditProfil(session, kod, ev, most)) notFound();
 
   const profil = getProfil(kod, ev);
@@ -44,23 +43,23 @@ export default async function SzerkesztesPage({
   // A profil sor közös updatedAt-ja csak a ténylegesen mentett blokkoknál jelenik meg.
   const m = (k: BlokkKulcs) => (profil?.mentett.includes(k) ? mentve : null);
   const b: Partial<ProfilBlokkok> = profil?.blokkok ?? {};
-  const evek = session.role === 'admin' ? Array.from({ length: most - EV_MIN + 1 }, (_, i) => most - i) : [most];
   const kozos = { kod, ev, action: mentBlokkAction };
 
   return (
     <div className="flex max-w-4xl flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
         <h2 className="text-lg font-semibold">{orszag.nev} – profil szerkesztése</h2>
-        {evek.length > 1 ? <EvValaszto evek={evek} ertek={ev} /> : <span className="text-sm text-muted-foreground">Év: {ev}</span>}
-        <Link href={`/orszagprofil/${kod}?ev=${ev}`} className={cn('ml-auto', buttonVariants({ variant: 'outline' }))}>
+        <span className="text-sm text-muted-foreground">Év: {ev}</span>
+        <Link href={`/orszagprofil/${kod}`} className={cn('ml-auto', buttonVariants({ variant: 'outline' }))}>
           Megtekintés
         </Link>
       </div>
       <p className="text-sm text-muted-foreground">
         Minden blokk külön menthető; a mentett blokkok azonnal megjelennek a térképen és a profil oldalon.
       </p>
-      {/* key={ev}: az App Router a search paramot nem veszi az állapot-kulcsba, így évváltásnál a
-          8 blokk kliens-állapota (a beírt, nem mentett értékek) különben átcsúszna a másik évre. */}
+      {/* key={ev}: az App Router a cookie-ból jövő évet nem veszi az állapot-kulcsba, így
+          évváltásnál a 8 blokk kliens-állapota (a beírt, nem mentett értékek) különben
+          átcsúszna a másik évre. */}
       <Fragment key={ev}>
         <AlapadatokMezok {...kozos} initial={b.alapadatok ?? uresBlokk('alapadatok')} mentve={m('alapadatok')} />
         <KfiRendszerMezok {...kozos} initial={b.kfiRendszer ?? uresBlokk('kfiRendszer')} mentve={m('kfiRendszer')} />

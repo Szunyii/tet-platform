@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, lte } from 'drizzle-orm';
 import { db } from '../index';
 import { orszagprofil, user } from '../schema';
 import { formatDatum } from '../../lib/datum';
@@ -55,15 +55,16 @@ export function getProfil(kod: string, ev: number): Profil | null {
   return r ? sorbol(r.p, r.szerzoNev ?? null) : null;
 }
 
-/** Az adott ország profil-évei, csökkenő sorrendben (évválasztó). */
-export function listEvek(kod: string): number[] {
-  return db
+/** Az ország legnagyobb profil-éve, amely nem nagyobb `ev`-nél (az évnézet állapot-jelvénye), vagy null. */
+export function getUtolsoEv(kod: string, ev: number): number | null {
+  const r = db
     .select({ ev: orszagprofil.ev })
     .from(orszagprofil)
-    .where(eq(orszagprofil.orszagKod, kod))
+    .where(and(eq(orszagprofil.orszagKod, kod), lte(orszagprofil.ev, ev)))
     .orderBy(desc(orszagprofil.ev))
-    .all()
-    .map((r) => r.ev);
+    .limit(1)
+    .get();
+  return r?.ev ?? null;
 }
 
 /** Az összes ország profil-évei egyszer, csökkenő sorrendben (fejléc ciklusválasztó). */

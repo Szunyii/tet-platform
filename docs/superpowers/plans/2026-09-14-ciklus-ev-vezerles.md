@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-09-14-ciklus-ev-vezerles-design.md`.
 
-**Ellenőrzés:** Nincs tesztkeretrendszer. Minden task végén `npx tsc --noEmit`; a UI-t a gstack headless böngészővel (`~/.claude/skills/gstack/browse/dist/browse goto/fill/click/text/js/snapshot -i/console --errors`). A felhasználó dev szervere fut a 3000-en: **nem szabad leállítani/újraindítani**, a subagent nem indít sajátot. Seed admin `admin@niu.hu`, teszt attasé `masodik.attase@niu.hu` (JP); jelszavak a `.env.local`-ban (`SEED_ADMIN_PASSWORD`) ill. a `.env.example`-ben (`Attase12345!`) – az admin jelszót ne írd ki. Commit üzenetek végén: `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`. `git add` mindig konkrét fájlokkal; `.env.example`-t és `AGENTS.md`-t soha ne stage-elj. Reviewer subagentnek: git csak olvasásra, tilos a `checkout`/`reset`/`stash`.
+**Ellenőrzés:** Nincs tesztkeretrendszer. Minden task végén `npx tsc --noEmit`; a UI-t a gstack headless böngészővel (`~/.claude/skills/gstack/browse/dist/browse goto/fill/click/text/js/snapshot -i/console --errors`). A felhasználó dev szervere fut a 3000-en: **nem szabad leállítani/újraindítani**, a subagent nem indít sajátot. Seed admin `admin@niu.hu`, teszt attasé `masodik.attase@niu.hu` (JP); jelszavak a `.env.local`-ban (`SEED_ADMIN_PASSWORD`) ill. a `.env.example`-ben (`Masodik1234!`) – az admin jelszót ne írd ki. Commit üzenetek végén: `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`. `git add` mindig konkrét fájlokkal; `.env.example`-t és `AGENTS.md`-t soha ne stage-elj. Reviewer subagentnek: git csak olvasásra, tilos a `checkout`/`reset`/`stash`.
 
 **Fontos tények (ellenőrizve a meglévő kódban):**
 - A helyi DB-ben profil: JP 2025, JP 2026, KR 2026. `EV_MIN = 2020`, `aktualisEv()` = 2026.

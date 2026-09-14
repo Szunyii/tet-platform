@@ -341,9 +341,3 @@ export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], Me
     diplomaciaiPrioritasok: { cimke: 'Diplomáciai prioritások' },
   },
 };
-
-/** `?ev=` search param → négyjegyű egész, különben az alapértelmezett. */
-export function evParam(raw: string | string[] | undefined, alap: number): number {
-  const v = Array.isArray(raw) ? raw[0] : raw;
-  return v && /^\d{4}$/.test(v) ? Number(v) : alap;
-}
