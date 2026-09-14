@@ -1289,7 +1289,7 @@ function OrszagSor({ o, hely, sav, ertek, benne, vsTele, onKivalaszt, onVsToggle
 }
 
 /** A térkép melletti panel kijelölés nélkül: rangsor (számszerű mutató) vagy csoportosított lista (kategorikus). */
-export function RangsorPanel({ mutato, rangsor, csoportok, tartomany, szamlalo, vs, onKivalaszt, onVsToggle }: {
+export function RangsorPanel({ mutato, rangsor, csoportok, tartomany, szamlalo, vs, vsTele, onKivalaszt, onVsToggle }: {
   mutato: Mutato;
   rangsor: Rangsor | null;
   csoportok: Csoport[];
