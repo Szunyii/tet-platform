@@ -17,9 +17,9 @@ import OldalsavAllapot from './components/OldalsavAllapot';
 // renderelnek layoutot. Minden szerver-oldali adatot olvasó page és minden action
 // maga hívja a requireSession()/requireAdmin()-t.
 //
-// Az olvasatlan ticket-számláló és a ciklusválasztó évlistája ugyanezért kliens-oldali
-// navigációnál késhet: a ticket-, a profil-mentő és az évválasztó action-ök
-// revalidatePath('/', 'layout')-tal frissítik.
+// Az olvasatlan ticket-számláló, a ciklusválasztó évlistája és az oldalsáv állapot-kártyája
+// (OldalsavAllapot) ugyanezért kliens-oldali navigációnál késhet: a ticket-, a profil-mentő,
+// a felhasználó- és az évválasztó action-ök revalidatePath('/', 'layout')-tal frissítik.
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await requireSession();
   const olvasatlan = countOlvasatlan(session);

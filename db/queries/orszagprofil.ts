@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { and, desc, eq, lte } from 'drizzle-orm';
 import { db } from '../index';
 import { orszagprofil, user } from '../schema';
@@ -55,8 +56,11 @@ export function getProfil(kod: string, ev: number): Profil | null {
   return r ? sorbol(r.p, r.szerzoNev ?? null) : null;
 }
 
-/** Az ország legnagyobb profil-éve, amely nem nagyobb `ev`-nél (az évnézet állapot-jelvénye), vagy null. */
-export function getUtolsoEv(kod: string, ev: number): number | null {
+/**
+ * Az ország legnagyobb profil-éve, amely nem nagyobb `ev`-nél (az évnézet állapot-jelvénye), vagy null.
+ * React.cache: egy kérésen belül (layout + page) azonos argumentummal egyszer fut le.
+ */
+export const getUtolsoEv = cache((kod: string, ev: number): number | null => {
   const r = db
     .select({ ev: orszagprofil.ev })
     .from(orszagprofil)
@@ -65,7 +69,7 @@ export function getUtolsoEv(kod: string, ev: number): number | null {
     .limit(1)
     .get();
   return r?.ev ?? null;
-}
+});
 
 /** Az összes ország profil-évei egyszer, csökkenő sorrendben (fejléc ciklusválasztó). */
 export function listProfilEvek(): number[] {
@@ -114,8 +118,9 @@ export interface TerkepOrszag {
  * viszonyít: van profil az évre → friss, csak régebbi → elavult, semmi → nincs (ev = aktuális
  * évnél ez a korábbi viselkedés). Két lekérdezés + JS-összefésülés; az orszagprofil tábla
  * országok × évek méretű, minden sorát beolvassuk – ezen a skálán rendben van.
+ * React.cache: egy kérésen belül (layout + page) azonos argumentummal egyszer fut le.
  */
-export function listTerkepAdat(ev: number): TerkepOrszag[] {
+export const listTerkepAdat = cache((ev: number): TerkepOrszag[] => {
   const now = Date.now();
   const attasek = db
     .select({
@@ -169,7 +174,7 @@ export function listTerkepAdat(ev: number): TerkepOrszag[] {
     });
   }
   return eredmeny.sort((x, y) => x.nev.localeCompare(y.nev, 'hu'));
-}
+});
 
 /**
  * Egy blokk mentése: a sor létrejön, ha nincs, majd csak az adott oszlop frissül (az
