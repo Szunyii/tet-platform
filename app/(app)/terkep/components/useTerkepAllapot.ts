@@ -46,12 +46,18 @@ export function useTerkepAllapot(adatok: TerkepOrszag[], kezdoKod: string | null
 
   // Új `?o=` (pl. „Vissza a térképre" a profil oldalról): a kijelölés a kezdő kódra vált; ha a
   // paraméter eltűnik, a meglévő kijelölés marad.
+  // `ujKod`: ha ebben a passban épp a kezdő kódra váltunk, a lenti „nem létező kijelölés" őrző már
+  // az új értéket nézze, ne a záródásban maradt régit (különben `setKod(null)` felülírná).
   const [elozoKezdo, setElozoKezdo] = useState(kezdoKod);
+  let ujKod = kod;
   if (kezdoKod !== elozoKezdo) {
     setElozoKezdo(kezdoKod);
-    if (kezdoKod && letezik(kezdoKod)) setKod(kezdoKod);
+    if (kezdoKod && letezik(kezdoKod)) {
+      setKod(kezdoKod);
+      ujKod = kezdoKod;
+    }
   }
-  if (kod && !letezik(kod)) setKod(null);
+  if (ujKod && !letezik(ujKod)) setKod(null);
   const vsElo = vs.filter(letezik);
   if (vsElo.length !== vs.length) setVs(vsElo);
 
