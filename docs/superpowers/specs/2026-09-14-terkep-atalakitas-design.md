@@ -73,12 +73,14 @@ export interface KategoriaMutato {
   sorrend: readonly string[];                        // a csoportok és a jelmagyarázat sorrendje
   szinek: Record<string, string>;
   cimkek: Record<string, string>;                    // kategória → felirat
+  csakHasznalt: boolean;                             // true: csak a használt kategóriák (iparág); false: mind (állapot)
   nincsCimke: string;                                // a null kategória felirata
 }
 export type Mutato = SzamMutato | KategoriaMutato;
 export const MUTATOK: readonly Mutato[];
 export const ALAP_MUTATO: MutatoKulcs = 'iparag';
-export function mutatoByKulcs(k: string): Mutato | undefined;
+/** Ismeretlen kulcsra az alapértelmezett mutatót adja. */
+export function mutatoByKulcs(k: string): Mutato;
 ```
 
 | kulcs | tipus | cimke (forrás) | utótag | ertek / kategoria |
@@ -107,6 +109,11 @@ export function csoportok(adatok: readonly TerkepOrszag[], m: KategoriaMutato, i
 /** Az ÖSSZES (szűretlen) adattal rendelkező ország min–max-a; nincs adat → null. */
 export function tartomany(adatok: readonly TerkepOrszag[], m: SzamMutato): { min: number; max: number } | null;
 export function szures(adatok: readonly TerkepOrszag[], iparag: string): TerkepOrszag[];
+/** Az összehasonlításhoz felkínált országok a `kizart` kódok nélkül: számszerűnél érték szerint csökkenő
+ *  (a szűrőtől függetlenül), az érték nélküliek a végén név szerint; kategorikusnál név szerint. */
+export function jeloltek(adatok: readonly TerkepOrszag[], kizart: readonly string[], m: Mutato): TerkepOrszag[];
+/** Egy posztos ország kitöltési színe; null = számszerű mutató érték nélkül (sraffozás). */
+export function orszagSzin(o: TerkepOrszag, m: Mutato, iparag: string, skala: ((v: number) => string) | null): string | null;
 ```
 
 - `rangsor`: a szűrt országok közül az `ertek !== null`-ok csökkenő érték szerint, azonos értéknél
@@ -146,10 +153,11 @@ befoglaló téglalapjára illeszt.
 
 ### Csomagok
 
-`d3-geo`, `d3-zoom`, `d3-selection`, `d3-scale`, `d3-interpolate`, `topojson-client`, `world-atlas`
-(a `countries-110m.json` innen jön, dinamikus importtal, külön chunkban). Típusok: `@types/d3-geo`,
-`@types/d3-zoom`, `@types/d3-selection`, `@types/d3-scale`, `@types/d3-interpolate`,
-`@types/topojson-client`, `@types/topojson-specification`, `@types/geojson`.
+`d3-geo`, `d3-zoom`, `d3-selection`, `d3-transition` (a gombok animált zoomjához), `d3-scale`,
+`d3-interpolate`, `topojson-client`, `world-atlas` (a `countries-110m.json` innen jön, dinamikus
+importtal, külön chunkban). Típusok: `@types/d3-geo`, `@types/d3-zoom`, `@types/d3-selection`,
+`@types/d3-transition`, `@types/d3-scale`, `@types/d3-interpolate`, `@types/topojson-client`,
+`@types/topojson-specification`, `@types/geojson`.
 
 Törlődik: `components/WorldMap.tsx`, `public/tet-world-map.js`, a `TerkepUres.tsx`, a CDN
 `<Script>` tagek.
@@ -173,6 +181,9 @@ Csak a `/terkep` használja, ezért a route alatt marad. Fájlok:
   iparag: string;                  // szűrő, '' = nincs
   kivalasztott: string | null;     // kód
   osszehasonlitas: readonly string[];
+  tartomany: { min: number; max: number } | null;   // a hívó (TerkepNezet) számolja useMemo-ban,
+  csoportok: Csoport[];                             // a panel is ugyanezt kapja – nincs dupla számítás
+  rangsor: Rangsor | null;
   onSelect: (kod: string) => void;
 }
 ```
@@ -311,9 +322,10 @@ szöveg.
   vesszővel). Üres érték „–".
 - A térképen választott számszerű mutató sora kiemelt háttérrel; számszerű sorban a legnagyobb
   érték félkövér (több egyenlő → mind).
-- Utolsó oszlop, ha `vs.length < 4`: `NativeSelect` „+ Ország" – a `vs`-ben nem lévő országok,
-  számszerű mutatónál a rangsor sorrendjében „Név · érték" felirattal (majd az adat nélküliek
-  név szerint), kategorikusnál név szerint; választásra `vsHozzaad`, a select üresre áll.
+- Utolsó oszlop, ha `vs.length < 4`: `NativeSelect` „+ Ország" – a `vs`-ben nem lévő országok a
+  `jeloltek()` sorrendjében: számszerű mutatónál érték szerint csökkenő (a szűrőtől függetlenül)
+  „Név · érték" felirattal, az adat nélküliek a végén név szerint; kategorikusnál név szerint;
+  választásra `vsHozzaad`, a select üresre áll.
 - Fejlécben „Törlés" gomb (`vsTorol`) – ez egyben a bezárás; a panel ekkor a rangsorra vált.
 - Vízszintesen görgethető konténer (`overflow-x: auto`), a panel ne szélesedjen.
 
@@ -343,7 +355,7 @@ közben igazodik.
 
 - Atlasz-chunk hiba → szöveges üzenet a térkép helyén, a panel és a fejléc működik tovább.
 - A szótár `geo` neve nincs az atlaszban → csak pin (mint ma).
-- Ismeretlen mutató-kulcs (`mutatoByKulcs` `undefined`) → `ALAP_MUTATO`.
+- Ismeretlen mutató-kulcs → a `mutatoByKulcs` az `ALAP_MUTATO` mutatót adja.
 - Számszerű mutató érték nélkül → sraffozás, „nincs adat" a rangsorban, „–" a táblában.
 - `vs` kód, ami az új évben nincs az adatokban → render közben kikerül.
 
