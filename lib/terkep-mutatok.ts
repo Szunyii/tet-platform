@@ -7,6 +7,7 @@
  */
 import { interpolateLab, piecewise } from 'd3-interpolate';
 import { scaleLinear, scaleSymlog } from 'd3-scale';
+import { formatSzam } from './szam';
 import type { TerkepOrszag } from '../db/queries/orszagprofil';
 import { ALLAPOTOK, ALLAPOT_CIMKE, ALLAPOT_SZINEK, BLOKK_KULCSOK, IPARAGAK, IPARAG_SZINEK } from './orszagprofil-szotar';
 
@@ -121,6 +122,17 @@ export function rangsor(adatok: readonly TerkepOrszag[], m: SzamMutato, iparag: 
     sorok.push({ ...ertekes[i], hely });
   }
   return { sorok, adatNelkul: adatNelkul.sort(nevSzerint) };
+}
+
+/**
+ * „3,3 % · 1./14": az érték az utótaggal, mellette a helyezés, ha az ország a (szűrt) rangsorban
+ * szerepel; null = nincs érték. A térkép tooltipje és a kivonat ugyanezt írja.
+ */
+export function ertekEsHely(o: TerkepOrszag, m: SzamMutato, r: Rangsor | null): string | null {
+  const v = m.ertek(o);
+  if (v === null) return null;
+  const sor = r?.sorok.find((s) => s.o.kod === o.kod);
+  return `${formatSzam(v, m.utotag)}${sor && r ? ` · ${sor.hely}./${r.sorok.length}` : ''}`;
 }
 
 export interface Csoport { kategoria: string | null; cimke: string; szin: string; orszagok: TerkepOrszag[] }

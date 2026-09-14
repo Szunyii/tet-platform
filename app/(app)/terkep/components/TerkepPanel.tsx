@@ -30,7 +30,6 @@ export function TerkepPanel({ adatok, allapot, vsOrszagok, rangsor, csoportok, t
   const { user } = useApp();
   const { kod, vs, vsTele, mutato } = allapot;
   const sel = kod ? adatok.find((o) => o.kod === kod) ?? null : null;
-  const onVsToggle = (k: string) => (vs.includes(k) ? allapot.vsKivesz(k) : allapot.vsHozzaad(k));
 
   return (
     <>
@@ -47,7 +46,7 @@ export function TerkepPanel({ adatok, allapot, vsOrszagok, rangsor, csoportok, t
           rangsor={rangsor}
           benneVs={vs.includes(sel.kod)}
           vsTele={vsTele}
-          onVs={() => onVsToggle(sel.kod)}
+          onVs={() => allapot.vsValt(sel.kod)}
         />
       ) : (
         <RangsorPanel
@@ -59,7 +58,7 @@ export function TerkepPanel({ adatok, allapot, vsOrszagok, rangsor, csoportok, t
           vs={vs}
           vsTele={vsTele}
           onKivalaszt={allapot.kivalaszt}
-          onVsToggle={onVsToggle}
+          onVsToggle={allapot.vsValt}
         />
       )}
     </>

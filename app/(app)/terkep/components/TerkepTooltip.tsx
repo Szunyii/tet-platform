@@ -2,8 +2,7 @@
 
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { ALLAPOT_CIMKE } from '../../../../lib/orszagprofil-szotar';
-import { formatSzam } from '../../../../lib/szam';
-import type { Mutato, Rangsor } from '../../../../lib/terkep-mutatok';
+import { ertekEsHely, type Mutato, type Rangsor } from '../../../../lib/terkep-mutatok';
 
 /**
  * A lebegtetett poligon/pin: `o` null, ha poszt nélküli ország; x/y a térkép-konténerhez képest,
@@ -14,10 +13,7 @@ export interface HoverAllapot { nev: string; o: TerkepOrszag | null; x: number; 
 /** A mutató sora: számszerűnél érték + helyezés (ha a rangsorban van), kategorikusnál a kategória. */
 function mutatoSor(o: TerkepOrszag, mutato: Mutato, rangsor: Rangsor | null): string | null {
   if (mutato.tipus === 'szam') {
-    const v = mutato.ertek(o);
-    if (v === null) return `${mutato.cimke}: nincs adat`;
-    const sor = rangsor?.sorok.find((s) => s.o.kod === o.kod);
-    return `${mutato.cimke}: ${formatSzam(v, mutato.utotag)}${sor && rangsor ? ` · ${sor.hely}./${rangsor.sorok.length}` : ''}`;
+    return `${mutato.cimke}: ${ertekEsHely(o, mutato, rangsor) ?? 'nincs adat'}`;
   }
   if (mutato.kulcs === 'allapot') return null; // az állapot-sor úgyis ott van
   const k = mutato.kategoria(o);

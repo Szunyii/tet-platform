@@ -31,8 +31,8 @@ function Sor({ cimke, kiemelt, orszagok, plusz, children }: {
   // (a Tailwind `bg-muted/60` a `hover:bg-muted/50` alatt eltűnt volna). A sticky címke-cellára is kell, mert az saját háttérrel fed.
   const hatter = kiemelt ? { background: KIEMELT_HATTER } : undefined;
   return (
-    <TableRow style={hatter}>
-      <TableHead scope="row" className={cn(CIMKE_OSZLOP, 'h-auto py-2 font-medium text-muted-foreground')} style={hatter}>
+    <TableRow className="hover:bg-transparent" style={hatter}>
+      <TableHead scope="row" className={cn(CIMKE_OSZLOP, `h-auto py-2 font-medium ${kiemelt ? 'text-foreground' : 'text-muted-foreground'}`)} style={hatter}>
         {cimke}
       </TableHead>
       {orszagok.map((o) => <TableCell key={o.kod} className="align-top whitespace-normal">{children(o)}</TableCell>)}
@@ -81,7 +81,7 @@ export function OsszehasonlitasPanel({ orszagok, jeloltek, mutato, onKivalaszt, 
                     <button
                       type="button"
                       title={o.nev}
-                      className="min-w-0 truncate rounded-sm font-semibold text-foreground outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+                      className="min-w-0 max-w-40 truncate rounded-sm font-semibold text-foreground outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
                       onClick={() => onKivalaszt(o.kod)}
                     >
                       {o.nev}

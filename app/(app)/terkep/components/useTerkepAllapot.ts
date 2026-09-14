@@ -25,6 +25,8 @@ export interface TerkepAllapot {
   setIparag: (i: string) => void;
   vsHozzaad: (kod: string) => void;
   vsKivesz: (kod: string) => void;
+  /** Hozzáad, ha nincs benne (és van hely); kivesz, ha benne van – a „+"/pipa gombok művelete. */
+  vsValt: (kod: string) => void;
   vsTorol: () => void;
 }
 
@@ -64,10 +66,14 @@ export function useTerkepAllapot(adatok: TerkepOrszag[], kezdoKod: string | null
   const setMutatoKulcs = useCallback((k: string) => setMutatoKulcsState(mutatoByKulcs(k).kulcs), []);
   const vsHozzaad = useCallback((k: string) => setVs((v) => (v.includes(k) || v.length >= VS_MAX ? v : [...v, k])), []);
   const vsKivesz = useCallback((k: string) => setVs((v) => v.filter((x) => x !== k)), []);
+  const vsValt = useCallback(
+    (k: string) => setVs((v) => (v.includes(k) ? v.filter((x) => x !== k) : v.length >= VS_MAX ? v : [...v, k])),
+    [],
+  );
   const vsTorol = useCallback(() => setVs([]), []);
 
   return {
     kod, vs, vsTele: vs.length >= VS_MAX, mutato: mutatoByKulcs(mutatoKulcs), iparag,
-    kivalaszt, bezar, setMutatoKulcs, setIparag, vsHozzaad, vsKivesz, vsTorol,
+    kivalaszt, bezar, setMutatoKulcs, setIparag, vsHozzaad, vsKivesz, vsValt, vsTorol,
   };
 }

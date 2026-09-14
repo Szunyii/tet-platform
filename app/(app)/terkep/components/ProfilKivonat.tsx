@@ -1,6 +1,6 @@
 'use client';
 
-import { X } from 'lucide-react';
+import { Check, Plus, X } from 'lucide-react';
 import Link from 'next/link';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { AllapotBadge } from '../../../../components/orszagprofil/AllapotBadge';
@@ -11,7 +11,7 @@ import { Button, buttonVariants } from '../../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../../../components/ui/card';
 import { BLOKK_KULCSOK, MEZO_CIMKEK } from '../../../../lib/orszagprofil-szotar';
 import { formatSzam as sz } from '../../../../lib/szam';
-import type { Mutato, Rangsor } from '../../../../lib/terkep-mutatok';
+import { ertekEsHely, SKALA_SZINEK, type Mutato, type Rangsor } from '../../../../lib/terkep-mutatok';
 import { cn } from '../../../../lib/utils';
 
 /** A kiválasztott ország profil-kivonata a térkép mellett. */
@@ -30,7 +30,7 @@ export function ProfilKivonat({
   rangsor: Rangsor | null;
   /** Benne van-e az ország az összehasonlításban. */
   benneVs: boolean;
-  /** Tele a halmaz (4) – ilyenkor a hozzáadás letiltva. */
+  /** Tele a halmaz (`VS_MAX`) – ilyenkor a hozzáadás letiltva. */
   vsTele: boolean;
   /** Hozzáadás / kivétel (a hívó dönti el `benneVs` alapján). */
   onVs: () => void;
@@ -42,12 +42,8 @@ export function ProfilKivonat({
     o.poszt?.terulet != null ? sz(o.poszt.terulet, ' km²') : null,
     o.poszt?.penznem,
   ].filter(Boolean).join(' · ');
-  let mutatoSor: string | null = null;
-  if (mutato.tipus === 'szam') {
-    const v = mutato.ertek(o);
-    const sor = rangsor?.sorok.find((s) => s.o.kod === o.kod);
-    mutatoSor = v === null ? 'nincs adat' : `${sz(v, mutato.utotag)}${sor && rangsor ? ` · ${sor.hely}./${rangsor.sorok.length}` : ''}`;
-  }
+  // A térképen választott számszerű mutató értéke és helyezése (a szűrt rangsorban); undefined = kategorikus mutató.
+  const ertek = mutato.tipus === 'szam' ? ertekEsHely(o, mutato, rangsor) : undefined;
   return (
     <Card>
       <CardHeader>
@@ -70,10 +66,16 @@ export function ProfilKivonat({
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        {mutatoSor !== null && (
-          <p className="text-sm">
-            <span className="text-muted-foreground">{mutato.cimke}: </span>
-            <span className={mutatoSor === 'nincs adat' ? 'text-muted-foreground' : 'font-mono'}>{mutatoSor}</span>
+        {ertek !== undefined && (
+          // Inline style szándékosan: a sáv színe a térkép skálájának legvilágosabb fokozata (mint az
+          // összehasonlító tábla kiemelt sora) – ez köti a sort a térkép aktuális színezéséhez.
+          <p className="rounded-md px-2 py-1 text-sm text-foreground" style={{ background: SKALA_SZINEK[0] }}>
+            <span>{mutato.cimke}: </span>
+            {ertek === null ? (
+              <span className="text-muted-foreground">nincs adat</span>
+            ) : (
+              <span className="font-mono font-medium" title="Érték és helyezés a jelenlegi szűrés szerinti rangsorban">{ertek}</span>
+            )}
           </p>
         )}
         {o.allapot === 'nincs' ? (
@@ -112,14 +114,15 @@ export function ProfilKivonat({
       <CardFooter className="flex flex-wrap gap-2">
         <Link href={`/orszagprofil/${o.kod}`} className={cn(buttonVariants({ variant: 'outline' }))}>Teljes profil</Link>
         <Link href="/kommunikacio" className={cn(buttonVariants({ variant: 'outline' }))}>Üzenet a poszttal</Link>
-        {/* Letiltott gombon a title nem jelenik meg (natív disabled + pointer-events-none); a korlátot a csík írja ki. */}
+        {/* Letiltott gombon a title nem jelenik meg (natív disabled + pointer-events-none); a korlátot az OsszehasonlitasCsik írja ki. */}
         <Button
           type="button"
           variant="outline"
+          aria-pressed={benneVs}
           disabled={!benneVs && vsTele}
           onClick={onVs}
         >
-          {benneVs ? 'Kivétel az összehasonlításból' : 'Összehasonlításhoz'}
+          {benneVs ? <><Check /> Összehasonlításban</> : <><Plus /> Összehasonlítás</>}
         </Button>
         <SzerkesztesGomb
           kod={o.kod}
