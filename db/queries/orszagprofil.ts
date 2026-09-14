@@ -66,6 +66,16 @@ export function listEvek(kod: string): number[] {
     .map((r) => r.ev);
 }
 
+/** Az összes ország profil-évei egyszer, csökkenő sorrendben (fejléc ciklusválasztó). */
+export function listProfilEvek(): number[] {
+  return db
+    .selectDistinct({ ev: orszagprofil.ev })
+    .from(orszagprofil)
+    .orderBy(desc(orszagprofil.ev))
+    .all()
+    .map((r) => r.ev);
+}
+
 /** Az ország aktív (nem tiltott) attaséja név szerint az első; a profil oldal fejléce. */
 export function getAttaseNev(kod: string): string | null {
   const now = Date.now();

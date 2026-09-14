@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { createContext, useActionState, useContext, useState, type ReactNode } from 'react';
 import type { LogoutState } from '../app/(app)/actions';
-import { CYCLES, DEADLINE, DEFAULT_CYCLE } from '../lib/data';
+import { DEADLINE } from '../lib/data';
 import { orszagNev } from '../lib/orszagok';
 import { ini } from '../lib/score';
 import type { AppSession } from '../lib/session';
@@ -13,8 +13,9 @@ type LogoutAction = (prev: LogoutState) => Promise<LogoutState>;
 
 interface AppState {
   user: AppSession;
-  cycle: string;
-  setCycle: (c: string) => void;
+  /** A fejlécben kiválasztott ciklus (év). Kliens-oldali kontextus, a monitoring cím és a sidebar sora mutatja. */
+  ev: number;
+  setEv: (ev: number) => void;
   /** Olvasatlan, nem lezárt ticketek száma – a Kommunikáció menüpont számlálója. */
   olvasatlan: number;
   /** A /kommunikacio oldal írja felül a saját, frissebb számával (OlvasatlanSzinkron). */
@@ -92,15 +93,23 @@ export default function AppShell({
   user,
   logoutAction,
   olvasatlan: szerverOlvasatlan,
+  evek,
+  aktualisEv,
   children,
 }: {
   user: AppSession;
   logoutAction: LogoutAction;
   /** Olvasatlan, nem lezárt ticketek száma a layoutból – a menü-számláló kiindulópontja. */
   olvasatlan: number;
+  /** A ciklusválasztó évei a layoutból: DB profil-évek + aktuális év, csökkenő, nem üres. */
+  evek: number[];
+  aktualisEv: number;
   children: ReactNode;
 }) {
-  const [cycle, setCycle] = useState(DEFAULT_CYCLE);
+  const [ev, setEv] = useState(aktualisEv);
+  // Ha a layout újrarenderelésekor a kiválasztott év már nincs a listában (pl. a DB-ből
+  // eltűnt), az aktuális évre állunk – render közbeni igazítás, mint az olvasatlan-nál.
+  if (!evek.includes(ev)) setEv(aktualisEv);
   // A számláló állapotban él, mert a /kommunikacio oldal a saját, frissebb értékével
   // felülírja (a layout a megtekintés-jelölés ELŐTT számol). A szerverről érkező új érték
   // viszont nyer: a layout revalidálásakor (revalidatePath) ez a render-közbeni igazítás
@@ -118,7 +127,7 @@ export default function AppShell({
     : `TéT attasé${user.orszag ? ' · ' + orszagNev(user.orszag) : ''}`;
 
   return (
-    <AppContext.Provider value={{ user, cycle, setCycle, olvasatlan, setOlvasatlan }}>
+    <AppContext.Provider value={{ user, ev, setEv, olvasatlan, setOlvasatlan }}>
       <div style={{ display: 'flex', minHeight: '100vh' }}>
         <aside style={{
           width: 238, flex: '0 0 238px', background: '#131a24', color: '#e7ebf1',
@@ -156,7 +165,7 @@ export default function AppShell({
             marginTop: 'auto', padding: '14px 18px', borderTop: '1px solid #232c39',
             fontSize: 11, color: '#8d97a5', lineHeight: 1.6,
           }}>
-            <div style={{ color: '#c3cbd6', fontWeight: 600, fontSize: 11.5 }}>Aktív ciklus: {cycle}</div>
+            <div style={{ color: '#c3cbd6', fontWeight: 600, fontSize: 11.5 }}>Aktív ciklus: {ev}</div>
             <div>Beadási határidő: {DEADLINE}</div>
             <div style={{ marginTop: 8, padding: '6px 8px', background: '#1b2330', borderRadius: 4, color: '#7f8a99' }}>
               Demóadatok – 14 poszt, 14 értékelési szempont
@@ -176,8 +185,8 @@ export default function AppShell({
             <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 14 }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11.5, color: '#6b7684' }}>
                 Ciklus
-                <select className="input" value={cycle} onChange={(e) => setCycle(e.target.value)}>
-                  {CYCLES.map((c) => <option key={c} value={c}>{c}</option>)}
+                <select className="input" value={ev} onChange={(e) => setEv(Number(e.target.value))}>
+                  {evek.map((e) => <option key={e} value={e}>{e}</option>)}
                 </select>
               </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 14, borderLeft: '1px solid #dde1e7' }}>

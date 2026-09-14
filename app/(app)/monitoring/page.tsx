@@ -6,7 +6,7 @@ import { CATS, CRITERIA, POSTS, SCORE_THRESHOLD } from '../../../lib/data';
 import { avg, catAvg, col, fmt, pill, sc } from '../../../lib/score';
 
 export default function MonitoringPage() {
-  const { cycle } = useApp();
+  const { ev } = useApp();
   const [selId, setSelId] = useState(1);
   const mon = POSTS.find((p) => p.id === selId) ?? POSTS[0];
 
@@ -16,7 +16,7 @@ export default function MonitoringPage() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 1560 }}>
       <div className="card">
         <div className="card-h">
-          <h3>Hálózati rangsor · {cycle}</h3>
+          <h3>Hálózati rangsor · {ev}</h3>
           <span className="card-sub">14 szempont, 3 kategória · küszöb {fmt(SCORE_THRESHOLD)}</span>
         </div>
         <div style={{ overflow: 'auto' }}>
