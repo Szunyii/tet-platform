@@ -245,23 +245,33 @@ export function VilagTerkep({
     select(svg).transition().duration(400).call(z.transform, r.bbox ? regioTranszform(r.bbox) : zoomIdentity);
   };
 
+  // A jelmagyarázat a betöltő/hiba állapotban is ott van, hogy a kártya magassága ne ugorjon a térkép beérkezésekor.
+  const jelmagyarazat = <Jelmagyarazat mutato={mutato} tartomany={tartomany} csoportok={csoportok} iparag={iparag} />;
+
   if (hiba) {
     return (
-      <div className={`flex ${ARANY} items-center justify-center p-6 text-center text-sm text-muted-foreground`}>
-        A térkép nem tölthető be.
+      <div>
+        <div className={`flex ${ARANY} items-center justify-center p-6 text-center text-sm text-muted-foreground`}>
+          A térkép nem tölthető be.
+        </div>
+        {jelmagyarazat}
       </div>
     );
   }
   if (!poligonok) {
     return (
-      <div className={`flex ${ARANY} animate-pulse items-center justify-center text-sm text-muted-foreground`}>
-        Térkép betöltése…
+      <div>
+        <div className={`flex ${ARANY} animate-pulse items-center justify-center text-sm text-muted-foreground`}>
+          Térkép betöltése…
+        </div>
+        {jelmagyarazat}
       </div>
     );
   }
   return (
     <div>
       <div ref={wrapRef} className="relative">
+        {/* role="img": a poligonok és pinek a segítő technológiának nem interaktívak – a billentyűzetes egyenértékes a RangsorPanel (minden ország gomb). */}
         <svg
           ref={svgRef}
           viewBox={`0 0 ${W} ${H}`}
@@ -304,7 +314,7 @@ export function VilagTerkep({
         </div>
         {hover && <TerkepTooltip hover={hover} mutato={mutato} rangsor={rangsor} />}
       </div>
-      <Jelmagyarazat mutato={mutato} tartomany={tartomany} csoportok={csoportok} iparag={iparag} />
+      {jelmagyarazat}
     </div>
   );
 }

@@ -17,9 +17,10 @@ export default async function TerkepPage({
   const ev = await getValasztottEv(most);
   const o = (await searchParams).o;
   const kezdoKod = typeof o === 'string' && orszagByKod(o) ? o : null;
-  // A ?o= változását (vissza/előre, oldalsáv, „Vissza a térképre") a useTerkepAllapot kezeli
-  // render közben: a kijelölés frissül, a mutató, a szűrő és az összehasonlítás-halmaz megmarad.
-  // Ezért nincs key – az évváltásnál is a hook igazítja az állapotot, ha az ország eltűnik.
+  // Nincs key: évváltáskor (a page mountolva marad) a useTerkepAllapot render közben igazítja az
+  // állapotot – a kijelölés és az összehasonlítás-halmaz nem létező elemei kikerülnek, a mutató és
+  // a szűrő megmarad –, és a ?o= változását is a hook kezeli, ha ugyanezen a route-on belül
+  // változna. Más route-ról (profil oldal, oldalsáv) érkezve a nézet amúgy is újramountol.
   return (
     <TerkepNezet
       adatok={listTerkepAdat(ev)}

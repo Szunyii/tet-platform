@@ -66,13 +66,13 @@ export function OsszehasonlitasPanel({ orszagok, jeloltek, mutato, onKivalaszt, 
         <div className="min-w-0">
           <CardTitle>Összehasonlítás</CardTitle>
           <CardDescription>
-            {orszagok.length} ország · a térkép mutatójának sora kiemelve, soronként a legnagyobb érték félkövér
+            {orszagok.length} ország{mutato.tipus === 'szam' ? ' · a térkép mutatójának sora kiemelve' : ''} · soronként a legnagyobb érték félkövér
           </CardDescription>
         </div>
         <Button type="button" variant="outline" size="sm" className="ml-auto" onClick={onTorol}>Összehasonlítás törlése</Button>
       </CardHeader>
       <CardContent className="px-0">
-        <Table className="text-xs">
+        <Table className="w-auto text-xs">
           <TableHeader>
             <TableRow>
               <TableHead className={cn(CIMKE_OSZLOP, 'h-10')} />
@@ -119,7 +119,9 @@ export function OsszehasonlitasPanel({ orszagok, jeloltek, mutato, onKivalaszt, 
               {(o) => (o.iparagak.length ? <span className="flex flex-wrap gap-1">{o.iparagak.map((i) => <IparagBadge key={i} iparag={i} />)}</span> : '–')}
             </Sor>
             {SZAM_MUTATOK.map((m) => {
-              const legjobb = Math.max(...orszagok.map((o) => m.ertek(o) ?? -Infinity));
+              // Félkövér csak valódi összevetésnél: legalább két ország értékével (egyetlen érték nem „legnagyobb”).
+              const ertekek = orszagok.map((o) => m.ertek(o)).filter((v): v is number => v !== null);
+              const legjobb = ertekek.length >= 2 ? Math.max(...ertekek) : null;
               return (
                 <Sor key={m.kulcs} cimke={m.cimke} kiemelt={m.kulcs === mutato.kulcs} orszagok={orszagok} plusz={plusz}>
                   {(o) => {
