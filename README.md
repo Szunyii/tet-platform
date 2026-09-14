@@ -60,7 +60,8 @@ Ezután nyisd meg: http://localhost:3000
 - `components/riport/` – a bejegyzés űrlap, lista és részlet komponensei
 - `app/(app)/kommunikacio/components/` – a ticketlista, beszélgetés, adatlap és új-ticket dialógus
 - `components/form/` – megosztott form-minta (`useMuveletForm`, `MezoHiba`, `MuveletDialog`, `Mezo`, `SzamMezo`, `CimkeValaszto`, `NativeSelect`)
-- `components/AppShell.tsx` – sidebar, fejléc (bejelentkezett felhasználó, kijelentkezés), ciklusválasztó (a választott év `tet-ev` cookie-ban; a térkép, az országprofil és a szerkesztő is ezt az évet mutatja)
+- `components/AppShell.tsx` – sidebar (menü, országprofil-állapot kártya, bejelentkezett felhasználó, kijelentkezés), fejléc (oldalcím, ciklusválasztó – a választott év `tet-ev` cookie-ban; a térkép, az országprofil és a szerkesztő is ezt az évet mutatja)
+- `app/(app)/components/OldalsavAllapot.tsx` – az oldalsáv állapot-kártyája (attasé: saját ország, admin: darabszámok a választott ciklusra)
 - `public/tet-world-map.js` – `<tet-world-map>` webkomponens (d3 + world-atlas, CDN-ről töltődik; az adatot és a színtáblákat JSON attribútumban kapja)
 
 Megjegyzés: a térkép internetkapcsolatot igényel (d3, topojson és a world-atlas TopoJSON CDN-ről jön).
