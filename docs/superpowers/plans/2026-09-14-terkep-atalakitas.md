@@ -127,13 +127,13 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
  * A térkép-oldal mutatói (színezés, rangsor, összehasonlítás), a színskála, a térkép fix
  * színei és a régió-gyorsválasztó. Framework-mentes: a TerkepOrszag csak típusként jön a
  * server-only query-modulból; a d3-scale/d3-interpolate tiszta függvénykönyvtár, DOM nélkül.
+ * A függvények a kapott `TerkepOrszag` példányokat adják vissza (a `listTerkepAdat` cache-elt,
+ * megosztott objektumait): egyik sem mutálja a bemenetet, és a hívó se tegye.
  */
 import { interpolateLab, piecewise } from 'd3-interpolate';
-import { scaleSequential } from 'd3-scale';
+import { scaleLinear, scaleSymlog } from 'd3-scale';
 import type { TerkepOrszag } from '../db/queries/orszagprofil';
-import {
-  ALLAPOTOK, ALLAPOT_CIMKE, ALLAPOT_SZINEK, BLOKK_KULCSOK, IPARAGAK, IPARAG_SZINEK, MEZO_CIMKEK,
-} from './orszagprofil-szotar';
+import { ALLAPOTOK, ALLAPOT_CIMKE, ALLAPOT_SZINEK, BLOKK_KULCSOK, IPARAGAK, IPARAG_SZINEK } from './orszagprofil-szotar';
 
 export const MUTATO_KULCSOK = [
   'iparag', 'allapot',
@@ -144,9 +144,12 @@ export type MutatoKulcs = (typeof MUTATO_KULCSOK)[number];
 export interface SzamMutato {
   kulcs: MutatoKulcs;
   tipus: 'szam';
+  /** Rövid felirat egység nélkül; az egységet az `utotag` viszi. */
   cimke: string;
   /** Közvetlenül a szám után (pl. ' %'); a formatSzam második paramétere. */
   utotag: string;
+  /** `log`: nagyságrendeket átfogó mutató (GDP, lakosság) – a szín és a rangsor-sáv symlog skálán. */
+  skala: 'linearis' | 'log';
   ertek: (o: TerkepOrszag) => number | null;
 }
 export interface KategoriaMutato {
@@ -161,46 +164,57 @@ export interface KategoriaMutato {
   cimkek: Readonly<Record<string, string>>;
   /** true: csak a használt kategóriák jelennek meg (iparág); false: mind, üresen is (állapot). */
   csakHasznalt: boolean;
-  /** A null kategória csoportjának felirata. */
+  /** A null (vagy a `sorrend`-ben nem szereplő) kategória csoportjának felirata. */
   nincsCimke: string;
 }
 export type Mutato = SzamMutato | KategoriaMutato;
 
+/** Az iparágnál a kategória neve maga a felirat; az egységes `cimkek` mező kedvéért azonosság-térkép. */
 const IPARAG_CIMKEK: Record<string, string> = Object.fromEntries(IPARAGAK.map((i) => [i, i]));
 
-export const MUTATOK: readonly Mutato[] = [
-  {
+/** Kulcsonként egy mutató; a kimerítő kulcs-térkép miatt egy kihagyott kulcs fordítási hiba. */
+const MUTATO_TABLA: { [K in MutatoKulcs]: Mutato & { kulcs: K } } = {
+  iparag: {
     kulcs: 'iparag', tipus: 'kategoria', cimke: 'Kiemelt iparág',
     kategoria: (o) => o.iparagak[0] ?? null,
     sorrend: IPARAGAK, szinek: IPARAG_SZINEK, cimkek: IPARAG_CIMKEK, csakHasznalt: true,
     nincsCimke: 'nincs kiemelt iparág',
   },
-  {
+  allapot: {
     kulcs: 'allapot', tipus: 'kategoria', cimke: 'Profil állapota',
     kategoria: (o) => o.allapot,
     sorrend: ALLAPOTOK, szinek: ALLAPOT_SZINEK, cimkek: ALLAPOT_CIMKE, csakHasznalt: false,
     nincsCimke: 'nincs adat',
   },
-  { kulcs: 'gdpEgyFore', tipus: 'szam', cimke: MEZO_CIMKEK.alapadatok.gdpEgyFore.cimke, utotag: ' USD', ertek: (o) => o.alapadatok?.gdpEgyFore ?? null },
-  { kulcs: 'gdp', tipus: 'szam', cimke: MEZO_CIMKEK.alapadatok.gdp.cimke, utotag: ' mrd USD', ertek: (o) => o.alapadatok?.gdp ?? null },
-  { kulcs: 'gdpNovekedes', tipus: 'szam', cimke: MEZO_CIMKEK.alapadatok.gdpNovekedes.cimke, utotag: ' %', ertek: (o) => o.alapadatok?.gdpNovekedes ?? null },
-  { kulcs: 'lakossag', tipus: 'szam', cimke: MEZO_CIMKEK.alapadatok.lakossag.cimke, utotag: ' fő', ertek: (o) => o.alapadatok?.lakossag ?? null },
-  { kulcs: 'gerd', tipus: 'szam', cimke: MEZO_CIMKEK.kfiRendszer.gerd.cimke, utotag: ' %', ertek: (o) => o.gerd },
-  {
-    kulcs: 'kitoltottseg', tipus: 'szam', cimke: 'Kitöltöttség (mentett blokk)', utotag: `/${BLOKK_KULCSOK.length}`,
+  gdpEgyFore: { kulcs: 'gdpEgyFore', tipus: 'szam', cimke: 'Egy főre jutó GDP', utotag: ' USD', skala: 'log', ertek: (o) => o.alapadatok?.gdpEgyFore ?? null },
+  gdp: { kulcs: 'gdp', tipus: 'szam', cimke: 'GDP', utotag: ' mrd USD', skala: 'log', ertek: (o) => o.alapadatok?.gdp ?? null },
+  gdpNovekedes: { kulcs: 'gdpNovekedes', tipus: 'szam', cimke: 'GDP-növekedés', utotag: ' %', skala: 'linearis', ertek: (o) => o.alapadatok?.gdpNovekedes ?? null },
+  lakossag: { kulcs: 'lakossag', tipus: 'szam', cimke: 'Lakosság', utotag: ' fő', skala: 'log', ertek: (o) => o.alapadatok?.lakossag ?? null },
+  gerd: { kulcs: 'gerd', tipus: 'szam', cimke: 'K+F ráfordítás (GERD)', utotag: ' %', skala: 'linearis', ertek: (o) => o.gerd },
+  kitoltottseg: {
+    kulcs: 'kitoltottseg', tipus: 'szam', cimke: 'Kitöltöttség (mentett blokk)', utotag: `/${BLOKK_KULCSOK.length}`, skala: 'linearis',
     ertek: (o) => (o.allapot === 'nincs' ? null : o.mentettDb),
   },
-  {
-    kulcs: 'rendezvenyDb', tipus: 'szam', cimke: 'Rendezvények száma', utotag: '',
+  rendezvenyDb: {
+    kulcs: 'rendezvenyDb', tipus: 'szam', cimke: 'Rendezvények száma', utotag: '', skala: 'linearis',
     ertek: (o) => (o.allapot === 'nincs' ? null : o.rendezvenyDb),
   },
-];
+};
+
+/** A mutatók a `MUTATO_KULCSOK` sorrendjében (a Select és az összehasonlító tábla sorrendje). */
+export const MUTATOK: readonly Mutato[] = MUTATO_KULCSOK.map((k) => MUTATO_TABLA[k]);
+export const SZAM_MUTATOK: readonly SzamMutato[] = MUTATOK.filter((m): m is SzamMutato => m.tipus === 'szam');
+export const KATEGORIA_MUTATOK: readonly KategoriaMutato[] = MUTATOK.filter((m): m is KategoriaMutato => m.tipus === 'kategoria');
 
 export const ALAP_MUTATO: MutatoKulcs = 'iparag';
 
+function isMutatoKulcs(v: string): v is MutatoKulcs {
+  return (MUTATO_KULCSOK as readonly string[]).includes(v);
+}
+
 /** Ismeretlen kulcsra az alapértelmezett mutatót adja (a hívónak nem kell külön kezelnie). */
 export function mutatoByKulcs(k: string): Mutato {
-  return MUTATOK.find((m) => m.kulcs === k) ?? MUTATOK.find((m) => m.kulcs === ALAP_MUTATO)!;
+  return isMutatoKulcs(k) ? MUTATO_TABLA[k] : MUTATO_TABLA[ALAP_MUTATO];
 }
 
 const nevSzerint = (a: TerkepOrszag, b: TerkepOrszag) => a.nev.localeCompare(b.nev, 'hu');
@@ -236,22 +250,34 @@ export function rangsor(adatok: readonly TerkepOrszag[], m: SzamMutato, iparag: 
 
 export interface Csoport { kategoria: string | null; cimke: string; szin: string; orszagok: TerkepOrszag[] }
 
-/** A szűrt országok kategóriánként a mutató `sorrend`-je szerint, végül a kategória nélküliek. */
+/**
+ * A szűrt országok kategóriánként a mutató `sorrend`-je szerint, végül a kategória nélküliek
+ * (a null és a `sorrend`-ben nem szereplő kategória is ide kerül – ugyanúgy, ahogy az
+ * `orszagSzin` is a semleges színt adja rá).
+ */
 export function csoportok(adatok: readonly TerkepOrszag[], m: KategoriaMutato, iparag: string): Csoport[] {
-  const szurt = szures(adatok, iparag).sort(nevSzerint);
+  const vodrok = new Map<string, TerkepOrszag[]>(m.sorrend.map((k) => [k, []]));
+  const nincs: TerkepOrszag[] = [];
+  for (const o of szures(adatok, iparag).sort(nevSzerint)) {
+    const k = m.kategoria(o);
+    const vodor = k === null ? undefined : vodrok.get(k);
+    if (vodor) vodor.push(o);
+    else nincs.push(o);
+  }
   const eredmeny: Csoport[] = [];
   for (const k of m.sorrend) {
-    const orszagok = szurt.filter((o) => m.kategoria(o) === k);
+    const orszagok = vodrok.get(k) ?? [];
     if (m.csakHasznalt && orszagok.length === 0) continue;
     eredmeny.push({ kategoria: k, cimke: m.cimkek[k] ?? k, szin: m.szinek[k] ?? TERKEP_SZINEK.semleges, orszagok });
   }
-  const nincs = szurt.filter((o) => m.kategoria(o) === null);
   if (nincs.length > 0) eredmeny.push({ kategoria: null, cimke: m.nincsCimke, szin: TERKEP_SZINEK.semleges, orszagok: nincs });
   return eredmeny;
 }
 
+export interface Tartomany { min: number; max: number }
+
 /** Az ÖSSZES (szűretlen) adattal rendelkező ország min–max-a – a színskála tartománya; nincs adat → null. */
-export function tartomany(adatok: readonly TerkepOrszag[], m: SzamMutato): { min: number; max: number } | null {
+export function tartomany(adatok: readonly TerkepOrszag[], m: SzamMutato): Tartomany | null {
   let min = Infinity;
   let max = -Infinity;
   for (const o of adatok) {
@@ -280,16 +306,28 @@ export function jeloltek(adatok: readonly TerkepOrszag[], kizart: readonly strin
   });
 }
 
-export const SKALA_SZINEK = ['#e3f1ec', '#8fcbbd', '#2f9a82', '#0f6b57', '#053f33'] as const;
-
-/** Folytonos zöld skála a [min, max] tartományra; min === max esetén a középső szín. */
-export function szinSkala(min: number, max: number): (v: number) => string {
-  if (min === max) {
-    const kozep: string = SKALA_SZINEK[2];
-    return () => kozep;
+/**
+ * Az érték 0–1 helye a tartományon belül a mutató skálája szerint (lineáris vagy symlog),
+ * a tartományra vágva; min === max esetén mindenre 0,5. A szín (`szinSkala`) és a rangsor
+ * sávja ugyanezt használja, hogy a kettő együtt mozogjon.
+ */
+export function arany(m: SzamMutato, t: Tartomany): (v: number) => number {
+  if (t.min === t.max) return () => 0.5;
+  if (m.skala === 'log') {
+    const s = scaleSymlog().domain([t.min, t.max]).range([0, 1]).clamp(true);
+    return (v) => s(v);
   }
-  const s = scaleSequential(piecewise(interpolateLab, [...SKALA_SZINEK])).domain([min, max]).clamp(true);
+  const s = scaleLinear().domain([t.min, t.max]).range([0, 1]).clamp(true);
   return (v) => s(v);
+}
+
+export const SKALA_SZINEK = ['#e3f1ec', '#8fcbbd', '#2f9a82', '#0f6b57', '#053f33'] as const;
+const SKALA_INTERPOLATOR = piecewise(interpolateLab, [...SKALA_SZINEK]);
+
+/** Folytonos zöld szín a tartományon belül (az `arany` szerint); mindig `rgb(r, g, b)` alakban. */
+export function szinSkala(m: SzamMutato, t: Tartomany): (v: number) => string {
+  const a = arany(m, t);
+  return (v) => SKALA_INTERPOLATOR(a(v));
 }
 
 export const TERKEP_SZINEK = {
@@ -299,8 +337,8 @@ export const TERKEP_SZINEK = {
   /** Poszt nélküli ország. */
   szarazfold: '#e6eaef',
   hatar: '#ffffff',
-  /** Az iparág-szűrő által kizárt ország. */
-  halvany: '#e3e7ec',
+  /** Az iparág-szűrő által kizárt posztos ország – a szárazföldnél érezhetően sötétebb, hogy elváljon tőle. */
+  halvany: '#ced5dd',
   /** Kategória nélküli (pl. nincs kiemelt iparág). */
   semleges: '#5f6b7a',
   /** A sraffozás csíkja (számszerű mutató, nincs érték). */
@@ -310,7 +348,7 @@ export const TERKEP_SZINEK = {
 
 /**
  * Egy posztos ország kitöltési színe. `null` = számszerű mutató érték nélkül (a térképen
- * sraffozás, a pinen `nincsAdat`). A `skala` a `szinSkala(min, max)` eredménye, vagy null,
+ * sraffozás, a pinen `nincsAdat`). A `skala` a `szinSkala(m, tartomany)` eredménye, vagy null,
  * ha nincs tartomány.
  */
 export function orszagSzin(o: TerkepOrszag, m: Mutato, iparag: string, skala: ((v: number) => string) | null): string | null {
@@ -346,9 +384,10 @@ export const REGIOK: readonly Regio[] = [
 ```ts
 import assert from 'node:assert/strict';
 import type { TerkepOrszag } from '../db/queries/orszagprofil';
+import type { Iparag } from '../lib/orszagprofil-szotar';
 import {
-  csoportok, jeloltek, mutatoByKulcs, orszagSzin, rangsor, szinSkala, szures, tartomany, TERKEP_SZINEK,
-  type KategoriaMutato, type SzamMutato,
+  arany, csoportok, jeloltek, KATEGORIA_MUTATOK, MUTATO_KULCSOK, MUTATOK, mutatoByKulcs, orszagSzin, rangsor,
+  SZAM_MUTATOK, szinSkala, szures, tartomany, TERKEP_SZINEK, type KategoriaMutato, type SzamMutato,
 } from '../lib/terkep-mutatok';
 
 function o(kod: string, nev: string, r: Partial<TerkepOrszag> = {}): TerkepOrszag {
@@ -359,6 +398,7 @@ function o(kod: string, nev: string, r: Partial<TerkepOrszag> = {}): TerkepOrsza
   };
 }
 const gerd = mutatoByKulcs('gerd') as SzamMutato;
+const lakossag = mutatoByKulcs('lakossag') as SzamMutato;
 const iparag = mutatoByKulcs('iparag') as KategoriaMutato;
 const allapot = mutatoByKulcs('allapot') as KategoriaMutato;
 const adatok = [
@@ -369,43 +409,64 @@ const adatok = [
   o('VN', 'Vietnám', { allapot: 'nincs', ev: null }),
 ];
 
+// Tábla és listák
+assert.deepEqual(MUTATOK.map((m) => m.kulcs), [...MUTATO_KULCSOK]);
+assert.equal(SZAM_MUTATOK.length, 7);
+assert.equal(KATEGORIA_MUTATOK.length, 2);
 assert.equal(mutatoByKulcs('nincs-ilyen').kulcs, 'iparag');
+assert.equal(gerd.cimke, 'K+F ráfordítás (GERD)');
+assert.equal((mutatoByKulcs('gdp') as SzamMutato).utotag, ' mrd USD');
+assert.equal((mutatoByKulcs('gdp') as SzamMutato).skala, 'log');
+assert.equal(gerd.skala, 'linearis');
 
+// Rangsor
 const r = rangsor(adatok, gerd, '');
 assert.deepEqual(r.sorok.map((s) => [s.o.kod, s.hely]), [['IL', 1], ['KR', 2], ['JP', 2], ['DE', 4]]);
 assert.deepEqual(r.adatNelkul.map((x) => x.kod), ['VN']);
-
 const rSzurt = rangsor(adatok, gerd, 'Mesterséges intelligencia és adatgazdaság');
 assert.deepEqual(rSzurt.sorok.map((s) => s.o.kod), ['KR', 'JP']);
 assert.equal(szures(adatok, 'Űripar').length, 1);
 
+// Tartomány
 assert.deepEqual(tartomany(adatok, gerd), { min: 3.1, max: 5.6 });
 assert.equal(tartomany([o('X', 'X')], gerd), null);
 
+// Csoportok (sorrend: IPARAGAK; ismeretlen kategória a „nincs" csoportba)
 const cs = csoportok(adatok, iparag, '');
 assert.deepEqual(cs.map((c) => [c.cimke, c.orszagok.map((x) => x.kod)]), [
   ['Mesterséges intelligencia és adatgazdaság', ['KR', 'JP']],
   ['Biotechnológia és gyógyszeripar', ['IL']],
   ['nincs kiemelt iparág', ['DE', 'VN']],
 ]);
+const csIsmeretlen = csoportok([o('XX', 'Xföld', { iparagak: ['Nem létező' as Iparag] })], iparag, '');
+assert.deepEqual(csIsmeretlen.map((c) => [c.kategoria, c.orszagok.length]), [[null, 1]]);
 const csA = csoportok(adatok, allapot, '');
 assert.deepEqual(csA.map((c) => [c.kategoria, c.orszagok.length]), [['friss', 4], ['elavult', 0], ['nincs', 1]]);
 
-const skala = szinSkala(3.1, 5.6);
-assert.equal(szinSkala(2, 2)(2), '#2f9a82');
+// Arány és színskála
+assert.equal(arany(gerd, { min: 0, max: 10 })(5), 0.5);
+assert.equal(arany(gerd, { min: 2, max: 2 })(2), 0.5);
+assert.equal(arany(gerd, { min: 0, max: 10 })(50), 1);
+const aLog = arany(lakossag, { min: 1e6, max: 1e9 })(1e7);
+assert.ok(Math.abs(aLog - 1 / 3) < 0.01, `symlog arány: ${aLog}`);
+const skala = szinSkala(gerd, { min: 3.1, max: 5.6 });
+assert.equal(szinSkala(gerd, { min: 2, max: 2 })(2), 'rgb(47, 154, 130)');
+assert.equal(skala(3.1), 'rgb(227, 241, 236)');
 assert.notEqual(skala(3.1), skala(5.6));
 assert.equal(orszagSzin(adatok[4], gerd, '', skala), null);
 assert.equal(orszagSzin(adatok[0], gerd, 'Űripar', skala), TERKEP_SZINEK.halvany);
+assert.equal(TERKEP_SZINEK.halvany, '#ced5dd');
 assert.equal(orszagSzin(adatok[3], iparag, '', null), TERKEP_SZINEK.semleges);
 assert.equal(orszagSzin(adatok[0], allapot, '', null), '#2f7d32');
 
+// Jelöltek
 assert.deepEqual(jeloltek(adatok, ['IL'], gerd).map((x) => x.kod), ['KR', 'JP', 'DE', 'VN']);
 assert.deepEqual(jeloltek(adatok, [], iparag).map((x) => x.kod), ['KR', 'IL', 'JP', 'DE', 'VN']);
 console.log('OK');
 ```
 
 Run: `npx tsx scripts/_proba-terkep-mutatok.ts`
-Expected: `OK`. (A `csoportok` az `iparag` mutatónál az `IPARAGAK` sorrendjét követi: MI előbb van, mint a Biotechnológia. A `jeloltek` kategorikusnál magyar név szerint rendez: Dél-Korea, Izrael, Japán, Németország, Vietnám.)
+Expected: `OK`. (A `csoportok` az `iparag` mutatónál az `IPARAGAK` sorrendjét követi: MI előbb van, mint a Biotechnológia. A `jeloltek` kategorikusnál magyar név szerint rendez: Dél-Korea, Izrael, Japán, Németország, Vietnám. A symlog arány 1e6–1e9 között 1e7-re ≈ 1/3.)
 
 - [ ] **Step 3: Típusellenőrzés, a próba-script törlése**
 
@@ -589,7 +650,10 @@ export function Jelmagyarazat({ mutato, tartomany, csoportok }: {
     <div className="absolute bottom-2.5 left-2.5 max-w-80 rounded-md border bg-background/95 px-2.5 py-2 text-[11px] text-muted-foreground shadow-sm">
       {mutato.tipus === 'szam' ? (
         <>
-          <p className="font-semibold text-foreground">{mutato.cimke}</p>
+          <p className="font-semibold text-foreground">
+            {mutato.cimke}
+            {mutato.skala === 'log' && <span className="ml-1 font-normal text-muted-foreground">(logaritmikus skála)</span>}
+          </p>
           {tartomany && (
             <>
               <div className="my-1 h-2 rounded-sm" style={{ background: `linear-gradient(90deg, ${SKALA_SZINEK.join(', ')})` }} />
@@ -654,7 +718,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState, type PointerEv
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { Button } from '../../../../components/ui/button';
 import {
-  orszagSzin, REGIOK, szinSkala, TERKEP_SZINEK, type Csoport, type Mutato, type Rangsor,
+  orszagSzin, REGIOK, szinSkala, TERKEP_SZINEK, type Csoport, type Mutato, type Rangsor, type Tartomany,
 } from '../../../../lib/terkep-mutatok';
 import { Jelmagyarazat } from './Jelmagyarazat';
 import { RegioGombok } from './RegioGombok';
@@ -791,7 +855,7 @@ export function VilagTerkep({
   iparag: string;
   kivalasztott: string | null;
   osszehasonlitas: readonly string[];
-  tartomany: { min: number; max: number } | null;
+  tartomany: Tartomany | null;
   csoportok: Csoport[];
   rangsor: Rangsor | null;
   onSelect: (kod: string) => void;
@@ -811,7 +875,7 @@ export function VilagTerkep({
   );
   const rekordGeo = useMemo(() => new Map(adatok.filter((o) => o.geo).map((o) => [o.geo, o] as const)), [adatok]);
   const szinek = useMemo(() => {
-    const skala = tartomany ? szinSkala(tartomany.min, tartomany.max) : null;
+    const skala = tartomany && mutato.tipus === 'szam' ? szinSkala(mutato, tartomany) : null;
     return new Map(adatok.map((o) => [o.kod, orszagSzin(o, mutato, iparag, skala)] as const));
   }, [adatok, mutato, iparag, tartomany]);
 
@@ -1084,7 +1148,7 @@ import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { Button } from '../../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../components/ui/card';
 import { formatSzam } from '../../../../lib/szam';
-import { SKALA_SZINEK, type Csoport, type Mutato, type Rangsor } from '../../../../lib/terkep-mutatok';
+import { arany, SKALA_SZINEK, type Csoport, type Mutato, type Rangsor, type Tartomany } from '../../../../lib/terkep-mutatok';
 import { VS_MAX } from './useTerkepAllapot';
 
 const SAV_SZIN = SKALA_SZINEK[3];
@@ -1137,7 +1201,7 @@ export function RangsorPanel({ mutato, rangsor, csoportok, tartomany, szamlalo, 
   mutato: Mutato;
   rangsor: Rangsor | null;
   csoportok: Csoport[];
-  tartomany: { min: number; max: number } | null;
+  tartomany: Tartomany | null;
   /** A fejléc számláló szövege (pl. „14 ország adattal · 4 adat nélkül"). */
   szamlalo: string;
   vs: readonly string[];
@@ -1145,8 +1209,8 @@ export function RangsorPanel({ mutato, rangsor, csoportok, tartomany, szamlalo, 
   onVsToggle: (kod: string) => void;
 }) {
   const vsTele = vs.length >= VS_MAX;
-  const sav = (v: number) =>
-    !tartomany || tartomany.max === tartomany.min ? 1 : (v - tartomany.min) / (tartomany.max - tartomany.min);
+  // A sáv ugyanazt a (lineáris vagy symlog) arányt használja, mint a térkép színe.
+  const sav = mutato.tipus === 'szam' && tartomany ? arany(mutato, tartomany) : () => 1;
   const sor = (o: TerkepOrszag, extra: { hely?: number; sav?: number; ertek?: string } = {}) => (
     <OrszagSor key={o.kod} o={o} {...extra} benne={vs.includes(o.kod)} vsTele={vsTele} onKivalaszt={onKivalaszt} onVsToggle={onVsToggle} />
   );
@@ -1228,11 +1292,9 @@ import { Button } from '../../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../components/ui/table';
 import { formatSzam } from '../../../../lib/szam';
-import { MUTATOK, type Mutato, type SzamMutato } from '../../../../lib/terkep-mutatok';
+import { SZAM_MUTATOK, type Mutato } from '../../../../lib/terkep-mutatok';
 import { cn } from '../../../../lib/utils';
 import { VS_MAX } from './useTerkepAllapot';
-
-const SZAM_MUTATOK = MUTATOK.filter((m): m is SzamMutato => m.tipus === 'szam');
 
 function Sor({ cimke, kiemelt, orszagok, plusz, children }: {
   cimke: string;
@@ -1566,7 +1628,8 @@ import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { canEditProfil } from '../../../../lib/orszagprofil-jog';
 import { IPARAGAK } from '../../../../lib/orszagprofil-szotar';
 import {
-  csoportok as szamolCsoportok, MUTATOK, rangsor as szamolRangsor, szures, tartomany as szamolTartomany,
+  csoportok as szamolCsoportok, KATEGORIA_MUTATOK, MUTATOK, rangsor as szamolRangsor, szures, SZAM_MUTATOK,
+  tartomany as szamolTartomany,
 } from '../../../../lib/terkep-mutatok';
 import { TerkepPanel } from './TerkepPanel';
 import { useTerkepAllapot } from './useTerkepAllapot';
@@ -1575,8 +1638,6 @@ import { VilagTerkep } from './VilagTerkep';
 /** A „Mind" opció értéke: a Base UI Select üres stringet nem tud választható értékként kezelni. */
 const MIND = '__mind';
 const MUTATO_ITEMS: Record<string, string> = Object.fromEntries(MUTATOK.map((m) => [m.kulcs, m.cimke]));
-const KATEGORIA_MUTATOK = MUTATOK.filter((m) => m.tipus === 'kategoria');
-const SZAM_MUTATOK = MUTATOK.filter((m) => m.tipus === 'szam');
 const IPARAG_ITEMS: Record<string, string> = { [MIND]: 'Mind', ...Object.fromEntries(IPARAGAK.map((i) => [i, i])) };
 
 export function TerkepNezet({
@@ -1708,10 +1769,10 @@ Expected: 0 típushiba, a build zöld. Ha a build nem létező `app/...` modulra
    Expected: „Mutató", „Iparág", „Rangsor · Kiemelt iparág", csoport-fejlécek „N ország" feliratokkal, a jelmagyarázatban „nincs poszt".
 3. `$B network` → a listában **nincs** `unpkg.com` és **nincs** `jsdelivr.net` kérés; van egy `countries-110m` chunk.
 4. `$B js "document.querySelectorAll('svg[role=img] path').length"` → 170-nél több (a poligonok + gömb + rács).
-5. Mutató-váltás GERD-re: `$B click "#mutato"`, majd `$B click "text=K+F ráfordítás a GDP %-ában"` (ha a szöveg-szelektor nem talál, `$B snapshot -i` és a listaelem ref-jére kattints). `$B text`.
-   Expected: „Rangsor · K+F ráfordítás a GDP %-ában", „N ország adattal · M adat nélkül", a jelmagyarázatban a mutató címe és két érték `%`-kal (ha a DB-ben van GERD – a KR 2026 profilban van kfiRendszer blokk), sorok „1." helyezéssel.
+5. Mutató-váltás GERD-re: `$B click "#mutato"`, majd `$B click "text=K+F ráfordítás (GERD)"` (ha a szöveg-szelektor nem talál, `$B snapshot -i` és a listaelem ref-jére kattints). `$B text`.
+   Expected: „Rangsor · K+F ráfordítás (GERD)", „N ország adattal · M adat nélkül", a jelmagyarázatban a mutató címe és két érték `%`-kal (ha a DB-ben van GERD – a KR 2026 profilban van kfiRendszer blokk), sorok „1." helyezéssel.
 6. Iparág-szűrő: `$B click "#iparag-szuro"`, válassz egy iparágat, `$B text` → a rangsor rövidül vagy „Ehhez a mutatóhoz még nincs adat", a számláló változik. Állítsd vissza „Mind"-re.
-7. Kijelölés a rangsorból: `$B click` az első ország nevére a panelen → a kivonat kártya jelenik meg („Teljes profil", „Összehasonlításhoz", a mutató sora „K+F ráfordítás a GDP %-ában: …"). `$B click "text=Összehasonlításhoz"` → a gomb felirata „Kivétel az összehasonlításból", fölötte a csík „Összehasonlítás: <ország>" és „Válassz még egy országot".
+7. Kijelölés a rangsorból: `$B click` az első ország nevére a panelen → a kivonat kártya jelenik meg („Teljes profil", „Összehasonlításhoz", a mutató sora „K+F ráfordítás (GERD): …"). `$B click "text=Összehasonlításhoz"` → a gomb felirata „Kivétel az összehasonlításból", fölötte a csík „Összehasonlítás: <ország>" és „Válassz még egy országot".
 8. `$B click "[aria-label=Bezárás]"` → rangsor a csíkkal; `$B click` egy másik ország „+" gombjára (`[aria-label$='hozzáadása az összehasonlításhoz']` első találat) → az összehasonlító tábla jelenik meg 2 oszloppal: `$B text` tartalmazza „Összehasonlítás", „2 ország", „Attasé", „Állapot", „Kiemelt iparágak", „Tagságok", „KFI-prioritások", és a „+ Ország" select.
 9. `$B select "select[aria-label='Ország hozzáadása']" <harmadik kód>` (a kódot `$B js "[...document.querySelectorAll('select[aria-label=\"Ország hozzáadása\"] option')].map(o=>o.value).slice(1,2)"`-vel olvasd ki) → 3 oszlop. `$B click "text=Törlés"` → vissza a rangsor.
 10. Zoom: `$B js "document.querySelector('svg[role=img] > g').getAttribute('transform')"` → `null`; `$B click "[aria-label=Nagyítás]"`, várj 0,5 s (`$B wait --load` vagy `sleep 1`), ugyanaz a `js` → `translate(…) scale(1.5)`; `$B click "text=Európa"` → a transform `scale` értéke 1-nél nagyobb és a gomb `aria-pressed="true"`; `$B click "[aria-label=Alaphelyzet]"` → `translate(0,0) scale(1)`.
@@ -1749,7 +1810,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 A `**Térkép.**`-kel kezdődő bekezdés teljes új szövege:
 
 ```
-**Térkép.** `app/(app)/terkep/components/VilagTerkep.tsx` React kliens-komponens: az SVG-t React rendereli, a d3-geo (npm) csak a Natural Earth vetületet és a path-okat adja, a world-atlas 110m TopoJSON is npm-ből jön (`useVilagAtlasz.ts`, dinamikus import, modulszintű promise – **nem kell CDN vagy internet**). Propjai: `adatok` (a `listTerkepAdat` eredménye, csak `import type` a server-only modulból), `mutato`, `iparag` (szűrő), `kivalasztott`, `osszehasonlitas` (kódlista), a számított `tartomany`/`csoportok`/`rangsor` és `onSelect`. A mutató-definíciók, a `rangsor()`/`csoportok()`/`tartomany()`/`jeloltek()`/`orszagSzin()` függvények, a `szinSkala()` (d3-scale, 5 zöld fokozat `SKALA_SZINEK`), a térkép fix színei (`TERKEP_SZINEK`) és a régiók (`REGIOK`, lon/lat bbox) a framework-mentes `lib/terkep-mutatok.ts`-ben vannak; ismeretlen mutató-kulcsra `mutatoByKulcs` az alapértelmezettet adja. Poligon-párosítás a szótár `geo` mezőjével (world-atlas `properties.name`); a `geo: ''` országok csak pint kapnak, a pin a rekordot adja át, így tooltipet és kiválasztást is kapnak. Számszerű mutatónál érték nélkül **sraffozott** minta (`<pattern>`), az iparág-szűrő által kizárt ország halvány; a kijelölt ország vastag kontúrral a `<g>` végére kerül, az összehasonlítottak közepes kontúrt kapnak (`vector-effect: non-scaling-stroke`). A zoom (d3-zoom, 1–8×, `clickDistance(4)`) **közvetlenül a DOM-on** állítja a `<g>` transformját és a pinek sugarát (1/k), nem React-állapoton át; a poligonok és pinek a `TerkepRetegek` memo-komponensben vannak, hogy a tooltip hover-állapota ne renderelje őket újra. Régió-gombok (`RegioGombok`) a bbox vetített befoglaló téglalapjára illesztenek; kézi zoom után egyik sem aktív. Tooltip (`TerkepTooltip`): név, attasé · főváros, a mutató értéke + helyezés (a szűrő által kizárt országnál helyezés nélkül), állapot + év, első két kiemelt iparág. Jelmagyarázat (`Jelmagyarazat`): gradiens + min/max (számszerű) vagy kategória-lista; a színskála tartománya szándékosan a **szűretlen** adathalmaz min–max-a, hogy a szűrő váltogatásakor ne ugráljanak a színek.
+**Térkép.** `app/(app)/terkep/components/VilagTerkep.tsx` React kliens-komponens: az SVG-t React rendereli, a d3-geo (npm) csak a Natural Earth vetületet és a path-okat adja, a world-atlas 110m TopoJSON is npm-ből jön (`useVilagAtlasz.ts`, dinamikus import, modulszintű promise – **nem kell CDN vagy internet**). Propjai: `adatok` (a `listTerkepAdat` eredménye, csak `import type` a server-only modulból), `mutato`, `iparag` (szűrő), `kivalasztott`, `osszehasonlitas` (kódlista), a számított `tartomany`/`csoportok`/`rangsor` és `onSelect`. A mutató-definíciók (`MUTATO_TABLA` kimerítő kulcs-térkép → `MUTATOK`, `SZAM_MUTATOK`, `KATEGORIA_MUTATOK`; a számszerű mutató `cimke`-je egység nélküli, az egységet az `utotag` viszi), a `rangsor()`/`csoportok()`/`tartomany()`/`jeloltek()`/`orszagSzin()` függvények, az `arany()`/`szinSkala()` (d3-scale: a mutató `skala` mezője szerint lineáris vagy symlog – GDP, GDP/fő, lakosság logaritmikus –, 5 zöld fokozat `SKALA_SZINEK`, mindig `rgb()` string; a rangsor sávja ugyanezt az arányt használja), a térkép fix színei (`TERKEP_SZINEK`) és a régiók (`REGIOK`, lon/lat bbox) a framework-mentes `lib/terkep-mutatok.ts`-ben vannak; ismeretlen mutató-kulcsra `mutatoByKulcs` az alapértelmezettet adja. Poligon-párosítás a szótár `geo` mezőjével (world-atlas `properties.name`); a `geo: ''` országok csak pint kapnak, a pin a rekordot adja át, így tooltipet és kiválasztást is kapnak. Számszerű mutatónál érték nélkül **sraffozott** minta (`<pattern>`), az iparág-szűrő által kizárt ország halvány; a kijelölt ország vastag kontúrral a `<g>` végére kerül, az összehasonlítottak közepes kontúrt kapnak (`vector-effect: non-scaling-stroke`). A zoom (d3-zoom, 1–8×, `clickDistance(4)`) **közvetlenül a DOM-on** állítja a `<g>` transformját és a pinek sugarát (1/k), nem React-állapoton át; a poligonok és pinek a `TerkepRetegek` memo-komponensben vannak, hogy a tooltip hover-állapota ne renderelje őket újra. Régió-gombok (`RegioGombok`) a bbox vetített befoglaló téglalapjára illesztenek; kézi zoom után egyik sem aktív. Tooltip (`TerkepTooltip`): név, attasé · főváros, a mutató értéke + helyezés (a szűrő által kizárt országnál helyezés nélkül), állapot + év, első két kiemelt iparág. Jelmagyarázat (`Jelmagyarazat`): gradiens + min/max (számszerű) vagy kategória-lista; a színskála tartománya szándékosan a **szűretlen** adathalmaz min–max-a, hogy a szűrő váltogatásakor ne ugráljanak a színek.
 ```
 
 - [ ] **Step 2: CLAUDE.md – a `/terkep` route leírása**
@@ -1798,4 +1859,4 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 
 ## Megvalósítási eltérések
 
-(A megvalósítás során ide kerül, ha valami a spec-től eltérően készült el, és miért.)
+- **Task 2 (minőségi review nyomán):** a számszerű mutató `skala: 'linearis' | 'log'` mezőt kapott; GDP, GDP/fő és lakosság symlog skálán színeződik (lineárisan a nagyságrendi különbség miatt szinte minden ország az első fokozatba esne). Új `arany(m, t)` adja a 0–1 arányt, a `szinSkala(m, t)` erre épül (mindig `rgb()` string), a rangsor sávja is ezt használja. A számszerű `cimke`-k rövidek, egység nélkül (a `MEZO_CIMKEK` címkéi már tartalmazták az egységet, és az `utotag` duplázta volna: „GDP (milliárd USD): 4 200 mrd USD"). `MUTATO_TABLA` kimerítő kulcs-térkép, `SZAM_MUTATOK`/`KATEGORIA_MUTATOK` export, `Tartomany` típus. `csoportok` a `sorrend`-ben nem szereplő kategóriát a „nincs" csoportba teszi (az `orszagSzin`-nel egyezően). `TERKEP_SZINEK.halvany` `#ced5dd` (az eredeti `#e3e7ec` a szárazföldtől megkülönböztethetetlen volt, ΔE ≈ 1). A Task 3–10 kódja ehhez igazítva.

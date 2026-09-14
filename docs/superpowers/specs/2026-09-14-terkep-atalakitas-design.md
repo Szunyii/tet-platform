@@ -64,7 +64,10 @@ export const MUTATO_KULCSOK = [
 export type MutatoKulcs = (typeof MUTATO_KULCSOK)[number];
 
 export interface SzamMutato {
-  kulcs: MutatoKulcs; tipus: 'szam'; cimke: string; utotag: string;
+  kulcs: MutatoKulcs; tipus: 'szam';
+  cimke: string;                      // rövid, egység nélkül – az egységet az utotag viszi
+  utotag: string;
+  skala: 'linearis' | 'log';          // log: nagyságrendeket átfogó mutató (GDP, GDP/fő, lakosság) – symlog szín és sáv
   ertek: (o: TerkepOrszag) => number | null;
 }
 export interface KategoriaMutato {
@@ -77,7 +80,10 @@ export interface KategoriaMutato {
   nincsCimke: string;                                // a null kategória felirata
 }
 export type Mutato = SzamMutato | KategoriaMutato;
+/** Kimerítő kulcs-térképből (`MUTATO_TABLA`) a `MUTATO_KULCSOK` sorrendjében; egy kihagyott kulcs fordítási hiba. */
 export const MUTATOK: readonly Mutato[];
+export const SZAM_MUTATOK: readonly SzamMutato[];
+export const KATEGORIA_MUTATOK: readonly KategoriaMutato[];
 export const ALAP_MUTATO: MutatoKulcs = 'iparag';
 /** Ismeretlen kulcsra az alapértelmezett mutatót adja. */
 export function mutatoByKulcs(k: string): Mutato;
@@ -87,11 +93,11 @@ export function mutatoByKulcs(k: string): Mutato;
 | --- | --- | --- | --- | --- |
 | `iparag` | kategoria | „Kiemelt iparág" | – | `o.iparagak[0] ?? null`; sorrend `IPARAGAK`, színek `IPARAG_SZINEK`, `nincsCimke` „nincs kiemelt iparág" |
 | `allapot` | kategoria | „Profil állapota" | – | `o.allapot`; sorrend `ALLAPOTOK`, színek `ALLAPOT_SZINEK`, címkék `ALLAPOT_CIMKE` |
-| `gdpEgyFore` | szam | `MEZO_CIMKEK.alapadatok.gdpEgyFore` | ` USD` | `o.alapadatok?.gdpEgyFore ?? null` |
-| `gdp` | szam | `MEZO_CIMKEK.alapadatok.gdp` | ` mrd USD` | `o.alapadatok?.gdp ?? null` |
-| `gdpNovekedes` | szam | `MEZO_CIMKEK.alapadatok.gdpNovekedes` | ` %` | `o.alapadatok?.gdpNovekedes ?? null` |
-| `lakossag` | szam | `MEZO_CIMKEK.alapadatok.lakossag` | ` fő` | `o.alapadatok?.lakossag ?? null` |
-| `gerd` | szam | `MEZO_CIMKEK.kfiRendszer.gerd` | ` %` | `o.gerd` |
+| `gdpEgyFore` | szam, log | „Egy főre jutó GDP" | ` USD` | `o.alapadatok?.gdpEgyFore ?? null` |
+| `gdp` | szam, log | „GDP" | ` mrd USD` | `o.alapadatok?.gdp ?? null` |
+| `gdpNovekedes` | szam | „GDP-növekedés" | ` %` | `o.alapadatok?.gdpNovekedes ?? null` |
+| `lakossag` | szam, log | „Lakosság" | ` fő` | `o.alapadatok?.lakossag ?? null` |
+| `gerd` | szam | „K+F ráfordítás (GERD)" | ` %` | `o.gerd` |
 | `kitoltottseg` | szam | „Kitöltöttség (mentett blokk)" | `/8` (`BLOKK_KULCSOK.length`) | `o.allapot === 'nincs' ? null : o.mentettDb` |
 | `rendezvenyDb` | szam | „Rendezvények száma" | `` | `o.allapot === 'nincs' ? null : o.rendezvenyDb` |
 
@@ -120,17 +126,21 @@ export function orszagSzin(o: TerkepOrszag, m: Mutato, iparag: string, skala: ((
   név szerint (`localeCompare(…, 'hu')`); `hely = 1 + (nála szigorúan nagyobb értékűek száma)`
   („1224" helyezés). Az `adatNelkul` a szűrt, de érték nélküli országok név szerint.
 - `csoportok`: a `sorrend` szerinti kategóriák (az `iparag` mutatónál csak a **használt**
-  kategóriák, az `allapot`-nál mind a három, üresen is), végül a `null` kategória csoportja
-  (`nincsCimke`, szín `TERKEP_SZINEK.semleges`), ha van benne ország. Az országok név szerint.
+  kategóriák, az `allapot`-nál mind a három, üresen is), végül a `null` – vagy a `sorrend`-ben
+  nem szereplő – kategória csoportja (`nincsCimke`, szín `TERKEP_SZINEK.semleges`), ha van benne
+  ország. Az országok név szerint.
 - Színskála és fix színek:
 
 ```ts
 export const SKALA_SZINEK = ['#e3f1ec', '#8fcbbd', '#2f9a82', '#0f6b57', '#053f33'] as const;
-/** d3 scaleSequential + piecewise(interpolateLab); min === max esetén a középső szín. */
-export function szinSkala(min: number, max: number): (v: number) => string;
+export interface Tartomany { min: number; max: number }
+/** 0–1 hely a tartományon belül a mutató `skala` mezője szerint (d3 scaleLinear vagy scaleSymlog, clamp); min === max → 0,5. */
+export function arany(m: SzamMutato, t: Tartomany): (v: number) => number;
+/** piecewise(interpolateLab, SKALA_SZINEK) az `arany` fölött; mindig `rgb(r, g, b)` string. A rangsor sávja ugyanazt az `arany`-t használja. */
+export function szinSkala(m: SzamMutato, t: Tartomany): (v: number) => string;
 export const TERKEP_SZINEK = {
   ocean: '#f4f7fb', gombKontur: '#dde1e7', racs: '#e7ebf1', szarazfold: '#e6eaef', hatar: '#ffffff',
-  halvany: '#e3e7ec', semleges: '#5f6b7a', nincsAdat: '#c5ccd6', kontur: '#10151d',
+  halvany: '#ced5dd', semleges: '#5f6b7a', nincsAdat: '#c5ccd6', kontur: '#10151d',
 } as const;
 ```
 
@@ -236,8 +246,8 @@ Csak a `/terkep` használja, ezért a route alatt marad. Fájlok:
 
 ### Jelmagyarázat
 
-Lebegő kártya bal alul (`Card`-szerű, fehér, vékony keret, árnyék). Számszerű: a mutató címkéje,
-gradiens csík a `SKALA_SZINEK`-ből, alatta `formatSzam(min)` és `formatSzam(max)` az utótaggal,
+Lebegő kártya bal alul (`Card`-szerű, fehér, vékony keret, árnyék). Számszerű: a mutató címkéje
+(log skálánál „(logaritmikus skála)" megjegyzéssel), gradiens csík a `SKALA_SZINEK`-ből, alatta `formatSzam(min)` és `formatSzam(max)` az utótaggal,
 majd „nincs adat" (sraffozott négyzet) és „nincs poszt" (`szarazfold`). Ha nincs tartomány
 (egyetlen ország sem ad értéket), csak a két utóbbi. Kategorikus: a `csoportok` színnégyzetei és
 feliratai (csak a használt kategóriák az iparágnál) + „nincs poszt".
@@ -293,8 +303,9 @@ szöveg.
 ### `RangsorPanel.tsx` (a `TerkepUres` helyett)
 
 - Cím: „Rangsor · <mutató címke>", alcím a számláló szöveggel.
-- Számszerű: sorok `hely.`, ország neve, sáv (szélesség `(ertek − min) / (max − min)` a
-  `tartomany` alapján; `min === max` → teljes), `formatSzam(ertek, utotag)` jobbra, monospace.
+- Számszerű: sorok `hely.`, ország neve, sáv (szélesség az `arany(mutato, tartomany)` szerint –
+  ugyanaz a lineáris/symlog arány, mint a térkép színe; `min === max` → fél), `formatSzam(ertek, utotag)`
+  jobbra, monospace.
   A sor gombja `kivalaszt(kod)`; a sor végén `+` ikon-gomb (`vsHozzaad`, `aria-label`),
   benne lévő országnál pipa (`vsKivesz`), 4 elemnél a `+` letiltva („Legfeljebb 4 ország").
   Alatta „Nincs adat" szakasz a nevekkel (kattinthatók, ugyanígy `+` gombbal).
@@ -379,3 +390,14 @@ Nincs tesztkeretrendszer. Elvárt lépések:
   DOM-on dolgozik; a tartomány szűretlen; `clickDistance`).
 - `README.md`: a `/terkep` sor, a `public/tet-world-map.js` sor törlése, az internet-megjegyzés
   törlése.
+
+## Eltérések a megvalósításban
+
+- **Symlog skála a nagyságrendi mutatókhoz** (Task 2 minőségi review): a `SzamMutato.skala`
+  mező (`linearis` | `log`); GDP, GDP/fő és lakosság `log`. Az `arany()` adja a 0–1 arányt, a
+  `szinSkala(m, t)` és a rangsor sávja is ezt használja, így a szín és a sáv együtt mozog.
+- **Rövid számszerű címkék**: a `MEZO_CIMKEK` címkéi egységet is tartalmaznak, az `utotag`
+  megduplázta volna („GDP (milliárd USD): 4 200 mrd USD"); a térképen a `cimke` egység nélküli.
+- `MUTATO_TABLA` kimerítő kulcs-térkép, `SZAM_MUTATOK`/`KATEGORIA_MUTATOK` export, `Tartomany` típus;
+  `csoportok` a `sorrend`-en kívüli kategóriát a „nincs" csoportba teszi; `TERKEP_SZINEK.halvany`
+  `#ced5dd` (az eredeti a szárazföldtől megkülönböztethetetlen volt).
