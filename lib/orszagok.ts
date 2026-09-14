@@ -208,7 +208,7 @@ export function orszagNev(kod: string | null | undefined): string {
   return KOD_INDEX.get(kod)?.nev ?? kod;
 }
 
-const NEV_GEO_SZERINT = new Map(ORSZAGOK.filter((o) => o.geo).map((o) => [o.geo, o.nev] as const));
+const NEV_GEO_SZERINT: ReadonlyMap<string, string> = new Map(ORSZAGOK.filter((o) => o.geo).map((o) => [o.geo, o.nev] as const));
 
 /**
  * A world-atlas térképnév (`properties.name`) magyar neve a szótárból – a térkép poszt nélküli

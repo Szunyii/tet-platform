@@ -5,8 +5,11 @@ import { ALLAPOT_CIMKE } from '../../../../lib/orszagprofil-szotar';
 import { formatSzam } from '../../../../lib/szam';
 import type { Mutato, Rangsor } from '../../../../lib/terkep-mutatok';
 
-/** A lebegtetett poligon/pin: `o` null, ha poszt nélküli ország; x/y a térkép-konténerhez képest. */
-export interface HoverAllapot { nev: string; o: TerkepOrszag | null; x: number; y: number }
+/**
+ * A lebegtetett poligon/pin: `o` null, ha poszt nélküli ország; x/y a térkép-konténerhez képest,
+ * `magassag` a konténer magassága (a lefelé fordításhoz).
+ */
+export interface HoverAllapot { nev: string; o: TerkepOrszag | null; x: number; y: number; magassag: number }
 
 /** Ennél kisebb y-nál nincs hely a kurzor fölött (a tooltip legfeljebb ~140 px magas): a kurzor alá kerül. */
 const FLIP_Y = 150;
@@ -27,8 +30,9 @@ function mutatoSor(o: TerkepOrszag, mutato: Mutato, rangsor: Rangsor | null): st
 export function TerkepTooltip({ hover, mutato, rangsor }: { hover: HoverAllapot; mutato: Mutato; rangsor: Rangsor | null }) {
   const { o } = hover;
   const sor = o ? mutatoSor(o, mutato, rangsor) : null;
-  // A kártya `overflow-hidden`, ezért a térkép tetejénél a kurzor fölé rajzolt tooltip levágódna: ott alá kerül.
-  const lent = hover.y < FLIP_Y;
+  // A kártya `overflow-hidden`, ezért a térkép tetejénél a kurzor fölé rajzolt tooltip levágódna: ott
+  // alá kerül – de csak ha alatta tényleg van hely (alacsony térképen inkább fent marad).
+  const lent = hover.y < FLIP_Y && hover.magassag - hover.y > FLIP_Y;
   return (
     <div
       role="tooltip"
