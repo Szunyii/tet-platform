@@ -604,7 +604,8 @@ function mutatoSor(o: TerkepOrszag, mutato: Mutato, rangsor: Rangsor | null): st
   if (mutato.tipus === 'szam') {
     return `${mutato.cimke}: ${ertekEsHely(o, mutato, rangsor) ?? 'nincs adat'}`;
   }
-  if (mutato.kulcs === 'allapot') return null; // az állapot-sor úgyis ott van
+  // Az állapot- és az iparág-sor úgyis ott van a tooltipben (az iparág mutató az első kiemelt iparágat írná ki mégegyszer).
+  if (mutato.kulcs === 'allapot' || mutato.kulcs === 'iparag') return null;
   const k = mutato.kategoria(o);
   return k === null ? mutato.nincsCimke : (mutato.cimkek[k] ?? k);
 }
@@ -692,13 +693,18 @@ export function Jelmagyarazat({ mutato, tartomany, csoportok, iparag }: {
             {mutato.cimke}
             {mutato.skala === 'log' && <span className="ml-1 font-normal text-muted-foreground">(logaritmikus skála)</span>}
           </span>
-          {tartomany && (
+          {tartomany && tartomany.min === tartomany.max ? (
+            // Egyetlen érték: nincs skála, minden adattal rendelkező ország a középső színt kapja (arany → 0,5).
+            <span className="flex items-center gap-1.5 font-mono">
+              <Negyzet szin={SKALA_SZINEK[2]} /> {formatSzam(tartomany.min, mutato.utotag)}
+            </span>
+          ) : tartomany ? (
             <span className="flex min-w-0 items-center gap-2 font-mono">
               <span>{formatSzam(tartomany.min, mutato.utotag)}</span>
               <span className="h-2 w-32 shrink rounded-sm" style={{ background: `linear-gradient(90deg, ${SKALA_SZINEK.join(', ')})` }} />
               <span>{formatSzam(tartomany.max, mutato.utotag)}</span>
             </span>
-          )}
+          ) : null}
           <span className="flex items-center gap-1.5"><Negyzet sraff /> nincs adat</span>
           {kozos}
         </>
@@ -1154,8 +1160,8 @@ export function useTerkepAllapot(adatok: TerkepOrszag[], kezdoKod: string | null
   const [mutatoKulcs, setMutatoKulcsState] = useState<MutatoKulcs>(ALAP_MUTATO);
   const [iparag, setIparag] = useState('');
 
-  // Új `?o=` (pl. „Vissza a térképre" a profil oldalról): a kijelölés a kezdő kódra vált; ha a
-  // paraméter eltűnik, a meglévő kijelölés marad.
+  // Új `?o=` ugyanezen a route-on belül: a kijelölés a kezdő kódra vált; ha a paraméter eltűnik
+  // vagy olyan országra mutat, ami nincs az adatokban, a meglévő kijelölés szándékosan marad.
   // `ujKod`: ha ebben a passban épp a kezdő kódra váltunk, a lenti „nem létező kijelölés" őrző már
   // az új értéket nézze, ne a záródásban maradt régit (különben `setKod(null)` felülírná).
   const [elozoKezdo, setElozoKezdo] = useState(kezdoKod);
@@ -2136,3 +2142,4 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - **Task 9:** a böngészős ellenőrzés adminnal és attaséval rendben (build zöld, konzolhiba nincs, CDN-kérés nincs, 179 path, zoom/régió/tooltip/rangsor/szűrő/kivonat/összehasonlítás 2 oszloppal). A 3. oszlop és a „+ Ország" választó a lokális DB-vel (2 térképes ország: KR, JP) nem próbálható – a választó ilyenkor helyesen el sem jelenik; ezt egy ideiglenes harmadik attaséval a záró ellenőrzés fedi le.
 - **Task 9 (minőségi review nyomán):** az összehasonlító `Table` `w-auto` (a `w-full` + auto elrendezés két oszlopot ~800 px-re szórt), a leírás „a térkép mutatójának sora kiemelve" része csak számszerű mutatónál, félkövér csak ha legalább két országnak van értéke; a `Jelmagyarazat` a betöltő/hiba állapotban is renderelődik (nincs ~33 px ugrás); `role="img"` magyarázó komment; a `page.tsx` kommentje pontosítva: a `key` elhagyása az évváltásnál számít (a page mountolva marad), a `?o=` route-váltással érkezik, amikor a nézet amúgy is újramountol – a mutató/szűrő/halmaz egy route-váltást nem él túl (a Task 5-ös eltérés ezt túlígérte).
 - **Záró csiszolás (a záró review-k nyomán):** a `TerkepOrszag` használatlan `frissitve`/`frissitveMs` mezői (a régi üres-panel rendezéséhez kellettek) kikerültek a `listTerkepAdat`-ból; az összehasonlító tábla celláin `max-w-44` (a fejléc-cella korlátja auto elrendezésben nem fogta a tartalmas oszlopot), döntetlennél nincs félkövér (`new Set(ertekek).size >= 2`); CLAUDE.md országprofil-mondat frissítve. A 3 oszlopos tábla és a „+ Ország" választó egy ideiglenes (utána törölt) harmadik attaséval böngészőben ellenőrizve: tábla 791 px a 1310 px-es kártyában, oszlopok egymás mellett, sticky címke-oszlop 900 px-en, GERD-sor kiemelve, félkövér csak a két-értékes sorokban, konzolhiba nincs.
+- **Záró review utáni apróságok:** a tooltip az iparág mutatónál nem írja ki kétszer az első kiemelt iparágat; a jelmagyarázat egyértékű tartománynál (min = max, a mostani demóadatnál a legtöbb számszerű mutató) gradiens helyett egy középső színnégyzetet és az értéket mutatja; a hook kommentje kimondja, hogy a nem létező országra mutató `?o=` szándékosan nem bántja a meglévő kijelölést. Nyitva hagyva (szándékosan): `components/ui/tabs.tsx` már nem használt shadcn primitív (marad, mint projekt-tulajdonú alapkomponens); a hover a térkép vezérlőit is újrarendereli (mérhetetlen); a `d3-transition` csak a gomb-animációkhoz kell.
