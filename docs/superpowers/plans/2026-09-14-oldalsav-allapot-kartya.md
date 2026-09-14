@@ -75,15 +75,15 @@ function Keret({ cim, link, children }: { cim: string; link: { href: string; fel
 
 export default function OldalsavAllapot({ session, ev, most }: { session: AppSession; ev: number; most: number }) {
   if (session.role === 'admin') {
-    const db: Record<Allapot, number> = { friss: 0, elavult: 0, nincs: 0 };
-    for (const o of listTerkepAdat(ev)) db[o.allapot] += 1;
+    const szamok: Record<Allapot, number> = { friss: 0, elavult: 0, nincs: 0 };
+    for (const o of listTerkepAdat(ev)) szamok[o.allapot] += 1;
     return (
       <Keret cim={`Országprofilok · ${ev}`} link={{ href: '/terkep', felirat: 'Térkép' }}>
         {ALLAPOTOK.map((a) => (
           <div key={a} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Potty allapot={a} />
             <span>{ALLAPOT_CIMKE[a]}</span>
-            <span style={{ marginLeft: 'auto', color: CIM, fontVariantNumeric: 'tabular-nums' }}>{db[a]}</span>
+            <span style={{ marginLeft: 'auto', color: CIM, fontVariantNumeric: 'tabular-nums' }}>{szamok[a]}</span>
           </div>
         ))}
       </Keret>
