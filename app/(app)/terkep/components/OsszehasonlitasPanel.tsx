@@ -36,7 +36,7 @@ function Sor({ cimke, kiemelt, orszagok, plusz, children }: {
       <TableHead scope="row" className={cn(CIMKE_OSZLOP, 'h-auto py-2 font-medium', kiemelt ? 'text-foreground' : 'text-muted-foreground')} style={hatter}>
         {cimke}
       </TableHead>
-      {orszagok.map((o) => <TableCell key={o.kod} className="align-top whitespace-normal">{children(o)}</TableCell>)}
+      {orszagok.map((o) => <TableCell key={o.kod} className="max-w-44 align-top whitespace-normal">{children(o)}</TableCell>)}
       {plusz && <TableCell />}
     </TableRow>
   );
@@ -119,9 +119,9 @@ export function OsszehasonlitasPanel({ orszagok, jeloltek, mutato, onKivalaszt, 
               {(o) => (o.iparagak.length ? <span className="flex flex-wrap gap-1">{o.iparagak.map((i) => <IparagBadge key={i} iparag={i} />)}</span> : '–')}
             </Sor>
             {SZAM_MUTATOK.map((m) => {
-              // Félkövér csak valódi összevetésnél: legalább két ország értékével (egyetlen érték nem „legnagyobb”).
+              // Félkövér csak valódi összevetésnél: legalább két különböző értéknél (egyetlen érték vagy döntetlen nem „legnagyobb”).
               const ertekek = orszagok.map((o) => m.ertek(o)).filter((v): v is number => v !== null);
-              const legjobb = ertekek.length >= 2 ? Math.max(...ertekek) : null;
+              const legjobb = new Set(ertekek).size >= 2 ? Math.max(...ertekek) : null;
               return (
                 <Sor key={m.kulcs} cimke={m.cimke} kiemelt={m.kulcs === mutato.kulcs} orszagok={orszagok} plusz={plusz}>
                   {(o) => {

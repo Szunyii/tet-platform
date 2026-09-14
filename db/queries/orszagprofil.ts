@@ -3,7 +3,6 @@ import { cache } from 'react';
 import { and, desc, eq, lte } from 'drizzle-orm';
 import { db } from '../index';
 import { orszagprofil, user } from '../schema';
-import { formatDatum } from '../../lib/datum';
 import { orszagByKod } from '../../lib/orszagok';
 import { tiltottE } from '../../lib/felhasznalo-tiltas';
 import {
@@ -109,8 +108,6 @@ export interface TerkepOrszag {
   /** KFI-prioritások (KFI-blokk) az összehasonlító táblához; nem mentett blokknál üres. */
   prioritasok: KfiPrioritas[];
   osszegzes: string;
-  frissitve: string | null;
-  frissitveMs: number | null;
   alapadatok: Alapadatok | null;
   mentettDb: number;
   rendezvenyDb: number;
@@ -173,8 +170,6 @@ export const listTerkepAdat = cache((ev: number): TerkepOrszag[] => {
       gerd: prof?.blokkok.kfiRendszer?.gerd ?? null,
       prioritasok: prof?.blokkok.kfiRendszer?.prioritasok ?? [],
       osszegzes: prof?.blokkok.magyarErtekeles?.osszegzes ?? '',
-      frissitve: prof ? formatDatum(prof.updatedAt) : null,
-      frissitveMs: prof ? prof.updatedAt.getTime() : null,
       alapadatok: prof?.blokkok.alapadatok ?? null,
       mentettDb: prof?.mentett.length ?? 0,
       rendezvenyDb: prof?.blokkok.rendezvenyek?.lista.length ?? 0,
