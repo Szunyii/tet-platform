@@ -77,11 +77,11 @@ function titleFor(pathname: string, role: AppSession['role']): [string, string] 
 function LogoutForm({ action }: { action: LogoutAction }) {
   const [state, formAction, pending] = useActionState(action, {});
   return (
-    <form action={formAction} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+    <form action={formAction} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
       {state.error && (
-        <span role="alert" style={{ fontSize: 11, color: '#b3261e' }}>{state.error}</span>
+        <span role="alert" style={{ fontSize: 11, color: '#f2a6a0', flexBasis: '100%' }}>{state.error}</span>
       )}
-      <button type="submit" className="btn" style={{ fontSize: 11.5 }} disabled={pending}>
+      <button type="submit" className="btn" style={{ fontSize: 11.5, width: '100%' }} disabled={pending}>
         {pending ? 'Kijelentkezés…' : 'Kijelentkezés'}
       </button>
     </form>
@@ -95,6 +95,7 @@ export default function AppShell({
   olvasatlan: szerverOlvasatlan,
   ev,
   evek,
+  oldalsavAlja,
   children,
 }: {
   user: AppSession;
@@ -106,6 +107,8 @@ export default function AppShell({
   ev: number;
   /** A ciklusválasztó évei a layoutból, csökkenő; a layout garantálja, hogy `ev` benne van. */
   evek: number[];
+  /** Az oldalsáv aljára szánt szerver-renderelt tartalom (OldalsavAllapot), a felhasználói blokk fölé. */
+  oldalsavAlja?: ReactNode;
   children: ReactNode;
 }) {
   // Évváltás: server action írja a cookie-t és revalidálja a layoutot. A kiválasztás a
@@ -174,6 +177,24 @@ export default function AppShell({
               );
             })}
           </nav>
+          <div style={{ marginTop: 'auto' }}>
+            {oldalsavAlja}
+            <div style={{ padding: '14px 18px', borderTop: '1px solid #232c39' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                <div style={{
+                  width: 29, height: 29, borderRadius: '50%', background: '#1b3a6b', color: '#fff', flex: '0 0 29px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600,
+                }}>{ini(user.name)}</div>
+                <div style={{ lineHeight: 1.25, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#e7ebf1', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</div>
+                  <div style={{ fontSize: 10.5, color: '#8d97a5' }}>{roleLabel}</div>
+                </div>
+              </div>
+              <div style={{ marginTop: 10 }}>
+                <LogoutForm action={logoutAction} />
+              </div>
+            </div>
+          </div>
         </aside>
 
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
@@ -192,17 +213,6 @@ export default function AppShell({
                   {evek.map((y) => <option key={y} value={y}>{y}</option>)}
                 </select>
               </label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 14, borderLeft: '1px solid #dde1e7' }}>
-                <div style={{
-                  width: 29, height: 29, borderRadius: '50%', background: '#1b3a6b', color: '#fff',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600,
-                }}>{ini(user.name)}</div>
-                <div style={{ lineHeight: 1.25 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600 }}>{user.name}</div>
-                  <div style={{ fontSize: 10.5, color: '#6b7684' }}>{roleLabel}</div>
-                </div>
-              </div>
-              <LogoutForm action={logoutAction} />
             </div>
           </header>
           <main style={{ flex: 1, minWidth: 0, padding: '20px 26px 44px' }}>{children}</main>
