@@ -49,9 +49,9 @@ export function Jelmagyarazat({ mutato, tartomany, csoportok, iparag }: {
             {mutato.skala === 'log' && <span className="ml-1 font-normal text-muted-foreground">(logaritmikus skála)</span>}
           </span>
           {tartomany && (
-            <span className="flex items-center gap-2 font-mono">
+            <span className="flex min-w-0 items-center gap-2 font-mono">
               <span>{formatSzam(tartomany.min, mutato.utotag)}</span>
-              <span className="h-2 w-32 rounded-sm" style={{ background: `linear-gradient(90deg, ${SKALA_SZINEK.join(', ')})` }} />
+              <span className="h-2 w-32 shrink rounded-sm" style={{ background: `linear-gradient(90deg, ${SKALA_SZINEK.join(', ')})` }} />
               <span>{formatSzam(tartomany.max, mutato.utotag)}</span>
             </span>
           )}
@@ -60,6 +60,7 @@ export function Jelmagyarazat({ mutato, tartomany, csoportok, iparag }: {
         </>
       ) : (
         <>
+          <span className="font-semibold text-foreground">{mutato.cimke}</span>
           {csoportok.map((cs) => (
             <span key={cs.kategoria ?? '__nincs'} className="flex items-center gap-1.5"><Negyzet szin={cs.szin} /> {cs.cimke}</span>
           ))}

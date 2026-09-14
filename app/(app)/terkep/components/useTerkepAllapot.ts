@@ -1,15 +1,21 @@
+'use client';
+
 import { useCallback, useState } from 'react';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
-import { ALAP_MUTATO, mutatoByKulcs, type Mutato } from '../../../../lib/terkep-mutatok';
+import { ALAP_MUTATO, mutatoByKulcs, type Mutato, type MutatoKulcs } from '../../../../lib/terkep-mutatok';
 
+/** Ennyi országtól látszik az összehasonlító tábla. */
+export const VS_MIN = 2;
 /** Legfeljebb ennyi ország lehet az összehasonlításban. */
 export const VS_MAX = 4;
 
 export interface TerkepAllapot {
   /** Egyes kijelölés (a kivonat országa). */
   kod: string | null;
-  /** Összehasonlítás-halmaz a hozzáadás sorrendjében. */
-  vs: string[];
+  /** Összehasonlítás-halmaz a hozzáadás sorrendjében; ne mutáld. */
+  vs: readonly string[];
+  /** `vs.length >= VS_MAX` – a hozzáadás-gombok letiltásához. */
+  vsTele: boolean;
   mutato: Mutato;
   /** Iparág-szűrő, '' = nincs. */
   iparag: string;
@@ -20,22 +26,31 @@ export interface TerkepAllapot {
   vsHozzaad: (kod: string) => void;
   vsKivesz: (kod: string) => void;
   vsTorol: () => void;
-  /** A kijelölést törli, így (vs.length >= 2 esetén) az összehasonlító panel látszik. */
+  /** A kijelölést törli, így (vs.length >= VS_MIN esetén) az összehasonlító panel látszik. */
   osszehasonlit: () => void;
 }
 
 /**
  * A térkép-oldal kliens-állapota. A panel sorrendje a hívóban: `kod` → kivonat, különben
- * `vs.length >= 2` → összehasonlítás, különben rangsor. Évváltáskor (új `adatok`) a nem létező
- * kijelölés és halmaz-elemek render közben kikerülnek (a „prop változásra állapot igazítása" minta).
+ * `vs.length >= VS_MIN` → összehasonlítás, különben rangsor. Évváltáskor (új `adatok`) a nem
+ * létező kijelölés és halmaz-elemek render közben kikerülnek, a `?o=` (kezdoKod) változására a
+ * kijelölés frissül, a többi állapot marad – ez a React „prop változásra állapot igazítása" mintája,
+ * ezért a page NEM ad `key`-t a nézetnek. A visszaadott objektum renderenként új (nem memoizálható).
  */
 export function useTerkepAllapot(adatok: TerkepOrszag[], kezdoKod: string | null): TerkepAllapot {
   const letezik = (k: string) => adatok.some((o) => o.kod === k);
-  const [kod, setKod] = useState<string | null>(kezdoKod && letezik(kezdoKod) ? kezdoKod : null);
-  const [vs, setVs] = useState<string[]>([]);
-  const [mutatoKulcs, setMutatoKulcsState] = useState<string>(ALAP_MUTATO);
+  const [kod, setKod] = useState<string | null>(() => (kezdoKod && letezik(kezdoKod) ? kezdoKod : null));
+  const [vs, setVs] = useState<readonly string[]>([]);
+  const [mutatoKulcs, setMutatoKulcsState] = useState<MutatoKulcs>(ALAP_MUTATO);
   const [iparag, setIparag] = useState('');
 
+  // Új `?o=` (pl. „Vissza a térképre" a profil oldalról): a kijelölés a kezdő kódra vált; ha a
+  // paraméter eltűnik, a meglévő kijelölés marad.
+  const [elozoKezdo, setElozoKezdo] = useState(kezdoKod);
+  if (kezdoKod !== elozoKezdo) {
+    setElozoKezdo(kezdoKod);
+    if (kezdoKod && letezik(kezdoKod)) setKod(kezdoKod);
+  }
   if (kod && !letezik(kod)) setKod(null);
   const vsElo = vs.filter(letezik);
   if (vsElo.length !== vs.length) setVs(vsElo);
@@ -49,7 +64,7 @@ export function useTerkepAllapot(adatok: TerkepOrszag[], kezdoKod: string | null
   const osszehasonlit = useCallback(() => setKod(null), []);
 
   return {
-    kod, vs, mutato: mutatoByKulcs(mutatoKulcs), iparag,
+    kod, vs, vsTele: vs.length >= VS_MAX, mutato: mutatoByKulcs(mutatoKulcs), iparag,
     kivalaszt, bezar, setMutatoKulcs, setIparag, vsHozzaad, vsKivesz, vsTorol, osszehasonlit,
   };
 }

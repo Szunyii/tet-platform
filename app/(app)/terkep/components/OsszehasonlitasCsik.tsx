@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { Badge } from '../../../../components/ui/badge';
 import { Button } from '../../../../components/ui/button';
+import { VS_MIN } from './useTerkepAllapot';
 
 /** A panel tetején: az összehasonlítás-halmaz chipjei és az „Összehasonlítás (n)" gomb. */
 export function OsszehasonlitasCsik({ orszagok, onKivesz, onOsszehasonlit }: {
@@ -16,11 +17,12 @@ export function OsszehasonlitasCsik({ orszagok, onKivesz, onOsszehasonlit }: {
     <div className="flex flex-wrap items-center gap-1.5 rounded-lg border bg-muted/40 px-2.5 py-2 text-xs">
       <span className="text-muted-foreground">Összehasonlítás:</span>
       {orszagok.map((o) => (
-        <Badge key={o.kod} variant="secondary" className="gap-1 pr-1">
+        // h-6 + overflow-visible: a Badge alapból h-5 és overflow-hidden, ami levágná a gomb fókuszgyűrűjét.
+        <Badge key={o.kod} variant="outline" className="h-6 gap-1 overflow-visible bg-background pr-1">
           {o.nev}
           <button
             type="button"
-            className="rounded-full p-0.5 hover:bg-foreground/10"
+            className="rounded-full p-0.5 outline-none hover:bg-foreground/10 focus-visible:ring-3 focus-visible:ring-ring/50"
             aria-label={`${o.nev} kivétele`}
             onClick={() => onKivesz(o.kod)}
           >
@@ -28,7 +30,7 @@ export function OsszehasonlitasCsik({ orszagok, onKivesz, onOsszehasonlit }: {
           </button>
         </Badge>
       ))}
-      {orszagok.length >= 2 ? (
+      {orszagok.length >= VS_MIN ? (
         <Button type="button" size="xs" className="ml-auto" onClick={onOsszehasonlit}>
           Összehasonlítás ({orszagok.length})
         </Button>

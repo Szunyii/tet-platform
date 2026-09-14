@@ -11,9 +11,6 @@ import type { Mutato, Rangsor } from '../../../../lib/terkep-mutatok';
  */
 export interface HoverAllapot { nev: string; o: TerkepOrszag | null; x: number; y: number; magassag: number }
 
-/** Ennél kisebb y-nál nincs hely a kurzor fölött (a tooltip legfeljebb ~140 px magas): a kurzor alá kerül. */
-const FLIP_Y = 150;
-
 /** A mutató sora: számszerűnél érték + helyezés (ha a rangsorban van), kategorikusnál a kategória. */
 function mutatoSor(o: TerkepOrszag, mutato: Mutato, rangsor: Rangsor | null): string | null {
   if (mutato.tipus === 'szam') {
@@ -30,9 +27,9 @@ function mutatoSor(o: TerkepOrszag, mutato: Mutato, rangsor: Rangsor | null): st
 export function TerkepTooltip({ hover, mutato, rangsor }: { hover: HoverAllapot; mutato: Mutato; rangsor: Rangsor | null }) {
   const { o } = hover;
   const sor = o ? mutatoSor(o, mutato, rangsor) : null;
-  // A kártya `overflow-hidden`, ezért a térkép tetejénél a kurzor fölé rajzolt tooltip levágódna: ott
-  // alá kerül – de csak ha alatta tényleg van hely (alacsony térképen inkább fent marad).
-  const lent = hover.y < FLIP_Y && hover.magassag - hover.y > FLIP_Y;
+  // A kártya `overflow-hidden`, ezért a tooltip arra az oldalra kerül, ahol több a hely: a kurzor
+  // fölé, ha ott legalább annyi hely van, mint alatta, különben alá.
+  const lent = hover.magassag - hover.y > hover.y;
   return (
     <div
       role="tooltip"
