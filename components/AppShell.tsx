@@ -107,9 +107,11 @@ export default function AppShell({
   children: ReactNode;
 }) {
   const [ev, setEv] = useState(aktualisEv);
-  // Ha a layout újrarenderelésekor a kiválasztott év már nincs a listában (pl. a DB-ből
-  // eltűnt), az aktuális évre állunk – render közbeni igazítás, mint az olvasatlan-nál.
-  if (!evek.includes(ev)) setEv(aktualisEv);
+  // Nem prop-változásra igazítunk (mint az olvasatlan-nál), hanem invariánst tartunk fenn:
+  // a kiválasztott év mindig szerepeljen az evek listában, különben az aktuális évre esünk
+  // vissza. Az `ev !== aktualisEv` feltétel a kilépést garantálja akkor is, ha a hívó olyan
+  // listát adna, amiben az aktuális év nincs benne – enélkül végtelen render-ciklusba futnánk.
+  if (!evek.includes(ev) && ev !== aktualisEv) setEv(aktualisEv);
   // A számláló állapotban él, mert a /kommunikacio oldal a saját, frissebb értékével
   // felülírja (a layout a megtekintés-jelölés ELŐTT számol). A szerverről érkező új érték
   // viszont nyer: a layout revalidálásakor (revalidatePath) ez a render-közbeni igazítás
@@ -186,7 +188,7 @@ export default function AppShell({
               <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11.5, color: '#6b7684' }}>
                 Ciklus
                 <select className="input" value={ev} onChange={(e) => setEv(Number(e.target.value))}>
-                  {evek.map((e) => <option key={e} value={e}>{e}</option>)}
+                  {evek.map((y) => <option key={y} value={y}>{y}</option>)}
                 </select>
               </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 14, borderLeft: '1px solid #dde1e7' }}>
