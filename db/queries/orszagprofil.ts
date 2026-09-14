@@ -8,7 +8,7 @@ import { orszagByKod } from '../../lib/orszagok';
 import { tiltottE } from '../../lib/felhasznalo-tiltas';
 import {
   BLOKK_KULCSOK, normalizalBlokk, profilAllapot,
-  type Alapadatok, type Allapot, type BlokkKulcs, type Iparag, type ProfilBlokkok,
+  type Alapadatok, type Allapot, type BlokkKulcs, type Iparag, type KfiPrioritas, type ProfilBlokkok,
 } from '../../lib/orszagprofil-szotar';
 
 export interface Profil {
@@ -104,6 +104,10 @@ export interface TerkepOrszag {
   ev: number | null;
   allapot: Allapot;
   iparagak: Iparag[];
+  /** K+F ráfordítás a GDP %-ában (KFI-blokk), ha a blokk mentett. */
+  gerd: number | null;
+  /** KFI-prioritások (KFI-blokk) az összehasonlító táblához; nem mentett blokknál üres. */
+  prioritasok: KfiPrioritas[];
   osszegzes: string;
   frissitve: string | null;
   frissitveMs: number | null;
@@ -166,6 +170,8 @@ export const listTerkepAdat = cache((ev: number): TerkepOrszag[] => {
       ev: prof?.ev ?? null,
       allapot: profilAllapot(prof?.ev ?? null, ev),
       iparagak: prof?.blokkok.kfiRendszer?.kiemeltIparagak ?? [],
+      gerd: prof?.blokkok.kfiRendszer?.gerd ?? null,
+      prioritasok: prof?.blokkok.kfiRendszer?.prioritasok ?? [],
       osszegzes: prof?.blokkok.magyarErtekeles?.osszegzes ?? '',
       frissitve: prof ? formatDatum(prof.updatedAt) : null,
       frissitveMs: prof ? prof.updatedAt.getTime() : null,
