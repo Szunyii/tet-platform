@@ -17,12 +17,12 @@ export default async function TerkepPage({
   const ev = await getValasztottEv(most);
   const o = (await searchParams).o;
   const kezdoKod = typeof o === 'string' && orszagByKod(o) ? o : null;
-  // A key a ?o= és az év változásakor újramountolja a nézetet, hogy a kezdő kiválasztás
-  // frissüljön (vissza/előre, oldalsáv) és a kiválasztás ne ragadjon be, ha a választott
-  // ország eltűnik az évváltással az adatokból.
+  // A key a ?o= változásakor (vissza/előre, oldalsáv) újramountolja a nézetet, hogy a kezdő
+  // kiválasztás frissüljön. Az év szándékosan NINCS a key-ben: évváltáskor a kiválasztás, a
+  // metrika-fül és az iparág-szűrő maradjon meg (a TerkepNezet igazítja, ha az ország eltűnik).
   return (
     <TerkepNezet
-      key={`${kezdoKod ?? ''}:${ev}`}
+      key={kezdoKod ?? ''}
       adatok={listTerkepAdat(ev)}
       ev={ev}
       most={most}

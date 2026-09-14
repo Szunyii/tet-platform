@@ -35,6 +35,9 @@ export function TerkepNezet({
   const [kod, setKod] = useState<string | null>(
     kezdoKod && adatok.some((o) => o.kod === kezdoKod) ? kezdoKod : null,
   );
+  // Évváltáskor az adatok újak, a kiválasztás marad; ha a választott ország az új évben
+  // nincs az adatokban, render közben töröljük (a „prop változásra állapot igazítása" minta).
+  if (kod && !adatok.some((o) => o.kod === kod)) setKod(null);
   const onSelect = useCallback((k: string) => setKod(k), []);
   const sel = kod ? adatok.find((o) => o.kod === kod) ?? null : null;
   const friss = adatok.filter((o) => o.allapot === 'friss').length;
