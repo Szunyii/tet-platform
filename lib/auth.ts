@@ -13,8 +13,42 @@ import * as schema from '../db/schema';
 const ac = createAccessControl(defaultStatements);
 const roles = { admin: adminAc, attase: userAc };
 
+// Az app publikus címe nem fix: ugyanaz a build fut lokálisan, az ideiglenes hosting
+// domainen és később a végleges címen. Ezért a baseURL dinamikus: a Better Auth a kérés
+// Host fejlécéből (proxy mögött x-forwarded-host/proto) állítja elő, de csak az itt
+// felsorolt hosztokra – idegen Host fejléc esetén 403 INVALID_ORIGIN. A lista a
+// BETTER_AUTH_ALLOWED_HOSTS env-ből jön (vesszővel elválasztva, wildcard megengedett,
+// pl. `tet.niu.hu,*.hostingersite.com`), és a BETTER_AUTH_URL hosztja mindig benne van.
+// A BETTER_AUTH_URL marad a fallback olyan hívásokhoz, ahol nincs kérés (pl. seed, CLI).
+function engedelyezettHostok(): string[] {
+  const hostok = (process.env.BETTER_AUTH_ALLOWED_HOSTS ?? '')
+    .split(',')
+    .map((h) => h.trim())
+    .filter(Boolean);
+  const alapUrl = process.env.BETTER_AUTH_URL;
+  if (alapUrl) {
+    try {
+      hostok.push(new URL(alapUrl).host);
+    } catch {
+      // Hibás BETTER_AUTH_URL: a Better Auth maga is panaszkodni fog rá.
+    }
+  }
+  return hostok.length > 0 ? hostok : ['localhost:3000'];
+}
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: 'sqlite', schema }),
+  baseURL: {
+    allowedHosts: engedelyezettHostok(),
+    fallback: process.env.BETTER_AUTH_URL,
+    // auto: x-forwarded-proto (ha trustedProxyHeaders), különben a kérés URL-jének sémája.
+    protocol: 'auto',
+  },
+  advanced: {
+    // Reverse proxy (Hostinger, nginx) mögött a Node az x-forwarded-host/proto fejlécből
+    // tudja a publikus hosztot és a HTTPS-t. Az allowedHosts lista korlátozza, mit fogadunk el.
+    trustedProxyHeaders: true,
+  },
   emailAndPassword: {
     enabled: true,
     // Belső rendszer: nincs nyilvános regisztráció. Felhasználót seed vagy admin hoz létre.
