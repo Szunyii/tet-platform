@@ -307,7 +307,7 @@ szöveg.
   ugyanaz a lineáris/symlog arány, mint a térkép színe; `min === max` → fél), `formatSzam(ertek, utotag)`
   jobbra, monospace.
   A sor gombja `kivalaszt(kod)`; a sor végén `+` ikon-gomb (`vsHozzaad`, `aria-label`),
-  benne lévő országnál pipa (`vsKivesz`), 4 elemnél a `+` letiltva („Legfeljebb 4 ország").
+  benne lévő országnál pipa (`vsKivesz`), 4 elemnél a `+` letiltva (a „Legfeljebb 4 ország" feliratot a csík mutatja).
   Alatta „Nincs adat" szakasz a nevekkel (kattinthatók, ugyanígy `+` gombbal).
 - Kategorikus: `csoportok` – csoport-fejléc színnégyzettel, felirattal, „N ország"; alatta a
   sorok ugyanazzal a gombozással; 0 elemű csoport csak fejlécet mutat.
@@ -319,7 +319,8 @@ szöveg.
   „nincs adat"; a szűrő által kizárt (rangsorban nem szereplő) országnál helyezés nélkül.
   Kategorikusnál nincs plusz sor.
 - A lábléc új gombja: „Összehasonlításhoz" (`vsHozzaad`) / „Kivétel az összehasonlításból"
-  (`vsKivesz`); 4 elemnél és nincs benne → letiltva, `title="Legfeljebb 4 ország"`.
+  (`vsKivesz`); 4 elemnél és nincs benne → letiltva (a korlát feliratát a csík mutatja: letiltott
+  gombon a `title` nem jelenne meg).
 - Propok ehhez: `mutato`, `rangsor` (a számított `Rangsor`, számszerűnél), `benneVs`, `vsTele`,
   `onVs()`.
 
@@ -420,3 +421,11 @@ Nincs tesztkeretrendszer. Elvárt lépések:
   állapota `MutatoKulcs` típusú; a csík chipje `outline` változat, a × gomb fókuszgyűrűvel (`h-6`,
   `overflow-visible`); a tooltip arra az oldalra kerül, ahol több a hely (nincs fix küszöb); a
   jelmagyarázat kategorikus ágon is a mutató címével kezd.
+- **Task 6 minőségi review nyomán**: a rangsor sora két soros (hely + név + érték, alatta teljes
+  szélességű sáv – a keskeny panelen a három elem egy sorban csonkolta a hosszú országneveket), a
+  hely a gombon belül, `title` a néven, sor-szintű hover és fókuszgyűrű, a minimum-érték sávja 2 %
+  (nem tűnik el); a kategorikus ág címe „Országok · …" (nem rangsor); üres állapotok: „Egy ország
+  sem felel meg a szűrőnek." (szűrés miatt üres) vs. „Ehhez a mutatóhoz még nincs adat."; a
+  letiltott `+` gombon nincs `title` (natív `disabled` + `pointer-events-none` miatt sosem látszana),
+  a „Legfeljebb 4 ország" feliratot a csík mutatja tele halmaznál; a számláló szöveg csak a panel
+  alcíme, a térkép-kártya fejlécében nem ismétlődik.
