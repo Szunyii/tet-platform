@@ -2,8 +2,10 @@ import AppShell from '../../components/AppShell';
 import { listProfilEvek } from '../../db/queries/orszagprofil';
 import { countOlvasatlan } from '../../db/queries/ticket';
 import { aktualisEv } from '../../lib/datum';
+import { EV_MIN } from '../../lib/orszagprofil-szotar';
 import { requireSession } from '../../lib/session';
-import { logoutAction } from './actions';
+import { getValasztottEv } from '../../lib/valasztott-ev';
+import { logoutAction, valasztEvAction } from './actions';
 
 // Minden védett oldal ebben a route groupban van. A requireSession() itt egy helyen
 // kényszeríti ki a bejelentkezést (elavult cookie esetén is: a proxy átengedi, ez
@@ -15,16 +17,28 @@ import { logoutAction } from './actions';
 // maga hívja a requireSession()/requireAdmin()-t.
 //
 // Az olvasatlan ticket-számláló és a ciklusválasztó évlistája ugyanezért kliens-oldali
-// navigációnál késhet: a ticket- és a profil-mentő action-ök revalidatePath('/', 'layout')-tal
-// frissítik.
+// navigációnál késhet: a ticket-, a profil-mentő és az évválasztó action-ök
+// revalidatePath('/', 'layout')-tal frissítik.
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await requireSession();
   const olvasatlan = countOlvasatlan(session);
   const most = aktualisEv();
-  // A fejléc ciklusválasztója: a DB-ben létező profil-évek + az aktuális év, csökkenő sorrendben.
-  const evek = [...new Set([most, ...listProfilEvek()])].sort((a, b) => b - a);
+  const ev = await getValasztottEv(most);
+  // A fejléc ciklusválasztója. Admin: minden év EV_MIN-től az aktuálisig (új év profilját is
+  // létre kell tudnia hozni, a szerkesztőnek nincs saját évválasztója). Attasé: a DB-ben létező
+  // profil-évek + az aktuális év. A választott év mindig benne van, hogy a select konzisztens legyen.
+  const evek = session.role === 'admin'
+    ? Array.from({ length: most - EV_MIN + 1 }, (_, i) => most - i)
+    : [...new Set([most, ev, ...listProfilEvek()])].sort((a, b) => b - a);
   return (
-    <AppShell user={session} logoutAction={logoutAction} olvasatlan={olvasatlan} evek={evek} aktualisEv={most}>
+    <AppShell
+      user={session}
+      logoutAction={logoutAction}
+      valasztEvAction={valasztEvAction}
+      olvasatlan={olvasatlan}
+      ev={ev}
+      evek={evek}
+    >
       {children}
     </AppShell>
   );

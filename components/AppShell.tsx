@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { createContext, useActionState, useContext, useState, type ReactNode } from 'react';
+import { createContext, useActionState, useContext, useState, useTransition, type ReactNode } from 'react';
 import type { LogoutState } from '../app/(app)/actions';
 import { DEADLINE } from '../lib/data';
 import { orszagNev } from '../lib/orszagok';
@@ -10,12 +10,12 @@ import { ini } from '../lib/score';
 import type { AppSession } from '../lib/session';
 
 type LogoutAction = (prev: LogoutState) => Promise<LogoutState>;
+type ValasztEvAction = (formData: FormData) => Promise<void>;
 
 interface AppState {
   user: AppSession;
-  /** A fejlécben kiválasztott ciklus (év). Kliens-oldali kontextus, a monitoring cím és a sidebar sora mutatja. */
+  /** A fejlécben kiválasztott ciklus (év) – a tet-ev cookie-ból, a layout adja. Váltani a fejléc selectje tud (valasztEvAction). */
   ev: number;
-  setEv: (ev: number) => void;
   /** Olvasatlan, nem lezárt ticketek száma – a Kommunikáció menüpont számlálója. */
   olvasatlan: number;
   /** A /kommunikacio oldal írja felül a saját, frissebb számával (OlvasatlanSzinkron). */
@@ -92,26 +92,30 @@ function LogoutForm({ action }: { action: LogoutAction }) {
 export default function AppShell({
   user,
   logoutAction,
+  valasztEvAction,
   olvasatlan: szerverOlvasatlan,
+  ev,
   evek,
-  aktualisEv,
   children,
 }: {
   user: AppSession;
   logoutAction: LogoutAction;
+  valasztEvAction: ValasztEvAction;
   /** Olvasatlan, nem lezárt ticketek száma a layoutból – a menü-számláló kiindulópontja. */
   olvasatlan: number;
-  /** A ciklusválasztó évei a layoutból: DB profil-évek + aktuális év, csökkenő, nem üres. */
+  /** A választott ciklus (év) a layoutból (cookie); nincs kliens-állapot, a szerver a forrás. */
+  ev: number;
+  /** A ciklusválasztó évei a layoutból, csökkenő; a layout garantálja, hogy `ev` benne van. */
   evek: number[];
-  aktualisEv: number;
   children: ReactNode;
 }) {
-  const [ev, setEv] = useState(aktualisEv);
-  // Nem prop-változásra igazítunk (mint az olvasatlan-nál), hanem invariánst tartunk fenn:
-  // a kiválasztott év mindig szerepeljen az evek listában, különben az aktuális évre esünk
-  // vissza. Az `ev !== aktualisEv` feltétel a kilépést garantálja akkor is, ha a hívó olyan
-  // listát adna, amiben az aktuális év nincs benne – enélkül végtelen render-ciklusba futnánk.
-  if (!evek.includes(ev) && ev !== aktualisEv) setEv(aktualisEv);
+  // Évváltás: server action írja a cookie-t és revalidálja a layoutot; a transition alatt a select tiltott.
+  const [evValtas, startEvValtas] = useTransition();
+  const valasztEv = (uj: string) => {
+    const fd = new FormData();
+    fd.set('ev', uj);
+    startEvValtas(() => valasztEvAction(fd));
+  };
   // A számláló állapotban él, mert a /kommunikacio oldal a saját, frissebb értékével
   // felülírja (a layout a megtekintés-jelölés ELŐTT számol). A szerverről érkező új érték
   // viszont nyer: a layout revalidálásakor (revalidatePath) ez a render-közbeni igazítás
@@ -129,7 +133,7 @@ export default function AppShell({
     : `TéT attasé${user.orszag ? ' · ' + orszagNev(user.orszag) : ''}`;
 
   return (
-    <AppContext.Provider value={{ user, ev, setEv, olvasatlan, setOlvasatlan }}>
+    <AppContext.Provider value={{ user, ev, olvasatlan, setOlvasatlan }}>
       <div style={{ display: 'flex', minHeight: '100vh' }}>
         <aside style={{
           width: 238, flex: '0 0 238px', background: '#131a24', color: '#e7ebf1',
@@ -187,7 +191,7 @@ export default function AppShell({
             <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 14 }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11.5, color: '#6b7684' }}>
                 Ciklus
-                <select className="input" value={ev} onChange={(e) => setEv(Number(e.target.value))}>
+                <select className="input" value={ev} disabled={evValtas} onChange={(e) => valasztEv(e.target.value)}>
                   {evek.map((y) => <option key={y} value={y}>{y}</option>)}
                 </select>
               </label>

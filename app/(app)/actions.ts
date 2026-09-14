@@ -1,10 +1,15 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { headers } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { auth } from '../../lib/auth';
+import { aktualisEv } from '../../lib/datum';
+import { orszagByKod } from '../../lib/orszagok';
 import { LOGIN_ROUTE } from '../../lib/routes';
+import { requireSession } from '../../lib/session';
+import { mezo } from '../../lib/urlap';
+import { ervenyesValasztottEv, EV_COOKIE } from '../../lib/valasztott-ev';
 
 export interface LogoutState {
   error?: string;
@@ -23,4 +28,30 @@ export async function logoutAction(_prev: LogoutState): Promise<LogoutState> {
   }
   revalidatePath('/', 'layout');
   redirect(LOGIN_ROUTE);
+}
+
+/**
+ * A fejléc ciklusválasztója: a választott évet httpOnly cookie-ba írja, és a layoutot
+ * revalidálja, így a térkép, a profil és a szerkesztő oldal az új évre renderelődik.
+ * Érvénytelen év (nem négyjegyű, EV_MIN alatt vagy az aktuális év felett) → nem ír semmit.
+ * Opcionális `kod` mezővel az ország szerkesztőjére irányít (a „Szerkesztés (2026)" gomb:
+ * attasé múltbeli évnézetből egy lépésben az aktuális évre vált és szerkeszt).
+ * A redirect() kivétellel működik: a try/catch-en kívül hívjuk.
+ */
+export async function valasztEvAction(formData: FormData): Promise<void> {
+  await requireSession();
+  const most = aktualisEv();
+  const evRaw = mezo(formData, 'ev');
+  const ev = /^\d{4}$/.test(evRaw) ? Number(evRaw) : NaN;
+  if (!ervenyesValasztottEv(ev, most)) return;
+  (await cookies()).set(EV_COOKIE, String(ev), {
+    httpOnly: true,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60 * 60 * 24 * 365,
+    secure: process.env.NODE_ENV === 'production',
+  });
+  revalidatePath('/', 'layout');
+  const kod = mezo(formData, 'kod');
+  if (kod && orszagByKod(kod)) redirect(`/orszagprofil/${kod}/szerkesztes`);
 }
