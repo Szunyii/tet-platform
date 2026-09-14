@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { unstable_rethrow, usePathname } from 'next/navigation';
 import { createContext, useActionState, useContext, useOptimistic, useState, useTransition, type ReactNode } from 'react';
 import type { LogoutState } from '../app/(app)/actions';
 import { DEADLINE } from '../lib/data';
@@ -121,7 +121,7 @@ export default function AppShell({
     startEvValtas(async () => {
       setOptimistaEv(Number(uj));
       // Hálózati/origin hiba esetén az évváltás egyszerűen nem történik meg; nem dobjuk az error boundary-ig.
-      try { await valasztEvAction(fd); } catch (err) { console.error('[ciklus] évváltás sikertelen:', err); }
+      try { await valasztEvAction(fd); } catch (err) { unstable_rethrow(err); console.error('[ciklus] évváltás sikertelen:', err); }
     });
   };
   // A számláló állapotban él, mert a /kommunikacio oldal a saját, frissebb értékével
