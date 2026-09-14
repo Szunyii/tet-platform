@@ -8,6 +8,9 @@ import type { Mutato, Rangsor } from '../../../../lib/terkep-mutatok';
 /** A lebegtetett poligon/pin: `o` null, ha poszt nélküli ország; x/y a térkép-konténerhez képest. */
 export interface HoverAllapot { nev: string; o: TerkepOrszag | null; x: number; y: number }
 
+/** Ennél kisebb y-nál nincs hely a kurzor fölött (a tooltip legfeljebb ~140 px magas): a kurzor alá kerül. */
+const FLIP_Y = 150;
+
 /** A mutató sora: számszerűnél érték + helyezés (ha a rangsorban van), kategorikusnál a kategória. */
 function mutatoSor(o: TerkepOrszag, mutato: Mutato, rangsor: Rangsor | null): string | null {
   if (mutato.tipus === 'szam') {
@@ -24,11 +27,15 @@ function mutatoSor(o: TerkepOrszag, mutato: Mutato, rangsor: Rangsor | null): st
 export function TerkepTooltip({ hover, mutato, rangsor }: { hover: HoverAllapot; mutato: Mutato; rangsor: Rangsor | null }) {
   const { o } = hover;
   const sor = o ? mutatoSor(o, mutato, rangsor) : null;
+  // A kártya `overflow-hidden`, ezért a térkép tetejénél a kurzor fölé rajzolt tooltip levágódna: ott alá kerül.
+  const lent = hover.y < FLIP_Y;
   return (
     <div
       role="tooltip"
       className="pointer-events-none absolute z-10 max-w-60 rounded-md bg-foreground px-2.5 py-2 text-[11px] leading-snug text-background shadow-lg"
-      style={{ left: hover.x, top: hover.y - 12, transform: 'translate(-50%, -100%)' }}
+      style={lent
+        ? { left: hover.x, top: hover.y + 16, transform: 'translate(-50%, 0)' }
+        : { left: hover.x, top: hover.y - 12, transform: 'translate(-50%, -100%)' }}
     >
       <p className="mb-0.5 text-xs font-semibold">{hover.nev}</p>
       {o ? (

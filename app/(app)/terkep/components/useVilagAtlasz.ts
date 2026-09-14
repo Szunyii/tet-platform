@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 import type { Feature, Geometry } from 'geojson';
 import type { GeometryCollection, Topology } from 'topojson-specification';
@@ -22,7 +24,10 @@ function betolt(): Promise<OrszagFeature[]> {
   return atlaszPromise;
 }
 
-/** A world-atlas 110m országpoligonjai; `feats` null, amíg töltődik, `hiba` true, ha a chunk nem jött be. */
+/**
+ * A world-atlas 110m országpoligonjai; `feats` null, amíg töltődik, `hiba` true, ha a chunk nem jött be.
+ * A visszaadott tömb modulszinten megosztott (minden hívó ugyanazt kapja): ne mutáld.
+ */
 export function useVilagAtlasz(): { feats: OrszagFeature[] | null; hiba: boolean } {
   const [feats, setFeats] = useState<OrszagFeature[] | null>(null);
   const [hiba, setHiba] = useState(false);

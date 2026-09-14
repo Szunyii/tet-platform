@@ -1,6 +1,6 @@
 /**
  * Országszótár: ISO 3166-1 alpha-2 kód, magyar név, world-atlas 110m térképnév (a
- * `countries-110m.json` `properties.name` értéke – ezzel párosít a <tet-world-map>) és a
+ * `countries-110m.json` `properties.name` értéke – ezzel párosít a `VilagTerkep`) és a
  * főváros koordinátája (a pin helye). A `user.orszag` és a `riport.orszag` a `kod`-ot
  * tárolja; a felület `orszagNev()`-vel ír. Framework-mentes.
  */
@@ -206,4 +206,15 @@ export function orszagByKod(kod: string | null | undefined): Orszag | undefined 
 export function orszagNev(kod: string | null | undefined): string {
   if (!kod) return '';
   return KOD_INDEX.get(kod)?.nev ?? kod;
+}
+
+const NEV_GEO_SZERINT = new Map(ORSZAGOK.filter((o) => o.geo).map((o) => [o.geo, o.nev] as const));
+
+/**
+ * A world-atlas térképnév (`properties.name`) magyar neve a szótárból – a térkép poszt nélküli
+ * poligonjainak tooltipjéhez. Ha a szótárban nincs ilyen ország (pl. Grönland, Antarktisz),
+ * maga a térképnév.
+ */
+export function geoNev(geo: string): string {
+  return NEV_GEO_SZERINT.get(geo) ?? geo;
 }
