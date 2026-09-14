@@ -11,3 +11,6 @@ data/
 *.db-wal
 *.db-shm
 .env*.local
+
+# brainstorming vizuális segítő munkafájljai
+.superpowers/
