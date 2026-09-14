@@ -54,14 +54,19 @@ export const IPARAG_SZINEK: Record<Iparag, string> = {
 export const ALLAPOTOK = ['friss', 'elavult', 'nincs'] as const;
 export type Allapot = (typeof ALLAPOTOK)[number];
 export const ALLAPOT_CIMKE: Record<Allapot, string> = {
-  friss: 'Az évi profil',
+  friss: 'Adott évi profil',
   elavult: 'Elavult profil',
   nincs: 'Nincs profil',
 };
 export const ALLAPOT_SZINEK: Record<Allapot, string> = { friss: '#2f7d32', elavult: '#b45309', nincs: '#6b7280' };
-/** A legfrissebb profil-év → állapot; a profil oldal és a térkép-adat ugyanezt számolja. */
-export function profilAllapot(ev: number | null, most: number): Allapot {
-  return ev === null ? 'nincs' : ev === most ? 'friss' : 'elavult';
+/**
+ * Egy profil-év állapota a viszonyítási évhez képest: nincs profil-év → nincs, egyenlő a
+ * viszonyítási évvel → friss, annál régebbi → elavult. A térkép és a profil oldal a nézett
+ * (választott) évet adja át viszonyítási évként; ha az a soron aktuális év, ez a korábbi
+ * (a legfrissebb profil-évet az aktuális évhez viszonyító) viselkedéssel egyezik meg.
+ */
+export function profilAllapot(ev: number | null, viszonyitasiEv: number): Allapot {
+  return ev === null ? 'nincs' : ev === viszonyitasiEv ? 'friss' : 'elavult';
 }
 
 export const RENDEZVENY_TIPUSOK = [

@@ -2,12 +2,14 @@
 
 import { useCallback, useState } from 'react';
 import WorldMap, { type MapMetric } from '../../../../components/WorldMap';
+import { useApp } from '../../../../components/AppShell';
 import { SzerkesztesGomb } from '../../../../components/orszagprofil/SzerkesztesGomb';
 import { Card, CardContent, CardHeader } from '../../../../components/ui/card';
 import { Label } from '../../../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '../../../../components/ui/tabs';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
+import { canEditProfil } from '../../../../lib/orszagprofil-jog';
 import { IPARAGAK, type Iparag } from '../../../../lib/orszagprofil-szotar';
 import { ProfilKivonat } from './ProfilKivonat';
 import { TerkepUres } from './TerkepUres';
@@ -27,6 +29,7 @@ export function TerkepNezet({
   kezdoKod: string | null;
   valasztEvAction: (formData: FormData) => Promise<void>;
 }) {
+  const { user } = useApp();
   const [metric, setMetric] = useState<MapMetric>('iparag');
   const [iparag, setIparag] = useState('');
   const [kod, setKod] = useState<string | null>(
@@ -71,8 +74,8 @@ export function TerkepNezet({
             <SzerkesztesGomb
               kod={sajatKod}
               most={most}
-              szerkeszthetEv={ev === most}
-              szerkeszthetMost
+              szerkeszthetEv={canEditProfil(user, sajatKod, ev, most)}
+              szerkeszthetMost={canEditProfil(user, sajatKod, most, most)}
               action={valasztEvAction}
               felirat="Saját országprofil"
             />
@@ -86,8 +89,8 @@ export function TerkepNezet({
         {sel ? (
           <ProfilKivonat
             o={sel}
-            szerkeszthetEv={admin || (sel.kod === sajatKod && ev === most)}
-            szerkeszthetMost={admin || sel.kod === sajatKod}
+            szerkeszthetEv={canEditProfil(user, sel.kod, ev, most)}
+            szerkeszthetMost={canEditProfil(user, sel.kod, most, most)}
             most={most}
             valasztEvAction={valasztEvAction}
             onClose={() => setKod(null)}

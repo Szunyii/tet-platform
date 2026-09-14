@@ -96,6 +96,7 @@ export function ProfilKivonat({
           szerkeszthetMost={szerkeszthetMost}
           action={valasztEvAction}
           felirat={o.allapot === 'nincs' ? 'Profil kitöltése' : 'Szerkesztés'}
+          feliratMost="Szerkesztés"
           className="ml-auto"
         />
       </CardFooter>

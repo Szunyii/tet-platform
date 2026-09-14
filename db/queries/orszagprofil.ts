@@ -138,7 +138,7 @@ export function listTerkepAdat(ev: number): TerkepOrszag[] {
     profilok.push(p);
   }
 
-  // Országkód → első (név szerint rendezett) attasé, ill. legfrissebb profil.
+  // Országkód → első (név szerint rendezett) attasé, ill. az `ev`-hez tartozó (≤ ev legnagyobb évű) profil.
   const attaseKodhoz = new Map<string, (typeof attasek)[number]>();
   for (const a of attasek) if (a.orszag && !attaseKodhoz.has(a.orszag)) attaseKodhoz.set(a.orszag, a);
   const profilKodhoz = new Map(profilok.map((p) => [p.orszagKod, p] as const));
