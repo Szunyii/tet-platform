@@ -436,3 +436,7 @@ Nincs tesztkeretrendszer. Elvárt lépések:
   táblában sticky `th scope="row"` címke-oszlop, csonkolt fejléc-nevek `title`-lel, a kiemelt sor a
   térkép skálájának legvilágosabb színével (inline), „+ Ország" csak ha van jelölt, „Összehasonlítás
   törlése" felirat.
+- **Task 8 minőségi review nyomán**: közös `ertekEsHely()` a tooltipnek és a kivonatnak; a kivonat
+  mutató-sora színezett sáv `title`-lel; ikonos „Összehasonlítás"/„Összehasonlításban" toggle
+  (`aria-pressed`); `vsValt(kod)` a hookban; a tábla sorai nem hover-színeződnek, a név-gomb
+  `max-w-40`, a kiemelt sor címkéje `text-foreground`.
