@@ -429,3 +429,10 @@ Nincs tesztkeretrendszer. Elvárt lépések:
   letiltott `+` gombon nincs `title` (natív `disabled` + `pointer-events-none` miatt sosem látszana),
   a „Legfeljebb 4 ország" feliratot a csík mutatja tele halmaznál; a számláló szöveg csak a panel
   alcíme, a térkép-kártya fejlécében nem ismétlődik.
+- **Task 7 minőségi review nyomán (elrendezés-változás)**: az összehasonlító tábla **a térkép alatt,
+  teljes szélességben** jelenik meg, amint `vs.length >= VS_MIN`, nem a jobb panelen (ott 2–4 oszlop
+  mindig vízszintesen görgetett volna). A jobb panel: `kod` → kivonat, különben rangsor; a csík csak
+  chipek + állapotszöveg, az „Összehasonlítás (n)" gomb és az `osszehasonlit()` művelet megszűnt. A
+  táblában sticky `th scope="row"` címke-oszlop, csonkolt fejléc-nevek `title`-lel, a kiemelt sor a
+  térkép skálájának legvilágosabb színével (inline), „+ Ország" csak ha van jelölt, „Összehasonlítás
+  törlése" felirat.

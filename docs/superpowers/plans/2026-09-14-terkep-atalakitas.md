@@ -31,10 +31,10 @@ Import-stílus: a meglévő fájlok relatív importot használnak (`../../../../
 | `app/(app)/terkep/components/useTerkepAllapot.ts` | új | `kod`, `vs`, `mutato`, `iparag` állapot és műveletek; `VS_MAX`. |
 | `app/(app)/terkep/components/OsszehasonlitasCsik.tsx` | új | Chipek + „Összehasonlítás (n)" gomb. |
 | `app/(app)/terkep/components/RangsorPanel.tsx` | új | Rangsor (számszerű) vagy csoportosított lista (kategorikus), a `TerkepUres` helyett. |
-| `app/(app)/terkep/components/OsszehasonlitasPanel.tsx` | új | 2–4 ország összehasonlító táblája. |
+| `app/(app)/terkep/components/OsszehasonlitasPanel.tsx` | új | 2–4 ország összehasonlító táblája a térkép alatt, teljes szélességben. |
 | `app/(app)/terkep/components/ProfilKivonat.tsx` | módosít | Mutató-sor, „Összehasonlításhoz" gomb. |
-| `app/(app)/terkep/components/TerkepPanel.tsx` | új | Kivonat / összehasonlítás / rangsor váltás + csík. |
-| `app/(app)/terkep/components/TerkepNezet.tsx` | átír | Fejléc (Mutató + Iparág select, számláló, Saját országprofil), térkép, panel. |
+| `app/(app)/terkep/components/TerkepPanel.tsx` | új | Jobb panel: kivonat / rangsor váltás + csík. |
+| `app/(app)/terkep/components/TerkepNezet.tsx` | átír | Fejléc (Mutató + Iparág select, Saját országprofil), térkép, jobb panel, alatta az összehasonlító tábla. |
 | `app/(app)/terkep/components/TerkepUres.tsx` | töröl | Helyette `RangsorPanel`. |
 | `components/WorldMap.tsx`, `public/tet-world-map.js` | töröl | Helyette `VilagTerkep`. |
 | `CLAUDE.md`, `README.md` | módosít | Térkép bekezdés, route-leírás, felépítés-lista. |
@@ -1118,13 +1118,11 @@ export interface TerkepAllapot {
   vsHozzaad: (kod: string) => void;
   vsKivesz: (kod: string) => void;
   vsTorol: () => void;
-  /** A kijelölést törli, így (vs.length >= VS_MIN esetén) az összehasonlító panel látszik. */
-  osszehasonlit: () => void;
 }
 
 /**
- * A térkép-oldal kliens-állapota. A panel sorrendje a hívóban: `kod` → kivonat, különben
- * `vs.length >= VS_MIN` → összehasonlítás, különben rangsor. Évváltáskor (új `adatok`) a nem
+ * A térkép-oldal kliens-állapota. A jobb panel a hívóban: `kod` → kivonat, különben rangsor; az
+ * összehasonlító tábla a térkép alatt jelenik meg, ha `vs.length >= VS_MIN`. Évváltáskor (új `adatok`) a nem
  * létező kijelölés és halmaz-elemek render közben kikerülnek, a `?o=` (kezdoKod) változására a
  * kijelölés frissül, a többi állapot marad – ez a React „prop változásra állapot igazítása" mintája,
  * ezért a page NEM ad `key`-t a nézetnek. A visszaadott objektum renderenként új (nem memoizálható).
@@ -1159,11 +1157,10 @@ export function useTerkepAllapot(adatok: TerkepOrszag[], kezdoKod: string | null
   const vsHozzaad = useCallback((k: string) => setVs((v) => (v.includes(k) || v.length >= VS_MAX ? v : [...v, k])), []);
   const vsKivesz = useCallback((k: string) => setVs((v) => v.filter((x) => x !== k)), []);
   const vsTorol = useCallback(() => setVs([]), []);
-  const osszehasonlit = useCallback(() => setKod(null), []);
 
   return {
     kod, vs, vsTele: vs.length >= VS_MAX, mutato: mutatoByKulcs(mutatoKulcs), iparag,
-    kivalaszt, bezar, setMutatoKulcs, setIparag, vsHozzaad, vsKivesz, vsTorol, osszehasonlit,
+    kivalaszt, bezar, setMutatoKulcs, setIparag, vsHozzaad, vsKivesz, vsTorol,
   };
 }
 ```
@@ -1176,17 +1173,24 @@ export function useTerkepAllapot(adatok: TerkepOrszag[], kezdoKod: string | null
 import { X } from 'lucide-react';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { Badge } from '../../../../components/ui/badge';
-import { Button } from '../../../../components/ui/button';
 import { VS_MAX, VS_MIN } from './useTerkepAllapot';
 
-/** A panel tetején: az összehasonlítás-halmaz chipjei, a korlát felirata (ha tele) és az „Összehasonlítás (n)" gomb. */
-export function OsszehasonlitasCsik({ orszagok, onKivesz, onOsszehasonlit }: {
+/**
+ * A panel tetején: az összehasonlítás-halmaz chipjei és egy állapotszöveg. Az összehasonlító tábla
+ * magától megjelenik a térkép alatt, amint VS_MIN ország van a halmazban, ezért itt nincs gomb.
+ */
+export function OsszehasonlitasCsik({ orszagok, onKivesz }: {
   /** A halmaz rekordjai a hozzáadás sorrendjében. */
   orszagok: TerkepOrszag[];
   onKivesz: (kod: string) => void;
-  onOsszehasonlit: () => void;
 }) {
   const tele = orszagok.length >= VS_MAX;
+  // A „+" gombok letiltva, ha tele; a letiltott gombon a title nem jelenik meg, ezért itt a felirat.
+  const allapot = tele
+    ? `Legfeljebb ${VS_MAX} ország`
+    : orszagok.length < VS_MIN
+      ? 'Válassz még egy országot'
+      : 'A tábla a térkép alatt';
   return (
     <div className="flex flex-wrap items-center gap-1.5 rounded-lg border bg-muted/40 px-2.5 py-2 text-xs">
       <span className="text-muted-foreground">Összehasonlítás:</span>
@@ -1204,15 +1208,7 @@ export function OsszehasonlitasCsik({ orszagok, onKivesz, onOsszehasonlit }: {
           </button>
         </Badge>
       ))}
-      {/* A „+" gombok letiltva, ha tele; a letiltott gombon a title nem jelenik meg, ezért itt a felirat. */}
-      {tele && <span className="ml-auto text-muted-foreground">Legfeljebb {VS_MAX} ország</span>}
-      {orszagok.length >= VS_MIN ? (
-        <Button type="button" size="xs" className={tele ? undefined : 'ml-auto'} onClick={onOsszehasonlit}>
-          Összehasonlítás ({orszagok.length})
-        </Button>
-      ) : (
-        <span className="ml-auto text-muted-foreground">Válassz még egy országot</span>
-      )}
+      <span className="ml-auto text-muted-foreground">{allapot}</span>
     </div>
   );
 }
@@ -1280,7 +1276,7 @@ function OrszagSor({ o, hely, sav, ertek, benne, vsTele, onKivalaszt, onVsToggle
           <span className="min-w-0 flex-1 truncate font-medium" title={o.nev}>{o.nev}</span>
           {ertek !== undefined && <span className="shrink-0 font-mono text-xs text-muted-foreground">{ertek}</span>}
         </button>
-        {/* A letiltott gombon a title nem jelenne meg (natív disabled + pointer-events-none); a korlátot a csík írja ki. */}
+        {/* Letiltott gombon a title nem jelenne meg (natív disabled + pointer-events-none); a korlátot az OsszehasonlitasCsik írja ki. */}
         <Button
           type="button"
           variant="ghost"
@@ -1347,7 +1343,7 @@ export function RangsorPanel({ mutato, rangsor, csoportok, tartomany, szamlalo, 
               </div>
             )}
           </>
-        ) : csoportok.length === 0 ? (
+        ) : csoportok.every((cs) => cs.orszagok.length === 0) ? (
           nincsTalalat
         ) : (
           csoportok.map((cs) => (
@@ -1404,9 +1400,14 @@ import { Button } from '../../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../components/ui/table';
 import { formatSzam } from '../../../../lib/szam';
-import { SZAM_MUTATOK, type Mutato } from '../../../../lib/terkep-mutatok';
+import { SKALA_SZINEK, SZAM_MUTATOK, type Mutato } from '../../../../lib/terkep-mutatok';
 import { cn } from '../../../../lib/utils';
 import { VS_MAX } from './useTerkepAllapot';
+
+/** A kiemelt sor (a térképen választott mutató) háttere: a térkép skálájának legvilágosabb színe. */
+const KIEMELT_HATTER = SKALA_SZINEK[0];
+/** A sorcímke-oszlop keskeny képernyőn is látszik (sticky), ezért saját, átlátszatlan háttere van. */
+const CIMKE_OSZLOP = 'sticky left-0 z-10 w-36 min-w-36 bg-card align-top whitespace-normal';
 
 function Sor({ cimke, kiemelt, orszagok, plusz, children }: {
   cimke: string;
@@ -1416,16 +1417,24 @@ function Sor({ cimke, kiemelt, orszagok, plusz, children }: {
   plusz: boolean;
   children: (o: TerkepOrszag) => ReactNode;
 }) {
+  // Inline style szándékosan: a kiemelés színe a térkép skálájából jön, és inline-ként a sor hover-hátterét is felülírja
+  // (a Tailwind `bg-muted/60` a `hover:bg-muted/50` alatt eltűnt volna). A sticky címke-cellára is kell, mert az saját háttérrel fed.
+  const hatter = kiemelt ? { background: KIEMELT_HATTER } : undefined;
   return (
-    <TableRow className={cn(kiemelt && 'bg-muted/60')}>
-      <TableCell className="font-medium whitespace-normal text-muted-foreground">{cimke}</TableCell>
+    <TableRow style={hatter}>
+      <TableHead scope="row" className={cn(CIMKE_OSZLOP, 'h-auto py-2 font-medium text-muted-foreground')} style={hatter}>
+        {cimke}
+      </TableHead>
       {orszagok.map((o) => <TableCell key={o.kod} className="align-top whitespace-normal">{children(o)}</TableCell>)}
       {plusz && <TableCell />}
     </TableRow>
   );
 }
 
-/** 2–4 ország adatai egymás mellett; a térképen választott számszerű mutató sora kiemelt, soronként a legnagyobb érték félkövér. */
+/**
+ * 2–4 ország adatai egymás mellett, a térkép alatt, teljes szélességben (a keskeny jobb panelen nem
+ * férne el). A térképen választott számszerű mutató sora kiemelt, soronként a legnagyobb érték félkövér.
+ */
 export function OsszehasonlitasPanel({ orszagok, jeloltek, mutato, onKivalaszt, onKivesz, onHozzaad, onTorol }: {
   /** A halmaz rekordjai a hozzáadás sorrendjében (2–4). */
   orszagok: TerkepOrszag[];
@@ -1437,7 +1446,7 @@ export function OsszehasonlitasPanel({ orszagok, jeloltek, mutato, onKivalaszt, 
   onHozzaad: (kod: string) => void;
   onTorol: () => void;
 }) {
-  const plusz = orszagok.length < VS_MAX;
+  const plusz = orszagok.length < VS_MAX && jeloltek.length > 0;
   const felirat = (o: TerkepOrszag) =>
     mutato.tipus === 'szam' ? `${o.nev} · ${formatSzam(mutato.ertek(o), mutato.utotag)}` : o.nev;
   return (
@@ -1445,19 +1454,26 @@ export function OsszehasonlitasPanel({ orszagok, jeloltek, mutato, onKivalaszt, 
       <CardHeader className="flex items-start gap-2">
         <div className="min-w-0">
           <CardTitle>Összehasonlítás</CardTitle>
-          <CardDescription>{orszagok.length} ország · a térkép mutatójának sora kiemelve</CardDescription>
+          <CardDescription>
+            {orszagok.length} ország · a térkép mutatójának sora kiemelve, soronként a legnagyobb érték félkövér
+          </CardDescription>
         </div>
-        <Button type="button" variant="outline" size="sm" className="ml-auto" onClick={onTorol}>Törlés</Button>
+        <Button type="button" variant="outline" size="sm" className="ml-auto" onClick={onTorol}>Összehasonlítás törlése</Button>
       </CardHeader>
-      <CardContent className="overflow-x-auto px-0">
+      <CardContent className="px-0">
         <Table className="text-xs">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-28" />
+              <TableHead className={cn(CIMKE_OSZLOP, 'h-10')} />
               {orszagok.map((o) => (
-                <TableHead key={o.kod} className="min-w-32">
+                <TableHead key={o.kod} className="min-w-36 max-w-44">
                   <span className="flex items-center gap-1">
-                    <button type="button" className="truncate font-semibold text-foreground hover:underline" onClick={() => onKivalaszt(o.kod)}>
+                    <button
+                      type="button"
+                      title={o.nev}
+                      className="min-w-0 truncate rounded-sm font-semibold text-foreground outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+                      onClick={() => onKivalaszt(o.kod)}
+                    >
                       {o.nev}
                     </button>
                     <Button type="button" variant="ghost" size="icon-xs" aria-label={`${o.nev} kivétele`} onClick={() => onKivesz(o.kod)}>
@@ -1467,7 +1483,7 @@ export function OsszehasonlitasPanel({ orszagok, jeloltek, mutato, onKivalaszt, 
                 </TableHead>
               ))}
               {plusz && (
-                <TableHead className="min-w-40">
+                <TableHead className="min-w-44">
                   <NativeSelect aria-label="Ország hozzáadása" value="" onChange={(e) => { if (e.target.value) onHozzaad(e.target.value); }}>
                     <option value="">+ Ország</option>
                     {jeloltek.map((o) => <option key={o.kod} value={o.kod}>{felirat(o)}</option>)}
@@ -1613,27 +1629,28 @@ A `<CardFooter>`-ben az „Üzenet a poszttal" link után, a `SzerkesztesGomb` e
 ```tsx
 'use client';
 
-import { useMemo } from 'react';
 import { useApp } from '../../../../components/AppShell';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { canEditProfil } from '../../../../lib/orszagprofil-jog';
-import { jeloltek, type Csoport, type Rangsor } from '../../../../lib/terkep-mutatok';
+import type { Csoport, Rangsor, Tartomany } from '../../../../lib/terkep-mutatok';
 import { OsszehasonlitasCsik } from './OsszehasonlitasCsik';
-import { OsszehasonlitasPanel } from './OsszehasonlitasPanel';
 import { ProfilKivonat } from './ProfilKivonat';
 import { RangsorPanel } from './RangsorPanel';
-import { VS_MIN, type TerkepAllapot } from './useTerkepAllapot';
+import type { TerkepAllapot } from './useTerkepAllapot';
 
 /**
- * A térkép melletti panel: `kod` → kivonat (fölötte a csík, ha van halmaz); különben `vs` ≥ VS_MIN →
- * összehasonlítás; különben rangsor (fölötte a csík, ha 1 elem van a halmazban).
+ * A térkép melletti panel: `kod` → kivonat, különben rangsor; fölötte az összehasonlítás-csík, ha a
+ * halmaz nem üres. Az összehasonlító tábla nem itt, hanem a térkép alatt, teljes szélességben van
+ * (TerkepNezet): 2–4 oszlop a keskeny panelen nem fér el.
  */
-export function TerkepPanel({ adatok, allapot, rangsor, csoportok, tartomany, szamlalo, ev, most, valasztEvAction }: {
+export function TerkepPanel({ adatok, allapot, vsOrszagok, rangsor, csoportok, tartomany, szamlalo, ev, most, valasztEvAction }: {
   adatok: TerkepOrszag[];
   allapot: TerkepAllapot;
+  /** A halmaz rekordjai a hozzáadás sorrendjében (a TerkepNezet számolja, a táblának is kell). */
+  vsOrszagok: TerkepOrszag[];
   rangsor: Rangsor | null;
   csoportok: Csoport[];
-  tartomany: { min: number; max: number } | null;
+  tartomany: Tartomany | null;
   szamlalo: string;
   ev: number;
   most: number;
@@ -1642,17 +1659,12 @@ export function TerkepPanel({ adatok, allapot, rangsor, csoportok, tartomany, sz
   const { user } = useApp();
   const { kod, vs, vsTele, mutato } = allapot;
   const sel = kod ? adatok.find((o) => o.kod === kod) ?? null : null;
-  const vsOrszagok = vs.map((k) => adatok.find((o) => o.kod === k)).filter((o): o is TerkepOrszag => !!o);
-  const jeloltLista = useMemo(() => jeloltek(adatok, vs, mutato), [adatok, vs, mutato]);
   const onVsToggle = (k: string) => (vs.includes(k) ? allapot.vsKivesz(k) : allapot.vsHozzaad(k));
-  const csik = vs.length > 0 && (
-    <OsszehasonlitasCsik orszagok={vsOrszagok} onKivesz={allapot.vsKivesz} onOsszehasonlit={allapot.osszehasonlit} />
-  );
 
-  if (sel) {
-    return (
-      <>
-        {csik}
+  return (
+    <>
+      {vsOrszagok.length > 0 && <OsszehasonlitasCsik orszagok={vsOrszagok} onKivesz={allapot.vsKivesz} />}
+      {sel ? (
         <ProfilKivonat
           o={sel}
           szerkeszthetEv={canEditProfil(user, sel.kod, ev, most)}
@@ -1666,36 +1678,19 @@ export function TerkepPanel({ adatok, allapot, rangsor, csoportok, tartomany, sz
           vsTele={vsTele}
           onVs={() => onVsToggle(sel.kod)}
         />
-      </>
-    );
-  }
-  if (vsOrszagok.length >= VS_MIN) {
-    return (
-      <OsszehasonlitasPanel
-        orszagok={vsOrszagok}
-        jeloltek={jeloltLista}
-        mutato={mutato}
-        onKivalaszt={allapot.kivalaszt}
-        onKivesz={allapot.vsKivesz}
-        onHozzaad={allapot.vsHozzaad}
-        onTorol={allapot.vsTorol}
-      />
-    );
-  }
-  return (
-    <>
-      {csik}
-      <RangsorPanel
-        mutato={mutato}
-        rangsor={rangsor}
-        csoportok={csoportok}
-        tartomany={tartomany}
-        szamlalo={szamlalo}
-        vs={vs}
-        vsTele={vsTele}
-        onKivalaszt={allapot.kivalaszt}
-        onVsToggle={onVsToggle}
-      />
+      ) : (
+        <RangsorPanel
+          mutato={mutato}
+          rangsor={rangsor}
+          csoportok={csoportok}
+          tartomany={tartomany}
+          szamlalo={szamlalo}
+          vs={vs}
+          vsTele={vsTele}
+          onKivalaszt={allapot.kivalaszt}
+          onVsToggle={onVsToggle}
+        />
+      )}
     </>
   );
 }
@@ -1741,11 +1736,12 @@ import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { canEditProfil } from '../../../../lib/orszagprofil-jog';
 import { IPARAGAK } from '../../../../lib/orszagprofil-szotar';
 import {
-  csoportok as szamolCsoportok, KATEGORIA_MUTATOK, MUTATOK, rangsor as szamolRangsor, szures, SZAM_MUTATOK,
+  csoportok as szamolCsoportok, jeloltek, KATEGORIA_MUTATOK, MUTATOK, rangsor as szamolRangsor, szures, SZAM_MUTATOK,
   tartomany as szamolTartomany,
 } from '../../../../lib/terkep-mutatok';
+import { OsszehasonlitasPanel } from './OsszehasonlitasPanel';
 import { TerkepPanel } from './TerkepPanel';
-import { useTerkepAllapot } from './useTerkepAllapot';
+import { useTerkepAllapot, VS_MIN } from './useTerkepAllapot';
 import { VilagTerkep } from './VilagTerkep';
 
 /** A „Mind" opció értéke: a Base UI Select üres stringet nem tud választható értékként kezelni. */
@@ -1768,12 +1764,18 @@ export function TerkepNezet({
   const { user } = useApp();
   const sajatKod = user.role === 'attase' ? user.orszag : null;
   const allapot = useTerkepAllapot(adatok, kezdoKod);
-  const { mutato, iparag } = allapot;
+  const { mutato, iparag, vs } = allapot;
 
   // A rangsor/csoportok a szűrt halmazon, a tartomány (színskála) szándékosan a szűretlenen.
   const rangsor = useMemo(() => (mutato.tipus === 'szam' ? szamolRangsor(adatok, mutato, iparag) : null), [adatok, mutato, iparag]);
   const csoportok = useMemo(() => (mutato.tipus === 'kategoria' ? szamolCsoportok(adatok, mutato, iparag) : []), [adatok, mutato, iparag]);
   const tartomany = useMemo(() => (mutato.tipus === 'szam' ? szamolTartomany(adatok, mutato) : null), [adatok, mutato]);
+  // Az összehasonlítás-halmaz rekordjai és a „+ Ország" jelöltjei; a `vs` csak tényleges változásnál új példány.
+  const vsOrszagok = useMemo(
+    () => vs.map((k) => adatok.find((o) => o.kod === k)).filter((o): o is TerkepOrszag => !!o),
+    [adatok, vs],
+  );
+  const jeloltLista = useMemo(() => jeloltek(adatok, vs, mutato), [adatok, vs, mutato]);
   const szamlalo = rangsor
     ? `${rangsor.sorok.length} ország adattal · ${rangsor.adatNelkul.length} adat nélkül`
     : iparag
@@ -1781,80 +1783,95 @@ export function TerkepNezet({
       : `${adatok.length} poszt · ${adatok.filter((o) => o.allapot === 'friss').length} profil (${ev})`;
 
   return (
-    <div className="flex max-w-[1600px] flex-wrap items-start gap-4">
-      <Card className="min-w-0 flex-[1_1_560px] overflow-hidden">
-        <CardHeader className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Label id="mutato-label" htmlFor="mutato">Mutató</Label>
-            <Select value={mutato.kulcs} onValueChange={(v) => allapot.setMutatoKulcs(v ?? '')} items={MUTATO_ITEMS}>
-              <SelectTrigger id="mutato" aria-labelledby="mutato-label mutato" className="w-64">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Kategória</SelectLabel>
-                  {KATEGORIA_MUTATOK.map((m) => <SelectItem key={m.kulcs} value={m.kulcs}>{m.cimke}</SelectItem>)}
-                </SelectGroup>
-                <SelectGroup>
-                  <SelectLabel>Számszerű</SelectLabel>
-                  {SZAM_MUTATOK.map((m) => <SelectItem key={m.kulcs} value={m.kulcs}>{m.cimke}</SelectItem>)}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center gap-2">
-            <Label id="iparag-szuro-label" htmlFor="iparag-szuro">Iparág</Label>
-            {/* A Select onValueChange null-t is adhat (törlés); a „Mind" és a null egyaránt „nincs szűrő". */}
-            <Select value={iparag || MIND} onValueChange={(v) => allapot.setIparag(!v || v === MIND ? '' : v)} items={IPARAG_ITEMS}>
-              <SelectTrigger id="iparag-szuro" aria-labelledby="iparag-szuro-label iparag-szuro" className="w-64">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={MIND}>Mind</SelectItem>
-                {IPARAGAK.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          {/* A számláló szöveg a rangsor-panel alcíme (nem duplázzuk a fejlécben). */}
-          {sajatKod && (
-            <SzerkesztesGomb
-              kod={sajatKod}
-              most={most}
-              szerkeszthetEv={canEditProfil(user, sajatKod, ev, most)}
-              szerkeszthetMost={canEditProfil(user, sajatKod, most, most)}
-              action={valasztEvAction}
-              felirat="Saját országprofil"
-              className="ml-auto"
+    <div className="flex max-w-[1600px] flex-col gap-4">
+      <div className="flex flex-wrap items-start gap-4">
+        <Card className="min-w-0 flex-[1_1_560px] overflow-hidden">
+          <CardHeader className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Label id="mutato-label" htmlFor="mutato">Mutató</Label>
+              <Select value={mutato.kulcs} onValueChange={(v) => allapot.setMutatoKulcs(v ?? '')} items={MUTATO_ITEMS}>
+                <SelectTrigger id="mutato" aria-labelledby="mutato-label mutato" className="w-64">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Kategória</SelectLabel>
+                    {KATEGORIA_MUTATOK.map((m) => <SelectItem key={m.kulcs} value={m.kulcs}>{m.cimke}</SelectItem>)}
+                  </SelectGroup>
+                  <SelectGroup>
+                    <SelectLabel>Számszerű</SelectLabel>
+                    {SZAM_MUTATOK.map((m) => <SelectItem key={m.kulcs} value={m.kulcs}>{m.cimke}</SelectItem>)}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label id="iparag-szuro-label" htmlFor="iparag-szuro">Iparág</Label>
+              {/* A Select onValueChange null-t is adhat (törlés); a „Mind" és a null egyaránt „nincs szűrő". */}
+              <Select value={iparag || MIND} onValueChange={(v) => allapot.setIparag(!v || v === MIND ? '' : v)} items={IPARAG_ITEMS}>
+                <SelectTrigger id="iparag-szuro" aria-labelledby="iparag-szuro-label iparag-szuro" className="w-64">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={MIND}>Mind</SelectItem>
+                  {IPARAGAK.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            {/* A számláló szöveg a rangsor-panel alcíme (nem duplázzuk a fejlécben). */}
+            {sajatKod && (
+              <SzerkesztesGomb
+                kod={sajatKod}
+                most={most}
+                szerkeszthetEv={canEditProfil(user, sajatKod, ev, most)}
+                szerkeszthetMost={canEditProfil(user, sajatKod, most, most)}
+                action={valasztEvAction}
+                felirat="Saját országprofil"
+                className="ml-auto"
+              />
+            )}
+          </CardHeader>
+          <CardContent className="p-0">
+            <VilagTerkep
+              adatok={adatok}
+              mutato={mutato}
+              iparag={iparag}
+              kivalasztott={allapot.kod}
+              osszehasonlitas={vs}
+              tartomany={tartomany}
+              csoportok={csoportok}
+              rangsor={rangsor}
+              onSelect={allapot.kivalaszt}
             />
-          )}
-        </CardHeader>
-        <CardContent className="p-0">
-          <VilagTerkep
+          </CardContent>
+        </Card>
+        <div className="flex min-w-0 max-w-[420px] flex-[1_1_330px] flex-col gap-4">
+          <TerkepPanel
             adatok={adatok}
-            mutato={mutato}
-            iparag={iparag}
-            kivalasztott={allapot.kod}
-            osszehasonlitas={allapot.vs}
-            tartomany={tartomany}
-            csoportok={csoportok}
+            allapot={allapot}
+            vsOrszagok={vsOrszagok}
             rangsor={rangsor}
-            onSelect={allapot.kivalaszt}
+            csoportok={csoportok}
+            tartomany={tartomany}
+            szamlalo={szamlalo}
+            ev={ev}
+            most={most}
+            valasztEvAction={valasztEvAction}
           />
-        </CardContent>
-      </Card>
-      <div className="flex min-w-0 max-w-[420px] flex-[1_1_330px] flex-col gap-4">
-        <TerkepPanel
-          adatok={adatok}
-          allapot={allapot}
-          rangsor={rangsor}
-          csoportok={csoportok}
-          tartomany={tartomany}
-          szamlalo={szamlalo}
-          ev={ev}
-          most={most}
-          valasztEvAction={valasztEvAction}
-        />
+        </div>
       </div>
+      {/* Az összehasonlító tábla a térkép alatt, teljes szélességben: 2–4 oszlop a keskeny panelen nem férne el. */}
+      {vsOrszagok.length >= VS_MIN && (
+        <OsszehasonlitasPanel
+          orszagok={vsOrszagok}
+          jeloltek={jeloltLista}
+          mutato={mutato}
+          onKivalaszt={allapot.kivalaszt}
+          onKivesz={allapot.vsKivesz}
+          onHozzaad={allapot.vsHozzaad}
+          onTorol={allapot.vsTorol}
+        />
+      )}
     </div>
   );
 }
@@ -1907,9 +1924,9 @@ Expected: 0 típushiba, a build zöld. Ha a build nem létező `app/...` modulra
 5. Mutató-váltás GERD-re: `$B click "#mutato"`, majd `$B click "text=K+F ráfordítás (GERD)"` (ha a szöveg-szelektor nem talál, `$B snapshot -i` és a listaelem ref-jére kattints). `$B text`.
    Expected: „Rangsor · K+F ráfordítás (GERD)", „N ország adattal · M adat nélkül", a jelmagyarázatban a mutató címe és két érték `%`-kal (ha a DB-ben van GERD – a KR 2026 profilban van kfiRendszer blokk), sorok „1." helyezéssel.
 6. Iparág-szűrő: `$B click "#iparag-szuro"`, válassz egy iparágat, `$B text` → a rangsor rövidül vagy „Ehhez a mutatóhoz még nincs adat", a számláló változik. Állítsd vissza „Mind"-re.
-7. Kijelölés a rangsorból: `$B click` az első ország nevére a panelen → a kivonat kártya jelenik meg („Teljes profil", „Összehasonlításhoz", a mutató sora „K+F ráfordítás (GERD): …"). `$B click "text=Összehasonlításhoz"` → a gomb felirata „Kivétel az összehasonlításból", fölötte a csík „Összehasonlítás: <ország>" és „Válassz még egy országot".
-8. `$B click "[aria-label=Bezárás]"` → rangsor a csíkkal; `$B click` egy másik ország „+" gombjára (`[aria-label$='hozzáadása az összehasonlításhoz']` első találat) → az összehasonlító tábla jelenik meg 2 oszloppal: `$B text` tartalmazza „Összehasonlítás", „2 ország", „Attasé", „Állapot", „Kiemelt iparágak", „Tagságok", „KFI-prioritások", és a „+ Ország" select.
-9. `$B select "select[aria-label='Ország hozzáadása']" <harmadik kód>` (a kódot `$B js "[...document.querySelectorAll('select[aria-label=\"Ország hozzáadása\"] option')].map(o=>o.value).slice(1,2)"`-vel olvasd ki) → 3 oszlop. `$B click "text=Törlés"` → vissza a rangsor.
+7. Kijelölés a rangsorból: `$B click` az első ország nevére a panelen → a kivonat kártya jelenik meg („Teljes profil", „Összehasonlításhoz", a mutató sora „K+F ráfordítás (GERD): …"). `$B click "text=Összehasonlításhoz"` → a gomb felirata „Kivétel az összehasonlításból", fölötte a csík „Összehasonlítás: <ország>" és „Válassz még egy országot" (gomb nincs a csíkon: a tábla magától jelenik meg a térkép alatt).
+8. `$B click "[aria-label=Bezárás]"` → rangsor a csíkkal; `$B click` egy másik ország „+" gombjára (`[aria-label$='hozzáadása az összehasonlításhoz']` első találat) → a csík szövege „A tábla a térkép alatt", és a térkép alatt megjelenik az összehasonlító tábla 2 oszloppal: `$B text` tartalmazza „Összehasonlítás", „2 ország", „Attasé", „Állapot", „Kiemelt iparágak", „Tagságok", „KFI-prioritások", és a „+ Ország" select; a jobb panelen közben a rangsor marad.
+9. `$B select "select[aria-label='Ország hozzáadása']" <harmadik kód>` (a kódot `$B js "[...document.querySelectorAll('select[aria-label=\"Ország hozzáadása\"] option')].map(o=>o.value).slice(1,2)"`-vel olvasd ki) → 3 oszlop. `$B click "text=Összehasonlítás törlése"` → a tábla eltűnik, a csík is.
 10. Zoom: `$B js "document.querySelector('svg[role=img] > g').getAttribute('transform')"` → `null`; `$B click "[aria-label=Nagyítás]"`, várj 0,5 s (`$B wait --load` vagy `sleep 1`), ugyanaz a `js` → `translate(…) scale(1.5)`; `$B click "text=Európa"` → a transform `scale` értéke 1-nél nagyobb és a gomb `aria-pressed="true"`; `$B click "[aria-label=Alaphelyzet]"` → `translate(0,0) scale(1)`.
 11. Tooltip: `$B hover "svg[role=img] g g"` (az első pin) → `$B text` tartalmaz egy ország nevet és „Kiemelt:" vagy „nincs aktív attasé" sort a `[role=tooltip]`-ben: `$B js "document.querySelector('[role=tooltip]')?.innerText"`.
 12. `$B console --errors` → üres.
@@ -1953,7 +1970,7 @@ A `**Térkép.**`-kel kezdődő bekezdés teljes új szövege:
 A `Route-ok: \`/terkep\` (…)` zárójeles részt cseréld erre (a `/orszagprofil/[kod]` rész változatlan marad):
 
 ```
-`/terkep` (server page: `listTerkepAdat` + a fejléc évét (cookie) mutatja, `?o=` marad; `terkep/components/TerkepNezet` kliens: **Mutató** `Select` két csoporttal (Kategória: Kiemelt iparág, Profil állapota; Számszerű: GDP/fő, GDP, GDP-növekedés, lakosság, GERD, kitöltöttség, rendezvények száma – `MUTATOK`), iparág-szűrő `Select` minden mutatónál – a „Mind" értéke `__mind`, mert a Base UI Select üres stringet nem választ –, `VilagTerkep`, és a `TerkepPanel`: az állapot a `useTerkepAllapot` hookban (`kod` egyes kijelölés, `vs` összehasonlítás-halmaz legfeljebb `VS_MAX`=4, `mutato`, `iparag`), panel-sorrend `kod` → `ProfilKivonat` (mutató-sor + „Összehasonlításhoz" gomb), különben `vs` ≥ 2 → `OsszehasonlitasPanel` (oszlop országonként, a térkép mutatójának sora kiemelt, soronként a legnagyobb félkövér, „+ Ország" `NativeSelect` a `jeloltek()` listából, „Törlés" = bezárás), különben `RangsorPanel` (számszerű: hely/sáv/érték, „Nincs adat" névsor; kategorikus: csoportok); az `OsszehasonlitasCsik` chipjei a kivonat és a rangsor fölött, ha a halmaz nem üres; attasénak „Saját országprofil" gomb)
+`/terkep` (server page: `listTerkepAdat` + a fejléc évét (cookie) mutatja, `?o=` marad; `terkep/components/TerkepNezet` kliens: **Mutató** `Select` két csoporttal (Kategória: Kiemelt iparág, Profil állapota; Számszerű: GDP/fő, GDP, GDP-növekedés, lakosság, GERD, kitöltöttség, rendezvények száma – `MUTATOK`), iparág-szűrő `Select` minden mutatónál – a „Mind" értéke `__mind`, mert a Base UI Select üres stringet nem választ –, `VilagTerkep`, és a `TerkepPanel`: az állapot a `useTerkepAllapot` hookban (`kod` egyes kijelölés, `vs` összehasonlítás-halmaz `VS_MIN`=2..`VS_MAX`=4, `vsTele`, `mutato`, `iparag`; a `?o=` változását a hook kezeli, a page nem ad `key`-t), a jobb panel `kod` → `ProfilKivonat` (mutató-sor + „Összehasonlításhoz" gomb), különben `RangsorPanel` (számszerű: két soros sorok hely/név/érték + sáv az `arany()`-ból, „Nincs adat" névsor; kategorikus: „Országok · …" csoportok; üres állapotok szűrés vs. adat szerint), fölötte az `OsszehasonlitasCsik` chipjei + állapotszöveg, ha a halmaz nem üres; az `OsszehasonlitasPanel` a térkép **alatt**, teljes szélességben, ha `vs.length >= VS_MIN` (oszlop országonként, sticky `th scope="row"` címke-oszlop, a térkép mutatójának sora kiemelt, soronként a legnagyobb félkövér, „+ Ország" `NativeSelect` a `jeloltek()` listából, „Összehasonlítás törlése"); attasénak „Saját országprofil" gomb)
 ```
 
 - [ ] **Step 3: CLAUDE.md – „Amire figyelni kell" pont**
@@ -1962,6 +1979,7 @@ A `- A \`/terkep\` page a \`TerkepNezet\`-et \`key={kezdoKod}\`-dal rendereli…
 
 ```
 - A `/terkep` page **nem** ad `key`-t a `TerkepNezet`-nek: a `?o=` változását (vissza/előre, oldalsáv, „Vissza a térképre") a `useTerkepAllapot` kezeli render közben (a kijelölés a kezdő kódra vált, a mutató, a szűrő és az összehasonlítás-halmaz megmarad), és ugyanígy törli a kijelölést és a halmaz nem létező elemeit, ha az ország eltűnik az új év adataiból. A mutató, a szűrő és az összehasonlítás-halmaz kliens-állapot, nem URL-paraméter.
+- Letiltott shadcn/Base UI `Button`-on a `title` sosem jelenik meg (natív `disabled` + `disabled:pointer-events-none`): a magyarázatot máshol kell kiírni (a térképen az `OsszehasonlitasCsik` szövege).
 ```
 
 - [ ] **Step 4: README.md**
@@ -1999,3 +2017,4 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - **Task 4 (minőségi review nyomán):** a `regioTranszform` maga tartja be a k ≥ 1 és a `translateExtent` korlátot (a `zoom.transform` nem alkalmaz constrain-t – az „Amerika" nézet 209 egységgel lelógott és az első húzásnál ugrott); a **jelmagyarázat a térkép alá, normál folyásba** került (lebegve elnyelte Dél-Amerika egérműveleteit), így nincs `max-h`/görgetés; a betöltő/hiba helykitöltő `aspect-[960/505]` (nincs layout-ugrás); a tooltip csak akkor fordul a kurzor alá, ha alatta is van hely (`HoverAllapot.magassag`); a `+`/`−` gomb törli az aktív régiót; a pinek külön `<g data-pinek>` rétegben, a sugár-effect csak `adatok` változásra fut; a sraffozás `<pattern>`-je a zoom-kezelőben `scale(1/k)`-val visszaskálázva; átlátszó `<rect>` az `<svg>` alján törli a tooltipet a gömbön kívüli sávban; a jelmagyarázat sraffja `135deg` (a `<pattern>` irányával azonos), `backgroundColor`; `NEV_GEO_SZERINT: ReadonlyMap`.
 - **Task 5 (minőségi review nyomán):** a `useTerkepAllapot` a `?o=` (kezdoKod) változására render közben frissíti a kijelölést (előző érték tárolva), ezért a `page.tsx` **nem** ad `key`-t a nézetnek – a „Teljes profil" → „Vissza a térképre" út nem dobja el a mutatót, a szűrőt és az összehasonlítás-halmazt (Task 9 Step 1b). A hook `vsTele`-t ad (Task 6/8 ezt kapja propként), `VS_MIN = 2`, `vs` `readonly`, `useState<MutatoKulcs>`, lusta kezdőérték, `'use client'`. A csík chipje `outline` változat (a `secondary` a `bg-muted/40` sávon nem látszott), a × gomb `focus-visible` gyűrűvel, a Badge `h-6 overflow-visible`. A tooltip a tágasabb oldalra kerül (`magassag - y > y`), nincs fix küszöb; a jelmagyarázat kategorikus ágon is a mutató címével kezd, a gradiens-sor `min-w-0`/`shrink`.
 - **Task 6 (minőségi review nyomán):** a rangsor sora két soros (hely + név + érték a gombban, alatta teljes szélességű sáv; `title` a néven, sor-szintű hover, fókuszgyűrű, a minimum sávja 2 %); a kategorikus ág címe „Országok · …"; üres állapotok: „Egy ország sem felel meg a szűrőnek." (a szűrt halmaz üres) vs. „Ehhez a mutatóhoz még nincs adat."; a `sav` tartaléka `() => 0`; a letiltott `+` gombon nincs `title` (Base UI natív `disabled` + `pointer-events-none`: sosem látszana), a „Legfeljebb 4 ország" feliratot az `OsszehasonlitasCsik` mutatja tele halmaznál; a hookban `ujKod` őrző-sorrend (a friss `kezdoKod`-ot nem írja felül a régi kijelölés törlése); a `szamlalo` csak a panel alcíme, a fejlécből kikerül (Task 9), a `SzerkesztesGomb` `ml-auto`.
+- **Task 7 (minőségi review nyomán, spec-szintű döntés):** az **összehasonlító tábla a térkép alatt, teljes szélességben** jelenik meg (`TerkepNezet` rendereli, ha `vs.length >= VS_MIN`), nem a jobb panelen: 2–4 oszlop + címke + „+ Ország" 640–765 px széles, a 330–420 px-es panelen mindig görgetett volna, a sorcímkék elgördültek. A jobb panel sorrendje egyszerűsödik: `kod` → kivonat, különben rangsor; a csík csak chipek + állapotszöveg („Válassz még egy országot" / „A tábla a térkép alatt" / „Legfeljebb 4 ország"), az „Összehasonlítás (n)" gomb és a hook `osszehasonlit()` műveletje megszűnt. A táblában: sticky, átlátszatlan hátterű címke-oszlop (`th scope="row"`), a fejléc-cellák `min-w-36 max-w-44` + `truncate` + `title`, a kiemelt sor inline `SKALA_SZINEK[0]` háttérrel (a `bg-muted/60` a hover alatt eltűnt), „+ Ország" csak ha van jelölt, „Összehasonlítás törlése" felirat, a leírás a félkövér-szabályt is mondja, nincs dupla `overflow-x-auto`. `RangsorPanel`: a kategorikus üres állapot `csoportok.every(...)`-vel (a „Profil állapota" mindig 3 csoportot ad).
