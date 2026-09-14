@@ -1431,12 +1431,13 @@ function Sor({ cimke, kiemelt, orszagok, plusz, children }: {
   plusz: boolean;
   children: (o: TerkepOrszag) => ReactNode;
 }) {
-  // Inline style szándékosan: a kiemelés színe a térkép skálájából jön, és inline-ként a sor hover-hátterét is felülírja
-  // (a Tailwind `bg-muted/60` a `hover:bg-muted/50` alatt eltűnt volna). A sticky címke-cellára is kell, mert az saját háttérrel fed.
+  // Inline style szándékosan: a kiemelés színe a térkép skálájából jön. A sorok nem interaktívak, ezért nincs
+  // hover-szín (a sticky címke-cella saját, átlátszatlan háttere nem tudná követni); a kiemelés a címke-cellára
+  // is kell, mert az fedi a sor hátterét.
   const hatter = kiemelt ? { background: KIEMELT_HATTER } : undefined;
   return (
     <TableRow className="hover:bg-transparent" style={hatter}>
-      <TableHead scope="row" className={cn(CIMKE_OSZLOP, `h-auto py-2 font-medium ${kiemelt ? 'text-foreground' : 'text-muted-foreground'}`)} style={hatter}>
+      <TableHead scope="row" className={cn(CIMKE_OSZLOP, 'h-auto py-2 font-medium', kiemelt ? 'text-foreground' : 'text-muted-foreground')} style={hatter}>
         {cimke}
       </TableHead>
       {orszagok.map((o) => <TableCell key={o.kod} className="align-top whitespace-normal">{children(o)}</TableCell>)}
@@ -1572,7 +1573,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 
 Öt új prop (`mutato`, `rangsor`, `benneVs`, `vsTele`, `onVs`), a mutató értéke és helyezése az `ertekEsHely()`-ből egy
 színezett sávban a `CardContent` elején, a láblécben ikonos „Összehasonlítás" / „Összehasonlításban" toggle
-(`aria-pressed`, letiltva, ha tele a halmaz és nincs benne; `title` nélkül – letiltott gombon nem látszana).
+(a felirat viszi az állapotot, mint a `RangsorPanel` „+"/pipa `aria-label`-je; letiltva, ha tele a halmaz és nincs benne; `title` nélkül – letiltott gombon nem látszana).
 
 ```tsx
 'use client';
@@ -1621,6 +1622,8 @@ export function ProfilKivonat({
   ].filter(Boolean).join(' · ');
   // A térképen választott számszerű mutató értéke és helyezése (a szűrt rangsorban); undefined = kategorikus mutató.
   const ertek = mutato.tipus === 'szam' ? ertekEsHely(o, mutato, rangsor) : undefined;
+  // Van-e helyezése (a szűrő által kizárt ország nincs a rangsorban, de értéke lehet).
+  const helyezett = !!rangsor?.sorok.some((s) => s.o.kod === o.kod);
   return (
     <Card>
       <CardHeader>
@@ -1645,13 +1648,19 @@ export function ProfilKivonat({
       <CardContent className="flex flex-col gap-4">
         {ertek !== undefined && (
           // Inline style szándékosan: a sáv színe a térkép skálájának legvilágosabb fokozata (mint az
-          // összehasonlító tábla kiemelt sora) – ez köti a sort a térkép aktuális színezéséhez.
-          <p className="rounded-md px-2 py-1 text-sm text-foreground" style={{ background: SKALA_SZINEK[0] }}>
+          // összehasonlító tábla kiemelt sora) – ez köti a sort a térkép aktuális színezéséhez. Érték
+          // nélkül nincs sáv: a térkép sem színezi az országot, és a halvány szöveg a színen nem olvasható.
+          <p className="rounded-md px-2 py-1 text-sm text-foreground" style={ertek === null ? undefined : { background: SKALA_SZINEK[0] }}>
             <span>{mutato.cimke}: </span>
             {ertek === null ? (
               <span className="text-muted-foreground">nincs adat</span>
             ) : (
-              <span className="font-mono font-medium" title="Érték és helyezés a jelenlegi szűrés szerinti rangsorban">{ertek}</span>
+              <span
+                className="font-mono font-medium"
+                title={helyezett ? 'Érték és helyezés a jelenlegi szűrés szerinti rangsorban' : 'Érték – a szűrés miatt az ország nincs a rangsorban'}
+              >
+                {ertek}
+              </span>
             )}
           </p>
         )}
@@ -1695,7 +1704,6 @@ export function ProfilKivonat({
         <Button
           type="button"
           variant="outline"
-          aria-pressed={benneVs}
           disabled={!benneVs && vsTele}
           onClick={onVs}
         >
@@ -2016,7 +2024,7 @@ Expected: 0 típushiba, a build zöld. Ha a build nem létező `app/...` modulra
 5. Mutató-váltás GERD-re: `$B click "#mutato"`, majd `$B click "text=K+F ráfordítás (GERD)"` (ha a szöveg-szelektor nem talál, `$B snapshot -i` és a listaelem ref-jére kattints). `$B text`.
    Expected: „Rangsor · K+F ráfordítás (GERD)", „N ország adattal · M adat nélkül", a jelmagyarázatban a mutató címe és két érték `%`-kal (ha a DB-ben van GERD – a KR 2026 profilban van kfiRendszer blokk), sorok „1." helyezéssel.
 6. Iparág-szűrő: `$B click "#iparag-szuro"`, válassz egy iparágat, `$B text` → a rangsor rövidül vagy „Ehhez a mutatóhoz még nincs adat", a számláló változik. Állítsd vissza „Mind"-re.
-7. Kijelölés a rangsorból: `$B click` az első ország nevére a panelen → a kivonat kártya jelenik meg („Teljes profil", „Összehasonlítás" gomb, a mutató sáv „K+F ráfordítás (GERD): …"). `$B click "button[aria-pressed=false]"` → a gomb felirata „Összehasonlításban" (`button[aria-pressed=true]`), fölötte a csík „Összehasonlítás: <ország>" és „Válassz még egy országot" (gomb nincs a csíkon: a tábla magától jelenik meg a térkép alatt).
+7. Kijelölés a rangsorból: `$B click` az első ország nevére a panelen → a kivonat kártya jelenik meg („Teljes profil", „Összehasonlítás" gomb, a mutató sáv „K+F ráfordítás (GERD): …"). kattints az „Összehasonlítás" gombra a kivonat láblécében (`$B snapshot -i` ref-jével; a `text=` a csík „Összehasonlítás:" feliratát is találhatja) → a gomb felirata „Összehasonlításban", fölötte a csík „Összehasonlítás: <ország>" és „Válassz még egy országot" (gomb nincs a csíkon: a tábla magától jelenik meg a térkép alatt).
 8. `$B click "[aria-label=Bezárás]"` → rangsor a csíkkal; `$B click` egy másik ország „+" gombjára (`[aria-label$='hozzáadása az összehasonlításhoz']` első találat) → a csík szövege „A tábla a térkép alatt", és a térkép alatt megjelenik az összehasonlító tábla 2 oszloppal: `$B text` tartalmazza „Összehasonlítás", „2 ország", „Attasé", „Állapot", „Kiemelt iparágak", „Tagságok", „KFI-prioritások", és a „+ Ország" select; a jobb panelen közben a rangsor marad.
 9. `$B select "select[aria-label='Ország hozzáadása']" <harmadik kód>` (a kódot `$B js "[...document.querySelectorAll('select[aria-label=\"Ország hozzáadása\"] option')].map(o=>o.value).slice(1,2)"`-vel olvasd ki) → 3 oszlop. `$B click "text=Összehasonlítás törlése"` → a tábla eltűnik, a csík is.
 10. Zoom: `$B js "document.querySelector('svg[role=img] > g').getAttribute('transform')"` → `null`; `$B click "[aria-label=Nagyítás]"`, várj 0,5 s (`$B wait --load` vagy `sleep 1`), ugyanaz a `js` → `translate(…) scale(1.5)`; `$B click "text=Európa"` → a transform `scale` értéke 1-nél nagyobb és a gomb `aria-pressed="true"`; `$B click "[aria-label=Alaphelyzet]"` → `translate(0,0) scale(1)`.
@@ -2111,3 +2119,5 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - **Task 6 (minőségi review nyomán):** a rangsor sora két soros (hely + név + érték a gombban, alatta teljes szélességű sáv; `title` a néven, sor-szintű hover, fókuszgyűrű, a minimum sávja 2 %); a kategorikus ág címe „Országok · …"; üres állapotok: „Egy ország sem felel meg a szűrőnek." (a szűrt halmaz üres) vs. „Ehhez a mutatóhoz még nincs adat."; a `sav` tartaléka `() => 0`; a letiltott `+` gombon nincs `title` (Base UI natív `disabled` + `pointer-events-none`: sosem látszana), a „Legfeljebb 4 ország" feliratot az `OsszehasonlitasCsik` mutatja tele halmaznál; a hookban `ujKod` őrző-sorrend (a friss `kezdoKod`-ot nem írja felül a régi kijelölés törlése); a `szamlalo` csak a panel alcíme, a fejlécből kikerül (Task 9), a `SzerkesztesGomb` `ml-auto`.
 - **Task 7 (minőségi review nyomán, spec-szintű döntés):** az **összehasonlító tábla a térkép alatt, teljes szélességben** jelenik meg (`TerkepNezet` rendereli, ha `vs.length >= VS_MIN`), nem a jobb panelen: 2–4 oszlop + címke + „+ Ország" 640–765 px széles, a 330–420 px-es panelen mindig görgetett volna, a sorcímkék elgördültek. A jobb panel sorrendje egyszerűsödik: `kod` → kivonat, különben rangsor; a csík csak chipek + állapotszöveg („Válassz még egy országot" / „A tábla a térkép alatt" / „Legfeljebb 4 ország"), az „Összehasonlítás (n)" gomb és a hook `osszehasonlit()` műveletje megszűnt. A táblában: sticky, átlátszatlan hátterű címke-oszlop (`th scope="row"`), a fejléc-cellák `min-w-36 max-w-44` + `truncate` + `title`, a kiemelt sor inline `SKALA_SZINEK[0]` háttérrel (a `bg-muted/60` a hover alatt eltűnt), „+ Ország" csak ha van jelölt, „Összehasonlítás törlése" felirat, a leírás a félkövér-szabályt is mondja, nincs dupla `overflow-x-auto`. `RangsorPanel`: a kategorikus üres állapot `csoportok.every(...)`-vel (a „Profil állapota" mindig 3 csoportot ad).
 - **Task 8 (minőségi review nyomán):** a mutató-sor formázása („3,3 % · 1./14") közös `ertekEsHely()` a `lib/terkep-mutatok.ts`-ben (a tooltip és a kivonat is ezt hívja); a kivonat mutató-sora színezett sáv (`SKALA_SZINEK[0]`, mint a tábla kiemelt sora) `title`-lel a helyezés magyarázatához; a lábléc gombja ikonos toggle („+ Összehasonlítás" / „✓ Összehasonlításban", `aria-pressed`); a hozzáad/kivesz szabály a hookban `vsValt(kod)` (a `TerkepPanel` és a `RangsorPanel` ezt kapja); az összehasonlító táblában a sorok `hover:bg-transparent` (a sticky címke-cella nem követte a hover-t), a név-gomb `max-w-40` (motorfüggetlen csonkolás), a kiemelt sor címkéje `text-foreground`.
+- **Task 8 utó-finomítás (re-review nyomán):** a kivonat mutató-sávja csak értékkel színezett (érték nélkül a halvány „nincs adat" a színen 4,07:1 kontrasztú lett volna), a `title` a helyezés meglétéhez igazodik (`helyezett`), a toggle-gombon nincs `aria-pressed` (a változó felirat viszi az állapotot – egy minta a `RangsorPanel` gombjával); az összehasonlító tábla sor-kommentje a hover hiányát magyarázza, `cn` variadikus formában.
+- **Task 9:** a böngészős ellenőrzés adminnal és attaséval rendben (build zöld, konzolhiba nincs, CDN-kérés nincs, 179 path, zoom/régió/tooltip/rangsor/szűrő/kivonat/összehasonlítás 2 oszloppal). A 3. oszlop és a „+ Ország" választó a lokális DB-vel (2 térképes ország: KR, JP) nem próbálható – a választó ilyenkor helyesen el sem jelenik; ezt egy ideiglenes harmadik attaséval a záró ellenőrzés fedi le.
