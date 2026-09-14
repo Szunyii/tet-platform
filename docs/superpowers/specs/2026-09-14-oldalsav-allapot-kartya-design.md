@@ -114,3 +114,12 @@ page/action oldalán van).
   a felhasználói blokk új helye.
 - README `components/AppShell.tsx` sora: sidebar (menü, állapot-kártya, felhasználó, kijelentkezés),
   fejléc (cím, ciklusválasztó).
+
+## Eltérések a megvalósításban (a review-k után)
+
+- A `LogoutForm` a keskeny sávhoz igazodott (`flexWrap`, teljes szélességű gomb, világos-piros hiba a gomb fölött) – a „nem változik" a viselkedésre igaz, a stílusra nem.
+- Az `<aside>` `overflowY: auto`: alacsony ablaknál a Kijelentkezés gomb elérhető marad (a fix `100vh` sáv korábban nem görgetett).
+- Akadálymentesség: a link nyila és az avatar-monogram `aria-hidden`.
+- A kártya linkjének nincs hover-állapota (inline `color`, mint a menü linkjeinél); a „hover fehér" nem teljesül, a meglévő sidebar-konvencióval egyezik.
+- `getUtolsoEv` és `listTerkepAdat` React `cache()`-ben (`db/queries/orszagprofil.ts`): a layout és a page kérésenként kétszer hívta azonos argumentummal.
+- A layout fejléc-kommentje az állapot-kártyát is felsorolja a késhető elemek között.

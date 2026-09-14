@@ -317,3 +317,9 @@ git commit -m "docs(shell): oldalsáv állapot-kártya és felhasználói blokk 
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
+
+---
+
+## Megvalósítási eltérések (a review-k után, végleges kód)
+
+Lásd a spec „Eltérések a megvalósításban" szakaszát. Röviden: `aria-hidden` a link nyilán és az avataron; `overflowY: auto` az `<aside>`-on; `getUtolsoEv`/`listTerkepAdat` React `cache()`-ben (+ „ne mutáld" JSDoc); a layout kommentje az állapot-kártyát is említi; a CLAUDE.md `cache()` mondata a lekérdezés-lista után önálló mondat. A browser-ellenőrzés adminnal 2/0/0 (2026), attaséval JP „Adott évi profil" + Szerkesztés (2026) / Megnyitás (2025).

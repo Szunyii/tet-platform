@@ -118,7 +118,8 @@ export interface TerkepOrszag {
  * viszonyít: van profil az évre → friss, csak régebbi → elavult, semmi → nincs (ev = aktuális
  * évnél ez a korábbi viselkedés). Két lekérdezés + JS-összefésülés; az orszagprofil tábla
  * országok × évek méretű, minden sorát beolvassuk – ezen a skálán rendben van.
- * React.cache: egy kérésen belül (layout + page) azonos argumentummal egyszer fut le.
+ * React.cache: egy kérésen belül (layout + page) azonos argumentummal egyszer fut le, a hívók
+ * ugyanazt a tömb-példányt kapják – ne mutáld.
  */
 export const listTerkepAdat = cache((ev: number): TerkepOrszag[] => {
   const now = Date.now();
