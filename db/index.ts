@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import * as schema from './schema';
 
@@ -12,6 +12,7 @@ const DB_PATH = resolve(
 );
 
 function createDb() {
+  const letezett = existsSync(DB_PATH);
   mkdirSync(dirname(DB_PATH), { recursive: true });
   const sqlite = new Database(DB_PATH, { timeout: 5000 });
   try {
@@ -23,6 +24,14 @@ function createDb() {
     if (!(err instanceof Error && 'code' in err && err.code === 'SQLITE_BUSY')) throw err;
   }
   sqlite.pragma('foreign_keys = ON');
+  // Diagnosztika hostinghoz: a relatív DATABASE_URL a process.cwd()-hez képest oldódik fel, ami
+  // lehet egy verziózott build-mappa is (Hostinger: hbuilds/versions/<id>/nodejs). Ott a repó
+  // data/tet.db-je nincs meg, és a fenti `new Database` egy üres fájlt hoz létre → „no such table".
+  // A log megmutatja, melyik fájlt nyitottuk meg, és hogy vannak-e benne táblák.
+  const vanTabla = sqlite.prepare("select 1 from sqlite_master where type = 'table' and name = 'user'").get();
+  const uzenet = `[db] ${DB_PATH} – ${letezett ? 'meglévő fájl' : 'ÚJ, üres fájl jött létre'}`;
+  if (vanTabla) console.log(uzenet);
+  else console.warn(`${uzenet}; NINCSENEK TÁBLÁK – állítsd a DATABASE_URL-t a feltöltött tet.db abszolút útvonalára, vagy futtasd a migrációt.`);
   return drizzle(sqlite, { schema });
 }
 
