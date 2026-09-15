@@ -5,11 +5,11 @@ out/
 next-env.d.ts
 .DS_Store
 
-# lokális adatbázis és titkok
-data/
-*.db
+# Demó: a data/tet.db SZÁNDÉKOSAN a repóban van (a hosting egy az egyben ezt kapja, nem kell seedelni);
+# a WAL/SHM segédfájlok nem, a commit előtt `sqlite3 data/tet.db "PRAGMA wal_checkpoint(TRUNCATE);"`.
 *.db-wal
 *.db-shm
+# titkok
 .env*.local
 
 # brainstorming vizuális segítő munkafájljai

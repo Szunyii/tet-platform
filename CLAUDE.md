@@ -29,7 +29,7 @@ Nincs tesztkeretrendszer és nincs linter. Ellenőrzés: `npx tsc --noEmit`, `np
 
 Ha a `npm run build` típusellenőrzése nem létező `app/...` modulra panaszkodik, az a futó dev szerver elavult `.next/dev/types/validator.ts`-e (a `tsconfig.json` ezt is bevonja): könyvtár-átnevezés után bennragadhat a régi route. Megoldás: `rm .next/dev/types/validator.ts`, majd újra build – a forrásban nincs mit javítani.
 
-Első indítás: `cp .env.example .env.local`, állítsd be a `BETTER_AUTH_SECRET`-et, majd `db:migrate` és `db:seed`. A `data/` mappa és a `.env.local` gitignore-olt.
+Első indítás: `cp .env.example .env.local`, állítsd be a `BETTER_AUTH_SECRET`-et. A `data/tet.db` demó-adatbázis **a repóban van** (a hosting egy az egyben ezt kapja, nincs seedelés; a felhasználók a `.env.example` kommentjeiben), ezért friss klónnál a `db:migrate`/`db:seed` nem kell – csak akkor, ha nulláról akarsz DB-t. A WAL/SHM segédfájlok és a `.env.local` gitignore-oltak; a DB commitolása előtt `sqlite3 data/tet.db "PRAGMA wal_checkpoint(TRUNCATE);"`, hogy a fő fájl teljes legyen.
 
 ## Architektúra
 

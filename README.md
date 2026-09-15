@@ -7,17 +7,17 @@ A tudástár és a monitoring képernyő még statikus dummy adatokból dolgozik
 
 ```bash
 npm install
-cp .env.example .env.local   # majd állítsd be a BETTER_AUTH_SECRET és SEED_ADMIN_* értékeket
-npm run db:migrate           # létrehozza a data/tet.db-t a táblákkal
-npm run db:seed              # első admin felhasználó a .env.local alapján
+cp .env.example .env.local   # majd állítsd be a BETTER_AUTH_SECRET-et
 npm run dev
 ```
+
+A `data/tet.db` demó-adatbázis a repóban van (felhasználókkal és mintaprofilokkal, a belépési adatok a `.env.example` kommentjeiben), ezért nincs seedelés: a hosting is egy az egyben ezt kapja. Nulláról induló DB-hez: töröld a `data/tet.db`-t, majd `npm run db:migrate` és `npm run db:seed` (a seed a `.env.local` `SEED_ADMIN_*` értékeit használja). A DB commitolása előtt `sqlite3 data/tet.db "PRAGMA wal_checkpoint(TRUNCATE);"`, hogy a fő fájl teljes legyen (a `-wal`/`-shm` segédfájlok gitignore-oltak).
 
 Ezután nyisd meg: http://localhost:3000
 
 ### Adatbázis és auth
 
-- Drizzle ORM + SQLite (`better-sqlite3`), DB fájl: `data/tet.db` (gitignore-olva)
+- Drizzle ORM + SQLite (`better-sqlite3`), DB fájl: `data/tet.db` (demó-adatokkal a repóban; csak a `-wal`/`-shm` van gitignore-olva)
 - Better Auth, Drizzle adapterrel; email + jelszó, nyilvános regisztráció tiltva; admin plugin (`role`: `admin` | `attase`)
 - Séma: `db/schema/`, migrációk: `drizzle/`, auth végpont: `/api/auth/*`
 - Scriptek: `db:generate` (migráció generálás séma-változás után), `db:migrate`, `db:studio`, `db:seed`, `auth:generate` (auth séma újragenerálás a Better Auth config változásakor); egyszeri adat-átírás: `npx tsx scripts/orszag-kod-migracio.ts` (szabadszöveges országnév → ISO-kód a `user`, `riport`, `ticket` táblákban, idempotens)
