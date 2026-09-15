@@ -16,7 +16,7 @@ A `data/tet.db` demó-adatbázis a repóban van (felhasználókkal és mintaprof
 ### Hosting (Hostinger Node.js)
 
 - Környezeti változók: `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (a publikus https cím) vagy `BETTER_AUTH_ALLOWED_HOSTS` (a domain), és **abszolút** `DATABASE_URL` a verziózott build-mappán kívül, pl. `/home/<user>/domains/<domain>/data/tet.db` – a Hostinger a buildet és a futást a `hbuilds/versions/<id>/nodejs` mappából végzi, relatív útvonallal ott egy üres adatbázis jönne létre („no such table: user").
-- Build parancs: `npm run build` – ez előbb a `db:init`-et futtatja (ha a `DATABASE_URL` célfájlja még nincs, a repó demó `data/tet.db`-jét másolja oda), majd `drizzle-kit migrate` és `next build`. Így az első deploy a demó-adatokat kapja, a későbbiek csak a sémát frissítik, az adatok megmaradnak.
+- Build parancs: `npm run build` – ez előbb a `db:init`-et futtatja (ha a `DATABASE_URL` célfájlja még nincs, **vagy van, de nincs benne felhasználó** – pl. üresen létrehozott fájl vagy egy korábbi rossz útvonalú deploy üres adatbázisa –, a repó demó `data/tet.db`-jét másolja oda; a régit `tet.db.ures-<időbélyeg>` néven megtartja), majd `drizzle-kit migrate` és `next build`. Így az első deploy a demó-adatokat kapja, a későbbiek csak a sémát frissítik, az adatok megmaradnak.
 - Indításkor a log `[db] <útvonal> – meglévő fájl` sort ír; ha „NINCSENEK TÁBLÁK" figyelmeztetés jön, a `DATABASE_URL` nem oda mutat, ahová a build tett.
 
 Ezután nyisd meg: http://localhost:3000
