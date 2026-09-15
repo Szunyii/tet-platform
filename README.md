@@ -13,6 +13,12 @@ npm run dev
 
 A `data/tet.db` demó-adatbázis a repóban van (felhasználókkal és mintaprofilokkal, a belépési adatok a `.env.example` kommentjeiben), ezért nincs seedelés: a hosting is egy az egyben ezt kapja. Nulláról induló DB-hez: töröld a `data/tet.db`-t, majd `npm run db:migrate` és `npm run db:seed` (a seed a `.env.local` `SEED_ADMIN_*` értékeit használja). A DB commitolása előtt `sqlite3 data/tet.db "PRAGMA wal_checkpoint(TRUNCATE);"`, hogy a fő fájl teljes legyen (a `-wal`/`-shm` segédfájlok gitignore-oltak).
 
+### Hosting (Hostinger Node.js)
+
+- Környezeti változók: `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (a publikus https cím) vagy `BETTER_AUTH_ALLOWED_HOSTS` (a domain), és **abszolút** `DATABASE_URL` a verziózott build-mappán kívül, pl. `/home/<user>/domains/<domain>/data/tet.db` – a Hostinger a buildet és a futást a `hbuilds/versions/<id>/nodejs` mappából végzi, relatív útvonallal ott egy üres adatbázis jönne létre („no such table: user").
+- Build parancs: `npm run build` – ez előbb a `db:init`-et futtatja (ha a `DATABASE_URL` célfájlja még nincs, a repó demó `data/tet.db`-jét másolja oda), majd `drizzle-kit migrate` és `next build`. Így az első deploy a demó-adatokat kapja, a későbbiek csak a sémát frissítik, az adatok megmaradnak.
+- Indításkor a log `[db] <útvonal> – meglévő fájl` sort ír; ha „NINCSENEK TÁBLÁK" figyelmeztetés jön, a `DATABASE_URL` nem oda mutat, ahová a build tett.
+
 Ezután nyisd meg: http://localhost:3000
 
 ### Adatbázis és auth
