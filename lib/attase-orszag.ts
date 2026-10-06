@@ -103,17 +103,22 @@ export interface OrszagTag {
  */
 export type OrszagTagok = Record<string, OrszagTag[]>;
 
-/** A felhasználó-listából országonként a lefedő felhasználók. */
+/**
+ * A felhasználó-listából országonként a lefedő felhasználók. Az adminok kimaradnak: nem attasék,
+ * az esetleg ott maradt sorai nem számítanak tagnak (mint a térképen és a profilon).
+ */
 export function orszagonkent(
   felhasznalok: readonly {
     id: string;
     nev: string;
+    szerepkor: 'admin' | 'attase';
     tiltott: boolean;
     orszagok: readonly Pick<AttaseOrszag, 'kod' | 'vezeto'>[];
   }[],
 ): OrszagTagok {
   const m: OrszagTagok = {};
   for (const f of felhasznalok) {
+    if (f.szerepkor === 'admin') continue;
     for (const o of f.orszagok) {
       if (!Object.hasOwn(m, o.kod)) m[o.kod] = [];
       m[o.kod].push({ userId: f.id, nev: f.nev, vezeto: o.vezeto, tiltott: f.tiltott });

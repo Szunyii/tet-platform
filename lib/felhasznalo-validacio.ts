@@ -128,7 +128,9 @@ function parseOrszagok(fd: FormData, szerepkor: Szerepkor | null, errors: MezoHi
   if (szerepkor !== 'attase') return [];
   const sorok: AttaseOrszag[] = [];
   const kod = mezo(fd, 'szekhely.orszag');
-  const varos = mezo(fd, 'szekhely.varos');
+  // A város egysoros mező: a belső whitespace-sorozat (a sortörés is) egy szóköz, még a hossz-ellenőrzés
+  // előtt. A részterület többsoros marad.
+  const varos = mezo(fd, 'szekhely.varos').replace(/\s+/g, ' ');
   const reszterulet = mezo(fd, 'szekhely.reszterulet');
   if (!kod) errors['szekhely.orszag'] = 'TéT attasénál a székhely országa kötelező.';
   else if (!orszagByKod(kod)) errors['szekhely.orszag'] = ORSZAG_LISTABOL;

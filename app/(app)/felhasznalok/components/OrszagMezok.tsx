@@ -64,7 +64,9 @@ function OrszagOpciok() {
  * alapértéke az `alapVezeto` szerint újraszámolódik. `sajatId`: a szerkesztett felhasználó (új
  * felhasználónál null) – a vezető-helyzet a többi attasé alapján számol. Sor hozzáadása után a
  * fókusz az új sor selectjére, törlése után a hozzáadás-gombra kerül; a törlés a következő
- * beküldésig elrejti a (pozícióhoz kötött) sorhibákat.
+ * beküldésig elrejti a (pozícióhoz kötött) sorhibákat. `rejtett` (adminnál): a komponens
+ * mountolva marad – a belső állapota (az elrejtett sorhibák) így túléli a szerepkör-váltást –,
+ * de nem renderel mezőt, tehát nem is küld be semmit.
  */
 export function OrszagMezok({
   ertekek,
@@ -72,12 +74,14 @@ export function OrszagMezok({
   errors,
   orszagTagok,
   sajatId,
+  rejtett = false,
 }: {
   ertekek: OrszagErtekek;
   onChange: (ertekek: OrszagErtekek) => void;
   errors: MezoHibak;
   orszagTagok: OrszagTagok;
   sajatId: string | null;
+  rejtett?: boolean;
 }) {
   const { szekhely, regio } = ertekek;
   const hozzaadGomb = useRef<HTMLButtonElement>(null);
@@ -106,6 +110,9 @@ export function OrszagMezok({
     });
     hozzaadGomb.current?.focus();
   };
+
+  // A hookok után: rejtve nincs mező, de az állapot megmarad (lásd a doc-kommentet).
+  if (rejtett) return null;
 
   return (
     <>

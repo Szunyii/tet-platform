@@ -15,6 +15,7 @@ import {
   type Szerepkor,
 } from '../../../lib/felhasznalo-validacio';
 import { requireAdmin } from '../../../lib/session';
+import { mezo } from '../../../lib/urlap';
 
 export type { MuveletState };
 
@@ -81,7 +82,7 @@ function mentOrszagok(userId: string, orszagok: readonly AttaseOrszag[], hibaUze
     setAttaseOrszagok(userId, orszagok);
     return null;
   } catch (err) {
-    console.error('[felhasznalok] setAttaseOrszagok sikertelen:', err);
+    console.error(`[felhasznalok] setAttaseOrszagok sikertelen (${userId}):`, err);
     revalidatePath('/', 'layout');
     return { errors: { form: hibaUzenet } };
   }
@@ -111,6 +112,8 @@ export async function createFelhasznaloAction(
   } catch (err) {
     return hiba(err, 'createUser');
   }
+  // Új adminnak nincs országa: nincs mit menteni, és a globális normalizálás sem kell.
+  if (orszagok.length === 0) return kesz();
   return (
     mentOrszagok(userId, orszagok, 'A felhasználó létrejött, de az országok mentése nem sikerült – szerkeszd újra.') ??
     kesz()
@@ -123,12 +126,14 @@ export async function updateFelhasznaloAction(
   formData: FormData,
 ): Promise<MuveletState> {
   const me = await requireAdmin();
+  // A saját szerepkör védelme a validálás előtt: attaséra állítva a (még üres) székhely hibája
+  // nem takarhatja el az igazi okot.
+  if (userId === me.userId && mezo(formData, 'szerepkor') !== 'admin') {
+    return { errors: { szerepkor: 'Saját admin szerepkörödet nem veheted el.' } };
+  }
   const parsed = parseSzerkesztes(formData);
   if (!parsed.ok) return { errors: parsed.errors };
   const { nev, szerepkor, orszagok, ...elerhetoseg } = parsed.data;
-  if (userId === me.userId && szerepkor !== 'admin') {
-    return { errors: { szerepkor: 'Saját admin szerepkörödet nem veheted el.' } };
-  }
   try {
     // Név, elérhetőségek és szerepkör egy hívásban: az adminUpdateUser a data.role-t maga
     // ellenőrzi és menti. A null érték törli a mezőt. Az országok utána, külön lépésben
@@ -201,6 +206,8 @@ export async function removeFelhasznaloAction(userId: string): Promise<MuveletSt
   try {
     normalizalVezetok();
   } catch (err) {
+    // A törlés megtörtént, ezért elég naplózni: a normalizálás globális, a következő országmentés
+    // pótolja, addig a felhasználó-oldal figyelmeztetése jelzi a vezető nélküli országot.
     console.error('[felhasznalok] normalizalVezetok sikertelen:', err);
   }
   return kesz();

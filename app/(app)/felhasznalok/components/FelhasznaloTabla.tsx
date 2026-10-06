@@ -11,7 +11,7 @@ import {
 import type { FelhasznaloSor } from '../../../../db/queries/felhasznalo';
 import type { AttaseOrszag, OrszagTagok } from '../../../../lib/attase-orszag';
 import { formatDatum } from '../../../../lib/datum';
-import { SZEREPKOR_CIMKE } from '../../../../lib/felhasznalo-validacio';
+import { SZEREPKOR_CIMKE, type Szerepkor } from '../../../../lib/felhasznalo-validacio';
 import { orszagNev } from '../../../../lib/orszagok';
 import { FelhasznaloMuveletek } from './FelhasznaloMuveletek';
 
@@ -34,7 +34,9 @@ export function FelhasznaloTabla({
             <TableHead>Név</TableHead>
             <TableHead>E-mail</TableHead>
             <TableHead>Szerepkör</TableHead>
-            <TableHead>Országok</TableHead>
+            <TableHead>
+              Országok <span className="font-normal text-muted-foreground">(★ relációs vezető)</span>
+            </TableHead>
             <TableHead>Telefon</TableHead>
             <TableHead>Állapot</TableHead>
             <TableHead>Létrehozva</TableHead>
@@ -55,7 +57,7 @@ export function FelhasznaloTabla({
                 </Badge>
               </TableCell>
               <TableCell className="min-w-48 whitespace-normal">
-                <OrszagCella orszagok={f.orszagok} tobbAttase={tobbAttase} />
+                <OrszagCella orszagok={f.orszagok} szerepkor={f.szerepkor} tobbAttase={tobbAttase} />
               </TableCell>
               <TableCell className="whitespace-nowrap">
                 {f.telefon ?? <span className="text-muted-foreground">–</span>}
@@ -75,15 +77,32 @@ export function FelhasznaloTabla({
   );
 }
 
-/** Első sor: székhely · város (★ vezető); második, halvány sor: a régiós országok. */
-function OrszagCella({ orszagok, tobbAttase }: { orszagok: readonly AttaseOrszag[]; tobbAttase: ReadonlySet<string> }) {
+/**
+ * Első sor: székhely · város (★ vezető); második, halvány sor: a régiós országok. Adminnál az
+ * üres lista „–”; ország nélküli attasé (hibás állapot) „Nincs ország”, hogy ne tűnjön adminnak.
+ */
+function OrszagCella({
+  orszagok,
+  szerepkor,
+  tobbAttase,
+}: {
+  orszagok: readonly AttaseOrszag[];
+  szerepkor: Szerepkor;
+  tobbAttase: ReadonlySet<string>;
+}) {
   const szekhely = orszagok.find((o) => o.szekhely);
   const regio = orszagok.filter((o) => !o.szekhely);
-  if (!szekhely && regio.length === 0) return <span className="text-muted-foreground">–</span>;
+  if (!szekhely && regio.length === 0) {
+    return szerepkor === 'attase' ? (
+      <span className="text-amber-700">Nincs ország</span>
+    ) : (
+      <span className="text-muted-foreground">–</span>
+    );
+  }
   const csillag = (o: AttaseOrszag) =>
     o.vezeto && tobbAttase.has(o.kod) ? (
       <>
-        <span aria-hidden className="text-amber-600"> ★</span>
+        <span aria-hidden className="text-amber-700"> ★</span>
         <span className="sr-only"> (relációs vezető)</span>
       </>
     ) : null;

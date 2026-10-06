@@ -31,8 +31,9 @@ export function SzerkesztesDialog({
     () => onOpenChange(false),
   );
   // Vezérelt mezők: a React 19 a <form action> beküldése után (hibánál is) alaphelyzetbe
-  // állítja a nem vezérelt inputokat; a state megőrzi a beírt értékeket, és az ország-adatok
-  // is megmaradnak, ha a szerepkör-váltás ideiglenesen elrejti a mezőket.
+  // állítja a nem vezérelt inputokat; a state megőrzi a beírt értékeket, és az ország-adatok is
+  // megmaradnak, ha a szerepkör-váltás ideiglenesen elrejti a mezőket (az `OrszagMezok` ilyenkor
+  // is mountolva marad, `rejtett`: így a belső állapota sem vész el).
   const [nev, setNev] = useState(felhasznalo.nev);
   const [szerepkor, setSzerepkor] = useState<Szerepkor>(felhasznalo.szerepkor);
   const [elerhetoseg, setElerhetoseg] = useState<ElerhetosegErtekek>({
@@ -79,15 +80,14 @@ export function SzerkesztesDialog({
         </div>
       </div>
       <ElerhetosegMezok ertekek={elerhetoseg} onChange={setElerhetoseg} errors={errors} />
-      {szerepkor === 'attase' && (
-        <OrszagMezok
-          ertekek={orszagok}
-          onChange={setOrszagok}
-          errors={errors}
-          orszagTagok={orszagTagok}
-          sajatId={felhasznalo.id}
-        />
-      )}
+      <OrszagMezok
+        ertekek={orszagok}
+        onChange={setOrszagok}
+        errors={errors}
+        orszagTagok={orszagTagok}
+        sajatId={felhasznalo.id}
+        rejtett={szerepkor !== 'attase'}
+      />
     </MuveletDialog>
   );
 }

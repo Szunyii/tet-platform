@@ -119,7 +119,8 @@ export function setAttaseOrszagok(userId: string, sorok: readonly AttaseOrszag[]
 }
 
 /**
- * Ahol egy országnak pontosan egy hozzárendelése van és nincs vezetője, az lesz a vezető
+ * Először az admin felhasználók (esetleg ott maradt) sorait törli, aztán: ahol egy országnak
+ * pontosan egy hozzárendelése van és nincs vezetője, az lesz a vezető
  * (egyszemélyes országban nem kell jelölni; a vezető távozásakor az egyedül maradó örököl).
  * Ha többen maradnak vezető nélkül, nem jelöl ki senkit – a felhasználó-kezelő figyelmeztet.
  * A felhasználó törlése után (FK cascade) a removeFelhasznaloAction hívja.
@@ -129,6 +130,10 @@ export function normalizalVezetok(): void {
 }
 
 function normalizal(tx: Tx): void {
+  // Admin felhasználónak nincs országa: a kétlépéses mentés esetleges maradékát itt takarítjuk.
+  tx.delete(attaseOrszag)
+    .where(inArray(attaseOrszag.userId, tx.select({ id: user.id }).from(user).where(eq(user.role, 'admin'))))
+    .run();
   const egyedul = tx
     .select({ kod: attaseOrszag.orszagKod })
     .from(attaseOrszag)
