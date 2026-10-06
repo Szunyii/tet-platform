@@ -1,8 +1,8 @@
 /**
- * Demó-adatok a két teszt attasé posztjához és országprofiljához (KR, JP) az aktuális évre.
- * Idempotens: a poszt-mezőket felülírja, a profil blokkjait blokkonként upsert-eli.
- * Az adatok a `validalBlokk` validátoron mennek át, tehát pontosan azt kapja a DB, amit az
- * űrlapon beírt érték adna.
+ * Demó-adatok a KR és JP országprofilhoz az aktuális évre. Idempotens: a profil blokkjait
+ * blokkonként upsert-eli; a szerző az első admin (a demó-tartalom nem kötődik valós
+ * attaséhoz). Az adatok a `validalBlokk` validátoron mennek át, tehát pontosan azt kapja a DB,
+ * amit az űrlapon beírt érték adna.
  *
  * Futtatás: NODE_OPTIONS="--conditions=react-server" npx tsx scripts/demo-orszagprofil.ts
  */
@@ -14,20 +14,11 @@ import { validalBlokk } from '../lib/orszagprofil-validacio';
 import { aktualisEv } from '../lib/datum';
 import { BLOKK_KULCSOK, type BlokkKulcs } from '../lib/orszagprofil-szotar';
 
-interface Poszt {
-  fovaros: string;
-  terulet: number;
-  penznem: string;
-  telefon: string;
-  kapcsolatEmail: string;
-}
-
 /** Egy blokk űrlap-értékei: mezőnév → string vagy string-lista (listás mezők, több azonos név). */
 type Urlap = Record<string, string | string[]>;
 
 interface DemoOrszag {
-  email: string;
-  poszt: Poszt;
+  kod: string;
   profil: Record<BlokkKulcs, Urlap>;
 }
 
@@ -43,16 +34,12 @@ function rendezvenyek(sorok: { nev: string; tipus: string; idopont: string; megj
 }
 
 const KR: DemoOrszag = {
-  email: 'teszt.attase@niu.hu',
-  poszt: {
-    fovaros: 'Szöul',
-    terulet: 100210,
-    penznem: 'dél-koreai won (KRW)',
-    telefon: '+82 2 792 2105',
-    kapcsolatEmail: 'tet.szoul@niu.hu',
-  },
+  kod: 'KR',
   profil: {
     alapadatok: {
+      fovaros: 'Szöul',
+      terulet: '100 210',
+      penznem: 'dél-koreai won (KRW)',
       lakossag: '51 700 000',
       gdp: '1 790,0',
       gdpEgyFore: '34 600',
@@ -182,16 +169,12 @@ const KR: DemoOrszag = {
 };
 
 const JP: DemoOrszag = {
-  email: 'masodik.attase@niu.hu',
-  poszt: {
-    fovaros: 'Tokió',
-    terulet: 377975,
-    penznem: 'japán jen (JPY)',
-    telefon: '+81 3 3798 8801',
-    kapcsolatEmail: 'tet.tokio@niu.hu',
-  },
+  kod: 'JP',
   profil: {
     alapadatok: {
+      fovaros: 'Tokió',
+      terulet: '377 975',
+      penznem: 'japán jen (JPY)',
       lakossag: '123 800 000',
       gdp: '4 190,0',
       gdpEgyFore: '33 900',
@@ -336,21 +319,23 @@ function urlapFormData(u: Urlap): FormData {
 
 function main() {
   const ev = aktualisEv();
+  // A szerző az első admin: a demó-tartalom nem kötődik valós attaséhoz.
+  const admin = db
+    .select({ id: user.id, name: user.name })
+    .from(user)
+    .where(eq(user.role, 'admin'))
+    .orderBy(user.createdAt)
+    .get();
+  if (!admin) throw new Error('Nincs admin felhasználó (npm run db:seed).');
   for (const o of [KR, JP]) {
-    const u = db.select({ id: user.id, orszag: user.orszag, name: user.name }).from(user).where(eq(user.email, o.email)).get();
-    if (!u) throw new Error(`Nincs ilyen felhasználó: ${o.email}`);
-    if (!u.orszag) throw new Error(`${o.email}: nincs ország a felhasználón`);
-
-    db.update(user).set({ ...o.poszt, updatedAt: new Date() }).where(eq(user.id, u.id)).run();
-
     for (const blokk of BLOKK_KULCSOK) {
       const eredmeny = validalBlokk(blokk, urlapFormData(o.profil[blokk]), ev);
       if (!eredmeny.ok) {
-        throw new Error(`${u.orszag} ${ev} ${blokk}: ${JSON.stringify(eredmeny.errors)}`);
+        throw new Error(`${o.kod} ${ev} ${blokk}: ${JSON.stringify(eredmeny.errors)}`);
       }
-      upsertBlokk(u.orszag, ev, blokk, eredmeny.ertek, u.id);
+      upsertBlokk(o.kod, ev, blokk, eredmeny.ertek, admin.id);
     }
-    console.log(`${u.name} (${u.orszag}): poszt-adatok + ${BLOKK_KULCSOK.length} blokk mentve ${ev}-ra`);
+    console.log(`${o.kod}: ${BLOKK_KULCSOK.length} blokk mentve ${ev}-ra (szerző: ${admin.name})`);
   }
 }
 

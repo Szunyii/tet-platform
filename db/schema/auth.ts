@@ -20,12 +20,8 @@ export const user = sqliteTable("user", {
   banned: integer("banned", { mode: "boolean" }).default(false),
   banReason: text("ban_reason"),
   banExpires: integer("ban_expires", { mode: "timestamp_ms" }),
-  orszag: text("orszag"),
-  // Attasé poszt-adatai (csak attasénál töltött) és elérhetőségei. Better Auth
-  // additionalFields (lib/auth.ts); az admin UI írja őket.
-  fovaros: text("fovaros"),
-  terulet: integer("terulet"),
-  penznem: text("penznem"),
+  // Az elérhetőségek (mindkét szerepkörnél). Better Auth additionalFields (lib/auth.ts); az admin
+  // UI írja őket. Az attasé országai az attase_orszag táblában (db/schema/attase-orszag.ts).
   telefon: text("telefon"),
   kapcsolatEmail: text("kapcsolat_email"),
 });

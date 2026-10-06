@@ -50,6 +50,13 @@
       "when": 1791285994656,
       "tag": "0006_attase_orszag",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1791311562940,
+      "tag": "0007_user_poszt_oszlopok",
+      "breakpoints": true
     }
   ]
 }

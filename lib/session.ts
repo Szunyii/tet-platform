@@ -4,7 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import { cache } from 'react';
 import { listAttaseOrszagok } from '../db/queries/attase-orszag';
 import { auth } from './auth';
-import { szekhelyKod, type SessionOrszag } from './attase-orszag';
+import type { SessionOrszag } from './attase-orszag';
 import { loginUtvonal } from './routes';
 
 export type AppRole = 'admin' | 'attase';
@@ -16,8 +16,6 @@ export interface AppSession {
   role: AppRole;
   /** Az attasé országai (székhely elöl, utána magyar név szerint); adminnál üres. */
   orszagok: readonly SessionOrszag[];
-  /** Átmeneti: a székhely kódja a még át nem állt fogyasztóknak; a 12. task törli. */
-  orszag: string | null;
 }
 
 /**
@@ -36,7 +34,7 @@ export const getSession = cache(async (): Promise<AppSession | null> => {
   // A role hiánya (régi rekord) attasénak számít.
   const role: AppRole = u.role === 'admin' ? 'admin' : 'attase';
   const orszagok = role === 'attase' ? listAttaseOrszagok(u.id) : [];
-  return { userId: u.id, name: u.name, email: u.email, role, orszagok, orszag: szekhelyKod(orszagok) };
+  return { userId: u.id, name: u.name, email: u.email, role, orszagok };
 });
 
 /**

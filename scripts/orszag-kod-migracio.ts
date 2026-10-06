@@ -1,13 +1,13 @@
 /**
- * Egyszeri, idempotens adat-átírás: a user.orszag, a riport.orszag és a ticket.orszag
- * szabadszöveges országneveit ISO-kódra cseréli a lib/orszagok.ts szótár alapján. Ami már
- * kód, azt kihagyja; a nem párosíthatót kilistázza és érintetlenül hagyja. (A riport és a
- * ticket updated_at-ja az $onUpdate miatt frissül – elfogadható.)
+ * Egyszeri, idempotens adat-átírás: az attase_orszag.orszag_kod, a riport.orszag és a
+ * ticket.orszag szabadszöveges országneveit ISO-kódra cseréli a lib/orszagok.ts szótár
+ * alapján. Ami már kód, azt kihagyja; a nem párosíthatót kilistázza és érintetlenül hagyja.
+ * (A riport és a ticket updated_at-ja az $onUpdate miatt frissül – elfogadható.)
  * Futtatás: npx tsx scripts/orszag-kod-migracio.ts
  */
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../db';
-import { riport, ticket, user } from '../db/schema';
+import { attaseOrszag, riport, ticket } from '../db/schema';
 import { ORSZAGOK, ORSZAG_KOD_RE, orszagByKod } from '../lib/orszagok';
 
 const ALIAS: Record<string, string> = {
@@ -36,16 +36,33 @@ function kodra(ertek: string): string | null | undefined {
 let atirt = 0;
 const parositatlan: string[] = [];
 
-for (const u of db.select({ id: user.id, orszag: user.orszag }).from(user).all()) {
-  if (!u.orszag) continue;
-  const kod = kodra(u.orszag);
+for (const a of db
+  .select({ userId: attaseOrszag.userId, kod: attaseOrszag.orszagKod, vezeto: attaseOrszag.vezeto })
+  .from(attaseOrszag)
+  .all()) {
+  const kod = kodra(a.kod);
   if (kod === null) continue;
   if (!kod) {
-    parositatlan.push(`user ${u.id}: "${u.orszag}"`);
+    parositatlan.push(`attase_orszag ${a.userId}: "${a.kod}"`);
     continue;
   }
-  db.update(user).set({ orszag: kod }).where(eq(user.id, u.id)).run();
-  atirt++;
+  // A 0006 a régi név „ál-országának” egyetlen sorát vezetővé tette; ha a cél-országnak már van
+  // vezetője, ez a sor nem maradhat az (országonként legfeljebb egy – részleges egyedi index).
+  const masikVezeto = db
+    .select({ userId: attaseOrszag.userId })
+    .from(attaseOrszag)
+    .where(and(eq(attaseOrszag.orszagKod, kod), eq(attaseOrszag.vezeto, true)))
+    .get();
+  try {
+    db.update(attaseOrszag)
+      .set({ orszagKod: kod, ...(a.vezeto && masikVezeto ? { vezeto: false } : {}) })
+      .where(and(eq(attaseOrszag.userId, a.userId), eq(attaseOrszag.orszagKod, a.kod)))
+      .run();
+    atirt++;
+  } catch {
+    // Ütközés (pl. a felhasználónak már van sora ezzel a kóddal): kézi rendezés kell.
+    parositatlan.push(`attase_orszag ${a.userId}: "${a.kod}" → ${kod} (ütközés)`);
+  }
 }
 for (const r of db.select({ id: riport.id, orszag: riport.orszag }).from(riport).all()) {
   const kod = kodra(r.orszag);
