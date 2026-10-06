@@ -160,9 +160,9 @@ export function vezetoHelyzet(kod: string, sajatId: string | null, m: OrszagTago
   };
 }
 
-/** Országválasztáskor a jelölő alapértéke: bejelölve, ha nincs másik vezető. */
+/** Országválasztáskor a jelölő alapértéke: bejelölve, ha nincs másik aktív vezető (nincs, vagy tiltott). */
 export function alapVezeto(h: VezetoHelyzet): boolean {
-  return h.masikVezeto === null;
+  return h.masikVezeto === null || h.masikVezeto.tiltott;
 }
 
 /** A jelölő súgója; a nevet toldalék nélkül írja (nem kell magánhangzó-illeszkedést számolni). */

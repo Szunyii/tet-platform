@@ -45,6 +45,7 @@ function attasekOrszagonkent(kod?: string): Map<string, OrszagAttase[]> {
       userId: user.id,
       nev: user.name,
       vezeto: attaseOrszag.vezeto,
+      role: user.role,
       banned: user.banned,
       banExpires: user.banExpires,
       szekhelyKod: szekhelySor.orszagKod,
@@ -54,11 +55,12 @@ function attasekOrszagonkent(kod?: string): Map<string, OrszagAttase[]> {
     .from(attaseOrszag)
     .innerJoin(user, eq(user.id, attaseOrszag.userId))
     .leftJoin(szekhelySor, and(eq(szekhelySor.userId, attaseOrszag.userId), eq(szekhelySor.szekhely, true)))
-    .where(kod ? eq(attaseOrszag.orszagKod, kod) : undefined)
+    .where(kod !== undefined ? eq(attaseOrszag.orszagKod, kod) : undefined)
     .all();
   const m = new Map<string, OrszagAttase[]>();
   for (const r of sorok) {
-    if (tiltottE(r, now)) continue;
+    // Az admin nem attasé: ha egy sikertelen második mentési lépés után sora maradt, az ne jelenjen meg attaséként.
+    if (r.role === 'admin' || tiltottE(r, now)) continue;
     const lista = m.get(r.kod) ?? [];
     lista.push({
       userId: r.userId,
@@ -105,8 +107,9 @@ export function setAttaseOrszagok(userId: string, sorok: readonly AttaseOrszag[]
             orszagKod: s.kod,
             szekhely: s.szekhely,
             vezeto: s.vezeto,
-            varos: s.varos,
-            reszterulet: s.reszterulet,
+            // A város és a részterület csak a székhely-sornál értelmezett.
+            varos: s.szekhely ? s.varos : null,
+            reszterulet: s.szekhely ? s.reszterulet : null,
           })),
         )
         .run();
