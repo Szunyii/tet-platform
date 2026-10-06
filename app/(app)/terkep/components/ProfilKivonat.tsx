@@ -9,6 +9,7 @@ import { SzerkesztesGomb } from '../../../../components/orszagprofil/Szerkesztes
 import { Badge } from '../../../../components/ui/badge';
 import { Button, buttonVariants } from '../../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../../../components/ui/card';
+import { attaseFelirat } from '../../../../lib/attase-orszag';
 import { BLOKK_KULCSOK, MEZO_CIMKEK } from '../../../../lib/orszagprofil-szotar';
 import { formatSzam as sz } from '../../../../lib/szam';
 import { ertekEsHely, SKALA_SZINEK, type Mutato, type Rangsor } from '../../../../lib/terkep-mutatok';
@@ -37,11 +38,10 @@ export function ProfilKivonat({
 }) {
   const a = o.alapadatok;
   const C = MEZO_CIMKEK.alapadatok;
-  const poszt = [
-    o.poszt?.fovaros,
-    o.poszt?.terulet != null ? sz(o.poszt.terulet, ' km²') : null,
-    o.poszt?.penznem,
-  ].filter(Boolean).join(' · ');
+  // A poszt országának adatai az Alapadatok blokkból (főváros, terület, pénznem).
+  const poszt = a
+    ? [a.fovaros, a.terulet != null ? sz(a.terulet, ' km²') : null, a.penznem].filter(Boolean).join(' · ')
+    : '';
   // A térképen választott számszerű mutató értéke és helyezése (a szűrt rangsorban); undefined = kategorikus mutató.
   const ertek = mutato.tipus === 'szam' ? ertekEsHely(o, mutato, rangsor) : undefined;
   // Van-e helyezése (a szűrő által kizárt ország nincs a rangsorban, de értéke lehet).
@@ -52,8 +52,18 @@ export function ProfilKivonat({
         <div className="flex items-start gap-2">
           <div className="min-w-0">
             <CardTitle>{o.nev}</CardTitle>
-            <CardDescription>
-              {o.attase ?? 'nincs aktív attasé'}{poszt ? ` · ${poszt}` : ''}
+            <CardDescription className="flex flex-col">
+              {o.attasek.length === 0 ? (
+                <span>nincs aktív attasé</span>
+              ) : (
+                o.attasek.map((at) => (
+                  <span key={at.userId}>
+                    {attaseFelirat(at, o.kod)}
+                    {o.attasek.length > 1 && at.vezeto ? ' · relációs vezető' : ''}
+                  </span>
+                ))
+              )}
+              {poszt && <span>{poszt}</span>}
             </CardDescription>
           </div>
           <Button type="button" variant="ghost" size="icon" className="ml-auto" aria-label="Bezárás" onClick={onClose}>

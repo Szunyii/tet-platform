@@ -9,6 +9,7 @@ import {
   Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,
 } from '../../../../components/ui/select';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
+import { elsoVezetettKod } from '../../../../lib/attase-orszag';
 import { canEditProfil } from '../../../../lib/orszagprofil-jog';
 import { IPARAGAK } from '../../../../lib/orszagprofil-szotar';
 import {
@@ -37,8 +38,9 @@ export function TerkepNezet({
   valasztEvAction: (formData: FormData) => Promise<void>;
 }) {
   // A session a contextből: a jog-számítás (canEditProfil) és a „Saját országprofil" gomb is ebből dolgozik.
+  // A gomb az első vezetett országra visz (a székhely előnyben); nem vezető attasénál nincs gomb.
   const { user } = useApp();
-  const sajatKod = user.role === 'attase' ? user.orszag : null;
+  const sajatKod = user.role === 'attase' ? elsoVezetettKod(user.orszagok) : null;
   const allapot = useTerkepAllapot(adatok, kezdoKod);
   const { mutato, iparag, vs } = allapot;
 

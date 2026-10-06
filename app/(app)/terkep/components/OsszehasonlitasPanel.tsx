@@ -9,6 +9,7 @@ import { IparagBadge } from '../../../../components/orszagprofil/IparagBadge';
 import { Button } from '../../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../components/ui/table';
+import { attasekRovid } from '../../../../lib/attase-orszag';
 import { formatSzam } from '../../../../lib/szam';
 import { SKALA_SZINEK, SZAM_MUTATOK, type Mutato } from '../../../../lib/terkep-mutatok';
 import { cn } from '../../../../lib/utils';
@@ -105,12 +106,7 @@ export function OsszehasonlitasPanel({ orszagok, jeloltek, mutato, onKivalaszt, 
           </TableHeader>
           <TableBody>
             <Sor cimke="Attasé" orszagok={orszagok} plusz={plusz}>
-              {(o) => (
-                <>
-                  {o.attase ?? '–'}
-                  {o.poszt?.fovaros && <span className="block text-muted-foreground">{o.poszt.fovaros}</span>}
-                </>
-              )}
+              {(o) => attasekRovid(o.attasek, o.kod) ?? '–'}
             </Sor>
             <Sor cimke="Állapot" orszagok={orszagok} plusz={plusz}>
               {(o) => <AllapotBadge allapot={o.allapot} ev={o.ev} />}

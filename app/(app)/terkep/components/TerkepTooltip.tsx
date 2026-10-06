@@ -1,6 +1,7 @@
 'use client';
 
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
+import { attasekRovid } from '../../../../lib/attase-orszag';
 import { ALLAPOT_CIMKE } from '../../../../lib/orszagprofil-szotar';
 import { ertekEsHely, type Mutato, type Rangsor } from '../../../../lib/terkep-mutatok';
 
@@ -38,7 +39,7 @@ export function TerkepTooltip({ hover, mutato, rangsor }: { hover: HoverAllapot;
       <p className="mb-0.5 text-xs font-semibold">{hover.nev}</p>
       {o ? (
         <>
-          <p className="text-background/70">{o.attase ?? 'nincs aktív attasé'}{o.poszt?.fovaros ? ` · ${o.poszt.fovaros}` : ''}</p>
+          <p className="text-background/70">{attasekRovid(o.attasek, o.kod) ?? 'nincs aktív attasé'}</p>
           {sor && <p className="text-background/70">{sor}</p>}
           <p className="text-background/70">{ALLAPOT_CIMKE[o.allapot]}{o.ev ? ` · ${o.ev}` : ''}</p>
           {o.iparagak.length > 0 && <p className="text-background/70">Kiemelt: {o.iparagak.slice(0, 2).join(', ')}</p>}

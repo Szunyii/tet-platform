@@ -4,7 +4,8 @@ import { and, desc, eq, lte } from 'drizzle-orm';
 import { db } from '../index';
 import { orszagprofil, user } from '../schema';
 import { orszagByKod } from '../../lib/orszagok';
-import { tiltottE } from '../../lib/felhasznalo-tiltas';
+import { listAttasekOrszagonkent } from './attase-orszag';
+import type { OrszagAttase } from '../../lib/attase-orszag';
 import {
   BLOKK_KULCSOK, normalizalBlokk, profilAllapot,
   type Alapadatok, type Allapot, type BlokkKulcs, type Iparag, type KfiPrioritas, type ProfilBlokkok,
@@ -85,8 +86,8 @@ export interface TerkepOrszag {
   nev: string;
   geo: string;
   lonlat: [number, number];
-  attase: string | null;
-  poszt: { fovaros: string | null; terulet: number | null; penznem: string | null } | null;
+  /** Az ország aktív attaséi (vezető elöl, utána a székhelyesek, végül a régiósak); üres, ha nincs. */
+  attasek: OrszagAttase[];
   ev: number | null;
   allapot: Allapot;
   iparagak: Iparag[];
@@ -102,25 +103,15 @@ export interface TerkepOrszag {
 
 /**
  * A térkép és a panel adata a választott `ev` nézetében: minden ország, ahol aktív attasé van
- * vagy van profil, országonként a legnagyobb év ≤ ev profiljával. Az `allapot` az `ev`-hez
- * viszonyít: van profil az évre → friss, csak régebbi → elavult, semmi → nincs (ev = aktuális
- * évnél ez a korábbi viselkedés). Két lekérdezés + JS-összefésülés; az orszagprofil tábla
- * országok × évek méretű, minden sorát beolvassuk – ezen a skálán rendben van.
+ * (székhelyként vagy régiósan) vagy van profil, országonként a legnagyobb év ≤ ev profiljával.
+ * Az `allapot` az `ev`-hez viszonyít: van profil az évre → friss, csak régebbi → elavult,
+ * semmi → nincs (ev = aktuális évnél ez a korábbi viselkedés). Két lekérdezés + JS-összefésülés;
+ * az orszagprofil tábla országok × évek méretű, minden sorát beolvassuk – ezen a skálán rendben van.
  * React.cache: egy kérésen belül (layout + page) azonos argumentummal egyszer fut le, a hívók
  * ugyanazt a tömb-példányt kapják – ne mutáld.
  */
 export const listTerkepAdat = cache((ev: number): TerkepOrszag[] => {
-  const now = Date.now();
-  const attasek = db
-    .select({
-      orszag: user.orszag, nev: user.name, fovaros: user.fovaros, terulet: user.terulet, penznem: user.penznem,
-      banned: user.banned, banExpires: user.banExpires,
-    })
-    .from(user)
-    .where(eq(user.role, 'attase'))
-    .orderBy(user.name)
-    .all()
-    .filter((u) => u.orszag && !tiltottE(u, now));
+  const attasek = listAttasekOrszagonkent();
 
   // Országonként a legnagyobb, ev-nél nem nagyobb év sora. (Az év szerint csökkenő listából
   // az első előfordulás országonként; a max(ev)-es al-lekérdezéses join helyett, mert a
@@ -133,24 +124,20 @@ export const listTerkepAdat = cache((ev: number): TerkepOrszag[] => {
     profilok.push(p);
   }
 
-  // Országkód → első (név szerint rendezett) attasé, ill. az `ev`-hez tartozó (≤ ev legnagyobb évű) profil.
-  const attaseKodhoz = new Map<string, (typeof attasek)[number]>();
-  for (const a of attasek) if (a.orszag && !attaseKodhoz.has(a.orszag)) attaseKodhoz.set(a.orszag, a);
+  // Országkód → az `ev`-hez tartozó (≤ ev legnagyobb évű) profil.
   const profilKodhoz = new Map(profilok.map((p) => [p.orszagKod, p] as const));
 
-  const kodok = new Set<string>([...attaseKodhoz.keys(), ...profilKodhoz.keys()]);
+  const kodok = new Set<string>([...attasek.keys(), ...profilKodhoz.keys()]);
 
   const eredmeny: TerkepOrszag[] = [];
   for (const kod of kodok) {
     const o = orszagByKod(kod);
     if (!o) continue;
-    const a = attaseKodhoz.get(kod) ?? null;
     const p = profilKodhoz.get(kod) ?? null;
     const prof = p ? sorbol(p, null) : null;
     eredmeny.push({
       kod, nev: o.nev, geo: o.geo, lonlat: o.lonlat,
-      attase: a?.nev ?? null,
-      poszt: a ? { fovaros: a.fovaros ?? null, terulet: a.terulet ?? null, penznem: a.penznem ?? null } : null,
+      attasek: attasek.get(kod) ?? [],
       ev: prof?.ev ?? null,
       allapot: profilAllapot(prof?.ev ?? null, ev),
       iparagak: prof?.blokkok.kfiRendszer?.kiemeltIparagak ?? [],
