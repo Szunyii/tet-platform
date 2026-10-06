@@ -1524,6 +1524,8 @@ git add components/riport/RiportForm.tsx "app/(app)/uj-riport/page.tsx" "app/(ap
 git commit -m "$(printf 'feat(attase-orszagok): riport beadásakor több országnál ország-választó, az action a saját országokra szűr\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>')"
 ```
 
+> **Végrehajtási eltérés (form-reset).** A React 19 a `<form action>` minden beküldése után (hibás eredménynél is) `form.reset()`-et hív, a commit végén, minden DOM-mutáció után. A vezérelt szöveges mezőket a React `defaultValue`-szinkronja megvédi. A natív `<select>`-et nem: a React csak `defaultValue`-ból állít `defaultSelected`-et. A választó ezért a DOM-ban az alapértelmezett opcióra ugrik vissza, a state közben a választást tartja, így egy változtatás nélküli újraküldés más országot vinne. A javítás a közös `components/form/NativeSelect.tsx`-be került, külön `fix(form)` commitban: render után a `value`-hoz igazítja az opciók `defaultSelected`-jét. Így a 10–11. task ország-választói és a meglévő `RendezvenySorok` is védettek. A checkboxnál ugyanez a hiba: a `defaultChecked` a kezdőérték marad. Ezt a 10. task `VezetoJelolo`-ja kezeli.
+
 ---
 
 ### Task 9: Ticket – címzett a székhellyel
@@ -1667,6 +1669,7 @@ export function ElerhetosegMezok({
 ```tsx
 'use client';
 
+import { useLayoutEffect, useRef } from 'react';
 import { vezetoSugo, type VezetoHelyzet } from '../../../../lib/attase-orszag';
 
 /**
@@ -1674,6 +1677,9 @@ import { vezetoSugo, type VezetoHelyzet } from '../../../../lib/attase-orszag';
  * Ha az országnak nincs más attaséja, bejelölt és letiltott – egyedüli attasé, automatikusan
  * vezető; a letiltott checkbox nem küldődik be, ezért ilyenkor rejtett mező viszi az `on`
  * értéket. A súgót a hívó helyezi el (`VezetoSugo`), hogy a régiós sorban a sor alá kerüljön.
+ * A `defaultChecked` render után a vezérelt értéket követi: a React 19 a `<form action>` után
+ * `form.reset()`-et hív, a vezérelt checkbox `defaultChecked`-je pedig a kezdőérték maradna –
+ * hibás beküldés után a jelölő visszaugrana (ugyanez a `NativeSelect`-ben a `defaultSelected`-re).
  */
 export function VezetoJelolo({
   id,
@@ -1691,14 +1697,20 @@ export function VezetoJelolo({
   helyzet: VezetoHelyzet;
 }) {
   const egyedul = helyzet.masok === 0;
+  const checked = egyedul || bejelolve;
   const vanSugo = vezetoSugo(helyzet, bejelolve) !== null;
+  const ref = useRef<HTMLInputElement>(null);
+  useLayoutEffect(() => {
+    if (ref.current && ref.current.defaultChecked !== checked) ref.current.defaultChecked = checked;
+  });
   return (
     <label className="flex shrink-0 items-center gap-2 text-sm">
       <input
+        ref={ref}
         type="checkbox"
         id={id}
         name={egyedul ? undefined : name}
-        checked={egyedul || bejelolve}
+        checked={checked}
         disabled={egyedul}
         onChange={(e) => onChange(e.target.checked)}
         aria-describedby={vanSugo ? `${id}-sugo` : undefined}
@@ -2690,10 +2702,10 @@ grep -rn "AttaseMezok\|AttaseAdatok" app components lib db   # üres legyen
 gstack, a futó dev szerveren (`http://localhost:3000`), admin bejelentkezéssel:
 
 1. `/felhasznalok`: az „Országok” oszlopban „Koreai Köztársaság” (Teszt Attasé) és „Japán” (Második Attasé); nincs figyelmeztetés.
-2. „Új felhasználó”: QA Régiós, `qa.regios@niu.hu`, jelszó ≥ 8 karakter, TéT attasé; Székhely: Ausztria, város Bécs → a jelölő bejelölt és letiltott, súgó „Egyedüli attasé – automatikusan vezető.”; „+ Ország hozzáadása” ×3: Szlovénia, Horvátország, Ausztria → Létrehozás → a 3. sor alatt „Ez az ország már szerepel.”, a fókusz azon a selecten; töröld a sort (✕) → Létrehozás → toast, a táblában „Ausztria · Bécs” és „régió: Horvátország, Szlovénia”.
+2. „Új felhasználó”: QA Régiós, `qa.regios@niu.hu`, jelszó ≥ 8 karakter, TéT attasé; Székhely: Ausztria, város Bécs → a jelölő bejelölt és letiltott, súgó „Egyedüli attasé – automatikusan vezető.”; „+ Ország hozzáadása” ×3: Szlovénia, Horvátország, Ausztria → Létrehozás → a 3. sor alatt „Ez az ország már szerepel.”, a fókusz azon a selecten, és a hibás beküldés után minden select a választásán áll (székhely Ausztria, régió Szlovénia, Horvátország, Ausztria – form-reset védelem, `NativeSelect`); töröld a sort (✕) → Létrehozás → toast, a táblában „Ausztria · Bécs” és „régió: Horvátország, Szlovénia”.
 3. `/terkep`: Szlovénia tooltipje „QA Régiós · regionálisan (Bécs)”.
 4. „Új felhasználó”: QA Második, `qa.masodik@niu.hu`, Székhely: Koreai Köztársaság, részterület „Puszan és környéke” → a jelölő üres, súgó „Jelenlegi vezető: Teszt Attasé.” → Létrehozás → a táblában a Teszt Attasé KR-je mellett ★ (két attasé).
-5. QA Második szerkesztése: jelölő be → súgó „Mentéskor ő lesz a relációs vezető (jelenleg: Teszt Attasé).” → Mentés → a ★ QA Másodiknál.
+5. QA Második szerkesztése: jelölő be → súgó „Mentéskor ő lesz a relációs vezető (jelenleg: Teszt Attasé).” → a nevet töröld ki → Mentés → névhiba, a jelölő bejelölve, a székhely-select Koreai Köztársaságon marad (form-reset védelem) → a nevet írd vissza → Mentés → a ★ QA Másodiknál.
 6. QA Második szerkesztése: jelölő ki → súgó „Kikapcsolva nem marad vezető – jelölj ki mást.” → Mentés → figyelmeztetés: „Koreai Köztársaság (2 aktív attasé)”; `/orszagprofil/KR` fejlécében az „Attasék” lista alatt: „Nincs aktív relációs vezető – a profilt csak admin szerkesztheti.”
 7. QA Második törlése → a figyelmeztetés eltűnik (Teszt Attasé örököl; a ★ eltűnik, mert egy attasé maradt).
 8. QA Régiós szerkesztése: szerepkör Admin → súgó „Adminra váltva az országok törlődnek.” → Mentés → „Országok”: „–”. Utána QA Régiós törlése.
@@ -3044,6 +3056,7 @@ Keresd meg és írd át a következő helyeket (a többi szöveg változatlan):
 7. Kommunikáció: „`listCimzettJeloltek`)” → „`listCimzettJeloltek` – a nem tiltott, székhellyel rendelkező attasék; a `ticket.orszag` a címzett székhely-országának pillanatképe)”.
 8. Térkép: „Tooltip (`TerkepTooltip`): név, attasé · főváros, …” → „Tooltip (`TerkepTooltip`): név, az attasék rövid sora (`attasekRovid`: az első – a vezető – attasé „név · város”, régiósnál „regionálisan (város)”, több attasénál „+N attasé”), …”.
 9. Parancsok bekezdés: „Eldobható tsx script, ami `db/queries/*`-t vagy `lib/session.ts`-t importál: `NODE_OPTIONS="--conditions=react-server" npx tsx scripts/_x.ts` (a `server-only` guard miatt).” → „Eldobható tsx script, ami `db/queries/*`-t importál: `NODE_OPTIONS="--conditions=react-server" npx tsx scripts/_x.ts` (a `server-only` guard miatt). A `lib/session.ts` tsx-ből nem importálható (a `next/headers`/`next/navigation` kérés-kontextust és a kliens-modult húzná be); a session-logikát a `db/queries/attase-orszag.ts` és a `lib/` tiszta függvényein át ellenőrizd.”
+10. Közös segédek: a „Form-minta `components/form/`: `useMuveletForm` (…), `MezoHiba`/`hibaAttr`, `FormAction` és `MuveletState` típusok.” mondat után új mondat: „A React 19 a `<form action>` minden beküldése után – hibás eredménynél is – `form.reset()`-et hív (a commit végén, minden DOM-mutáció után): a vezérelt szöveges mezőket a React `defaultValue`-szinkronja megvédi, a natív `<select>`-et és checkboxot nem (a `defaultSelected`/`defaultChecked` a kezdőérték marad, a DOM visszaugrik, a state nem). Ezért a `NativeSelect` render után a `value`-hoz igazítja az opciók `defaultSelected`-jét – új vezérelt select mindig `NativeSelect` legyen –, a `VezetoJelolo` pedig a `defaultChecked`-et; új vezérelt natív checkbox ugyanígy szinkronizáljon.”
 
 - [ ] **Step 2: `README.md`**
 
@@ -3096,6 +3109,11 @@ migráció és a tooltip főváros nélkül már a spec része). Ha nem volt elt
 - Az oldalsáv-kártya attasé-sorában az állapot és a „Szerkesztés →”/„Megnyitás →” művelet két külön elem
   (flex-wrap, a művelet jobbra igazítva, nem törik), a spec „állapot · művelet” egysoros alakja helyett; a
   felhasználói blokk „+N”-je előtt nem törő szóköz.
+- Form-reset védelem: a React 19 a `<form action>` után `form.reset()`-et hív, ami a vezérelt natív selectet és
+  checkboxot a DOM-ban a kezdőértékére ugrasztotta (a state közben a választást tartotta, egy változtatás nélküli
+  újraküldés így más értéket vitt). A `NativeSelect` render után a `value`-hoz igazítja az opciók
+  `defaultSelected`-jét, a `VezetoJelolo` a `defaultChecked`-et; ezzel a meglévő `RendezvenySorok` típus-választója
+  is javult.
 - Tudatos kompromisszum: a főváros/terület/pénznem évfüggetlen adat, de az évenkénti Alapadatok blokkban van, így új
   évben a lakossághoz és a GDP-hez hasonlóan újra ki kell tölteni (az előző év átmásolása hatókörön kívül maradt).
 ```
@@ -3141,7 +3159,7 @@ Jelszó: `sed -n 's/^DEMO_ATTASE_PASSWORD=//p' .env.example` (ne írd ki a logba
 
 `szanto.szilvia@niu.hu`:
 1. Oldalsáv: „TéT attasé · Franciaország +4” (a „+4” nem törik külön sorba); kártya „Országprofilok · <év>” öt sorral, mindegyikben jobbra igazítva „Szerkesztés →” (az aktuális évben).
-2. `/uj-riport`: „Ország” választó 5 opcióval, alapérték Franciaország; válaszd Marokkót → beadás → a részletoldalon Marokkó → **töröld a bejegyzést**.
+2. `/uj-riport`: „Ország” választó 5 opcióval, alapérték Franciaország; válaszd Marokkót → üres űrlappal beküldés → hibák, a választó Marokkón marad (form-reset védelem) → töltsd ki → beadás → a részletoldalon Marokkó → **töröld a bejegyzést**.
 3. `/orszagprofil/MA/szerkesztes` megnyílik (régiós vezető); ne ments.
 4. `/terkep`: „Saját országprofil” gomb Franciaországra visz.
 
