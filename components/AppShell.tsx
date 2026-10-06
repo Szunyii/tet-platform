@@ -205,13 +205,13 @@ export default function AppShell({
   }
   const pathname = usePathname();
   const [title, sub] = titleFor(pathname, user.role);
-  // Attasé: a székhely országa, további (régiós) országoknál „+N".
+  // Attasé: a székhely országa, további (régiós) országoknál „+N" (nem törő szóközzel: a „+N" ne törjön egyedül új sorba).
   const szekhely = szekhelyKod(user.orszagok);
   const tovabbi = user.orszagok.length - (szekhely ? 1 : 0);
   const roleLabel =
     user.role === "admin"
       ? "NIÜ admin"
-      : `TéT attasé${szekhely ? " · " + orszagNev(szekhely) : ""}${tovabbi > 0 ? ` +${tovabbi}` : ""}`;
+      : `TéT attasé${szekhely ? " · " + orszagNev(szekhely) : ""}${tovabbi > 0 ? `\u00a0+${tovabbi}` : ""}`;
 
   return (
     <AppContext.Provider value={{ user, ev, olvasatlan, setOlvasatlan }}>

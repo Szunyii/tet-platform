@@ -10,8 +10,9 @@ import type { AppSession } from '../../../lib/session';
 // a kliens-komponensbe. A színek a térképpel közös szótárból jönnek (ALLAPOT_SZINEK), inline
 // style-lal; az AllapotBadge szándékosan nincs újrahasználva, az világos háttérre van hangolva.
 // Attasé: országonként egy sor (székhely elöl); a sor a szerkesztőre visz, ha az attasé az ország
-// relációs vezetője és az év szerkeszthető (canEditProfil), különben az olvasó nézetre. A „→” nyíl
-// nbsp-vel tapad a szóhoz: a szűk oldalsávban („Elavult profil · 2026 · Szerkesztés →”) ne törjön külön sorba.
+// relációs vezetője és az év szerkeszthető (canEditProfil), különben az olvasó nézetre. Az állapot és
+// a művelet két külön elem (flex-wrap): keskeny sorban – pl. „Elavult profil · 2025” mellett – a művelet
+// egészben kerül a következő sorba, lógó elválasztó és árva nyíl nélkül.
 //
 // Frissülés: a mentBlokkAction, a valasztEvAction és a felhasználó-műveletek
 // revalidatePath('/', 'layout')-ot hívnak; kliens-oldali navigációnál a layout nem fut újra
@@ -74,13 +75,16 @@ export default function OldalsavAllapot({ session, ev, most }: { session: AppSes
             href={szerkesztheto ? `/orszagprofil/${o.kod}/szerkesztes` : `/orszagprofil/${o.kod}`}
             style={{ display: 'flex', flexDirection: 'column', padding: '2px 0', color: SZOVEG, textDecoration: 'none' }}
           >
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: CIM }}>
+            <span style={{ display: 'flex', alignItems: 'baseline', gap: 8, color: CIM }}>
               <Potty allapot={allapot} />
               {orszagNev(o.kod)}
+              <span className="sr-only">: </span>
             </span>
-            <span style={{ paddingLeft: 16 }}>
-              {ALLAPOT_CIMKE[allapot]}{allapot === 'elavult' && utolsoEv ? ` · ${utolsoEv}` : ''}
-              <span style={{ color: LINK, fontWeight: 500 }}> · {szerkesztheto ? 'Szerkesztés' : 'Megnyitás'}&nbsp;<span aria-hidden>→</span></span>
+            <span style={{ display: 'flex', flexWrap: 'wrap', columnGap: 6, paddingLeft: 16 }}>
+              <span>{ALLAPOT_CIMKE[allapot]}{allapot === 'elavult' && utolsoEv ? ` · ${utolsoEv}` : ''}</span>
+              <span style={{ marginLeft: 'auto', color: LINK, fontWeight: 500, whiteSpace: 'nowrap' }}>
+                {szerkesztheto ? 'Szerkesztés' : 'Megnyitás'} <span aria-hidden>→</span>
+              </span>
             </span>
           </Link>
         );
