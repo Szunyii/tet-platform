@@ -1,8 +1,8 @@
 /**
  * Országszótár: ISO 3166-1 alpha-2 kód, magyar név, world-atlas 110m térképnév (a
  * `countries-110m.json` `properties.name` értéke – ezzel párosít a `VilagTerkep`) és a
- * főváros koordinátája (a pin helye). A `user.orszag` és a `riport.orszag` a `kod`-ot
- * tárolja; a felület `orszagNev()`-vel ír. Framework-mentes.
+ * főváros koordinátája (a pin helye). Az `attase_orszag.orszag_kod`, a `riport.orszag` és a
+ * `ticket.orszag` a `kod`-ot tárolja; a felület `orszagNev()`-vel ír. Framework-mentes.
  */
 export interface Orszag {
   kod: string;
@@ -20,13 +20,14 @@ export const ORSZAG_KOD_RE = /^[A-Z]{2}$/;
 
 /**
  * Magyar név szerint rendezve (a select ebben a sorrendben listáz). A `geo: ''` sorok (SG, MT,
- * BH) a 110m atlaszban poligon nélküli kis államok: a térképen csak pin.
+ * BH, VI, MV) a 110m atlaszban poligon nélküli kis államok: a térképen csak pin.
  */
 export const ORSZAGOK: readonly Orszag[] = [
   { kod: 'AF', nev: 'Afganisztán', geo: 'Afghanistan', lonlat: [69.17, 34.53] },
   { kod: 'AL', nev: 'Albánia', geo: 'Albania', lonlat: [19.82, 41.33] },
   { kod: 'DZ', nev: 'Algéria', geo: 'Algeria', lonlat: [3.06, 36.75] },
   { kod: 'US', nev: 'Amerikai Egyesült Államok', geo: 'United States of America', lonlat: [-77.04, 38.9] },
+  { kod: 'VI', nev: 'Amerikai Virgin-szigetek', geo: '', lonlat: [-64.93, 18.34] },
   { kod: 'AO', nev: 'Angola', geo: 'Angola', lonlat: [13.23, -8.84] },
   { kod: 'AR', nev: 'Argentína', geo: 'Argentina', lonlat: [-58.38, -34.6] },
   { kod: 'AU', nev: 'Ausztrália', geo: 'Australia', lonlat: [149.13, -35.28] },
@@ -128,6 +129,7 @@ export const ORSZAGOK: readonly Orszag[] = [
   { kod: 'HU', nev: 'Magyarország', geo: 'Hungary', lonlat: [19.04, 47.5] },
   { kod: 'MY', nev: 'Malajzia', geo: 'Malaysia', lonlat: [101.69, 3.14] },
   { kod: 'MW', nev: 'Malawi', geo: 'Malawi', lonlat: [33.79, -13.96] },
+  { kod: 'MV', nev: 'Maldív-szigetek', geo: '', lonlat: [73.51, 4.18] },
   { kod: 'ML', nev: 'Mali', geo: 'Mali', lonlat: [-8.0, 12.65] },
   { kod: 'MT', nev: 'Málta', geo: '', lonlat: [14.51, 35.9] },
   { kod: 'MA', nev: 'Marokkó', geo: 'Morocco', lonlat: [-6.85, 34.02] },
@@ -156,6 +158,7 @@ export const ORSZAGOK: readonly Orszag[] = [
   { kod: 'PY', nev: 'Paraguay', geo: 'Paraguay', lonlat: [-57.58, -25.28] },
   { kod: 'PE', nev: 'Peru', geo: 'Peru', lonlat: [-77.03, -12.05] },
   { kod: 'PT', nev: 'Portugália', geo: 'Portugal', lonlat: [-9.14, 38.72] },
+  { kod: 'PR', nev: 'Puerto Rico', geo: 'Puerto Rico', lonlat: [-66.11, 18.47] },
   { kod: 'RO', nev: 'Románia', geo: 'Romania', lonlat: [26.1, 44.43] },
   { kod: 'RW', nev: 'Ruanda', geo: 'Rwanda', lonlat: [30.06, -1.94] },
   { kod: 'SB', nev: 'Salamon-szigetek', geo: 'Solomon Is.', lonlat: [159.97, -9.43] },
