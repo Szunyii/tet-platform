@@ -3074,6 +3074,10 @@ migráció és a tooltip főváros nélkül már a spec része). Ha nem volt elt
   helyett); a dialógusok országonkénti listájának típusa `OrszagTagok` (prop: `orszagTagok`).
 - Az összehasonlító tábla „Attasé” sora egysoros (`attasekRovid`: „név · város +N attasé”, régiósnál
   „regionálisan”), nem név + halvány város két sorban.
+- A térkép-kivonat a főváros/terület/pénznem értéket címkézett sorként, az Alapadatok-kivonat elején mutatja
+  (nem a leírás alatti „·”-os sorban, mert az egy újabb attasé-sornak látszott); a térkép alcíme „N ország · M
+  profil”, a jelmagyarázat szárazföld-felirata „nincs attasé és profil” (a lista a csak régiósan lefedett
+  országokat is tartalmazza, ezért a „poszt” szó félrevezető lett).
 - A profil fejléce: a cím, az állapot-jelvény és a gombok egy sorban, alattuk teljes szélességben az „Attasé(k)”
   címkéjű lista (név · hely, „Relációs vezető” outline jelvény, részterület); ha egyik aktív attasé sem vezető
   (nincs kijelölve, vagy a vezető tiltott), a lista után: „Nincs aktív relációs vezető – a profilt csak admin
