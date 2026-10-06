@@ -1383,8 +1383,12 @@ Import: `import { NativeSelect } from '../form/NativeSelect';`. A props-típus �
 ```tsx
 /** Létrehozásnál nincs `initial`, szerkesztésnél kötelező – a típus is ezt kényszeríti ki. */
 export type RiportFormProps = { action: FormAction } & (
-  /** `orszagok`: a beadó saját országai (székhely elöl); több országnál választó jelenik meg. */
-  | { mode: 'create'; initial?: undefined; orszagok?: readonly { kod: string; nev: string }[] }
+  | {
+      mode: 'create';
+      initial?: undefined;
+      /** A beadó saját országai (székhely elöl); több országnál választó jelenik meg. */
+      orszagok?: readonly { kod: string; nev: string }[];
+    }
   | { mode: 'edit'; initial: RiportDetail; orszagok?: undefined }
 );
 
@@ -1494,8 +1498,10 @@ const NINCS_ORSZAG = 'A fiókodhoz nincs ország rendelve, ezért nem adhatsz be
 export async function createRiportAction(_prev: RiportFormState, formData: FormData): Promise<RiportFormState> {
   const session = await requireSession();
   if (session.orszagok.length === 0) return { errors: { form: NINCS_ORSZAG } };
-  // Egy országnál nincs választó: az az ország. Többnél a beküldött értéknek a saját országok közt kell lennie.
-  const orszag = session.orszagok.length === 1 ? session.orszagok[0].kod : mezo(formData, 'orszag');
+  // Választó csak a több országgal renderelt lapon van. Ha volt, a beküldött értéknek most is a saját
+  // országok közt kell lennie (különben mezőhiba alatta); ha nem volt, a székhely (a session-ben az első).
+  // Így a lap betöltése óta történt admin-módosítás nem okoz sem néma elakadást, sem a választás csendes felülírását.
+  const orszag = formData.has('orszag') ? mezo(formData, 'orszag') : session.orszagok[0].kod;
   const orszagHiba = session.orszagok.some((o) => o.kod === orszag) ? null : 'Válassz a saját országaid közül.';
   const parsed = parseRiportForm(formData);
   if (!parsed.ok || orszagHiba) {
@@ -1525,6 +1531,8 @@ git commit -m "$(printf 'feat(attase-orszagok): riport beadásakor több ország
 ```
 
 > **Végrehajtási eltérés (form-reset).** A React 19 a `<form action>` minden beküldése után (hibás eredménynél is) `form.reset()`-et hív, a commit végén, minden DOM-mutáció után. A vezérelt szöveges mezőket a React `defaultValue`-szinkronja megvédi. A natív `<select>`-et nem: a React csak `defaultValue`-ból állít `defaultSelected`-et. A választó ezért a DOM-ban az alapértelmezett opcióra ugrik vissza, a state közben a választást tartja, így egy változtatás nélküli újraküldés más országot vinne. A javítás a közös `components/form/NativeSelect.tsx`-be került, külön `fix(form)` commitban: render után a `value`-hoz igazítja az opciók `defaultSelected`-jét. Így a 10–11. task ország-választói és a meglévő `RendezvenySorok` is védettek. A checkboxnál ugyanez a hiba: a `defaultChecked` a kezdőérték marad. Ezt a 10. task `VezetoJelolo`-ja kezeli.
+
+> **Végrehajtási eltérés (versenyhelyzet).** A Step 3 kódja már a végleges. Az action eredetileg a session mostani országszámából döntött. Ha egyországos lap mellett az admin hozzáadott egy országot, a beküldés szó nélkül elmaradt: `orszag` mezőhiba jött, de nem volt `#orszag`, ahol megjelenhetett volna. Fordított esetben a választás szó nélkül felülíródott. Most az dönt, hogy az űrlapon volt-e választó (`formData.has('orszag')`). Ha volt, a beküldött értéknek a saját országok közt kell lennie. Ha nem volt, a székhely kerül a bejegyzésre. Normál esetben a viselkedés azonos.
 
 ---
 
@@ -3051,7 +3059,7 @@ Keresd meg és írd át a következő helyeket (a többi szöveg változatlan):
    > Az attasé országai az `attase_orszag` táblában vannak (`db/schema/attase-orszag.ts`; egy sor = egy (felhasználó, ország) pár, `orszag_kod` **ISO 3166-1 alpha-2 kód** a `lib/orszagok.ts` szótárból – `ORSZAGOK` magyar név szerint rendezve, `orszagByKod`, `orszagNev`, `ORSZAG_KOD_RE`): felhasználónként pontosan egy `szekhely` (a poszt országa; `varos` = a poszt városa, `reszterulet` = az országon belüli terület, pl. a lefedett tartományok – mindkettő csak a székhely-sornál), a többi sor regionális lefedettség; `vezeto` = relációs vezető, az országprofil felelőse, országonként legfeljebb egy (részleges egyedi indexek: `orszag_kod WHERE vezeto = 1`, `user_id WHERE szekhely = 1`). Szabályok `db/queries/attase-orszag.ts`: `setAttaseOrszagok` (egy tranzakció: a felhasználó sorainak cseréje, a bejelölt vezetőség átvétele a többiektől, normalizálás), `normalizalVezetok` (az egyetlen attaséjú, vezető nélküli ország attaséja lesz a vezető; több attasénál nem jelöl ki senkit – a `/felhasznalok` figyelmeztet), `listOrszagAttasek`, `listAttasekOrszagonkent`; típusok és tiszta segédek `lib/attase-orszag.ts` (`AttaseOrszag`, `SessionOrszag`, `OrszagAttase`, `rendezOrszagok`, `rendezAttasek`, `attaseFelirat`, `attasekRovid`, `elsoVezetettKod`, `orszagonkent`, `vezetoNelkuliOrszagok`, `vezetoHelyzet`/`alapVezeto`/`vezetoSugo` a dialógus jelölőjéhez). A felület mindenhol `orszagNev()`-vel ír, a dialógus `NativeSelect`-ből (`components/form/NativeSelect.tsx`, natív `<select>` a shadcn `Input` osztályaival) választ. Szingapúr, Málta, Bahrein, az Amerikai Virgin-szigetek és a Maldív-szigetek `geo: ''`-vel szerepel (a 110m atlaszban nincs poligonjuk, a térképen csak pin). A `user` táblán az elérhetőségek maradtak: `telefon`, `kapcsolatEmail` (`additionalFields`, `input: false`, oszlop `kapcsolat_email`, mindkét szerepkörnél; a Drizzle adapter a séma property-kulcsával párosít, ezért nem kell `fieldName`); a főváros, terület, pénznem az országprofil Alapadatok blokkjába költözött (0006 migráció). Az `adminUpdateUser` `data`-jában a `null` törli a mezőt, az `undefined` érintetlenül hagyja. A validátor `lib/felhasznalo-validacio.ts` (`ElerhetosegAdatok`; az országok `szekhely.*` és `regio.<i>.*` mezőkből), a dialógusok blokkjai `app/(app)/felhasznalok/components/` alatt (`ElerhetosegMezok`, `OrszagMezok`, `VezetoJelolo`, `Blokk`), a `MuveletDialog` `szeles` propja adja a szélesebb keretet (`sm:max-w-2xl`). A mentés a `createUser`/`adminUpdateUser` után `setAttaseOrszagok` – két lépés, nem egy tranzakció: ha a második elbukik, form-hiba. Az admin plugin `roles` mappel (`admin`, `attase`) fut.
 
 4. UI shell: „(monogram, név, szerep · ország)” → „(monogram, név, szerep · székhely-ország, további országoknál „+N”)”; az `OldalsavAllapot` leírásában „(attasé: a saját ország állapota a választott évre `getUtolsoEv` + `profilAllapot`-ból, „Szerkesztés” link `canEditProfil` mellett, különben „Megnyitás”; …” → „(attasé: országonként egy sor – székhely elöl – az állapottal a választott évre `getUtolsoEv` + `profilAllapot`-ból; a sor a szerkesztőre visz, ha `canEditProfil`, különben az olvasó nézetre; …”.
-5. Riportok: „A `riport.orszag` a beadó session-országának **kódja** (a `ticket.orszag` pillanatkép is), megjelenítés `orszagNev()`-vel” → „A `riport.orszag` a beadó egyik saját országának **kódja** (egy országnál automatikus, többnél a `RiportForm` „Ország” választója, alapértéke a székhely; az action ellenőrzi, hogy a session országai közt van), megjelenítés `orszagNev()`-vel”.
+5. Riportok: „A `riport.orszag` a beadó session-országának **kódja** (a `ticket.orszag` pillanatkép is), megjelenítés `orszagNev()`-vel” → „A `riport.orszag` a beadó egyik saját országának **kódja** (egy országnál automatikus, többnél a `RiportForm` „Ország” választója, alapértéke a székhely; az action a beküldött értéket a session országaihoz köti, választó nélküli űrlapnál – egy ország, vagy a lap betöltése óta bővült – a székhelyet veszi), megjelenítés `orszagNev()`-vel”.
 6. Országprofil: a lekérdezés-felsorolásban a „`getAttaseNev` (az ország első aktív attaséja, a profil-oldal fejléce)” helyett „a profil-oldal fejlécének attasé-listája `listOrszagAttasek` (`db/queries/attase-orszag.ts`) + `components/orszagprofil/AttaseLista`”; a `listTerkepAdat` leírásában „minden ország, ahol aktív attasé van vagy van profil” → „minden ország, ahol aktív attasé van (székhelyként vagy régiósan) vagy van profil”, és a mezőlistában a `poszt` helyett `attasek` (`OrszagAttase[]`, vezető elöl); a szótár-leírásban a blokk-interfészeknél: „(az `Alapadatok` a `fovaros`, `terulet` km², `penznem` mezőt is tartalmazza – a 0006 migráció másolta át a felhasználóról)”; a jog-mondat: „Jog `lib/orszagprofil-jog.ts` `canEditProfil(session, kod, ev, aktualisEv)`: admin bármely ország `EV_MIN`..aktuális év, attasé csak az az ország, amelynek relációs vezetője (`session.orszagok` `vezeto`), és csak az aktuális év”; a térkép-route leírásában „attasénak „Saját országprofil” gomb” → „attasénak „Saját országprofil” gomb (`elsoVezetettKod`: a székhely, ha ott vezető, különben az első vezetett ország; nem vezetőnek nincs gomb)”.
 7. Kommunikáció: „`listCimzettJeloltek`)” → „`listCimzettJeloltek` – a nem tiltott, székhellyel rendelkező attasék; a `ticket.orszag` a címzett székhely-országának pillanatképe)”.
 8. Térkép: „Tooltip (`TerkepTooltip`): név, attasé · főváros, …” → „Tooltip (`TerkepTooltip`): név, az attasék rövid sora (`attasekRovid`: az első – a vezető – attasé „név · város”, régiósnál „regionálisan (város)”, több attasénál „+N attasé”), …”.
@@ -3114,6 +3122,10 @@ migráció és a tooltip főváros nélkül már a spec része). Ha nem volt elt
   újraküldés így más értéket vitt). A `NativeSelect` render után a `value`-hoz igazítja az opciók
   `defaultSelected`-jét, a `VezetoJelolo` a `defaultChecked`-et; ezzel a meglévő `RendezvenySorok` típus-választója
   is javult.
+- A riport országa: választó nélküli űrlapnál (egy ország) az action a székhelyet veszi, választós űrlapnál a beküldött
+  értéket a saját országokhoz köti. Az „egy országnál azt használja” szabály csak versenyhelyzetben tér el. Ha a lap
+  betöltése óta az admin bővítette az országokat, a bejegyzés a székhelyre kerül, a beküldés nem akad el némán; ha a
+  választottat vette el, látható mezőhiba jön, a választás nem íródik felül.
 - Tudatos kompromisszum: a főváros/terület/pénznem évfüggetlen adat, de az évenkénti Alapadatok blokkban van, így új
   évben a lakossághoz és a GDP-hez hasonlóan újra ki kell tölteni (az előző év átmásolása hatókörön kívül maradt).
 ```
