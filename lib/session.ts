@@ -2,7 +2,9 @@ import 'server-only';
 import { headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { cache } from 'react';
+import { listAttaseOrszagok } from '../db/queries/attase-orszag';
 import { auth } from './auth';
+import { szekhelyKod, type SessionOrszag } from './attase-orszag';
 import { loginUtvonal } from './routes';
 
 export type AppRole = 'admin' | 'attase';
@@ -12,6 +14,9 @@ export interface AppSession {
   name: string;
   email: string;
   role: AppRole;
+  /** Az attasé országai (székhely elöl, utána magyar név szerint); adminnál üres. */
+  orszagok: SessionOrszag[];
+  /** Átmeneti: a székhely kódja a még át nem állt fogyasztóknak; a 12. task törli. */
   orszag: string | null;
 }
 
@@ -19,20 +24,17 @@ export interface AppSession {
  * Aktuális session a kérés cookie-jából, vagy null. Csak szerver oldalon hívható.
  * React.cache: egy kérésen belül (layout + page) egyszer fut le. Server action-ben
  * a cache átlátszó, minden hívás friss. A Better Auth session.cookieCache szándékosan
- * NINCS bekapcsolva: tiltás/törlés után azonnal érvénytelen legyen a session.
+ * NINCS bekapcsolva: tiltás/törlés után azonnal érvénytelen legyen a session. Az attasé
+ * országai minden kérésnél a DB-ből jönnek, így egy admin-módosítás azonnal érvényes.
  */
 export const getSession = cache(async (): Promise<AppSession | null> => {
   const result = await auth.api.getSession({ headers: await headers() });
   if (!result) return null;
   const u = result.user;
-  return {
-    userId: u.id,
-    name: u.name,
-    email: u.email,
-    // A role hiánya (régi rekord) attasénak számít.
-    role: u.role === 'admin' ? 'admin' : 'attase',
-    orszag: u.orszag ?? null,
-  };
+  // A role hiánya (régi rekord) attasénak számít.
+  const role: AppRole = u.role === 'admin' ? 'admin' : 'attase';
+  const orszagok = role === 'attase' ? listAttaseOrszagok(u.id) : [];
+  return { userId: u.id, name: u.name, email: u.email, role, orszagok, orszag: szekhelyKod(orszagok) };
 });
 
 /**
