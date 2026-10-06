@@ -71,7 +71,10 @@ export function attaseFelirat(a: OrszagAttase, kod: string): string {
   return a.varos ? `${a.nev} · ${a.varos}` : a.nev;
 }
 
-/** Egy sor az ország attaséiról: az első (a vezető, ha van) felirata, több attasénál „+N attasé”; üres listára null. A lista `rendezAttasek` sorrendű (a hívók így adják), ezért az első a vezető, ha van. */
+/**
+ * Egy sor az ország attaséiról: az első felirata, több attasénál „+N attasé”; üres listára null.
+ * A lista `rendezAttasek` sorrendű (a hívók így adják), ezért az első a vezető, ha van.
+ */
 export function attasekRovid(attasek: readonly OrszagAttase[], kod: string): string | null {
   const [elso, ...tobbi] = attasek;
   if (!elso) return null;
@@ -85,7 +88,11 @@ export interface OrszagTag {
   vezeto: boolean;
   tiltott: boolean;
 }
-/** Országkód → az országot lefedő felhasználók (tiltottakkal együtt). Sima objektum (a felhasználó-oldal kliens-dialógusainak propja); a kulcs validált ISO-kód, olvasás `Object.hasOwn`-nal. */
+/**
+ * Országkód → az országot lefedő felhasználók (tiltottakkal együtt). Sima objektum
+ * (a felhasználó-oldal kliens-dialógusainak propja); a kulcs validált ISO-kód,
+ * olvasás `Object.hasOwn`-nal.
+ */
 export type OrszagTagok = Record<string, OrszagTag[]>;
 
 /** A felhasználó-listából országonként a lefedő felhasználók. */
@@ -115,7 +122,10 @@ export interface HianyosOrszag {
   vezetoTiltott: boolean;
 }
 
-/** Az aktív attaséval rendelkező, de aktív vezető nélküli országok (nincs kijelölve, vagy a vezető tiltott), magyar név szerint – a felhasználó-oldal figyelmeztetése. */
+/**
+ * Az aktív attaséval rendelkező, de aktív vezető nélküli országok (nincs kijelölve,
+ * vagy a vezető tiltott), magyar név szerint – a felhasználó-oldal figyelmeztetése.
+ */
 export function vezetoNelkuliOrszagok(m: OrszagTagok): HianyosOrszag[] {
   const ki: HianyosOrszag[] = [];
   for (const [kod, tagok] of Object.entries(m)) {
