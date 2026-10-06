@@ -2694,7 +2694,7 @@ gstack, a futó dev szerveren (`http://localhost:3000`), admin bejelentkezéssel
 3. `/terkep`: Szlovénia tooltipje „QA Régiós · regionálisan (Bécs)”.
 4. „Új felhasználó”: QA Második, `qa.masodik@niu.hu`, Székhely: Koreai Köztársaság, részterület „Puszan és környéke” → a jelölő üres, súgó „Jelenlegi vezető: Teszt Attasé.” → Létrehozás → a táblában a Teszt Attasé KR-je mellett ★ (két attasé).
 5. QA Második szerkesztése: jelölő be → súgó „Mentéskor ő lesz a relációs vezető (jelenleg: Teszt Attasé).” → Mentés → a ★ QA Másodiknál.
-6. QA Második szerkesztése: jelölő ki → súgó „Kikapcsolva nem marad vezető – jelölj ki mást.” → Mentés → figyelmeztetés: „Koreai Köztársaság (2 aktív attasé)”.
+6. QA Második szerkesztése: jelölő ki → súgó „Kikapcsolva nem marad vezető – jelölj ki mást.” → Mentés → figyelmeztetés: „Koreai Köztársaság (2 aktív attasé)”; `/orszagprofil/KR` fejlécében az „Attasék” lista alatt: „Nincs aktív relációs vezető – a profilt csak admin szerkesztheti.”
 7. QA Második törlése → a figyelmeztetés eltűnik (Teszt Attasé örököl; a ★ eltűnik, mert egy attasé maradt).
 8. QA Régiós szerkesztése: szerepkör Admin → súgó „Adminra váltva az országok törlődnek.” → Mentés → „Országok”: „–”. Utána QA Régiós törlése.
 9. `console --errors` üres.
@@ -3074,8 +3074,10 @@ migráció és a tooltip főváros nélkül már a spec része). Ha nem volt elt
   helyett); a dialógusok országonkénti listájának típusa `OrszagTagok` (prop: `orszagTagok`).
 - Az összehasonlító tábla „Attasé” sora egysoros (`attasekRovid`: „név · város +N attasé”, régiósnál
   „regionálisan”), nem név + halvány város két sorban.
-- A profil fejléce akkor is kiírja a „Nincs kijelölt relációs vezető.” sort, ha egyetlen aktív, nem vezető
-  attasé van (pl. a vezető tiltott).
+- A profil fejléce: a cím, az állapot-jelvény és a gombok egy sorban, alattuk teljes szélességben az „Attasé(k)”
+  címkéjű lista (név · hely, „Relációs vezető” outline jelvény, részterület); ha egyik aktív attasé sem vezető
+  (nincs kijelölve, vagy a vezető tiltott), a lista után: „Nincs aktív relációs vezető – a profilt csak admin
+  szerkesztheti.” (a spec „Nincs kijelölt relációs vezető.” szövege helyett).
 - A vezető-jelölő alapértéke akkor is „bejelölve”, ha a másik vezető tiltott (gyakorlatilag nincs aktív vezető).
 - A 0006 migráció: a régi `user.orszag` trimmelve kerül át (üres/csak szóköz nem ad sort); a vezetőválasztás
   döntetlennél az id-vel determinisztikus; a főváros/terület/pénznem mezőnként az ország bármely attaséjától
@@ -3118,7 +3120,7 @@ gstack, `http://localhost:3000`, admin:
 1. `/felhasznalok`: 16 felhasználó; ★ Kindert Juditnál (Németország · Berlin) és dr. Nagy Gabriellánál (Amerikai Egyesült Államok · New York); nincs figyelmeztetés; Szántó Szilviánál „régió: Algéria, Marokkó, Mauritánia, Tunézia”.
 2. Kindert Judit szerkesztése: a részterület szövegdobozban a tartományok; a jelölő bejelölt, súgó nincs; Mégse.
 3. `/terkep`: Németország tooltipje „Kindert Judit · Berlin +2 attasé”; a kivonatban három attasé, Kindertnél „· relációs vezető”; Puerto Rico színezett poligon (van attaséja), a Maldív-szigetek pinje kijelölhető; az Amerikai Virgin-szigetek pinje 1× nagyításnál a Puerto Ricóé alá esik – nagyítva (vagy a rangsor-panelből) ellenőrizd; Algéria tooltipje „Szántó Szilvia · regionálisan (Párizs)”.
-4. `/orszagprofil/DE`: az attasé-lista három sorral, a részterületekkel, „Relációs vezető” jelvény Kindertnél; `/orszagprofil/DZ`: „Szántó Szilvia · regionálisan, székhely: Párizs, Franciaország”; `/orszagprofil/KR`: az Alapadatokban Főváros: Szöul, Terület: 100 210 km², Pénznem.
+4. `/orszagprofil/DE`: a cím sorában a jelvény és a gombok, alatta az „Attasék” lista három sorral, a részterületekkel (hosszú listánál is tördelve), „Relációs vezető” (outline) jelvény Kindertnél; `/orszagprofil/US`: a két hosszú állam-lista olvashatóan tördelve; `/orszagprofil/DZ`: „Szántó Szilvia · regionálisan, székhely: Párizs, Franciaország”; `/orszagprofil/KR`: az Alapadatokban Főváros: Szöul, Terület: 100 210 km², Pénznem.
 5. `/kommunikacio` → „Új ticket”: a címzettek közt „Kindert Judit · Németország”, „Szántó Szilvia · Franciaország” (ne hozz létre ticketet).
 
 - [ ] **Step 2: Nem vezető attasé (Komma Krisztián)**
