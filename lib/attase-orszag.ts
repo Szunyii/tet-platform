@@ -67,11 +67,11 @@ export function rendezAttasek(kod: string, lista: readonly OrszagAttase[]): Orsz
 
 /** „Név · Város”; régiósnál „Név · regionálisan (Város)” – város nélkül a székhely országa. */
 export function attaseFelirat(a: OrszagAttase, kod: string): string {
-  if (regionalisE(a, kod)) return `${a.nev} · regionálisan (${a.varos ?? orszagNev(a.szekhelyKod)})`;
+  if (regionalisE(a, kod)) return `${a.nev} · regionálisan (${a.varos || orszagNev(a.szekhelyKod)})`;
   return a.varos ? `${a.nev} · ${a.varos}` : a.nev;
 }
 
-/** Egy sor az ország attaséiról: az első (a vezető, ha van) felirata, több attasénál „+N attasé”; üres listára null. */
+/** Egy sor az ország attaséiról: az első (a vezető, ha van) felirata, több attasénál „+N attasé”; üres listára null. A lista `rendezAttasek` sorrendű (a hívók így adják), ezért az első a vezető, ha van. */
 export function attasekRovid(attasek: readonly OrszagAttase[], kod: string): string | null {
   const [elso, ...tobbi] = attasek;
   if (!elso) return null;
@@ -85,8 +85,8 @@ export interface OrszagTag {
   vezeto: boolean;
   tiltott: boolean;
 }
-/** Országkód → az országot lefedő felhasználók (tiltottakkal együtt). Sima objektum: kliens-propként is átadható. */
-export type OrszagAttasek = Record<string, OrszagTag[]>;
+/** Országkód → az országot lefedő felhasználók (tiltottakkal együtt). Sima objektum (a felhasználó-oldal kliens-dialógusainak propja); a kulcs validált ISO-kód, olvasás `Object.hasOwn`-nal. */
+export type OrszagTagok = Record<string, OrszagTag[]>;
 
 /** A felhasználó-listából országonként a lefedő felhasználók. */
 export function orszagonkent(
@@ -96,18 +96,18 @@ export function orszagonkent(
     tiltott: boolean;
     orszagok: readonly Pick<AttaseOrszag, 'kod' | 'vezeto'>[];
   }[],
-): OrszagAttasek {
-  const m: OrszagAttasek = {};
+): OrszagTagok {
+  const m: OrszagTagok = {};
   for (const f of felhasznalok) {
     for (const o of f.orszagok) {
-      if (!m[o.kod]) m[o.kod] = [];
+      if (!Object.hasOwn(m, o.kod)) m[o.kod] = [];
       m[o.kod].push({ userId: f.id, nev: f.nev, vezeto: o.vezeto, tiltott: f.tiltott });
     }
   }
   return m;
 }
 
-/** Ország, amelynek van attaséja, de nincs aktív vezetője (nincs kijelölve, vagy a vezető tiltott). */
+/** Ország, amelynek van aktív attaséja, de nincs aktív vezetője (nincs kijelölve, vagy a vezető tiltott). */
 export interface HianyosOrszag {
   kod: string;
   /** A nem tiltott attasék száma. */
@@ -115,13 +115,15 @@ export interface HianyosOrszag {
   vezetoTiltott: boolean;
 }
 
-/** A vezető nélküli országok magyar név szerint (a felhasználó-oldal figyelmeztetése). */
-export function vezetoNelkuliOrszagok(m: OrszagAttasek): HianyosOrszag[] {
+/** Az aktív attaséval rendelkező, de aktív vezető nélküli országok (nincs kijelölve, vagy a vezető tiltott), magyar név szerint – a felhasználó-oldal figyelmeztetése. */
+export function vezetoNelkuliOrszagok(m: OrszagTagok): HianyosOrszag[] {
   const ki: HianyosOrszag[] = [];
   for (const [kod, tagok] of Object.entries(m)) {
+    const aktivDb = tagok.filter((t) => !t.tiltott).length;
     const vezeto = tagok.find((t) => t.vezeto);
-    if (vezeto && !vezeto.tiltott) continue;
-    ki.push({ kod, aktivDb: tagok.filter((t) => !t.tiltott).length, vezetoTiltott: Boolean(vezeto) });
+    // Csak ahol van aktív attasé: a csupa tiltott attasés országban nincs kire átadni a vezetést.
+    if (aktivDb === 0 || (vezeto && !vezeto.tiltott)) continue;
+    ki.push({ kod, aktivDb, vezetoTiltott: Boolean(vezeto) });
   }
   return ki.sort((a, b) => orszagNev(a.kod).localeCompare(orszagNev(b.kod), 'hu'));
 }
@@ -137,8 +139,8 @@ export interface VezetoHelyzet {
 }
 
 /** `sajatId`: a szerkesztett felhasználó (új felhasználónál null). */
-export function vezetoHelyzet(kod: string, sajatId: string | null, m: OrszagAttasek): VezetoHelyzet {
-  const tagok = m[kod] ?? [];
+export function vezetoHelyzet(kod: string, sajatId: string | null, m: OrszagTagok): VezetoHelyzet {
+  const tagok = Object.hasOwn(m, kod) ? m[kod] : [];
   const masok = tagok.filter((t) => t.userId !== sajatId);
   const v = masok.find((t) => t.vezeto);
   return {
@@ -157,8 +159,10 @@ export function alapVezeto(h: VezetoHelyzet): boolean {
 export function vezetoSugo(h: VezetoHelyzet, bejelolve: boolean): string | null {
   if (h.masok === 0) return 'Egyedüli attasé – automatikusan vezető.';
   if (h.masikVezeto) {
-    const nev = h.masikVezeto.nev + (h.masikVezeto.tiltott ? ' (tiltott)' : '');
-    return bejelolve ? `Mentéskor átveszi a vezetőséget (jelenleg: ${nev}).` : `Jelenlegi vezető: ${nev}.`;
+    const { nev, tiltott } = h.masikVezeto;
+    return bejelolve
+      ? `Mentéskor ő lesz a relációs vezető (jelenleg: ${nev}${tiltott ? ', tiltott' : ''}).`
+      : `Jelenlegi vezető: ${nev}${tiltott ? ' (tiltott)' : ''}.`;
   }
   if (h.sajatVezeto) return bejelolve ? null : 'Kikapcsolva nem marad vezető – jelölj ki mást.';
   return 'Nincs kijelölt vezető.';
