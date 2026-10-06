@@ -14,6 +14,7 @@ export function AlapadatokMezok({
 }: BlokkMezokProps<Alapadatok>) {
   const [e, set] = useBlokkAllapot({
     ...initial,
+    terulet: szamStr(initial.terulet),
     lakossag: szamStr(initial.lakossag), gdp: szamStr(initial.gdp), gdpEgyFore: szamStr(initial.gdpEgyFore),
     gdpNovekedes: szamStr(initial.gdpNovekedes), adatEv: szamStr(initial.adatEv),
   });
@@ -22,6 +23,9 @@ export function AlapadatokMezok({
       {(errors) => (
         <>
           <div className="grid gap-4 sm:grid-cols-2">
+            <RovidMezo id={mezoId(B, 'fovaros')} name="fovaros" cimke={C.fovaros.cimke} value={e.fovaros} onChange={set('fovaros')} max={ROVID_MAX} errors={errors} placeholder="pl. Szöul" />
+            <SzamMezo id={mezoId(B, 'terulet')} name="terulet" cimke={C.terulet.cimke} value={e.terulet} onChange={set('terulet')} errors={errors} maxHossz={SZAM_MAX_HOSSZ} utotag="km²" />
+            <RovidMezo id={mezoId(B, 'penznem')} name="penznem" cimke={C.penznem.cimke} sugo={C.penznem.sugo} value={e.penznem} onChange={set('penznem')} max={ROVID_MAX} errors={errors} />
             <SzamMezo id={mezoId(B, 'lakossag')} name="lakossag" cimke={C.lakossag.cimke} value={e.lakossag} onChange={set('lakossag')} errors={errors} maxHossz={SZAM_MAX_HOSSZ} utotag="fő" />
             <SzamMezo id={mezoId(B, 'gdp')} name="gdp" cimke={C.gdp.cimke} value={e.gdp} onChange={set('gdp')} errors={errors} maxHossz={SZAM_MAX_HOSSZ} utotag="mrd USD" />
             <SzamMezo id={mezoId(B, 'gdpEgyFore')} name="gdpEgyFore" cimke={C.gdpEgyFore.cimke} value={e.gdpEgyFore} onChange={set('gdpEgyFore')} errors={errors} maxHossz={SZAM_MAX_HOSSZ} utotag="USD" />

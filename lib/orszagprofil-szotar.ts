@@ -114,6 +114,11 @@ export function isBlokkKulcs(v: string): v is BlokkKulcs {
 }
 
 export interface Alapadatok {
+  /** A poszt-adatok 2026-10-től itt vannak (korábban a felhasználón; a 0006 migráció másolta át). */
+  fovaros: string;
+  /** km², pozitív egész. */
+  terulet: number | null;
+  penznem: string;
   lakossag: number | null;
   gdp: number | null;
   gdpEgyFore: number | null;
@@ -212,6 +217,7 @@ function szovegLista(v: unknown, max: number): string[] {
  */
 const NORMALIZALOK: { [K in BlokkKulcs]: (r: Record<string, unknown>) => ProfilBlokkok[K] } = {
   alapadatok: (r) => ({
+    fovaros: szoveg(r.fovaros), terulet: szam(r.terulet), penznem: szoveg(r.penznem),
     lakossag: szam(r.lakossag), gdp: szam(r.gdp), gdpEgyFore: szam(r.gdpEgyFore),
     gdpNovekedes: szam(r.gdpNovekedes), adatEv: szam(r.adatEv), forras: szoveg(r.forras),
     tagsagok: szurtLista(r.tagsagok, TAGSAGOK), tagsagEgyeb: szoveg(r.tagsagEgyeb),
@@ -282,6 +288,9 @@ export interface MezoCimke {
 }
 export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], MezoCimke> } = {
   alapadatok: {
+    fovaros: { cimke: 'Főváros' },
+    terulet: { cimke: 'Terület (km²)' },
+    penznem: { cimke: 'Pénznem', sugo: 'Pl. dél-koreai won (KRW).' },
     lakossag: { cimke: 'Lakosság (fő)' },
     gdp: { cimke: 'GDP (milliárd USD)' },
     gdpEgyFore: { cimke: 'Egy főre jutó GDP (USD)' },

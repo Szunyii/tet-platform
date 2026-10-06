@@ -51,6 +51,9 @@ const NEZETEK: { [K in BlokkKulcs]: (b: ProfilBlokkok[K]) => ReactNode } = {
     const C = MEZO_CIMKEK.alapadatok;
     return (
       <dl className="flex flex-col gap-3">
+        <Sor cimke={C.fovaros.cimke}><Szoveg v={b.fovaros} /></Sor>
+        <Sor cimke={C.terulet.cimke}>{formatSzam(b.terulet, ' km²')}</Sor>
+        <Sor cimke={C.penznem.cimke}><Szoveg v={b.penznem} /></Sor>
         <Sor cimke={C.lakossag.cimke}>{formatSzam(b.lakossag)}</Sor>
         <Sor cimke={C.gdp.cimke}>{formatSzam(b.gdp)}</Sor>
         <Sor cimke={C.gdpEgyFore.cimke}>{formatSzam(b.gdpEgyFore)}</Sor>

@@ -90,6 +90,9 @@ const VALIDALOK: { [K in BlokkKulcs]: (fd: FormData, errors: MezoHibak, aktualis
   alapadatok: (fd, errors, aktualisEv) => {
     const b = 'alapadatok';
     return {
+      fovaros: szoveg(fd, b, 'fovaros', ROVID_MAX, errors),
+      terulet: szam(fd, b, 'terulet', { min: 1, max: 999_999_999, tizedes: 0 }, errors),
+      penznem: szoveg(fd, b, 'penznem', ROVID_MAX, errors),
       lakossag: szam(fd, b, 'lakossag', { min: 1, max: 10_000_000_000, tizedes: 0 }, errors),
       gdp: szam(fd, b, 'gdp', { min: 0, max: 1_000_000, tizedes: 1 }, errors),
       gdpEgyFore: szam(fd, b, 'gdpEgyFore', { min: 0, max: 10_000_000, tizedes: 0 }, errors),
