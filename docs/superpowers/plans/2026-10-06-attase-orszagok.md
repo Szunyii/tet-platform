@@ -3093,6 +3093,9 @@ migráció és a tooltip főváros nélkül már a spec része). Ha nem volt elt
 - Az Alapadatok-űrlap: a főváros és a pénznem példája súgóként a szótárban („Pl. Szöul.”, „Pl. dél-koreai von (KRW).”),
   a rács sorrendje a súgós mezők párosításával (Főváros | Pénznem, Terület | Lakosság, GDP | GDP/fő,
   GDP-növekedés | Adatév, Forrás teljes szélességben).
+- Az oldalsáv-kártya attasé-sorában az állapot és a „Szerkesztés →”/„Megnyitás →” művelet két külön elem
+  (flex-wrap, a művelet jobbra igazítva, nem törik), a spec „állapot · művelet” egysoros alakja helyett; a
+  felhasználói blokk „+N”-je előtt nem törő szóköz.
 - Tudatos kompromisszum: a főváros/terület/pénznem évfüggetlen adat, de az évenkénti Alapadatok blokkban van, így új
   évben a lakossághoz és a GDP-hez hasonlóan újra ki kell tölteni (az előző év átmásolása hatókörön kívül maradt).
 ```
