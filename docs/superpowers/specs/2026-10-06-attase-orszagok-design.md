@@ -1,7 +1,7 @@
 # Attasé–ország hozzárendelés (több attasé országonként, relációs vezető, régiós lefedettség) – tervezési spec
 
 Dátum: 2026-10-06
-Állapot: jóváhagyásra vár
+Állapot: jóváhagyva
 
 ## Cél
 
@@ -91,9 +91,11 @@ ellenőrizni). A „Virgin-szigetek” az USA-hoz tartozó szigeteket jelenti.
 
 ## Migráció
 
-Egy drizzle-kit migráció (`npm run db:generate`), a generált SQL-be kézzel beszúrt
-adatmásoló utasításokkal a tábla-létrehozás és az oszloptörlés közé (a snapshot a sémából jön,
-az adatlépések nem befolyásolják). A hostingon a `npm run build` futtatja (`drizzle-kit migrate`).
+Két drizzle-kit migráció (`npm run db:generate`): `0006_attase_orszag` (az 1. lépés generálva,
+a 2–4. adatlépés kézzel a végére fűzve – a snapshot a sémából jön, az adatlépések nem
+befolyásolják) és `0007_user_poszt_oszlopok` (az 5. lépés). A kettéosztás miatt a fejlesztés
+köztes állapotaiban is fordul és fut a kód: a régi oszlopok az utolsó lépésig olvashatók maradnak.
+A hostingon a `npm run build` mindkettőt futtatja (`drizzle-kit migrate`).
 
 1. `CREATE TABLE attase_orszag` + az indexek.
 2. Minden attasé (`coalesce(role, 'attase') <> 'admin'`), akinek van nem üres `orszag`-a →
@@ -277,8 +279,8 @@ súgó szövegei a nevet toldalék nélkül írják, hogy ne kelljen magánhangz
   `attasek: OrszagAttase[]` (a `listOrszagAttasek` sorrendjével). A főváros, terület és pénznem
   a már meglévő `alapadatok` mezőből jön.
 - Tooltip: az első attasé (vezető, ha van) „név · város”, több attasénál „+N attasé”; régiósnál
-  „név · regionálisan (város)”; nincs attasé: „nincs aktív attasé”; a főváros az
-  `alapadatok`-ból.
+  „név · regionálisan (város)”; nincs attasé: „nincs aktív attasé”. A fővárost a tooltip nem
+  írja ki (az első attasé városa informatívabb; a kivonat mutatja a fővárost).
 - `ProfilKivonat`: az attasék listája (név · város, „relációs vezető” jelzés több attasénál,
   „regionálisan” jelzés), alatta „főváros · terület km² · pénznem” az `alapadatok`-ból.
   A részterület itt nem látszik.
