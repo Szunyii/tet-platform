@@ -71,6 +71,14 @@ export function attaseFelirat(a: OrszagAttase, kod: string): string {
   return a.varos ? `${a.nev} · ${a.varos}` : a.nev;
 }
 
+/** A profil fejlécének hely-felirata: „Város”, régiósnál „regionálisan, székhely: Város, Ország” (város nélkül csak az ország). */
+export function attaseHely(a: OrszagAttase, kod: string): string {
+  if (regionalisE(a, kod)) {
+    return `regionálisan, székhely: ${[a.varos, orszagNev(a.szekhelyKod)].filter(Boolean).join(', ')}`;
+  }
+  return a.varos ?? '';
+}
+
 /**
  * Egy sor az ország attaséiról: az első felirata, több attasénál „+N attasé”; üres listára null.
  * A lista `rendezAttasek` sorrendű (a hívók így adják), ezért az első a vezető, ha van.

@@ -47,25 +47,23 @@ export default async function OrszagprofilPage({ params }: { params: Promise<{ k
 
   return (
     <div className="flex max-w-4xl flex-col gap-4">
-      <div className="flex flex-wrap items-start gap-3">
-        <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-1">
-          <div className="flex flex-wrap items-center gap-3">
-            <h2 className="text-lg font-semibold">{orszag.nev}</h2>
-            <AllapotBadge allapot={allapot} ev={utolsoEv} />
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 className="text-lg font-semibold">{orszag.nev}</h2>
+          <AllapotBadge allapot={allapot} ev={utolsoEv} />
+          <div className="ml-auto flex gap-2">
+            <Link href={`/terkep?o=${kod}`} className={cn(buttonVariants({ variant: 'outline' }))}>Vissza a térképre</Link>
+            <SzerkesztesGomb
+              kod={kod}
+              most={most}
+              szerkeszthetEv={canEditProfil(session, kod, ev, most)}
+              szerkeszthetMost={canEditProfil(session, kod, most, most)}
+              action={valasztEvAction}
+              felirat="Szerkesztés"
+            />
           </div>
-          <AttaseLista kod={kod} attasek={attasek} />
         </div>
-        <div className="ml-auto flex gap-2">
-          <Link href={`/terkep?o=${kod}`} className={cn(buttonVariants({ variant: 'outline' }))}>Vissza a térképre</Link>
-          <SzerkesztesGomb
-            kod={kod}
-            most={most}
-            szerkeszthetEv={canEditProfil(session, kod, ev, most)}
-            szerkeszthetMost={canEditProfil(session, kod, most, most)}
-            action={valasztEvAction}
-            felirat="Szerkesztés"
-          />
-        </div>
+        <AttaseLista kod={kod} attasek={attasek} />
       </div>
       {profil ? (
         <p className="text-sm text-muted-foreground">
