@@ -58,7 +58,7 @@ export function TerkepNezet({
     ? `${rangsor.sorok.length} ország adattal · ${rangsor.adatNelkul.length} adat nélkül`
     : iparag
       ? `${szures(adatok, iparag).length} ország emeli ki ezt az iparágat`
-      : `${adatok.length} poszt · ${adatok.filter((o) => o.allapot === 'friss').length} profil (${ev})`;
+      : `${adatok.length} ország · ${adatok.filter((o) => o.allapot === 'friss').length} profil (${ev})`;
 
   return (
     <div className="flex max-w-[1600px] flex-col gap-4">

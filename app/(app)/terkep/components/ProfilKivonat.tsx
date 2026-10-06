@@ -38,10 +38,6 @@ export function ProfilKivonat({
 }) {
   const a = o.alapadatok;
   const C = MEZO_CIMKEK.alapadatok;
-  // A poszt országának adatai az Alapadatok blokkból (főváros, terület, pénznem).
-  const poszt = a
-    ? [a.fovaros, a.terulet != null ? sz(a.terulet, ' km²') : null, a.penznem].filter(Boolean).join(' · ')
-    : '';
   // A térképen választott számszerű mutató értéke és helyezése (a szűrt rangsorban); undefined = kategorikus mutató.
   const ertek = mutato.tipus === 'szam' ? ertekEsHely(o, mutato, rangsor) : undefined;
   // Van-e helyezése (a szűrő által kizárt ország nincs a rangsorban, de értéke lehet).
@@ -63,7 +59,6 @@ export function ProfilKivonat({
                   </span>
                 ))
               )}
-              {poszt && <span>{poszt}</span>}
             </CardDescription>
           </div>
           <Button type="button" variant="ghost" size="icon" className="ml-auto" aria-label="Bezárás" onClick={onClose}>
@@ -102,6 +97,15 @@ export function ProfilKivonat({
           <>
             {a && (
               <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
+                {a.fovaros && (
+                  <><dt className="text-muted-foreground">{C.fovaros.cimke}</dt><dd>{a.fovaros}</dd></>
+                )}
+                {a.terulet != null && (
+                  <><dt className="text-muted-foreground">{C.terulet.cimke}</dt><dd>{sz(a.terulet)}</dd></>
+                )}
+                {a.penznem && (
+                  <><dt className="text-muted-foreground">{C.penznem.cimke}</dt><dd>{a.penznem}</dd></>
+                )}
                 <dt className="text-muted-foreground">{C.lakossag.cimke}</dt><dd>{sz(a.lakossag)}</dd>
                 <dt className="text-muted-foreground">{C.gdp.cimke}</dt><dd>{sz(a.gdp)}</dd>
                 <dt className="text-muted-foreground">{C.gdpEgyFore.cimke}</dt><dd>{sz(a.gdpEgyFore)}</dd>

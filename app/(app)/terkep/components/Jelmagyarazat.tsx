@@ -37,7 +37,7 @@ export function Jelmagyarazat({ mutato, tartomany, csoportok, iparag }: {
   const kozos = (
     <>
       {iparag && <span className="flex items-center gap-1.5"><Negyzet szin={TERKEP_SZINEK.halvany} /> nem felel meg a szűrőnek</span>}
-      <span className="flex items-center gap-1.5"><Negyzet szin={TERKEP_SZINEK.szarazfold} keret /> nincs poszt</span>
+      <span className="flex items-center gap-1.5"><Negyzet szin={TERKEP_SZINEK.szarazfold} keret /> nincs attasé és profil</span>
     </>
   );
   return (
