@@ -12,6 +12,7 @@ import {
   type ReactNode,
 } from "react";
 import type { LogoutState } from "../app/(app)/actions";
+import { szekhelyKod } from "../lib/attase-orszag";
 import { orszagNev } from "../lib/orszagok";
 import { ini } from "../lib/score";
 import type { AppSession } from "../lib/session";
@@ -204,10 +205,13 @@ export default function AppShell({
   }
   const pathname = usePathname();
   const [title, sub] = titleFor(pathname, user.role);
+  // Attasé: a székhely országa, további (régiós) országoknál „+N".
+  const szekhely = szekhelyKod(user.orszagok);
+  const tovabbi = user.orszagok.length - (szekhely ? 1 : 0);
   const roleLabel =
     user.role === "admin"
       ? "NIÜ admin"
-      : `TéT attasé${user.orszag ? " · " + orszagNev(user.orszag) : ""}`;
+      : `TéT attasé${szekhely ? " · " + orszagNev(szekhely) : ""}${tovabbi > 0 ? ` +${tovabbi}` : ""}`;
 
   return (
     <AppContext.Provider value={{ user, ev, olvasatlan, setOlvasatlan }}>
