@@ -3097,6 +3097,12 @@ migráció és a tooltip főváros nélkül már a spec része). Ha nem volt elt
 
 - A vezető nélküli országok figyelmeztetése csak az aktív attaséval rendelkező országokat sorolja fel
   (a csupa tiltott attasés országban nincs kire átadni a vezetést; a tiltott fiók szerkesztésével rendezhető).
+  Formája a spec egymondatos szövege helyett:
+  - cím: „Relációs vezető nélküli országok”;
+  - felsorolás: „X (N aktív attasé)”, tiltott vezetőnél „ – a vezető tiltott”;
+  - zárómondat: „Jelöld ki a vezetőt valamelyik attasé szerkesztésében; addig a profilt csak admin szerkesztheti.”
+- Szerkesztésnél az országmentés hibaüzenete: „A felhasználó adatai mentve, de az országok mentése nem sikerült – próbáld
+  újra.” A spec „Az országok mentése nem sikerült.” szövege helyett: jelzi, hogy a többi adat már mentve van.
 - A vezető-jelölő súgója: „Mentéskor ő lesz a relációs vezető (jelenleg: X).” (a „vezetőség” testületet
   jelentene); tiltott vezetőnél „(jelenleg: X, tiltott)”, illetve „Jelenlegi vezető: X (tiltott).”
 - A validátor kimenete és a felhasználó-lista sora egyaránt `AttaseOrszag` (a spec `AttaseOrszagInput` neve
