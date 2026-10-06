@@ -1,7 +1,9 @@
 'use client';
 
 import { XIcon } from 'lucide-react';
-import { hibaAttr, MezoHiba } from '../../../../components/form/MezoHiba';
+import { useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
+import { hibaAttr, leiroAttr, MezoHiba } from '../../../../components/form/MezoHiba';
 import { Mezo } from '../../../../components/form/Mezo';
 import { NativeSelect } from '../../../../components/form/NativeSelect';
 import { Button } from '../../../../components/ui/button';
@@ -60,7 +62,9 @@ function OrszagOpciok() {
  * ország + vezető-jelölő). A mezőnevek a validátoréi (`szekhely.<mezo>`, `regio.<i>.<mezo>`,
  * az `i` a sor aktuális pozíciója); az id = name = hibakulcs. Országválasztáskor a vezető-jelölő
  * alapértéke az `alapVezeto` szerint újraszámolódik. `sajatId`: a szerkesztett felhasználó (új
- * felhasználónál null) – a vezető-helyzet a többi attasé alapján számol.
+ * felhasználónál null) – a vezető-helyzet a többi attasé alapján számol. Sor hozzáadása után a
+ * fókusz az új sor selectjére, törlése után a hozzáadás-gombra kerül; a törlés a következő
+ * beküldésig elrejti a (pozícióhoz kötött) sorhibákat.
  */
 export function OrszagMezok({
   ertekek,
@@ -76,14 +80,32 @@ export function OrszagMezok({
   sajatId: string | null;
 }) {
   const { szekhely, regio } = ertekek;
+  const hozzaadGomb = useRef<HTMLButtonElement>(null);
+  // A sorhibák pozícióhoz kötöttek (regio.<i>.orszag): sor törlése után más sorra mutatnának,
+  // ezért a következő beküldésig elrejtjük őket (két beküldés között az `errors` ugyanaz az objektum).
+  const [elavultHibak, setElavultHibak] = useState<MezoHibak | null>(null);
+  const sorHibak = elavultHibak === errors ? {} : errors;
   const helyzet = (kod: string) => vezetoHelyzet(kod, sajatId, orszagTagok);
   const setSzekhely = (resz: Partial<OrszagErtekek['szekhely']>) =>
     onChange({ ...ertekek, szekhely: { ...szekhely, ...resz } });
   const setSor = (id: number, resz: Partial<RegioSor>) =>
     onChange({ ...ertekek, regio: regio.map((r) => (r.id === id ? { ...r, ...resz } : r)) });
-  const ujSor = () =>
-    onChange({ ...ertekek, regio: [...regio, { id: Math.max(0, ...regio.map((r) => r.id)) + 1, kod: '', vezeto: false }] });
-  const torolSor = (id: number) => onChange({ ...ertekek, regio: regio.filter((r) => r.id !== id) });
+  // A fókusz a sorral együtt eltűnő ✕-ről a dialógusra esne (a következő Tab a Név mezőre vinne), a
+  // hozzáadás-gombon maradó pedig az új sort kihagyná: a DOM frissítése után (flushSync) az új sor
+  // selectjére, illetve törlés után a hozzáadás-gombra tesszük.
+  const ujSor = () => {
+    flushSync(() => {
+      onChange({ ...ertekek, regio: [...regio, { id: Math.max(0, ...regio.map((r) => r.id)) + 1, kod: '', vezeto: false }] });
+    });
+    document.getElementById(`regio.${regio.length}.orszag`)?.focus();
+  };
+  const torolSor = (id: number) => {
+    flushSync(() => {
+      setElavultHibak(errors);
+      onChange({ ...ertekek, regio: regio.filter((r) => r.id !== id) });
+    });
+    hozzaadGomb.current?.focus();
+  };
 
   return (
     <>
@@ -114,20 +136,25 @@ export function OrszagMezok({
             />
           </Mezo>
         </div>
-        <Mezo id="szekhely.reszterulet" cimke="Részterület (opcionális)" errors={errors}>
+        <Mezo
+          id="szekhely.reszterulet"
+          cimke="Részterület (opcionális)"
+          sugo="Ha több attasé dolgozik az országban: a lefedett tartományok, államok."
+          errors={errors}
+        >
           <Textarea
             id="szekhely.reszterulet"
             name="szekhely.reszterulet"
             rows={2}
             maxLength={RESZTERULET_MAX}
-            placeholder="Ha több attasé dolgozik az országban: a lefedett tartományok, államok"
+            placeholder="pl. Baden-Württemberg, Hessen"
             value={szekhely.reszterulet}
             onChange={(e) => setSzekhely({ reszterulet: e.target.value })}
-            {...hibaAttr(errors, 'szekhely.reszterulet')}
+            {...leiroAttr(errors, 'szekhely.reszterulet', true)}
           />
         </Mezo>
         {szekhely.kod && (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col items-start gap-1">
             <VezetoJelolo
               id="szekhely.vezeto"
               name="szekhely.vezeto"
@@ -154,7 +181,7 @@ export function OrszagMezok({
                   className="flex-1"
                   value={r.kod}
                   onChange={(e) => setSor(r.id, { kod: e.target.value, vezeto: alapVezeto(helyzet(e.target.value)) })}
-                  {...hibaAttr(errors, `${p}orszag`)}
+                  {...hibaAttr(sorHibak, `${p}orszag`)}
                 >
                   <OrszagOpciok />
                 </NativeSelect>
@@ -162,7 +189,11 @@ export function OrszagMezok({
                   <VezetoJelolo
                     id={`${p}vezeto`}
                     name={`${p}vezeto`}
-                    cimke="Vezető"
+                    cimke={
+                      <>
+                        Vezető<span className="sr-only"> ({orszagNev(r.kod)})</span>
+                      </>
+                    }
                     bejelolve={r.vezeto}
                     onChange={(v) => setSor(r.id, { vezeto: v })}
                     helyzet={helyzet(r.kod)}
@@ -172,22 +203,33 @@ export function OrszagMezok({
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  aria-label={`${r.kod ? orszagNev(r.kod) : 'Üres sor'} eltávolítása`}
+                  aria-label={`${i + 1}. régiós ország eltávolítása${r.kod ? ` (${orszagNev(r.kod)})` : ''}`}
                   onClick={() => torolSor(r.id)}
                 >
                   <XIcon />
                 </Button>
               </div>
-              <MezoHiba mezo={`${p}orszag`} errors={errors} />
+              <MezoHiba mezo={`${p}orszag`} errors={sorHibak} />
               {r.kod && <VezetoSugo id={`${p}vezeto`} helyzet={helyzet(r.kod)} bejelolve={r.vezeto} />}
             </div>
           );
         })}
-        {regio.length < REGIO_MAX && (
-          <Button type="button" variant="outline" size="sm" className="self-start" onClick={ujSor}>
+        {/* A korlátnál is kirajzolva marad (letiltva): a törlés utáni fókusz célja így mindig létezik. */}
+        <div>
+          <Button
+            ref={hozzaadGomb}
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={regio.length >= REGIO_MAX}
+            onClick={ujSor}
+          >
             + Ország hozzáadása
           </Button>
-        )}
+          {regio.length >= REGIO_MAX && (
+            <span className="ml-2 text-xs text-muted-foreground">Legfeljebb {REGIO_MAX} régiós ország.</span>
+          )}
+        </div>
       </Blokk>
     </>
   );

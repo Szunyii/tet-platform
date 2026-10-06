@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, type ReactNode } from 'react';
 import { vezetoSugo, type VezetoHelyzet } from '../../../../lib/attase-orszag';
 
 /**
@@ -11,6 +11,9 @@ import { vezetoSugo, type VezetoHelyzet } from '../../../../lib/attase-orszag';
  * A `defaultChecked` render után a vezérelt értéket követi: a React 19 a `<form action>` után
  * `form.reset()`-et hív, a vezérelt checkbox `defaultChecked`-je pedig a kezdőérték maradna –
  * hibás beküldés után a jelölő visszaugrana (ugyanez a `NativeSelect`-ben a `defaultSelected`-re).
+ * A `cimke` ReactNode: a régiós sorban a látható „Vezető” mellé képernyőolvasó-szöveg (az ország
+ * neve) kerül, különben minden jelölő ugyanazt a nevet viselné. A natív checkbox fókuszgyűrűje a
+ * globális `outline-ring/50` miatt alig látszik, ezért kifejezett kontúrt kap.
  */
 export function VezetoJelolo({
   id,
@@ -22,7 +25,7 @@ export function VezetoJelolo({
 }: {
   id: string;
   name: string;
-  cimke: string;
+  cimke: ReactNode;
   bejelolve: boolean;
   onChange: (bejelolve: boolean) => void;
   helyzet: VezetoHelyzet;
@@ -45,7 +48,7 @@ export function VezetoJelolo({
         disabled={egyedul}
         onChange={(e) => onChange(e.target.checked)}
         aria-describedby={vanSugo ? `${id}-sugo` : undefined}
-        className="size-4 accent-primary"
+        className="size-4 accent-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       />
       {cimke}
       {egyedul && <input type="hidden" name={name} value="on" />}
