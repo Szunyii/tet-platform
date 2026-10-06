@@ -3068,7 +3068,7 @@ git commit -m "$(printf 'feat(attase-orszagok): demó attasék a valós TéT-pé
 
 Keresd meg és írd át a következő helyeket (a többi szöveg változatlan):
 
-1. Parancslista: az `orszag-kod-migracio.ts` sor kommentje `# egyszeri: attase_orszag.orszag_kod / riport.orszag / ticket.orszag országnév → ISO-kód (idempotens, a párosítatlant kilistázza)`; utána új sor:
+1. Parancslista: az `orszag-kod-migracio.ts` sor kommentje `# egyszeri: attase_orszag.orszag_kod / riport.orszag / ticket.orszag országnév → ISO-kód (idempotens, a párosítatlant és az ütközőket kilistázza; a 0006/0007 után futtatható)`; utána új sor:
    `DEMO_ATTASE_PASSWORD=… NODE_OPTIONS="--conditions=react-server" npx tsx scripts/demo-attasek.ts   # a 15 demó attasé (valós példák) a data/tet.db-be, idempotens; a két régi tesztfiókot törli`
 2. Auth bekezdés: a „Session szerver oldalon: `lib/session.ts` (…)” zárójel után: „; az `AppSession.orszagok` (`kod`, `szekhely`, `vezeto`, székhely elöl) kérésenként a DB-ből jön, így a hozzárendelés változása azonnal érvényes”.
 3. Auth bekezdés: a „A `user.orszag` mező (`additionalFields`, `input: false`) …” mondattól az „… az admin plugin `roles` mappel (`admin`, `attase`) fut.” mondatig tartó rész helyett:
@@ -3082,6 +3082,7 @@ Keresd meg és írd át a következő helyeket (a többi szöveg változatlan):
 8. Térkép: „Tooltip (`TerkepTooltip`): név, attasé · főváros, …” → „Tooltip (`TerkepTooltip`): név, az attasék rövid sora (`attasekRovid`: az első – a vezető – attasé „név · város”, régiósnál „regionálisan (város)”, több attasénál „+N attasé”), …”.
 9. Parancsok bekezdés: „Eldobható tsx script, ami `db/queries/*`-t vagy `lib/session.ts`-t importál: `NODE_OPTIONS="--conditions=react-server" npx tsx scripts/_x.ts` (a `server-only` guard miatt).” → „Eldobható tsx script, ami `db/queries/*`-t importál: `NODE_OPTIONS="--conditions=react-server" npx tsx scripts/_x.ts` (a `server-only` guard miatt). A `lib/session.ts` tsx-ből nem importálható (a `next/headers`/`next/navigation` kérés-kontextust és a kliens-modult húzná be); a session-logikát a `db/queries/attase-orszag.ts` és a `lib/` tiszta függvényein át ellenőrizd.”
 10. Közös segédek: a „Form-minta `components/form/`: `useMuveletForm` (…), `MezoHiba`/`hibaAttr`, `FormAction` és `MuveletState` típusok.” mondat után új mondat: „A React 19 a `<form action>` minden beküldése után – hibás eredménynél is – `form.reset()`-et hív (a commit végén, minden DOM-mutáció után): a vezérelt szöveges mezőket a React `defaultValue`-szinkronja megvédi, a natív `<select>`-et és checkboxot nem (a `defaultSelected`/`defaultChecked` a kezdőérték marad, a DOM visszaugrik, a state nem). Ezért a `NativeSelect` render után a `value`-hoz igazítja az opciók `defaultSelected`-jét – új vezérelt select mindig `NativeSelect` legyen –, a `VezetoJelolo` pedig a `defaultChecked`-et; új vezérelt natív checkbox ugyanígy szinkronizáljon.”
+11. Adatréteg bekezdés, a „Migrációk: drizzle-kit, `drizzle/` mappa, commitolva.” mondat után: „A drizzle migrátor a függő migrációkat egy tranzakcióban futtatja, a better-sqlite3-ban a foreign key-ek be vannak kapcsolva, tranzakción belül pedig a `PRAGMA foreign_keys=OFF` hatástalan. Ezért egy szülőtáblát (`user`, `riport`, `ticket`, `orszagprofil`) újraépítő, `__new_…` + `DROP TABLE` mintájú generált migráció kaszkádolva törli a gyerektáblák sorait. Ilyet kézi átírás nélkül ne commitolj. Oszlop törlésére az `ALTER TABLE … DROP COLUMN` jó (pl. 0007).”
 
 - [ ] **Step 2: `README.md`**
 
@@ -3093,6 +3094,17 @@ Keresd meg és írd át a következő helyeket (a többi szöveg változatlan):
 4. Hosting szakasz két új pontja:
    - „A demó attasék (`scripts/demo-attasek.ts`) a repó `data/tet.db`-jében vannak; egy már meglévő hosting-DB-be nem kerülnek be maguktól (a `db:init` csak hiányzó vagy felhasználó nélküli DB-t cserél). Ehhez töröld a hosting DB-fájlt (a következő build a repó DB-jét másolja), vagy futtasd ott a scriptet.”
    - „A build előbb migrál, csak utána fordít: a `0007` migráció törli a `user` régi oszlopait (`orszag`, `fovaros`, `terulet`, `penznem`), ezért a build ideje alatt a még futó régi verzió a bejelentkezett kérésekre hibát ad, és ha a `next build` elbukik, így is marad. Csendes időszakban deployolj, és előbb helyben fusson le hibátlanul a `npm run build`.”
+   - „A 0006+0007 visszafordíthatatlan. A 0006 a régi `user.fovaros/terulet/penznem` értéket csak akkor viszi át az országprofil Alapadatok blokkjába, ha a `user.orszag` ISO-kód, és az országnak van Alapadatok blokkja. A 0007 utána törli a forrást, és a régi verzióra visszaállás DB-visszaállítás nélkül nem működik. Ha a hosting-DB-ben valós adat van, deploy előtt:
+     1. mentés: `sqlite3 <db> ".backup '<db>.pre-0007'"`;
+     2. a lenti lekérdezés felsorolja, kinek a poszt-adata nem kerülne át. Ha nem üres, ezeket előbb vidd fel kézzel az ország Alapadatok blokkjába, vagy javítsd a `user.orszag` értékét ISO-kódra:
+     ```sql
+     SELECT u.email, u.orszag, u.fovaros, u.terulet, u.penznem FROM user u
+     WHERE coalesce(u.role,'attase') <> 'admin'
+       AND (coalesce(u.fovaros,'') <> '' OR u.terulet IS NOT NULL OR coalesce(u.penznem,'') <> '')
+       AND NOT EXISTS (SELECT 1 FROM orszagprofil p WHERE p.orszag_kod = trim(u.orszag)
+                       AND p.alapadatok IS NOT NULL AND json_valid(p.alapadatok));
+     ```
+     A drizzle-kit migrációs hibánál üzenet nélkül áll le (`exit 1`): ha a build a migrációnál bukik, a mentésből állítsd vissza a DB-t, és helyben, a hosting-DB másolatán futtasd a migrációt.”
 5. Felépítés: új sor `lib/attase-orszag.ts` – „attasé–ország hozzárendelés: típusok, vezető-szabályok tiszta segédei (a DB-oldal `db/queries/attase-orszag.ts`)”; az `OldalsavAllapot` sorában „(attasé: saját ország, …)” → „(attasé: a saját országai, …)”.
 
 - [ ] **Step 3: A spec**
