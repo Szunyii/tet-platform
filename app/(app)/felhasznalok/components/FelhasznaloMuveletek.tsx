@@ -23,6 +23,7 @@ import {
   DropdownMenuTrigger,
 } from '../../../../components/ui/dropdown-menu';
 import type { FelhasznaloSor } from '../../../../db/queries/felhasznalo';
+import type { OrszagTagok } from '../../../../lib/attase-orszag';
 import { banAction, removeFelhasznaloAction, unbanAction, type MuveletState } from '../actions';
 import { JelszoDialog } from './JelszoDialog';
 import { SzerkesztesDialog } from './SzerkesztesDialog';
@@ -66,7 +67,15 @@ const MEGEROSITES: Record<Megerosites, MegerositesLeiras> = {
   },
 };
 
-export function FelhasznaloMuveletek({ felhasznalo, sajat }: { felhasznalo: FelhasznaloSor; sajat: boolean }) {
+export function FelhasznaloMuveletek({
+  felhasznalo,
+  sajat,
+  orszagTagok,
+}: {
+  felhasznalo: FelhasznaloSor;
+  sajat: boolean;
+  orszagTagok: OrszagTagok;
+}) {
   const [szerkesztes, setSzerkesztes] = useState(false);
   const [jelszo, setJelszo] = useState(false);
   // Minden dialógus-nyitás új key: a dialógus (és az űrlap állapota) tisztán újraindul.
@@ -130,7 +139,13 @@ export function FelhasznaloMuveletek({ felhasznalo, sajat }: { felhasznalo: Felh
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <SzerkesztesDialog key={`sz-${nyitas}`} felhasznalo={felhasznalo} open={szerkesztes} onOpenChange={setSzerkesztes} />
+      <SzerkesztesDialog
+        key={`sz-${nyitas}`}
+        felhasznalo={felhasznalo}
+        orszagTagok={orszagTagok}
+        open={szerkesztes}
+        onOpenChange={setSzerkesztes}
+      />
       <JelszoDialog key={`j-${nyitas}`} felhasznalo={felhasznalo} sajat={sajat} open={jelszo} onOpenChange={setJelszo} />
 
       <AlertDialog

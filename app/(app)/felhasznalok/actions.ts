@@ -4,20 +4,22 @@ import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import { unstable_rethrow } from 'next/navigation';
 import type { MuveletState } from '../../../components/form/useMuveletForm';
+import { normalizalVezetok, setAttaseOrszagok } from '../../../db/queries/attase-orszag';
 import { auth } from '../../../lib/auth';
+import type { AttaseOrszag } from '../../../lib/attase-orszag';
 import {
   parseJelszo,
   parseSzerkesztes,
   parseUjFelhasznalo,
-  type AttaseAdatok,
+  type ElerhetosegAdatok,
   type Szerepkor,
 } from '../../../lib/felhasznalo-validacio';
 import { requireAdmin } from '../../../lib/session';
 
 export type { MuveletState };
 
-/** A Better Auth `user` rekord általunk írt mezői (createUser / adminUpdateUser `data`). */
-interface FelhasznaloAdatok extends AttaseAdatok {
+/** A Better Auth `user` rekord általunk írt mezői (createUser / adminUpdateUser `data`). Az országok külön táblában. */
+interface FelhasznaloAdatok extends ElerhetosegAdatok {
   name?: string;
   role?: Szerepkor;
 }
@@ -70,6 +72,21 @@ function hiba(err: unknown, muvelet: string): MuveletState {
   }
 }
 
+/**
+ * Az országok mentése a Better Auth hívás után (két lépés, nem egy tranzakció). Ha elbukik, a
+ * felhasználó többi adata már mentve van: form-hiba, és a lista frissül, hogy a valós állapot látsszon.
+ */
+function mentOrszagok(userId: string, orszagok: readonly AttaseOrszag[], hibaUzenet: string): MuveletState | null {
+  try {
+    setAttaseOrszagok(userId, orszagok);
+    return null;
+  } catch (err) {
+    console.error('[felhasznalok] setAttaseOrszagok sikertelen:', err);
+    revalidatePath('/', 'layout');
+    return { errors: { form: hibaUzenet } };
+  }
+}
+
 export async function createFelhasznaloAction(
   _prev: MuveletState,
   formData: FormData,
@@ -77,22 +94,27 @@ export async function createFelhasznaloAction(
   await requireAdmin();
   const parsed = parseUjFelhasznalo(formData);
   if (!parsed.ok) return { errors: parsed.errors };
-  const { nev, email, jelszo, szerepkor, ...adatok } = parsed.data;
+  const { nev, email, jelszo, szerepkor, orszagok, ...elerhetoseg } = parsed.data;
+  let userId: string;
   try {
-    await auth.api.createUser({
+    const { user: uj } = await auth.api.createUser({
       headers: await headers(),
       body: {
         name: nev,
         email,
         password: jelszo,
         role: szerepkor,
-        data: adatok satisfies FelhasznaloAdatok,
+        data: elerhetoseg satisfies FelhasznaloAdatok,
       },
     });
+    userId = uj.id;
   } catch (err) {
     return hiba(err, 'createUser');
   }
-  return kesz();
+  return (
+    mentOrszagok(userId, orszagok, 'A felhasználó létrejött, de az országok mentése nem sikerült – szerkeszd újra.') ??
+    kesz()
+  );
 }
 
 export async function updateFelhasznaloAction(
@@ -103,22 +125,25 @@ export async function updateFelhasznaloAction(
   const me = await requireAdmin();
   const parsed = parseSzerkesztes(formData);
   if (!parsed.ok) return { errors: parsed.errors };
-  const { nev, szerepkor, ...adatok } = parsed.data;
+  const { nev, szerepkor, orszagok, ...elerhetoseg } = parsed.data;
   if (userId === me.userId && szerepkor !== 'admin') {
     return { errors: { szerepkor: 'Saját admin szerepkörödet nem veheted el.' } };
   }
   try {
-    // Egyetlen hívás (név, poszt-adatok, elérhetőségek, szerepkör együtt): az
-    // adminUpdateUser a data.role-t maga ellenőrzi és menti, így nincs részlegesen
-    // mentett állapot. A null értékek törlik a mezőt (adminra váltásnál a poszt-adatokat).
+    // Név, elérhetőségek és szerepkör egy hívásban: az adminUpdateUser a data.role-t maga
+    // ellenőrzi és menti. A null érték törli a mezőt. Az országok utána, külön lépésben
+    // (adminnál üres lista → a felhasználó minden hozzárendelése törlődik).
     await auth.api.adminUpdateUser({
       headers: await headers(),
-      body: { userId, data: { name: nev, role: szerepkor, ...adatok } satisfies FelhasznaloAdatok },
+      body: { userId, data: { name: nev, role: szerepkor, ...elerhetoseg } satisfies FelhasznaloAdatok },
     });
   } catch (err) {
     return hiba(err, 'adminUpdateUser');
   }
-  return kesz();
+  return (
+    mentOrszagok(userId, orszagok, 'A felhasználó adatai mentve, de az országok mentése nem sikerült – próbáld újra.') ??
+    kesz()
+  );
 }
 
 export async function setJelszoAction(
@@ -171,6 +196,12 @@ export async function removeFelhasznaloAction(userId: string): Promise<MuveletSt
     await auth.api.removeUser({ headers: await headers(), body: { userId } });
   } catch (err) {
     return hiba(err, 'removeUser');
+  }
+  // A cascade törölte a hozzárendeléseit; ahol egyetlen attasé maradt vezető nélkül, ő örököl.
+  try {
+    normalizalVezetok();
+  } catch (err) {
+    console.error('[felhasznalok] normalizalVezetok sikertelen:', err);
   }
   return kesz();
 }

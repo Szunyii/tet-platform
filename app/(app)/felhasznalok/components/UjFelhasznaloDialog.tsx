@@ -4,15 +4,17 @@ import { useState } from 'react';
 import { Button } from '../../../../components/ui/button';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
+import type { OrszagTagok } from '../../../../lib/attase-orszag';
 import type { Szerepkor } from '../../../../lib/felhasznalo-validacio';
 import { createFelhasznaloAction } from '../actions';
 import { hibaAttr, MezoHiba } from '../../../../components/form/MezoHiba';
 import { MuveletDialog } from '../../../../components/form/MuveletDialog';
-import { AttaseMezok, URES_ATTASE_MEZOK, type AttaseMezoErtekek } from './AttaseMezok';
+import { ElerhetosegMezok, URES_ELERHETOSEG, type ElerhetosegErtekek } from './ElerhetosegMezok';
+import { OrszagMezok, URES_ORSZAGOK, type OrszagErtekek } from './OrszagMezok';
 import { SzerepkorSelect } from './SzerepkorSelect';
 import { useMuveletForm } from '../../../../components/form/useMuveletForm';
 
-export function UjFelhasznaloDialog() {
+export function UjFelhasznaloDialog({ orszagTagok }: { orszagTagok: OrszagTagok }) {
   const [open, setOpen] = useState(false);
   // Minden nyitás új key: a modal (és benne az űrlap állapota) tisztán újraindul.
   const [nyitas, setNyitas] = useState(0);
@@ -26,7 +28,7 @@ export function UjFelhasznaloDialog() {
       >
         Új felhasználó
       </Button>
-      <UjFelhasznaloModal key={nyitas} open={open} onOpenChange={setOpen} />
+      <UjFelhasznaloModal key={nyitas} open={open} onOpenChange={setOpen} orszagTagok={orszagTagok} />
     </>
   );
 }
@@ -34,9 +36,11 @@ export function UjFelhasznaloDialog() {
 function UjFelhasznaloModal({
   open,
   onOpenChange,
+  orszagTagok,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  orszagTagok: OrszagTagok;
 }) {
   const [state, formAction, pending] = useMuveletForm(
     createFelhasznaloAction,
@@ -44,13 +48,14 @@ function UjFelhasznaloModal({
     () => onOpenChange(false),
   );
   // Vezérelt mezők: a React 19 a <form action> beküldése után (hibánál is) alaphelyzetbe
-  // állítja a nem vezérelt inputokat; a state megőrzi a beírt értékeket, és a poszt-adatok
+  // állítja a nem vezérelt inputokat; a state megőrzi a beírt értékeket, és az ország-adatok
   // is megmaradnak, ha a szerepkör-váltás ideiglenesen elrejti a mezőket.
   const [nev, setNev] = useState('');
   const [email, setEmail] = useState('');
   const [jelszo, setJelszo] = useState('');
   const [szerepkor, setSzerepkor] = useState<Szerepkor>('attase');
-  const [attase, setAttase] = useState<AttaseMezoErtekek>(URES_ATTASE_MEZOK);
+  const [elerhetoseg, setElerhetoseg] = useState<ElerhetosegErtekek>(URES_ELERHETOSEG);
+  const [orszagok, setOrszagok] = useState<OrszagErtekek>(URES_ORSZAGOK);
   const errors = state.errors ?? {};
 
   return (
@@ -115,7 +120,10 @@ function UjFelhasznaloModal({
           <MezoHiba mezo="szerepkor" errors={errors} />
         </div>
       </div>
-      <AttaseMezok ertekek={attase} onChange={setAttase} szerepkor={szerepkor} errors={errors} />
+      <ElerhetosegMezok ertekek={elerhetoseg} onChange={setElerhetoseg} errors={errors} />
+      {szerepkor === 'attase' && (
+        <OrszagMezok ertekek={orszagok} onChange={setOrszagok} errors={errors} orszagTagok={orszagTagok} sajatId={null} />
+      )}
     </MuveletDialog>
   );
 }

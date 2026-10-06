@@ -42,7 +42,7 @@ export function MuveletDialog({
   gombFolyamatban?: string;
   formAction: (formData: FormData) => void;
   errors: MezoHibak;
-  /** Szélesebb dialógus (sm:max-w-lg) a többoszlopos űrlapokhoz. */
+  /** Szélesebb dialógus (42rem, keskeny ablakban 1rem margóval) a többoszlopos űrlapokhoz (felhasználó-dialógusok). */
   szeles?: boolean;
   children: ReactNode;
 }) {
@@ -60,7 +60,7 @@ export function MuveletDialog({
       {/* Kis képernyőn a hosszú űrlap különben nem görgethető: a Base UI zárolja a body görgetést. */}
       <DialogContent
         showCloseButton={!pending}
-        className={cn('max-h-[calc(100dvh-2rem)] overflow-y-auto', szeles && 'sm:max-w-lg')}
+        className={cn('max-h-[calc(100dvh-2rem)] overflow-y-auto', szeles && 'sm:max-w-[min(42rem,calc(100%-2rem))]')}
       >
         <DialogHeader>
           <DialogTitle>{cim}</DialogTitle>

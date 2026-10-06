@@ -5,10 +5,13 @@
  * kötött hibáké (a server action-ök használják). A szöveg-tisztítás (láthatatlan és
  * vezérlőkarakterek) a közös `lib/urlap.ts` `mezo()`-jából jön. Az e-mail trim + kisbetű
  * (a Better Auth is kisbetűsít); a jelszót szándékosan nem trimmeljük.
- * Az ország a lib/orszagok.ts szótár ISO-kódja. A poszt-adatok (ország, főváros, terület,
- * pénznem) csak attasénál értelmezettek, adminnál hiba nélkül null-ok; a telefon és a
- * kapcsolattartási e-mail mindkét szerepkörnél opcionális.
+ * Az attasé országai (`lib/attase-orszag.ts`): kötelező székhely (`szekhely.orszag`,
+ * `szekhely.varos`, `szekhely.reszterulet`, `szekhely.vezeto`) és opcionális régiós sorok
+ * (`regio.<i>.orszag`, `regio.<i>.vezeto`); az ország a lib/orszagok.ts szótár ISO-kódja.
+ * Adminnál az országok hiba nélkül üres listát adnak. A telefon és a kapcsolattartási e-mail
+ * mindkét szerepkörnél opcionális.
  */
+import { REGIO_MAX, RESZTERULET_MAX, VAROS_MAX, type AttaseOrszag } from './attase-orszag';
 import { orszagByKod } from './orszagok';
 import { mezo, type MezoHibak } from './urlap';
 
@@ -23,27 +26,25 @@ export const SZEREPKOR_CIMKE: Record<Szerepkor, string> = {
 /** Mezőnév → hibaüzenet. A `form` kulcs az űrlap-szintű hibáé. A típus a közös `lib/urlap.ts`-ből jön. */
 export type { MezoHibak };
 
-/** A poszt országának adatai (csak attasénál) és az attasé elérhetőségei (mindkét szerepkörnél). */
-export interface AttaseAdatok {
-  orszag: string | null;
-  fovaros: string | null;
-  /** km², pozitív egész. */
-  terulet: number | null;
-  penznem: string | null;
+/** Az elérhetőségek (mindkét szerepkörnél opcionálisak). */
+export interface ElerhetosegAdatok {
   telefon: string | null;
   kapcsolatEmail: string | null;
 }
 
-export interface UjFelhasznaloInput extends AttaseAdatok {
+export interface UjFelhasznaloInput extends ElerhetosegAdatok {
   nev: string;
   email: string;
   jelszo: string;
   szerepkor: Szerepkor;
+  /** Attasénál a székhely és a régiós országok; adminnál üres. */
+  orszagok: AttaseOrszag[];
 }
 
-export interface SzerkesztesInput extends AttaseAdatok {
+export interface SzerkesztesInput extends ElerhetosegAdatok {
   nev: string;
   szerepkor: Szerepkor;
+  orszagok: AttaseOrszag[];
 }
 
 export type ParseResult<T> = { ok: true; data: T } | { ok: false; errors: MezoHibak };
@@ -75,62 +76,11 @@ function validSzerepkor(raw: string, errors: MezoHibak): Szerepkor | null {
   return null;
 }
 
-/** Attasénál kötelező, a szótár ISO-kódja; adminnál (és érvénytelen szerepkörnél) eldobjuk, hiba nélkül. */
-function validOrszag(raw: string, szerepkor: Szerepkor | null, errors: MezoHibak): string | null {
-  if (szerepkor !== 'attase') return null;
-  if (!raw) {
-    errors.orszag = 'TéT attasénál az ország kötelező.';
-    return null;
-  }
-  if (!orszagByKod(raw)) {
-    errors.orszag = 'Válassz országot a listából.';
-    return null;
-  }
-  return raw;
-}
-
 export const TELEFON_MAX = 40;
-/** RFC 5321 gyakorlati felső korlát; a főváros/pénznem/telefon mintájára a kapcsolat-e-mailt is határoljuk. */
+/** RFC 5321 gyakorlati felső korlát; a telefon mintájára a kapcsolat-e-mailt is határoljuk. */
 export const EMAIL_MAX = 254;
 // Legalább egy számjegyet követel, hogy pl. a '()' vagy '-' önmagában ne menjen át.
 const TELEFON_RE = /^(?=.*\d)[0-9+\-/() ]+$/;
-const TERULET_HIBA = 'A terület pozitív egész szám legyen (km²).';
-
-// Ezreselválasztó: szóköz, NBSP, keskeny NBSP vagy pont, csak 3-as csoportok között
-// ('377 975', '17.098.246'); a tizedes pont ('2.02') így hibát ad, nem torzul 202-vé.
-const TERULET_RE = /^\d{1,9}$|^\d{1,3}(?:[   .]\d{3}){1,2}$/;
-
-const POSZT_CIMKE = { fovaros: 'főváros', penznem: 'pénznem' } as const;
-
-/** Opcionális, ≤100 karakteres poszt-szöveg (főváros, pénznem); csak attasénál értelmezett. */
-function validPosztSzoveg(
-  raw: string,
-  szerepkor: Szerepkor | null,
-  kulcs: keyof typeof POSZT_CIMKE,
-  errors: MezoHibak,
-): string | null {
-  if (szerepkor !== 'attase' || !raw) return null;
-  if (raw.length > 100) {
-    errors[kulcs] = `A ${POSZT_CIMKE[kulcs]} legfeljebb 100 karakter.`;
-    return null;
-  }
-  return raw;
-}
-
-/** Terület km²-ben: pozitív egész; szóköz/NBSP/pont ezreselválasztóként, csak 3-as csoportokban. */
-function validTerulet(raw: string, szerepkor: Szerepkor | null, errors: MezoHibak): number | null {
-  if (szerepkor !== 'attase' || !raw) return null;
-  if (!TERULET_RE.test(raw)) {
-    errors.terulet = TERULET_HIBA;
-    return null;
-  }
-  const n = Number(raw.replace(/[   .]/g, ''));
-  if (n < 1) {
-    errors.terulet = TERULET_HIBA;
-    return null;
-  }
-  return n;
-}
 
 /** Telefon: mindkét szerepkörnél opcionális; legalább egy számjegy kell, csak megengedett jelekkel. */
 function validTelefon(raw: string, errors: MezoHibak): string | null {
@@ -160,16 +110,55 @@ function validKapcsolatEmail(raw: string, errors: MezoHibak): string | null {
   return raw;
 }
 
-/** Az AttaseAdatok mezői egy menetben; a poszt-adatok adminnál hiba nélkül null-ok. */
-function parseAttaseAdatok(fd: FormData, szerepkor: Szerepkor | null, errors: MezoHibak): AttaseAdatok {
+function parseElerhetoseg(fd: FormData, errors: MezoHibak): ElerhetosegAdatok {
   return {
-    orszag: validOrszag(mezo(fd, 'orszag'), szerepkor, errors),
-    fovaros: validPosztSzoveg(mezo(fd, 'fovaros'), szerepkor, 'fovaros', errors),
-    terulet: validTerulet(mezo(fd, 'terulet'), szerepkor, errors),
-    penznem: validPosztSzoveg(mezo(fd, 'penznem'), szerepkor, 'penznem', errors),
     telefon: validTelefon(mezo(fd, 'telefon'), errors),
     kapcsolatEmail: validKapcsolatEmail(mezo(fd, 'kapcsolatEmail').toLowerCase(), errors),
   };
+}
+
+const ORSZAG_LISTABOL = 'Válassz országot a listából.';
+
+/**
+ * Az attasé országai: a székhely kötelező (ország + opcionális város és részterület), a régiós
+ * sorok közül az ország nélküli kimarad, a már szereplő ország hibás. Adminnál (és érvénytelen
+ * szerepkörnél) üres lista, hiba nélkül. A bejelölt checkbox `on` értéket küld.
+ */
+function parseOrszagok(fd: FormData, szerepkor: Szerepkor | null, errors: MezoHibak): AttaseOrszag[] {
+  if (szerepkor !== 'attase') return [];
+  const sorok: AttaseOrszag[] = [];
+  const kod = mezo(fd, 'szekhely.orszag');
+  const varos = mezo(fd, 'szekhely.varos');
+  const reszterulet = mezo(fd, 'szekhely.reszterulet');
+  if (!kod) errors['szekhely.orszag'] = 'TéT attasénál a székhely országa kötelező.';
+  else if (!orszagByKod(kod)) errors['szekhely.orszag'] = ORSZAG_LISTABOL;
+  if (varos.length > VAROS_MAX) errors['szekhely.varos'] = `A város legfeljebb ${VAROS_MAX} karakter.`;
+  if (reszterulet.length > RESZTERULET_MAX) {
+    errors['szekhely.reszterulet'] = `A részterület legfeljebb ${RESZTERULET_MAX} karakter.`;
+  }
+  if (kod && orszagByKod(kod)) {
+    sorok.push({
+      kod,
+      szekhely: true,
+      vezeto: fd.get('szekhely.vezeto') === 'on',
+      varos: varos || null,
+      reszterulet: reszterulet || null,
+    });
+  }
+  // A régiós sorok indexe folytonos (a dialógus a pozíció szerint nevez); a REGIO_MAX feletti rész hiba.
+  for (let i = 0; fd.has(`regio.${i}.orszag`); i++) {
+    if (i >= REGIO_MAX) {
+      errors.form = `Legfeljebb ${REGIO_MAX} régiós ország adható meg.`;
+      break;
+    }
+    const kulcs = `regio.${i}.orszag`;
+    const k = mezo(fd, kulcs);
+    if (!k) continue;
+    if (!orszagByKod(k)) errors[kulcs] = ORSZAG_LISTABOL;
+    else if (sorok.some((s) => s.kod === k)) errors[kulcs] = 'Ez az ország már szerepel.';
+    else sorok.push({ kod: k, szekhely: false, vezeto: fd.get(`regio.${i}.vezeto`) === 'on', varos: null, reszterulet: null });
+  }
+  return sorok;
 }
 
 export function parseUjFelhasznalo(fd: FormData): ParseResult<UjFelhasznaloInput> {
@@ -182,9 +171,10 @@ export function parseUjFelhasznalo(fd: FormData): ParseResult<UjFelhasznaloInput
   else if (!EMAIL_RE.test(email)) errors.email = 'Érvénytelen e-mail cím.';
   validJelszo(jelszo, errors);
   const szerepkor = validSzerepkor(mezo(fd, 'szerepkor'), errors);
-  const adatok = parseAttaseAdatok(fd, szerepkor, errors);
+  const elerhetoseg = parseElerhetoseg(fd, errors);
+  const orszagok = parseOrszagok(fd, szerepkor, errors);
   if (Object.keys(errors).length > 0 || !szerepkor) return { ok: false, errors };
-  return { ok: true, data: { nev, email, jelszo, szerepkor, ...adatok } };
+  return { ok: true, data: { nev, email, jelszo, szerepkor, ...elerhetoseg, orszagok } };
 }
 
 export function parseSzerkesztes(fd: FormData): ParseResult<SzerkesztesInput> {
@@ -192,9 +182,10 @@ export function parseSzerkesztes(fd: FormData): ParseResult<SzerkesztesInput> {
   const nev = mezo(fd, 'nev');
   validNev(nev, errors);
   const szerepkor = validSzerepkor(mezo(fd, 'szerepkor'), errors);
-  const adatok = parseAttaseAdatok(fd, szerepkor, errors);
+  const elerhetoseg = parseElerhetoseg(fd, errors);
+  const orszagok = parseOrszagok(fd, szerepkor, errors);
   if (Object.keys(errors).length > 0 || !szerepkor) return { ok: false, errors };
-  return { ok: true, data: { nev, szerepkor, ...adatok } };
+  return { ok: true, data: { nev, szerepkor, ...elerhetoseg, orszagok } };
 }
 
 export function parseJelszo(fd: FormData): ParseResult<{ jelszo: string }> {
