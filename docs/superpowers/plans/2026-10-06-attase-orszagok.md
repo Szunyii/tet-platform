@@ -3082,7 +3082,7 @@ Keresd meg és írd át a következő helyeket (a többi szöveg változatlan):
 8. Térkép: „Tooltip (`TerkepTooltip`): név, attasé · főváros, …” → „Tooltip (`TerkepTooltip`): név, az attasék rövid sora (`attasekRovid`: az első – a vezető – attasé „név · város”, régiósnál „regionálisan (város)”, több attasénál „+N attasé”), …”.
 9. Parancsok bekezdés: „Eldobható tsx script, ami `db/queries/*`-t vagy `lib/session.ts`-t importál: `NODE_OPTIONS="--conditions=react-server" npx tsx scripts/_x.ts` (a `server-only` guard miatt).” → „Eldobható tsx script, ami `db/queries/*`-t importál: `NODE_OPTIONS="--conditions=react-server" npx tsx scripts/_x.ts` (a `server-only` guard miatt). A `lib/session.ts` tsx-ből nem importálható (a `next/headers`/`next/navigation` kérés-kontextust és a kliens-modult húzná be); a session-logikát a `db/queries/attase-orszag.ts` és a `lib/` tiszta függvényein át ellenőrizd.”
 10. Közös segédek: a „Form-minta `components/form/`: `useMuveletForm` (…), `MezoHiba`/`hibaAttr`, `FormAction` és `MuveletState` típusok.” mondat után új mondat: „A React 19 a `<form action>` minden beküldése után – hibás eredménynél is – `form.reset()`-et hív (a commit végén, minden DOM-mutáció után): a vezérelt szöveges mezőket a React `defaultValue`-szinkronja megvédi, a natív `<select>`-et és checkboxot nem (a `defaultSelected`/`defaultChecked` a kezdőérték marad, a DOM visszaugrik, a state nem). Ezért a `NativeSelect` render után a `value`-hoz igazítja az opciók `defaultSelected`-jét – új vezérelt select mindig `NativeSelect` legyen –, a `VezetoJelolo` pedig a `defaultChecked`-et; új vezérelt natív checkbox ugyanígy szinkronizáljon.”
-11. Adatréteg bekezdés, a „Migrációk: drizzle-kit, `drizzle/` mappa, commitolva.” mondat után: „A drizzle migrátor a függő migrációkat egy tranzakcióban futtatja, a better-sqlite3-ban a foreign key-ek be vannak kapcsolva, tranzakción belül pedig a `PRAGMA foreign_keys=OFF` hatástalan. Ezért egy szülőtáblát (`user`, `riport`, `ticket`, `orszagprofil`) újraépítő, `__new_…` + `DROP TABLE` mintájú generált migráció kaszkádolva törli a gyerektáblák sorait. Ilyet kézi átírás nélkül ne commitolj. Oszlop törlésére az `ALTER TABLE … DROP COLUMN` jó (pl. 0007).”
+11. Adatréteg bekezdés, a „Migrációk: drizzle-kit, `drizzle/` mappa, commitolva.” mondat után: „A drizzle migrátor a még le nem futott migrációkat egy tranzakcióban futtatja, a better-sqlite3-ban a foreign key-ek be vannak kapcsolva, tranzakción belül pedig a `PRAGMA foreign_keys=OFF` hatástalan. Ezért egy szülőtáblát (`user`, `riport`, `ticket`) újraépítő, `__new_…` + `DROP TABLE` mintájú generált migráció kaszkádolva törli vagy nullázza a hivatkozó sorokat (a `user`-nél pl. az `orszagprofil.szerzo_id`-t is). Ilyet kézi átírás nélkül ne commitolj. Oszlop törlésére az `ALTER TABLE … DROP COLUMN` jó (pl. 0007).”
 
 - [ ] **Step 2: `README.md`**
 
@@ -3096,7 +3096,9 @@ Keresd meg és írd át a következő helyeket (a többi szöveg változatlan):
    - „A build előbb migrál, csak utána fordít: a `0007` migráció törli a `user` régi oszlopait (`orszag`, `fovaros`, `terulet`, `penznem`), ezért a build ideje alatt a még futó régi verzió a bejelentkezett kérésekre hibát ad, és ha a `next build` elbukik, így is marad. Csendes időszakban deployolj, és előbb helyben fusson le hibátlanul a `npm run build`.”
    - „A 0006+0007 visszafordíthatatlan. A 0006 a régi `user.fovaros/terulet/penznem` értéket csak akkor viszi át az országprofil Alapadatok blokkjába, ha a `user.orszag` ISO-kód, és az országnak van Alapadatok blokkja. A 0007 utána törli a forrást, és a régi verzióra visszaállás DB-visszaállítás nélkül nem működik. Ha a hosting-DB-ben valós adat van, deploy előtt:
      1. mentés: `sqlite3 <db> ".backup '<db>.pre-0007'"`;
-     2. a lenti lekérdezés felsorolja, kinek a poszt-adata nem kerülne át. Ha nem üres, ezeket előbb vidd fel kézzel az ország Alapadatok blokkjába, vagy javítsd a `user.orszag` értékét ISO-kódra:
+     2. a lenti lekérdezés felsorolja, kinek a poszt-adata nem kerülne át. Ha nem üres:
+        - ahol a `user.orszag` nem ISO-kód, javítsd deploy előtt (a régi felhasználó-dialógusban az ország újraválasztásával, vagy SQL-lel);
+        - a többi sor kimenetét (az országnak nincs Alapadatok blokkja) mentsd el, és a deploy után vidd fel kézzel az új Alapadatok mezőkbe. Az adat a `.pre-0007` mentésben is megvan.
      ```sql
      SELECT u.email, u.orszag, u.fovaros, u.terulet, u.penznem FROM user u
      WHERE coalesce(u.role,'attase') <> 'admin'
@@ -3104,7 +3106,9 @@ Keresd meg és írd át a következő helyeket (a többi szöveg változatlan):
        AND NOT EXISTS (SELECT 1 FROM orszagprofil p WHERE p.orszag_kod = trim(u.orszag)
                        AND p.alapadatok IS NOT NULL AND json_valid(p.alapadatok));
      ```
-     A drizzle-kit migrációs hibánál üzenet nélkül áll le (`exit 1`): ha a build a migrációnál bukik, a mentésből állítsd vissza a DB-t, és helyben, a hosting-DB másolatán futtasd a migrációt.”
+     Ha a build a migrációnál bukik, a DB változatlan marad: a migrátor egy tranzakcióban fut, és mindent visszagörget, így a régi verzió fut tovább. A drizzle-kit ilyenkor üzenet nélkül áll le (`exit 1`). Az okot a hosting-DB egy másolatán ez a parancs írja ki (a másolat sem változik):
+     `DATABASE_URL=<másolat> node -e "const D=require('better-sqlite3');const {drizzle}=require('drizzle-orm/better-sqlite3');const {migrate}=require('drizzle-orm/better-sqlite3/migrator');migrate(drizzle(new D(process.env.DATABASE_URL)),{migrationsFolder:'drizzle'})"`.
+     A mentésre akkor van szükség, ha a migráció lefutott, de a `next build` elbukott: ilyenkor a régi verzió a megváltozott DB-n hibázik, ezért a mentést kell visszaállítani.”
 5. Felépítés: új sor `lib/attase-orszag.ts` – „attasé–ország hozzárendelés: típusok, vezető-szabályok tiszta segédei (a DB-oldal `db/queries/attase-orszag.ts`)”; az `OldalsavAllapot` sorában „(attasé: saját ország, …)” → „(attasé: a saját országai, …)”.
 
 - [ ] **Step 3: A spec**
