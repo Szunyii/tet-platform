@@ -2750,7 +2750,28 @@ Az `AppSession`-ből töröld az `orszag` mezőt a kommentjével, a `getSession`
 
 - [ ] **Step 3: Scriptek**
 
-`scripts/orszag-kod-migracio.ts`: a fejléc-komment első mondata „Egyszeri, idempotens adat-átírás: a riport.orszag és a ticket.orszag szabadszöveges országneveit ISO-kódra cseréli …” (a `user.orszag` megszűnt; az `attase_orszag` mindig kódot tárol). Az import `import { riport, ticket } from '../db/schema';`; a `for (const u of db.select({ id: user.id, orszag: user.orszag }) …)` ciklust töröld.
+`scripts/orszag-kod-migracio.ts`: a `user` ciklus helyett az `attase_orszag` sorait írja át (a 0006 migráció a régi `user.orszag`-ot csak trimmelve másolta, így egy kódra nem alakított régi név ott maradhat). A fejléc-komment első mondata: „Egyszeri, idempotens adat-átírás: az attase_orszag.orszag_kod, a riport.orszag és a ticket.orszag szabadszöveges országneveit ISO-kódra cseréli …”. Importok: `import { and, eq } from 'drizzle-orm';`, `import { attaseOrszag, riport, ticket } from '../db/schema';`. A `for (const u of db.select({ id: user.id, orszag: user.orszag }) …)` ciklus helyett:
+
+```ts
+for (const a of db.select({ userId: attaseOrszag.userId, kod: attaseOrszag.orszagKod }).from(attaseOrszag).all()) {
+  const kod = kodra(a.kod);
+  if (kod === null) continue;
+  if (!kod) {
+    parositatlan.push(`attase_orszag ${a.userId}: "${a.kod}"`);
+    continue;
+  }
+  try {
+    db.update(attaseOrszag)
+      .set({ orszagKod: kod })
+      .where(and(eq(attaseOrszag.userId, a.userId), eq(attaseOrszag.orszagKod, a.kod)))
+      .run();
+    atirt++;
+  } catch {
+    // A felhasználónak már van sora ezzel a kóddal (PK): kézi rendezés kell.
+    parositatlan.push(`attase_orszag ${a.userId}: "${a.kod}" → ${kod} (már van ilyen sora)`);
+  }
+}
+```
 
 `scripts/demo-orszagprofil.ts`:
 - A fejléc-komment: „Demó-adatok a KR és JP országprofilhoz az aktuális évre. Idempotens: a profil blokkjait blokkonként upsert-eli; a szerző az első admin (a demó-tartalom nem kötődik valós attaséhoz). Az adatok a `validalBlokk` validátoron mennek át …” (a futtatási sor marad).
@@ -3020,7 +3041,9 @@ Keresd meg és írd át a következő helyeket (a többi szöveg változatlan):
    - „Admin a `/felhasznalok` oldalon hoz létre TéT attasé fiókokat (név, e-mail, kezdő jelszó; székhely: ország, a poszt városa, részterület – pl. a lefedett tartományok –, relációs vezető jelölés; régiós lefedettség: további országok; opcionálisan telefon, kapcsolattartási e-mail), szerkeszt, jelszót állít vissza, tilt és töröl. Nyilvános regisztráció nincs.”
    - „Szerepkörök: `admin` (NIÜ) és `attase`. Egy országban több attasé is lehet; közülük egy a relációs vezető, ő az országprofil felelőse és – az adminon kívül – egyedüli szerkesztője (egyszemélyes országban automatikus; ha több attasé marad vezető nélkül, a felhasználó-oldal figyelmeztet). Egy attasé regionálisan több országot is lefedhet; minden lefedett országára riportot adhat be. A főváros, terület, pénznem az országprofil Alapadatok blokkjában van.”
 3. Képernyők tábla, `/orszagprofil/[kod]/szerkesztes`: „(attasé: saját ország, idei év; …)” → „(attasé: az az ország, amelynek relációs vezetője, idei év; …)”.
-4. Hosting szakasz új pont: „A demó attasék (`scripts/demo-attasek.ts`) a repó `data/tet.db`-jében vannak; egy már meglévő hosting-DB-be nem kerülnek be maguktól (a `db:init` csak hiányzó vagy felhasználó nélküli DB-t cserél). Ehhez töröld a hosting DB-fájlt (a következő build a repó DB-jét másolja), vagy futtasd ott a scriptet.”
+4. Hosting szakasz két új pontja:
+   - „A demó attasék (`scripts/demo-attasek.ts`) a repó `data/tet.db`-jében vannak; egy már meglévő hosting-DB-be nem kerülnek be maguktól (a `db:init` csak hiányzó vagy felhasználó nélküli DB-t cserél). Ehhez töröld a hosting DB-fájlt (a következő build a repó DB-jét másolja), vagy futtasd ott a scriptet.”
+   - „A build előbb migrál, csak utána fordít: a `0007` migráció törli a `user` régi oszlopait (`orszag`, `fovaros`, `terulet`, `penznem`), ezért a build ideje alatt a még futó régi verzió a bejelentkezett kérésekre hibát ad, és ha a `next build` elbukik, így is marad. Csendes időszakban deployolj, és előbb helyben fusson le hibátlanul a `npm run build`.”
 5. Felépítés: új sor `lib/attase-orszag.ts` – „attasé–ország hozzárendelés: típusok, vezető-szabályok tiszta segédei (a DB-oldal `db/queries/attase-orszag.ts`)”; az `OldalsavAllapot` sorában „(attasé: saját ország, …)” → „(attasé: a saját országai, …)”.
 
 - [ ] **Step 3: A spec**
@@ -3042,6 +3065,14 @@ migráció és a tooltip főváros nélkül már a spec része). Ha nem volt elt
   „regionálisan”), nem név + halvány város két sorban.
 - A profil fejléce akkor is kiírja a „Nincs kijelölt relációs vezető.” sort, ha egyetlen aktív, nem vezető
   attasé van (pl. a vezető tiltott).
+- A vezető-jelölő alapértéke akkor is „bejelölve”, ha a másik vezető tiltott (gyakorlatilag nincs aktív vezető).
+- A 0006 migráció: a régi `user.orszag` trimmelve kerül át (üres/csak szóköz nem ad sort); a vezetőválasztás
+  döntetlennél az id-vel determinisztikus; a főváros/terület/pénznem mezőnként az ország bármely attaséjától
+  átvehető (a vezető előnyben), és hibás JSON-ú Alapadatok blokkot nem érint.
+- Az admin felhasználó esetleg ott maradt `attase_orszag` sorai a profil- és térkép-listákban nem jelennek meg;
+  a `setAttaseOrszagok` a város/részterület értéket csak a székhely-sorra írja.
+- A `scripts/orszag-kod-migracio.ts` a `user` helyett az `attase_orszag` sorait írja át.
+- A `0007` migráció a build elején fut: a régi verzió a build ideje alatt hibát adhat (README, hosting).
 ```
 
 (A végrehajtás közben adódó további eltéréseket fűzd hozzá.)
