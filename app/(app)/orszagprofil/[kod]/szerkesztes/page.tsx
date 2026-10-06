@@ -25,9 +25,10 @@ export const metadata: Metadata = { title: 'Országprofil szerkesztése' };
 
 /**
  * Blokkonkénti szerkesztő. Az év a fejléc ciklusválasztójáé (tet-ev cookie). Jogosultsági
- * hiba 404 (attasé: csak a saját országa és az aktuális év; admin: bármely ország EV_MIN és
- * az aktuális év között) – attasé múltbeli évnézetből a gombok előbb az aktuális évre váltanak,
- * így a 404 csak kézzel beírt URL-nél fordul elő.
+ * hiba 404 (attasé: csak az az ország, amelynek relációs vezetője, és csak az aktuális év;
+ * admin: bármely ország EV_MIN és az aktuális év között). Attasé múltbeli évnézetből a gombok
+ * előbb az aktuális évre váltanak; a 404 így kézzel beírt URL-nél, vagy egy közben elvett
+ * vezetőség után egy elavult gombbal fordul elő.
  */
 export default async function SzerkesztesPage({ params }: { params: Promise<{ kod: string }> }) {
   const session = await requireSession();

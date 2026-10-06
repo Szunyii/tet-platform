@@ -11,8 +11,7 @@ import { KuldGomb } from './KuldGomb';
  * A form-ág feliratára `feliratMost` adható meg külön (pl. a térkép-panelen a nézett év
  * állapotából adódó „Profil kitöltése" a form-ágon félrevezető lenne, hiszen az az aktuális
  * évet szerkeszti); ha nincs megadva, a `felirat` megy oda is.
- * Ha egyik sem szerkeszthető: nem renderel semmit. A jogot a hívó számolja (canEditProfil,
- * ill. a térképen admin || saját kód).
+ * Ha egyik sem szerkeszthető: nem renderel semmit. A jogot a hívó számolja (canEditProfil).
  */
 export function SzerkesztesGomb({
   kod, most, szerkeszthetEv, szerkeszthetMost, action, felirat, feliratMost, className,

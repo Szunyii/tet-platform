@@ -15,7 +15,7 @@ export interface AppSession {
   email: string;
   role: AppRole;
   /** Az attasé országai (székhely elöl, utána magyar név szerint); adminnál üres. */
-  orszagok: SessionOrszag[];
+  orszagok: readonly SessionOrszag[];
   /** Átmeneti: a székhely kódja a még át nem állt fogyasztóknak; a 12. task törli. */
   orszag: string | null;
 }
@@ -25,7 +25,9 @@ export interface AppSession {
  * React.cache: egy kérésen belül (layout + page) egyszer fut le. Server action-ben
  * a cache átlátszó, minden hívás friss. A Better Auth session.cookieCache szándékosan
  * NINCS bekapcsolva: tiltás/törlés után azonnal érvénytelen legyen a session. Az attasé
- * országai minden kérésnél a DB-ből jönnek, így egy admin-módosítás azonnal érvényes.
+ * országai minden kérésnél a DB-ből jönnek, így egy admin-módosítás a szerver-oldali
+ * ellenőrzésekben azonnal érvényes (a layoutból jövő kliens-megjelenítés a következő
+ * layout-renderig késhet).
  */
 export const getSession = cache(async (): Promise<AppSession | null> => {
   const result = await auth.api.getSession({ headers: await headers() });

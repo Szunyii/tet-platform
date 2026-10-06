@@ -21,9 +21,9 @@ const NINCS_JOG = 'Nincs jogosultságod ehhez a profilhoz.';
  * → jog → validálás → upsert. Az ismeretlen országkód/blokk-kulcs 404 (mint a
  * `requireAdmin()`-nál: ez csak manipulált kéréssel jöhet létre). A jogosultsági hiba
  * viszont űrlap-szintű hiba, nem 404: a szerkesztő oldal nyitva tartása közben is
- * érvénytelenné válhat (évváltás Európa/Budapest éjfélkor, vagy admin átírja az attasé
- * országát/szerepkörét) – a 404 az egész oldalt lecserélné, elveszítve a még nem mentett
- * blokkokat.
+ * érvénytelenné válhat (évváltás Európa/Budapest éjfélkor, vagy az admin átírja az attasé
+ * országait/szerepkörét, illetve átadja a relációs vezetőséget) – a 404 az egész oldalt
+ * lecserélné, elveszítve a még nem mentett blokkokat.
  */
 export async function mentBlokkAction(_prev: MuveletState, formData: FormData): Promise<MuveletState> {
   const session = await requireSession();
