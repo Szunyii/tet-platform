@@ -131,16 +131,16 @@ const m = orszagonkent([
   { id: 'u5', nev: 'Alfa', tiltott: false, orszagok: [{ kod: 'GB', vezeto: false }] },
   { id: 'u6', nev: 'Béta', tiltott: false, orszagok: [{ kod: 'GB', vezeto: false }] },
 ]);
+// A csupa tiltott attasés CA kimarad (nincs kire átadni a vezetést).
 assert.deepEqual(vezetoNelkuliOrszagok(m), [
   { kod: 'US', aktivDb: 1, vezetoTiltott: true },
   { kod: 'GB', aktivDb: 2, vezetoTiltott: false },
-  { kod: 'CA', aktivDb: 0, vezetoTiltott: true },
 ]);
 const hUj = vezetoHelyzet('DE', null, m);
 assert.deepEqual(hUj, { masok: 2, masikVezeto: { nev: 'Kindert Judit', tiltott: false }, sajatVezeto: false });
 assert.equal(alapVezeto(hUj), false);
 assert.equal(vezetoSugo(hUj, false), 'Jelenlegi vezető: Kindert Judit.');
-assert.equal(vezetoSugo(hUj, true), 'Mentéskor átveszi a vezetőséget (jelenleg: Kindert Judit).');
+assert.equal(vezetoSugo(hUj, true), 'Mentéskor ő lesz a relációs vezető (jelenleg: Kindert Judit).');
 const hKindert = vezetoHelyzet('DE', 'u1', m);
 assert.deepEqual(hKindert, { masok: 1, masikVezeto: null, sajatVezeto: true });
 assert.equal(alapVezeto(hKindert), true);
@@ -232,11 +232,14 @@ export function rendezAttasek(kod: string, lista: readonly OrszagAttase[]): Orsz
 
 /** „Név · Város”; régiósnál „Név · regionálisan (Város)” – város nélkül a székhely országa. */
 export function attaseFelirat(a: OrszagAttase, kod: string): string {
-  if (regionalisE(a, kod)) return `${a.nev} · regionálisan (${a.varos ?? orszagNev(a.szekhelyKod)})`;
+  if (regionalisE(a, kod)) return `${a.nev} · regionálisan (${a.varos || orszagNev(a.szekhelyKod)})`;
   return a.varos ? `${a.nev} · ${a.varos}` : a.nev;
 }
 
-/** Egy sor az ország attaséiról: az első (a vezető, ha van) felirata, több attasénál „+N attasé”; üres listára null. */
+/**
+ * Egy sor az ország attaséiról: az első felirata, több attasénál „+N attasé”; üres listára null.
+ * A lista `rendezAttasek` sorrendű (a hívók így adják), ezért az első a vezető, ha van.
+ */
 export function attasekRovid(attasek: readonly OrszagAttase[], kod: string): string | null {
   const [elso, ...tobbi] = attasek;
   if (!elso) return null;
@@ -250,8 +253,12 @@ export interface OrszagTag {
   vezeto: boolean;
   tiltott: boolean;
 }
-/** Országkód → az országot lefedő felhasználók (tiltottakkal együtt). Sima objektum: kliens-propként is átadható. */
-export type OrszagAttasek = Record<string, OrszagTag[]>;
+/**
+ * Országkód → az országot lefedő felhasználók (tiltottakkal együtt). Sima objektum
+ * (a felhasználó-oldal kliens-dialógusainak propja); a kulcs validált ISO-kód,
+ * olvasás `Object.hasOwn`-nal.
+ */
+export type OrszagTagok = Record<string, OrszagTag[]>;
 
 /** A felhasználó-listából országonként a lefedő felhasználók. */
 export function orszagonkent(
@@ -261,18 +268,18 @@ export function orszagonkent(
     tiltott: boolean;
     orszagok: readonly Pick<AttaseOrszag, 'kod' | 'vezeto'>[];
   }[],
-): OrszagAttasek {
-  const m: OrszagAttasek = {};
+): OrszagTagok {
+  const m: OrszagTagok = {};
   for (const f of felhasznalok) {
     for (const o of f.orszagok) {
-      if (!m[o.kod]) m[o.kod] = [];
+      if (!Object.hasOwn(m, o.kod)) m[o.kod] = [];
       m[o.kod].push({ userId: f.id, nev: f.nev, vezeto: o.vezeto, tiltott: f.tiltott });
     }
   }
   return m;
 }
 
-/** Ország, amelynek van attaséja, de nincs aktív vezetője (nincs kijelölve, vagy a vezető tiltott). */
+/** Ország, amelynek van aktív attaséja, de nincs aktív vezetője (nincs kijelölve, vagy a vezető tiltott). */
 export interface HianyosOrszag {
   kod: string;
   /** A nem tiltott attasék száma. */
@@ -280,13 +287,18 @@ export interface HianyosOrszag {
   vezetoTiltott: boolean;
 }
 
-/** A vezető nélküli országok magyar név szerint (a felhasználó-oldal figyelmeztetése). */
-export function vezetoNelkuliOrszagok(m: OrszagAttasek): HianyosOrszag[] {
+/**
+ * Az aktív attaséval rendelkező, de aktív vezető nélküli országok (nincs kijelölve,
+ * vagy a vezető tiltott), magyar név szerint – a felhasználó-oldal figyelmeztetése.
+ */
+export function vezetoNelkuliOrszagok(m: OrszagTagok): HianyosOrszag[] {
   const ki: HianyosOrszag[] = [];
   for (const [kod, tagok] of Object.entries(m)) {
+    const aktivDb = tagok.filter((t) => !t.tiltott).length;
     const vezeto = tagok.find((t) => t.vezeto);
-    if (vezeto && !vezeto.tiltott) continue;
-    ki.push({ kod, aktivDb: tagok.filter((t) => !t.tiltott).length, vezetoTiltott: Boolean(vezeto) });
+    // Csak ahol van aktív attasé: a csupa tiltott attasés országban nincs kire átadni a vezetést.
+    if (aktivDb === 0 || (vezeto && !vezeto.tiltott)) continue;
+    ki.push({ kod, aktivDb, vezetoTiltott: Boolean(vezeto) });
   }
   return ki.sort((a, b) => orszagNev(a.kod).localeCompare(orszagNev(b.kod), 'hu'));
 }
@@ -302,8 +314,8 @@ export interface VezetoHelyzet {
 }
 
 /** `sajatId`: a szerkesztett felhasználó (új felhasználónál null). */
-export function vezetoHelyzet(kod: string, sajatId: string | null, m: OrszagAttasek): VezetoHelyzet {
-  const tagok = m[kod] ?? [];
+export function vezetoHelyzet(kod: string, sajatId: string | null, m: OrszagTagok): VezetoHelyzet {
+  const tagok = Object.hasOwn(m, kod) ? m[kod] : [];
   const masok = tagok.filter((t) => t.userId !== sajatId);
   const v = masok.find((t) => t.vezeto);
   return {
@@ -322,8 +334,10 @@ export function alapVezeto(h: VezetoHelyzet): boolean {
 export function vezetoSugo(h: VezetoHelyzet, bejelolve: boolean): string | null {
   if (h.masok === 0) return 'Egyedüli attasé – automatikusan vezető.';
   if (h.masikVezeto) {
-    const nev = h.masikVezeto.nev + (h.masikVezeto.tiltott ? ' (tiltott)' : '');
-    return bejelolve ? `Mentéskor átveszi a vezetőséget (jelenleg: ${nev}).` : `Jelenlegi vezető: ${nev}.`;
+    const { nev, tiltott } = h.masikVezeto;
+    return bejelolve
+      ? `Mentéskor ő lesz a relációs vezető (jelenleg: ${nev}${tiltott ? ', tiltott' : ''}).`
+      : `Jelenlegi vezető: ${nev}${tiltott ? ' (tiltott)' : ''}.`;
   }
   if (h.sajatVezeto) return bejelolve ? null : 'Kikapcsolva nem marad vezető – jelölj ki mást.';
   return 'Nincs kijelölt vezető.';
@@ -1016,7 +1030,8 @@ export function AttaseLista({ kod, attasek }: { kod: string; attasek: readonly O
   const tobb = attasek.length > 1;
   return (
     <div className="flex flex-col gap-1.5 text-sm">
-      {tobb && !attasek.some((a) => a.vezeto) && (
+      {/* A lista csak aktív attasékat tartalmaz: ha egyikük sem vezető (nincs kijelölve, vagy a vezető tiltott), a profilt csak admin szerkesztheti. */}
+      {!attasek.some((a) => a.vezeto) && (
         <p className="text-muted-foreground">Nincs kijelölt relációs vezető.</p>
       )}
       <ul className="flex flex-col gap-1.5">
@@ -1334,16 +1349,16 @@ export default function OldalsavAllapot({ session, ev, most }: { session: AppSes
 
 - [ ] **Step 2: `components/AppShell.tsx` – a szerep-felirat**
 
-A `roleLabel` (a fájl idézőjel-stílusával):
+Import (a fájl idézőjel-stílusával): `import { szekhelyKod } from "../lib/attase-orszag";`. A `roleLabel`:
 
 ```tsx
   // Attasé: a székhely országa, további (régiós) országoknál „+N".
-  const szekhely = user.orszagok.find((o) => o.szekhely);
+  const szekhely = szekhelyKod(user.orszagok);
   const tovabbi = user.orszagok.length - (szekhely ? 1 : 0);
   const roleLabel =
     user.role === "admin"
       ? "NIÜ admin"
-      : `TéT attasé${szekhely ? " · " + orszagNev(szekhely.kod) : ""}${tovabbi > 0 ? ` +${tovabbi}` : ""}`;
+      : `TéT attasé${szekhely ? " · " + orszagNev(szekhely) : ""}${tovabbi > 0 ? ` +${tovabbi}` : ""}`;
 ```
 
 - [ ] **Step 3: Típusellenőrzés, commit**
@@ -1715,7 +1730,7 @@ import { Button } from '../../../../components/ui/button';
 import { Input } from '../../../../components/ui/input';
 import { Textarea } from '../../../../components/ui/textarea';
 import {
-  alapVezeto, REGIO_MAX, RESZTERULET_MAX, VAROS_MAX, vezetoHelyzet, type AttaseOrszag, type OrszagAttasek,
+  alapVezeto, REGIO_MAX, RESZTERULET_MAX, VAROS_MAX, vezetoHelyzet, type AttaseOrszag, type OrszagTagok,
 } from '../../../../lib/attase-orszag';
 import { ORSZAGOK, orszagNev } from '../../../../lib/orszagok';
 import type { MezoHibak } from '../../../../lib/urlap';
@@ -1773,17 +1788,17 @@ export function OrszagMezok({
   ertekek,
   onChange,
   errors,
-  orszagAttasek,
+  orszagTagok,
   sajatId,
 }: {
   ertekek: OrszagErtekek;
   onChange: (ertekek: OrszagErtekek) => void;
   errors: MezoHibak;
-  orszagAttasek: OrszagAttasek;
+  orszagTagok: OrszagTagok;
   sajatId: string | null;
 }) {
   const { szekhely, regio } = ertekek;
-  const helyzet = (kod: string) => vezetoHelyzet(kod, sajatId, orszagAttasek);
+  const helyzet = (kod: string) => vezetoHelyzet(kod, sajatId, orszagTagok);
   const setSzekhely = (resz: Partial<OrszagErtekek['szekhely']>) =>
     onChange({ ...ertekek, szekhely: { ...szekhely, ...resz } });
   const setSor = (id: number, resz: Partial<RegioSor>) =>
@@ -2353,18 +2368,18 @@ export default async function FelhasznalokPage() {
   const me = await requireAdmin();
   const felhasznalok = listFelhasznalok();
   // Országonként a lefedő attasék (vezető-jelölő súgója, ★, figyelmeztetés): a listából, új lekérdezés nélkül.
-  const orszagAttasek = orszagonkent(felhasznalok);
-  const hianyos = vezetoNelkuliOrszagok(orszagAttasek);
+  const orszagTagok = orszagonkent(felhasznalok);
+  const hianyos = vezetoNelkuliOrszagok(orszagTagok);
   return (
     <div className="flex max-w-6xl flex-col gap-4">
       <div className="flex items-center gap-3">
         <p className="text-sm text-muted-foreground">{felhasznalok.length} felhasználó</p>
         <div className="ml-auto">
-          <UjFelhasznaloDialog orszagAttasek={orszagAttasek} />
+          <UjFelhasznaloDialog orszagTagok={orszagTagok} />
         </div>
       </div>
       {hianyos.length > 0 && <VezetoFigyelmeztetes orszagok={hianyos} />}
-      <FelhasznaloTabla felhasznalok={felhasznalok} sajatId={me.userId} orszagAttasek={orszagAttasek} />
+      <FelhasznaloTabla felhasznalok={felhasznalok} sajatId={me.userId} orszagTagok={orszagTagok} />
     </div>
   );
 }
@@ -2384,7 +2399,7 @@ import {
   TableRow,
 } from '../../../../components/ui/table';
 import type { FelhasznaloSor } from '../../../../db/queries/felhasznalo';
-import type { AttaseOrszag, OrszagAttasek } from '../../../../lib/attase-orszag';
+import type { AttaseOrszag, OrszagTagok } from '../../../../lib/attase-orszag';
 import { formatDatum } from '../../../../lib/datum';
 import { SZEREPKOR_CIMKE } from '../../../../lib/felhasznalo-validacio';
 import { orszagNev } from '../../../../lib/orszagok';
@@ -2393,14 +2408,14 @@ import { FelhasznaloMuveletek } from './FelhasznaloMuveletek';
 export function FelhasznaloTabla({
   felhasznalok,
   sajatId,
-  orszagAttasek,
+  orszagTagok,
 }: {
   felhasznalok: FelhasznaloSor[];
   sajatId: string;
-  orszagAttasek: OrszagAttasek;
+  orszagTagok: OrszagTagok;
 }) {
   // A ★ csak ott jelzi a vezetőt, ahol egynél több attasé van (egyszemélyes országban automatikus).
-  const tobbAttase = new Set(Object.entries(orszagAttasek).filter(([, t]) => t.length > 1).map(([kod]) => kod));
+  const tobbAttase = new Set(Object.entries(orszagTagok).filter(([, t]) => t.length > 1).map(([kod]) => kod));
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card">
       <Table>
@@ -2440,7 +2455,7 @@ export function FelhasznaloTabla({
               </TableCell>
               <TableCell className="text-muted-foreground">{formatDatum(f.letrehozva)}</TableCell>
               <TableCell className="text-right">
-                <FelhasznaloMuveletek felhasznalo={f} sajat={f.id === sajatId} orszagAttasek={orszagAttasek} />
+                <FelhasznaloMuveletek felhasznalo={f} sajat={f.id === sajatId} orszagTagok={orszagTagok} />
               </TableCell>
             </TableRow>
           ))}
@@ -2490,17 +2505,17 @@ function OrszagCella({ orszagok, tobbAttase }: { orszagok: readonly AttaseOrszag
 
 - [ ] **Step 8: `FelhasznaloMuveletek.tsx`**
 
-Import: `import type { OrszagAttasek } from '../../../../lib/attase-orszag';`. A szignatúra és a dialógus-propok:
+Import: `import type { OrszagTagok } from '../../../../lib/attase-orszag';`. A szignatúra és a dialógus-propok:
 
 ```tsx
 export function FelhasznaloMuveletek({
   felhasznalo,
   sajat,
-  orszagAttasek,
+  orszagTagok,
 }: {
   felhasznalo: FelhasznaloSor;
   sajat: boolean;
-  orszagAttasek: OrszagAttasek;
+  orszagTagok: OrszagTagok;
 }) {
 ```
 
@@ -2508,7 +2523,7 @@ export function FelhasznaloMuveletek({
       <SzerkesztesDialog
         key={`sz-${nyitas}`}
         felhasznalo={felhasznalo}
-        orszagAttasek={orszagAttasek}
+        orszagTagok={orszagTagok}
         open={szerkesztes}
         onOpenChange={setSzerkesztes}
       />
@@ -2526,7 +2541,7 @@ import { useMuveletForm } from '../../../../components/form/useMuveletForm';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
 import type { FelhasznaloSor } from '../../../../db/queries/felhasznalo';
-import type { OrszagAttasek } from '../../../../lib/attase-orszag';
+import type { OrszagTagok } from '../../../../lib/attase-orszag';
 import type { Szerepkor } from '../../../../lib/felhasznalo-validacio';
 import { updateFelhasznaloAction } from '../actions';
 import { ElerhetosegMezok, type ElerhetosegErtekek } from './ElerhetosegMezok';
@@ -2535,12 +2550,12 @@ import { SzerepkorSelect } from './SzerepkorSelect';
 
 export function SzerkesztesDialog({
   felhasznalo,
-  orszagAttasek,
+  orszagTagok,
   open,
   onOpenChange,
 }: {
   felhasznalo: FelhasznaloSor;
-  orszagAttasek: OrszagAttasek;
+  orszagTagok: OrszagTagok;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -2603,7 +2618,7 @@ export function SzerkesztesDialog({
           ertekek={orszagok}
           onChange={setOrszagok}
           errors={errors}
-          orszagAttasek={orszagAttasek}
+          orszagTagok={orszagTagok}
           sajatId={felhasznalo.id}
         />
       )}
@@ -2617,7 +2632,7 @@ export function SzerkesztesDialog({
 Az importokban az `AttaseMezok` helyett:
 
 ```tsx
-import type { OrszagAttasek } from '../../../../lib/attase-orszag';
+import type { OrszagTagok } from '../../../../lib/attase-orszag';
 import { ElerhetosegMezok, URES_ELERHETOSEG, type ElerhetosegErtekek } from './ElerhetosegMezok';
 import { OrszagMezok, URES_ORSZAGOK, type OrszagErtekek } from './OrszagMezok';
 ```
@@ -2625,22 +2640,22 @@ import { OrszagMezok, URES_ORSZAGOK, type OrszagErtekek } from './OrszagMezok';
 A két komponens szignatúrája és a prop továbbadása:
 
 ```tsx
-export function UjFelhasznaloDialog({ orszagAttasek }: { orszagAttasek: OrszagAttasek }) {
+export function UjFelhasznaloDialog({ orszagTagok }: { orszagTagok: OrszagTagok }) {
 ```
 
 ```tsx
-      <UjFelhasznaloModal key={nyitas} open={open} onOpenChange={setOpen} orszagAttasek={orszagAttasek} />
+      <UjFelhasznaloModal key={nyitas} open={open} onOpenChange={setOpen} orszagTagok={orszagTagok} />
 ```
 
 ```tsx
 function UjFelhasznaloModal({
   open,
   onOpenChange,
-  orszagAttasek,
+  orszagTagok,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  orszagAttasek: OrszagAttasek;
+  orszagTagok: OrszagTagok;
 }) {
 ```
 
@@ -2656,7 +2671,7 @@ A `<AttaseMezok … />` helyett:
 ```tsx
       <ElerhetosegMezok ertekek={elerhetoseg} onChange={setElerhetoseg} errors={errors} />
       {szerepkor === 'attase' && (
-        <OrszagMezok ertekek={orszagok} onChange={setOrszagok} errors={errors} orszagAttasek={orszagAttasek} sajatId={null} />
+        <OrszagMezok ertekek={orszagok} onChange={setOrszagok} errors={errors} orszagTagok={orszagTagok} sajatId={null} />
       )}
 ```
 
@@ -2678,7 +2693,7 @@ gstack, a futó dev szerveren (`http://localhost:3000`), admin bejelentkezéssel
 2. „Új felhasználó”: QA Régiós, `qa.regios@niu.hu`, jelszó ≥ 8 karakter, TéT attasé; Székhely: Ausztria, város Bécs → a jelölő bejelölt és letiltott, súgó „Egyedüli attasé – automatikusan vezető.”; „+ Ország hozzáadása” ×3: Szlovénia, Horvátország, Ausztria → Létrehozás → a 3. sor alatt „Ez az ország már szerepel.”, a fókusz azon a selecten; töröld a sort (✕) → Létrehozás → toast, a táblában „Ausztria · Bécs” és „régió: Horvátország, Szlovénia”.
 3. `/terkep`: Szlovénia tooltipje „QA Régiós · regionálisan (Bécs)”.
 4. „Új felhasználó”: QA Második, `qa.masodik@niu.hu`, Székhely: Koreai Köztársaság, részterület „Puszan és környéke” → a jelölő üres, súgó „Jelenlegi vezető: Teszt Attasé.” → Létrehozás → a táblában a Teszt Attasé KR-je mellett ★ (két attasé).
-5. QA Második szerkesztése: jelölő be → súgó „Mentéskor átveszi a vezetőséget (jelenleg: Teszt Attasé).” → Mentés → a ★ QA Másodiknál.
+5. QA Második szerkesztése: jelölő be → súgó „Mentéskor ő lesz a relációs vezető (jelenleg: Teszt Attasé).” → Mentés → a ★ QA Másodiknál.
 6. QA Második szerkesztése: jelölő ki → súgó „Kikapcsolva nem marad vezető – jelölj ki mást.” → Mentés → figyelmeztetés: „Koreai Köztársaság (2 aktív attasé)”.
 7. QA Második törlése → a figyelmeztetés eltűnik (Teszt Attasé örököl; a ★ eltűnik, mert egy attasé maradt).
 8. QA Régiós szerkesztése: szerepkör Admin → súgó „Adminra váltva az országok törlődnek.” → Mentés → „Országok”: „–”. Utána QA Régiós törlése.
@@ -3017,8 +3032,19 @@ migráció és a tooltip főváros nélkül már a spec része). Ha nem volt elt
 ```markdown
 ## Megvalósítási eltérések
 
-- Nincs eltérés a spectől.
+- A vezető nélküli országok figyelmeztetése csak az aktív attaséval rendelkező országokat sorolja fel
+  (a csupa tiltott attasés országban nincs kire átadni a vezetést; a tiltott fiók szerkesztésével rendezhető).
+- A vezető-jelölő súgója: „Mentéskor ő lesz a relációs vezető (jelenleg: X).” (a „vezetőség” testületet
+  jelentene); tiltott vezetőnél „(jelenleg: X, tiltott)”, illetve „Jelenlegi vezető: X (tiltott).”
+- A validátor kimenete és a felhasználó-lista sora egyaránt `AttaseOrszag` (a spec `AttaseOrszagInput` neve
+  helyett); a dialógusok országonkénti listájának típusa `OrszagTagok` (prop: `orszagTagok`).
+- Az összehasonlító tábla „Attasé” sora egysoros (`attasekRovid`: „név · város +N attasé”, régiósnál
+  „regionálisan”), nem név + halvány város két sorban.
+- A profil fejléce akkor is kiírja a „Nincs kijelölt relációs vezető.” sort, ha egyetlen aktív, nem vezető
+  attasé van (pl. a vezető tiltott).
 ```
+
+(A végrehajtás közben adódó további eltéréseket fűzd hozzá.)
 
 - [ ] **Step 4: Build**
 
@@ -3044,7 +3070,7 @@ git commit -m "$(printf 'docs(attase-orszagok): CLAUDE.md, README és a spec –
 gstack, `http://localhost:3000`, admin:
 1. `/felhasznalok`: 16 felhasználó; ★ Kindert Juditnál (Németország · Berlin) és dr. Nagy Gabriellánál (Amerikai Egyesült Államok · New York); nincs figyelmeztetés; Szántó Szilviánál „régió: Algéria, Marokkó, Mauritánia, Tunézia”.
 2. Kindert Judit szerkesztése: a részterület szövegdobozban a tartományok; a jelölő bejelölt, súgó nincs; Mégse.
-3. `/terkep`: Németország tooltipje „Kindert Judit · Berlin +2 attasé”; a kivonatban három attasé, Kindertnél „· relációs vezető”; Puerto Rico színezett poligon (van attaséja), a Maldív-szigetek pinje kijelölhető; Algéria tooltipje „Szántó Szilvia · regionálisan (Párizs)”.
+3. `/terkep`: Németország tooltipje „Kindert Judit · Berlin +2 attasé”; a kivonatban három attasé, Kindertnél „· relációs vezető”; Puerto Rico színezett poligon (van attaséja), a Maldív-szigetek pinje kijelölhető; az Amerikai Virgin-szigetek pinje 1× nagyításnál a Puerto Ricóé alá esik – nagyítva (vagy a rangsor-panelből) ellenőrizd; Algéria tooltipje „Szántó Szilvia · regionálisan (Párizs)”.
 4. `/orszagprofil/DE`: az attasé-lista három sorral, a részterületekkel, „Relációs vezető” jelvény Kindertnél; `/orszagprofil/DZ`: „Szántó Szilvia · regionálisan, székhely: Párizs, Franciaország”; `/orszagprofil/KR`: az Alapadatokban Főváros: Szöul, Terület: 100 210 km², Pénznem.
 5. `/kommunikacio` → „Új ticket”: a címzettek közt „Kindert Judit · Németország”, „Szántó Szilvia · Franciaország” (ne hozz létre ticketet).
 
