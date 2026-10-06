@@ -80,19 +80,6 @@ export function listProfilEvek(): number[] {
     .map((r) => r.ev);
 }
 
-/** Az ország aktív (nem tiltott) attaséja név szerint az első; a profil oldal fejléce. */
-export function getAttaseNev(kod: string): string | null {
-  const now = Date.now();
-  const u = db
-    .select({ nev: user.name, banned: user.banned, banExpires: user.banExpires })
-    .from(user)
-    .where(and(eq(user.role, 'attase'), eq(user.orszag, kod)))
-    .orderBy(user.name)
-    .all()
-    .find((x) => !tiltottE(x, now));
-  return u?.nev ?? null;
-}
-
 export interface TerkepOrszag {
   kod: string;
   nev: string;

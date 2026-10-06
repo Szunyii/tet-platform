@@ -2,11 +2,13 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { AllapotBadge } from '../../../../components/orszagprofil/AllapotBadge';
+import { AttaseLista } from '../../../../components/orszagprofil/AttaseLista';
 import { BlokkNezet } from '../../../../components/orszagprofil/BlokkNezet';
 import { KuldGomb } from '../../../../components/orszagprofil/KuldGomb';
 import { SzerkesztesGomb } from '../../../../components/orszagprofil/SzerkesztesGomb';
 import { buttonVariants } from '../../../../components/ui/button';
-import { getAttaseNev, getProfil, getUtolsoEv } from '../../../../db/queries/orszagprofil';
+import { listOrszagAttasek } from '../../../../db/queries/attase-orszag';
+import { getProfil, getUtolsoEv } from '../../../../db/queries/orszagprofil';
 import { aktualisEv, formatDatumIdo } from '../../../../lib/datum';
 import { orszagByKod } from '../../../../lib/orszagok';
 import { canEditProfil } from '../../../../lib/orszagprofil-jog';
@@ -35,7 +37,7 @@ export default async function OrszagprofilPage({ params }: { params: Promise<{ k
   const most = aktualisEv();
   const ev = await getValasztottEv(most);
   const profil = getProfil(kod, ev);
-  const attaseNev = getAttaseNev(kod);
+  const attasek = listOrszagAttasek(kod);
   // A jelvény az évnézet szabályával (mint a térkép): a legnagyobb profil-év ≤ ev állapota az ev-hez
   // képest. Ha az évre van profil, az a legnagyobb; csak üres évnél kell külön lekérdezés.
   const utolsoEv = profil ? profil.ev : getUtolsoEv(kod, ev);
@@ -45,12 +47,14 @@ export default async function OrszagprofilPage({ params }: { params: Promise<{ k
 
   return (
     <div className="flex max-w-4xl flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex flex-col gap-0.5">
-          <h2 className="text-lg font-semibold">{orszag.nev}</h2>
-          <p className="text-sm text-muted-foreground">{attaseNev ? `Attasé: ${attaseNev}` : 'Nincs aktív attasé'}</p>
+      <div className="flex flex-wrap items-start gap-3">
+        <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-1">
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="text-lg font-semibold">{orszag.nev}</h2>
+            <AllapotBadge allapot={allapot} ev={utolsoEv} />
+          </div>
+          <AttaseLista kod={kod} attasek={attasek} />
         </div>
-        <AllapotBadge allapot={allapot} ev={utolsoEv} />
         <div className="ml-auto flex gap-2">
           <Link href={`/terkep?o=${kod}`} className={cn(buttonVariants({ variant: 'outline' }))}>Vissza a térképre</Link>
           <SzerkesztesGomb
