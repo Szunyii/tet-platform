@@ -2753,22 +2753,32 @@ Az `AppSession`-ből töröld az `orszag` mezőt a kommentjével, a `getSession`
 `scripts/orszag-kod-migracio.ts`: a `user` ciklus helyett az `attase_orszag` sorait írja át (a 0006 migráció a régi `user.orszag`-ot csak trimmelve másolta, így egy kódra nem alakított régi név ott maradhat). A fejléc-komment első mondata: „Egyszeri, idempotens adat-átírás: az attase_orszag.orszag_kod, a riport.orszag és a ticket.orszag szabadszöveges országneveit ISO-kódra cseréli …”. Importok: `import { and, eq } from 'drizzle-orm';`, `import { attaseOrszag, riport, ticket } from '../db/schema';`. A `for (const u of db.select({ id: user.id, orszag: user.orszag }) …)` ciklus helyett:
 
 ```ts
-for (const a of db.select({ userId: attaseOrszag.userId, kod: attaseOrszag.orszagKod }).from(attaseOrszag).all()) {
+for (const a of db
+  .select({ userId: attaseOrszag.userId, kod: attaseOrszag.orszagKod, vezeto: attaseOrszag.vezeto })
+  .from(attaseOrszag)
+  .all()) {
   const kod = kodra(a.kod);
   if (kod === null) continue;
   if (!kod) {
     parositatlan.push(`attase_orszag ${a.userId}: "${a.kod}"`);
     continue;
   }
+  // A 0006 a régi név „ál-országának” egyetlen sorát vezetővé tette; ha a cél-országnak már van
+  // vezetője, ez a sor nem maradhat az (országonként legfeljebb egy – részleges egyedi index).
+  const masikVezeto = db
+    .select({ userId: attaseOrszag.userId })
+    .from(attaseOrszag)
+    .where(and(eq(attaseOrszag.orszagKod, kod), eq(attaseOrszag.vezeto, true)))
+    .get();
   try {
     db.update(attaseOrszag)
-      .set({ orszagKod: kod })
+      .set({ orszagKod: kod, ...(a.vezeto && masikVezeto ? { vezeto: false } : {}) })
       .where(and(eq(attaseOrszag.userId, a.userId), eq(attaseOrszag.orszagKod, a.kod)))
       .run();
     atirt++;
   } catch {
-    // A felhasználónak már van sora ezzel a kóddal (PK): kézi rendezés kell.
-    parositatlan.push(`attase_orszag ${a.userId}: "${a.kod}" → ${kod} (már van ilyen sora)`);
+    // Ütközés (pl. a felhasználónak már van sora ezzel a kóddal): kézi rendezés kell.
+    parositatlan.push(`attase_orszag ${a.userId}: "${a.kod}" → ${kod} (ütközés)`);
   }
 }
 ```
@@ -3021,7 +3031,7 @@ git commit -m "$(printf 'feat(attase-orszagok): demó attasék a valós TéT-pé
 
 Keresd meg és írd át a következő helyeket (a többi szöveg változatlan):
 
-1. Parancslista: az `orszag-kod-migracio.ts` sor kommentje `# egyszeri: riport.orszag / ticket.orszag országnév → ISO-kód (idempotens, a párosítatlant kilistázza)`; utána új sor:
+1. Parancslista: az `orszag-kod-migracio.ts` sor kommentje `# egyszeri: attase_orszag.orszag_kod / riport.orszag / ticket.orszag országnév → ISO-kód (idempotens, a párosítatlant kilistázza)`; utána új sor:
    `DEMO_ATTASE_PASSWORD=… NODE_OPTIONS="--conditions=react-server" npx tsx scripts/demo-attasek.ts   # a 15 demó attasé (valós példák) a data/tet.db-be, idempotens; a két régi tesztfiókot törli`
 2. Auth bekezdés: a „Session szerver oldalon: `lib/session.ts` (…)” zárójel után: „; az `AppSession.orszagok` (`kod`, `szekhely`, `vezeto`, székhely elöl) kérésenként a DB-ből jön, így a hozzárendelés változása azonnal érvényes”.
 3. Auth bekezdés: a „A `user.orszag` mező (`additionalFields`, `input: false`) …” mondattól az „… az admin plugin `roles` mappel (`admin`, `attase`) fut.” mondatig tartó rész helyett:
@@ -3036,7 +3046,7 @@ Keresd meg és írd át a következő helyeket (a többi szöveg változatlan):
 
 - [ ] **Step 2: `README.md`**
 
-1. Scriptek pont: „(szabadszöveges országnév → ISO-kód a `user`, `riport`, `ticket` táblákban, idempotens)” → „(… a `riport`, `ticket` táblákban, idempotens); demó attasék: `scripts/demo-attasek.ts` (a 15 valós példa, idempotens – lásd a CLAUDE.md parancslistáját)”.
+1. Scriptek pont: „(szabadszöveges országnév → ISO-kód a `user`, `riport`, `ticket` táblákban, idempotens)” → „(… az `attase_orszag`, `riport`, `ticket` táblákban, idempotens); demó attasék: `scripts/demo-attasek.ts` (a 15 valós példa, idempotens – lásd a CLAUDE.md parancslistáját)”.
 2. „Bejelentkezés és felhasználók” második és harmadik pontja helyett:
    - „Admin a `/felhasznalok` oldalon hoz létre TéT attasé fiókokat (név, e-mail, kezdő jelszó; székhely: ország, a poszt városa, részterület – pl. a lefedett tartományok –, relációs vezető jelölés; régiós lefedettség: további országok; opcionálisan telefon, kapcsolattartási e-mail), szerkeszt, jelszót állít vissza, tilt és töröl. Nyilvános regisztráció nincs.”
    - „Szerepkörök: `admin` (NIÜ) és `attase`. Egy országban több attasé is lehet; közülük egy a relációs vezető, ő az országprofil felelőse és – az adminon kívül – egyedüli szerkesztője (egyszemélyes országban automatikus; ha több attasé marad vezető nélkül, a felhasználó-oldal figyelmeztet). Egy attasé regionálisan több országot is lefedhet; minden lefedett országára riportot adhat be. A főváros, terület, pénznem az országprofil Alapadatok blokkjában van.”
