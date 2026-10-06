@@ -138,7 +138,7 @@ function UjTicketModal({
     >
       {jeloltek.length === 0 && (
         <p className="text-sm text-muted-foreground" role="status">
-          Nincs címezhető attasé: a Felhasználók oldalon hozz létre attasét országgal.
+          Nincs címezhető attasé: a Felhasználók oldalon hozz létre attasét székhellyel.
         </p>
       )}
       <Valaszto

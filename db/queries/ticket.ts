@@ -2,7 +2,7 @@ import 'server-only';
 import { and, count, desc, eq, ne, sql, type SQL } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import { db } from '../index';
-import { ticket, ticketOlvasas, ticketUzenet, user } from '../schema';
+import { attaseOrszag, ticket, ticketOlvasas, ticketUzenet, user } from '../schema';
 import type { AppRole } from '../../lib/session';
 import { tiltottE } from '../../lib/felhasznalo-tiltas';
 import type {
@@ -304,21 +304,25 @@ export function countOlvasatlan(nezo: Nezo): number {
   return sor?.n ?? 0;
 }
 
-/** Az admin új-ticket dialógusához: nem tiltott attasék, akiknek van országa, magyar névsorrendben. */
+/**
+ * Az admin új-ticket dialógusához: nem tiltott attasék, akiknek van székhelye, magyar
+ * névsorrendben; az `orszag` a székhely kódja (a ticket pillanatképe).
+ */
 export function listCimzettJeloltek(): CimzettJelolt[] {
   const most = Date.now();
   return db
     .select({
       id: user.id,
       nev: user.name,
-      orszag: user.orszag,
+      orszag: attaseOrszag.orszagKod,
       role: user.role,
       banned: user.banned,
       banExpires: user.banExpires,
     })
     .from(user)
+    .innerJoin(attaseOrszag, and(eq(attaseOrszag.userId, user.id), eq(attaseOrszag.szekhely, true)))
     .all()
-    .filter((u) => u.role !== 'admin' && u.orszag && !tiltottE(u, most))
-    .map((u) => ({ id: u.id, nev: u.nev, orszag: u.orszag as string }))
+    .filter((u) => u.role !== 'admin' && !tiltottE(u, most))
+    .map((u) => ({ id: u.id, nev: u.nev, orszag: u.orszag }))
     .sort((a, b) => a.nev.localeCompare(b.nev, 'hu'));
 }
