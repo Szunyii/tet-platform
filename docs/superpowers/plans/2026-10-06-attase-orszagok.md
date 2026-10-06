@@ -3104,6 +3104,11 @@ migráció és a tooltip főváros nélkül már a spec része). Ha nem volt elt
   (nincs kijelölve, vagy a vezető tiltott), a lista után: „Nincs aktív relációs vezető – a profilt csak admin
   szerkesztheti.” (a spec „Nincs kijelölt relációs vezető.” szövege helyett).
 - A vezető-jelölő alapértéke akkor is „bejelölve”, ha a másik vezető tiltott (gyakorlatilag nincs aktív vezető).
+- Egyedüli attasénál a letiltott, bejelölt jelölő helyett rejtett `on` mező küldődik. A spec szerint ilyenkor semmi nem
+  ment volna be, és a szerver normalizálása állította volna be a vezetőt. Konzisztens adatnál az eredmény azonos;
+  elavult dialógusnál (ha közben más attasé is került az országba) így az megy be, amit a jelölő mutat.
+- A régiós sorok kulcsa stabil kliens-`id`. A spec „mint a `RendezvenySorok`” megjegyzése pontatlan: az indexkulcsot
+  használ. A székhely vezető-súgója a jelölő alatt áll, ahogy a régiós soroknál is.
 - A 0006 migráció: a régi `user.orszag` trimmelve kerül át (üres/csak szóköz nem ad sort); a vezetőválasztás
   döntetlennél az id-vel determinisztikus; a főváros/terület/pénznem mezőnként az ország bármely attaséjától
   átvehető (a vezető előnyben), és hibás JSON-ú Alapadatok blokkot nem érint.
