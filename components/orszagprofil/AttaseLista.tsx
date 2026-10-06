@@ -14,8 +14,8 @@ export function AttaseLista({ kod, attasek }: { kod: string; attasek: readonly O
   const cim = tobb ? 'Attasék' : 'Attasé';
   return (
     <div className="flex flex-col gap-1 text-sm">
-      <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{cim}</p>
-      <ul aria-label={cim} className="flex flex-col gap-1.5">
+      <p id="attase-lista-cim" className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{cim}</p>
+      <ul aria-labelledby="attase-lista-cim" className="flex flex-col gap-1.5">
         {attasek.map((a) => {
           const h = attaseHely(a, kod);
           return (
