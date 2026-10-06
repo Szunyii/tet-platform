@@ -3133,14 +3133,14 @@ gstack, `http://localhost:3000`, admin:
 - [ ] **Step 2: Nem vezető attasé (Komma Krisztián)**
 
 Jelszó: `sed -n 's/^DEMO_ATTASE_PASSWORD=//p' .env.example` (ne írd ki a logba). Kijelentkezés után `komma.krisztian@niu.hu`:
-1. Oldalsáv: „TéT attasé · Németország”, kártya „Országprofil · <év>”, a sor „… · Megnyitás →”.
+1. Oldalsáv: „TéT attasé · Németország”, kártya „Országprofil · <év>”, a sorban az állapot mellett jobbra igazítva „Megnyitás →” (az olvasó nézetre visz).
 2. `/orszagprofil/DE`: nincs Szerkesztés gomb; `/orszagprofil/DE/szerkesztes` → 404; `/terkep`: nincs „Saját országprofil” gomb.
 3. `/uj-riport`: „A bejegyzés a(z) Németország poszthoz kerül” (nincs ország-választó) → hozz létre egy QA-bejegyzést → a részletoldalon Németország → **töröld a bejegyzést**.
 
 - [ ] **Step 3: Több országos vezető attasé (Szántó Szilvia)**
 
 `szanto.szilvia@niu.hu`:
-1. Oldalsáv: „TéT attasé · Franciaország +4”; kártya „Országprofilok · <év>” öt sorral, mindegyik „Szerkesztés →” (az aktuális évben).
+1. Oldalsáv: „TéT attasé · Franciaország +4” (a „+4” nem törik külön sorba); kártya „Országprofilok · <év>” öt sorral, mindegyikben jobbra igazítva „Szerkesztés →” (az aktuális évben).
 2. `/uj-riport`: „Ország” választó 5 opcióval, alapérték Franciaország; válaszd Marokkót → beadás → a részletoldalon Marokkó → **töröld a bejegyzést**.
 3. `/orszagprofil/MA/szerkesztes` megnyílik (régiós vezető); ne ments.
 4. `/terkep`: „Saját országprofil” gomb Franciaországra visz.
