@@ -3084,6 +3084,11 @@ migráció és a tooltip főváros nélkül már a spec része). Ha nem volt elt
   a `setAttaseOrszagok` a város/részterület értéket csak a székhely-sorra írja.
 - A `scripts/orszag-kod-migracio.ts` a `user` helyett az `attase_orszag` sorait írja át.
 - A `0007` migráció a build elején fut: a régi verzió a build ideje alatt hibát adhat (README, hosting).
+- Az Alapadatok-űrlap: a főváros és a pénznem példája súgóként a szótárban („Pl. Szöul.”, „Pl. dél-koreai von (KRW).”),
+  a rács sorrendje a súgós mezők párosításával (Főváros | Pénznem, Terület | Lakosság, GDP | GDP/fő,
+  GDP-növekedés | Adatév, Forrás teljes szélességben).
+- Tudatos kompromisszum: a főváros/terület/pénznem évfüggetlen adat, de az évenkénti Alapadatok blokkban van, így új
+  évben a lakossághoz és a GDP-hez hasonlóan újra ki kell tölteni (az előző év átmásolása hatókörön kívül maradt).
 ```
 
 (A végrehajtás közben adódó további eltéréseket fűzd hozzá.)
