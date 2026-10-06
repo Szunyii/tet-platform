@@ -15,6 +15,7 @@ import {
 } from '../../lib/riport-szotar';
 import { cn } from '../../lib/utils';
 import { hibaAttr, MezoHiba } from '../form/MezoHiba';
+import { NativeSelect } from '../form/NativeSelect';
 import { useMuveletForm, type FormAction } from '../form/useMuveletForm';
 import { Button, buttonVariants } from '../ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
@@ -28,11 +29,12 @@ import { KulcsszoValaszto } from './KulcsszoValaszto';
 
 /** Létrehozásnál nincs `initial`, szerkesztésnél kötelező – a típus is ezt kényszeríti ki. */
 export type RiportFormProps = { action: FormAction } & (
-  | { mode: 'create'; initial?: undefined }
-  | { mode: 'edit'; initial: RiportDetail }
+  /** `orszagok`: a beadó saját országai (székhely elöl); több országnál választó jelenik meg. */
+  | { mode: 'create'; initial?: undefined; orszagok?: readonly { kod: string; nev: string }[] }
+  | { mode: 'edit'; initial: RiportDetail; orszagok?: undefined }
 );
 
-export function RiportForm({ mode, initial, action }: RiportFormProps) {
+export function RiportForm({ mode, initial, action, orszagok }: RiportFormProps) {
   // Sikernél az action redirectel a részletoldalra; a hook unstable_rethrow-val továbbengedi,
   // ezért nincs siker-toast.
   const [state, formAction, pending] = useMuveletForm(action);
@@ -40,6 +42,7 @@ export function RiportForm({ mode, initial, action }: RiportFormProps) {
 
   // Vezérelt mezők: a React 19 a <form action> beküldése után (hibánál is) alaphelyzetbe
   // állítja a nem vezérelt inputokat; a state megőrzi az értékeket.
+  const [orszag, setOrszag] = useState(orszagok?.[0]?.kod ?? '');
   const [kategoria, setKategoria] = useState<KategoriaKulcs | null>(initial?.kategoria ?? null);
   const [targy, setTargy] = useState(initial?.targy ?? '');
   const [leiras, setLeiras] = useState(initial?.leiras ?? '');
@@ -73,6 +76,34 @@ export function RiportForm({ mode, initial, action }: RiportFormProps) {
 
   return (
     <form action={formAction} className="flex max-w-3xl flex-col gap-6" noValidate>
+      {orszagok && orszagok.length > 1 && (
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="orszag">Ország</Label>
+          <NativeSelect
+            id="orszag"
+            name="orszag"
+            className="max-w-sm"
+            value={orszag}
+            onChange={(e) => {
+              setOrszag(e.target.value);
+              // A <form action> után a React 19 form.reset()-et hív, ami a <select>-et az alapértelmezett
+              // (defaultSelected) opcióra állítja vissza, a vezérelt értéket pedig nem állítja helyre: hibás
+              // beküldés után a választás némán a székhelyre ugrana vissza, és egy változtatás nélküli
+              // újrapróbálás azon az országon adná be a bejegyzést. A választott opció legyen az alapértelmezett.
+              for (const o of e.target.options) o.defaultSelected = o.selected;
+            }}
+            {...hibaAttr(errors, 'orszag')}
+          >
+            {orszagok.map((o) => (
+              <option key={o.kod} value={o.kod}>
+                {o.nev}
+              </option>
+            ))}
+          </NativeSelect>
+          <MezoHiba mezo="orszag" errors={errors} />
+        </div>
+      )}
+
       <section className="flex flex-col gap-2">
         <Label id="kategoria-label">Kategória</Label>
         <KategoriaValaszto value={kategoria} onChange={setKategoria} invalid={Boolean(errors.kategoria)} />
