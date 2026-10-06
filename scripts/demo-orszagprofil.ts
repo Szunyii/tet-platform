@@ -39,7 +39,7 @@ const KR: DemoOrszag = {
     alapadatok: {
       fovaros: 'Szöul',
       terulet: '100 210',
-      penznem: 'dél-koreai won (KRW)',
+      penznem: 'dél-koreai von (KRW)',
       lakossag: '51 700 000',
       gdp: '1 790,0',
       gdpEgyFore: '34 600',
@@ -319,12 +319,12 @@ function urlapFormData(u: Urlap): FormData {
 
 function main() {
   const ev = aktualisEv();
-  // A szerző az első admin: a demó-tartalom nem kötődik valós attaséhoz.
+  // Az első admin: létrehozás szerint, azonos időnél id szerint (determinisztikus).
   const admin = db
     .select({ id: user.id, name: user.name })
     .from(user)
     .where(eq(user.role, 'admin'))
-    .orderBy(user.createdAt)
+    .orderBy(user.createdAt, user.id)
     .get();
   if (!admin) throw new Error('Nincs admin felhasználó (npm run db:seed).');
   for (const o of [KR, JP]) {
