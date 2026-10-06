@@ -114,7 +114,7 @@ export function isBlokkKulcs(v: string): v is BlokkKulcs {
 }
 
 export interface Alapadatok {
-  /** A poszt-adatok 2026-10-től itt vannak (korábban a felhasználón; a 0006 migráció másolta át). */
+  // Az ország poszt-adatai (főváros, terület, pénznem).
   fovaros: string;
   /** km², pozitív egész. */
   terulet: number | null;
@@ -288,9 +288,9 @@ export interface MezoCimke {
 }
 export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], MezoCimke> } = {
   alapadatok: {
-    fovaros: { cimke: 'Főváros' },
+    fovaros: { cimke: 'Főváros', sugo: 'Pl. Szöul.' },
     terulet: { cimke: 'Terület (km²)' },
-    penznem: { cimke: 'Pénznem', sugo: 'Pl. dél-koreai won (KRW).' },
+    penznem: { cimke: 'Pénznem', sugo: 'Pl. dél-koreai von (KRW).' },
     lakossag: { cimke: 'Lakosság (fő)' },
     gdp: { cimke: 'GDP (milliárd USD)' },
     gdpEgyFore: { cimke: 'Egy főre jutó GDP (USD)' },
