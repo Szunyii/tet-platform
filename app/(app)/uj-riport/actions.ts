@@ -16,8 +16,11 @@ const NINCS_ORSZAG = 'A fiókodhoz nincs ország rendelve, ezért nem adhatsz be
 export async function createRiportAction(_prev: RiportFormState, formData: FormData): Promise<RiportFormState> {
   const session = await requireSession();
   if (session.orszagok.length === 0) return { errors: { form: NINCS_ORSZAG } };
-  // Egy országnál nincs választó: az az ország. Többnél a beküldött értéknek a saját országok közt kell lennie.
-  const orszag = session.orszagok.length === 1 ? session.orszagok[0].kod : mezo(formData, 'orszag');
+  // Választó csak a több országgal renderelt lapon van. Ha volt, a beküldött értéknek most is a saját
+  // országok közt kell lennie (különben mezőhiba alatta); ha nem volt, a székhely (a session-ben az első).
+  // Így a lap betöltése óta történt admin-módosítás nem okoz sem néma elakadást, sem a választás
+  // csendes felülírását.
+  const orszag = formData.has('orszag') ? mezo(formData, 'orszag') : session.orszagok[0].kod;
   const orszagHiba = session.orszagok.some((o) => o.kod === orszag) ? null : 'Válassz a saját országaid közül.';
   const parsed = parseRiportForm(formData);
   if (!parsed.ok || orszagHiba) {

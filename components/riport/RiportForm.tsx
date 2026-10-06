@@ -29,8 +29,12 @@ import { KulcsszoValaszto } from './KulcsszoValaszto';
 
 /** Létrehozásnál nincs `initial`, szerkesztésnél kötelező – a típus is ezt kényszeríti ki. */
 export type RiportFormProps = { action: FormAction } & (
-  /** `orszagok`: a beadó saját országai (székhely elöl); több országnál választó jelenik meg. */
-  | { mode: 'create'; initial?: undefined; orszagok?: readonly { kod: string; nev: string }[] }
+  | {
+      mode: 'create';
+      initial?: undefined;
+      /** A beadó saját országai (székhely elöl); több országnál választó jelenik meg. */
+      orszagok?: readonly { kod: string; nev: string }[];
+    }
   | { mode: 'edit'; initial: RiportDetail; orszagok?: undefined }
 );
 

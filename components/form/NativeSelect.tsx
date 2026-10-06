@@ -25,8 +25,10 @@ export function NativeSelect({ className, ref, ...props }: ComponentProps<'selec
   useImperativeHandle(ref, () => select.current as HTMLSelectElement, []);
 
   const { value } = props;
-  // Deps nélkül, minden renderkor: a reset a commit mutációs fázisa végén fut, ez a layout effect
-  // utána. Csak eltérésnél írunk a DOM-ba.
+  // Deps nélkül, minden commit után (az opciók is változhatnak): így a következő reset már a mostani
+  // értékre áll vissza. Ha az érték épp a resetelő commitban változik, az effekt a reset után fut; a
+  // reset törli az opciók dirtiness-ét, ezért az attribútum írása a kijelölést is helyreállítja. Csak
+  // eltérésnél írunk.
   useLayoutEffect(() => {
     const el = select.current;
     if (!el || value == null) return;
