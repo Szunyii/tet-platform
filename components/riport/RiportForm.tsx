@@ -84,14 +84,7 @@ export function RiportForm({ mode, initial, action, orszagok }: RiportFormProps)
             name="orszag"
             className="max-w-sm"
             value={orszag}
-            onChange={(e) => {
-              setOrszag(e.target.value);
-              // A <form action> után a React 19 form.reset()-et hív, ami a <select>-et az alapértelmezett
-              // (defaultSelected) opcióra állítja vissza, a vezérelt értéket pedig nem állítja helyre: hibás
-              // beküldés után a választás némán a székhelyre ugrana vissza, és egy változtatás nélküli
-              // újrapróbálás azon az országon adná be a bejegyzést. A választott opció legyen az alapértelmezett.
-              for (const o of e.target.options) o.defaultSelected = o.selected;
-            }}
+            onChange={(e) => setOrszag(e.target.value)}
             {...hibaAttr(errors, 'orszag')}
           >
             {orszagok.map((o) => (
