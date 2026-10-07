@@ -78,8 +78,9 @@ megmaradnak. Az attasék között kis térköz van, hogy a részterület-blokkok
 - `npx tsc --noEmit`, `npm run build`.
 - gstack böngészős QA a TéT dev szerveren, a 3001-es porton (a 3000-et a mechalearn
   használja), adminnal:
-  - **Németország:** három attasé ebben a sorrendben: Kindert Judit a címkével, Komma
-    Krisztián, dr. Gurza László. A részterületek legfeljebb 2 sorosak, a hosszabbak „…”-tal.
+  - **Németország:** három attasé ebben a sorrendben: Kindert Judit a címkével, dr. Gurza
+    László, Komma Krisztián (a vezető után név szerint, a „dr.” előtag a D-hez sorolja). A
+    részterületek legfeljebb 2 sorosak, a hosszabbak „…”-tal.
   - **USA:** két attasé, dr. Nagy Gabriella a címkével, mindkét részterület 2 sorra vágva.
   - **Írország:** „Balogh András Zoltán · regionálisan (London)”, címke és részterület nélkül.
   - **Ausztria:** egy attasé, címke nélkül.
