@@ -3257,7 +3257,7 @@ Minden lépés után `console --errors` üres.
 
 ```bash
 sqlite3 data/tet.db "select count(*) from riport; select count(*) from ticket;"   # 0 és 0 (a QA-bejegyzések törölve)
-sqlite3 data/tet.db "delete from session where user_id in (select id from user where role = 'attase');"   # a QA-belépések
+sqlite3 data/tet.db "delete from session;"   # minden session: a QA-belépések (admin is) érvényes tokenje ne kerüljön a publikus repóba
 sqlite3 data/tet.db "PRAGMA wal_checkpoint(TRUNCATE);"
 git add data/tet.db
 git commit -m "$(printf 'chore(attase-orszagok): demó DB – 0006/0007 migráció, 15 demó attasé, régi tesztfiókok nélkül\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>')"
