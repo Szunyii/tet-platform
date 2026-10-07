@@ -102,9 +102,9 @@ megmaradnak. Az attasék között kis térköz van, hogy a részterület-blokkok
 
 ## Megvalósítási eltérések
 
-A Task 1 minőségi review-ja nyomán, a terv kódjához képest:
+A Task 1 minőségi review-ja nyomán, az eredeti terv (`35b187a`) kódjához képest:
 
-- **Elhelyezés.** A tervben a `VilagTerkep` a kurzor x-ét a legnagyobb szélesség felével
+- **Elhelyezés.** Az eredeti tervben a `VilagTerkep` a kurzor x-ét a legnagyobb szélesség felével
   (160 px) korlátozta, függőlegesen pedig nem volt korlát. A review kimutatta a hiányosságokat:
   - a 4 attasés legrosszabb eset (kb. 309 px) a térkép közepén egyik vizsgált viewporton sem fér
     el (191–226 px hely);

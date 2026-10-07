@@ -468,7 +468,7 @@ a jobb panel `kod` → `ProfilKivonat` (mutató-sáv + ikonos „Összehasonlít
 cseréld erre:
 
 ```
-a jobb panel `kod` → `ProfilKivonat` (az attasék attasénként a teljes részterülettel, mutató-sáv + ikonos „Összehasonlítás"/„Összehasonlításban" gomb)
+a jobb panel `kod` → `ProfilKivonat` (az attasék a teljes részterületükkel, mutató-sáv + ikonos „Összehasonlítás"/„Összehasonlításban" gomb)
 ```
 
 (A záró idézőjelek itt egyenes `"` karakterek, mint a fájlban.)
@@ -484,7 +484,7 @@ Tooltip (`TerkepTooltip`): név, az attasék rövid sora (`attasekRovid`: az els
 cseréld erre:
 
 ```
-Tooltip (`TerkepTooltip`): név, az attasék listája a `TerkepOrszag.attasek` sorrendjében (vezető, a többi székhelyes, a régiósak; legfeljebb 4, a többi helyén „+N további attasé"): soronként `attaseFelirat` („név · város" (város nélkül csak a név), régiósnál „név · regionálisan (város)" (város nélkül a székhely országával)), több attasénál a vezetőnél „relációs vezető" címke, alatta a részterület legfeljebb 2 sorban (`line-clamp-2`; a teljes szöveg a `ProfilKivonat`-ban); attasé nélkül „nincs aktív attasé"; utána a mutató értéke + helyezés (`ertekEsHely`, a szűrő által kizárt országnál helyezés nélkül), állapot + év, első két kiemelt iparág. Szélessége a tartalomhoz igazodik (`w-max`, `break-words`), legfeljebb 320 px, keskeny térképen a térkép szélessége; vízszintesen a kurzor fölé középre, függőlegesen arra az oldalra kerül, ahol több a hely, és mindkét tengelyen CSS `clamp()` tartja a konténeren belül (a `translate()` %-a a tooltip saját méretére vonatkozik, így a tényleges mérettel számol; ha a tágasabb oldalon sem fér el, a kurzorra csúszik – a tooltip `pointer-events-none` –, ha a konténernél is magasabb, a teteje igazodik) – a `HoverAllapot` a konténer méretét is viszi, a `VilagTerkep` csak a nyers kurzor-pozíciót adja. Az `attasekRovid` (az első attasé + „+N attasé") már csak az összehasonlító tábla „Attasé" sorát adja.
+Tooltip (`TerkepTooltip`): név, az attasék listája a `TerkepOrszag.attasek` sorrendjében (vezető, a többi székhelyes, a régiósak; legfeljebb 4, a többi helyén „+N további attasé"): soronként `attaseFelirat` („név · város" (város nélkül csak a név), régiósnál „név · regionálisan (város)" (város nélkül a székhely országával)), több attasénál a vezetőnél „relációs vezető" címke, alatta a részterület legfeljebb 2 sorban (`line-clamp-2`; a teljes szöveg a `ProfilKivonat`-ban); attasé nélkül „nincs aktív attasé"; utána a mutató értéke + helyezés (`ertekEsHely`, a szűrő által kizárt országnál helyezés nélkül), állapot + év, első két kiemelt iparág. Szélessége a tartalomhoz igazodik (`w-max`, `break-words`), legfeljebb 320 px, keskeny térképen a térkép szélessége; vízszintesen a kurzor fölé középre, függőlegesen arra az oldalra kerül, ahol több a hely, és mindkét tengelyen maga tartja magát a konténeren belül (CSS `clamp()` a tényleges mérettel; a részletek, pl. a kurzorra csúszás, a komponens kommentjében) – a `VilagTerkep` a kurzor-pozíciót korlátozás nélkül adja, a konténer méretével együtt (`HoverAllapot.szelesseg`/`magassag`). Az `attasekRovid` (az első attasé + „+N attasé") már csak az összehasonlító tábla „Attasé" sorát adja.
 ```
 
 - [ ] **Step 4: Típusellenőrzés és build**
