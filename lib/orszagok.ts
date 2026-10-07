@@ -214,8 +214,8 @@ export function orszagNev(kod: string | null | undefined): string {
 const NEV_GEO_SZERINT: ReadonlyMap<string, string> = new Map(ORSZAGOK.filter((o) => o.geo).map((o) => [o.geo, o.nev] as const));
 
 /**
- * A world-atlas térképnév (`properties.name`) magyar neve a szótárból – a térkép poszt nélküli
- * poligonjainak tooltipjéhez. Ha a szótárban nincs ilyen ország (pl. Grönland, Antarktisz),
+ * A world-atlas térképnév (`properties.name`) magyar neve a szótárból – a térkép attasé és profil
+ * nélküli poligonjainak tooltipjéhez. Ha a szótárban nincs ilyen ország (pl. Grönland, Antarktisz),
  * maga a térképnév.
  */
 export function geoNev(geo: string): string {

@@ -6,7 +6,7 @@ import { ALLAPOT_CIMKE } from '../../../../lib/orszagprofil-szotar';
 import { ertekEsHely, type Mutato, type Rangsor } from '../../../../lib/terkep-mutatok';
 
 /**
- * A lebegtetett poligon/pin: `o` null, ha poszt nélküli ország; x/y a térkép-konténerhez képest,
+ * A lebegtetett poligon/pin: `o` null, ha az országnak nincs aktív attaséja és profilja; x/y a térkép-konténerhez képest,
  * `magassag` a konténer magassága (a lefelé fordításhoz).
  */
 export interface HoverAllapot { nev: string; o: TerkepOrszag | null; x: number; y: number; magassag: number }

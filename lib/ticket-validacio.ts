@@ -47,7 +47,7 @@ export function parseUjTicketForm(fd: FormData, jeloltek: readonly CimzettJelolt
   } else if (!cimzettId) {
     errors.cimzettId = 'Válassz címzettet.';
   } else if (!cimzett) {
-    errors.cimzettId = 'A címzett nem választható (nem attasé, tiltott, vagy nincs országa).';
+    errors.cimzettId = 'A címzett nem választható (nem attasé, tiltott, vagy nincs székhelye).';
   }
 
   const tipusRaw = mezo(fd, 'tipus');

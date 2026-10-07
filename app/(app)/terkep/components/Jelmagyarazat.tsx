@@ -31,7 +31,7 @@ export function Jelmagyarazat({ mutato, tartomany, csoportok, iparag }: {
   tartomany: Tartomany | null;
   /** Csak kategorikus mutatónál (a szűrt, használt kategóriák). */
   csoportok: Csoport[];
-  /** Az aktív iparág-szűrő ('' = nincs); ha van, a kizárt posztos ország halvány színe is szerepel. */
+  /** Az aktív iparág-szűrő ('' = nincs); ha van, a kizárt (attasés vagy profilos) ország halvány színe is szerepel. */
   iparag: string;
 }) {
   const kozos = (

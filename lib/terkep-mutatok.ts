@@ -221,10 +221,10 @@ export const TERKEP_SZINEK = {
   ocean: '#f4f7fb',
   gombKontur: '#dde1e7',
   racs: '#e7ebf1',
-  /** Poszt nélküli ország. */
+  /** Ország aktív attasé és profil nélkül. */
   szarazfold: '#e6eaef',
   hatar: '#ffffff',
-  /** Az iparág-szűrő által kizárt posztos ország – a szárazföldnél érezhetően sötétebb, hogy elváljon tőle. */
+  /** Az iparág-szűrő által kizárt (attasés vagy profilos) ország – a szárazföldnél érezhetően sötétebb, hogy elváljon tőle. */
   halvany: '#ced5dd',
   /** Kategória nélküli (pl. nincs kiemelt iparág). */
   semleges: '#5f6b7a',
@@ -234,7 +234,7 @@ export const TERKEP_SZINEK = {
 } as const;
 
 /**
- * Egy posztos ország kitöltési színe. `null` = számszerű mutató érték nélkül (a térképen
+ * Egy attasés vagy profilos ország kitöltési színe. `null` = számszerű mutató érték nélkül (a térképen
  * sraffozás, a pinen `nincsAdat`). A `skala` a `szinSkala(m, tartomany)` eredménye, vagy null,
  * ha nincs tartomány.
  */
