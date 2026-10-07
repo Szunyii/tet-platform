@@ -397,3 +397,84 @@ Idempotens tsx-script (`NODE_OPTIONS="--conditions=react-server"`, a jelszó a
   - térkép: tooltip, kivonat, összehasonlító tábla „Attasé” sora; Németország három
     attaséval, Puerto Rico poligon, Maldív-szigetek pin;
   - ticket: címzett-felirat a székhellyel.
+
+## Megvalósítási eltérések
+
+- A vezető nélküli országok figyelmeztetése csak az aktív attaséval rendelkező országokat sorolja fel
+  (a csupa tiltott attasés országban nincs kire átadni a vezetést; a tiltott fiók szerkesztésével rendezhető).
+  Formája a spec egymondatos szövege helyett:
+  - cím: „Relációs vezető nélküli országok”;
+  - felsorolás: „X (N aktív attasé)”, tiltott vezetőnél „ – a vezető tiltott”;
+  - zárómondat: „Jelöld ki a vezetőt valamelyik attasé szerkesztésében; addig a profilt csak admin szerkesztheti.”
+- Szerkesztésnél az országmentés hibaüzenete: „A felhasználó adatai mentve, de az országok mentése nem sikerült – próbáld
+  újra.” A spec „Az országok mentése nem sikerült.” szövege helyett: jelzi, hogy a többi adat már mentve van.
+- A vezető-jelölő súgója: „Mentéskor ő lesz a relációs vezető (jelenleg: X).” (a „vezetőség” testületet
+  jelentene); tiltott vezetőnél „(jelenleg: X, tiltott)”, illetve „Jelenlegi vezető: X (tiltott).”
+- A validátor kimenete és a felhasználó-lista sora egyaránt `AttaseOrszag` (a spec `AttaseOrszagInput` neve
+  helyett); a dialógusok országonkénti listájának típusa `OrszagTagok` (prop: `orszagTagok`).
+- Az összehasonlító tábla „Attasé” sora egysoros (`attasekRovid`: „név · város +N attasé”, régiósnál
+  „regionálisan”), nem név + halvány város két sorban.
+- A térkép-kivonat a főváros/terület/pénznem értéket címkézett sorként, az Alapadatok-kivonat elején mutatja
+  (nem a leírás alatti „·”-os sorban, mert az egy újabb attasé-sornak látszott); a térkép alcíme „N ország · M
+  profil”, a jelmagyarázat szárazföld-felirata „nincs attasé és profil” (a lista a csak régiósan lefedett
+  országokat is tartalmazza, ezért a „poszt” szó félrevezető lett).
+- A profil fejléce: a cím, az állapot-jelvény és a gombok egy sorban, alattuk teljes szélességben az „Attasé(k)”
+  címkéjű lista (név · hely, „Relációs vezető” outline jelvény, részterület); ha egyik aktív attasé sem vezető
+  (nincs kijelölve, vagy a vezető tiltott), a lista után: „Nincs aktív relációs vezető – a profilt csak admin
+  szerkesztheti.” (a spec „Nincs kijelölt relációs vezető.” szövege helyett).
+- A vezető-jelölő alapértéke akkor is „bejelölve”, ha a másik vezető tiltott (gyakorlatilag nincs aktív vezető).
+- Egyedüli attasénál a letiltott, bejelölt jelölő helyett rejtett `on` mező küldődik. A spec szerint ilyenkor semmi nem
+  ment volna be, és a szerver normalizálása állította volna be a vezetőt. Konzisztens adatnál az eredmény azonos;
+  elavult dialógusnál (ha közben más attasé is került az országba) így az megy be, amit a jelölő mutat.
+- A régiós sorok kulcsa stabil kliens-`id`. A spec „mint a `RendezvenySorok`” megjegyzése pontatlan: az indexkulcsot
+  használ. A székhely vezető-súgója a jelölő alatt áll, ahogy a régiós soroknál is.
+- A dialógus a specen túl:
+  - sor törlése után a sorhibák a következő beküldésig rejtve vannak;
+  - billentyűzetes fókusz-kezelés a sorok hozzáadásakor és törlésekor;
+  - 20 sornál a gomb letiltott, mellette magyarázó szöveg;
+  - a régiós jelölők és a ✕ gombok felolvasó-nevében benne az ország;
+  - a részterület útmutatója súgó, nem placeholder;
+  - a szélesebb keret keskeny ablakban 1rem margót tart.
+- A 0006 migráció: a régi `user.orszag` trimmelve kerül át (üres/csak szóköz nem ad sort); a vezetőválasztás
+  döntetlennél az id-vel determinisztikus; a főváros/terület/pénznem mezőnként az ország bármely attaséjától
+  átvehető (a vezető előnyben), és hibás JSON-ú Alapadatok blokkot nem érint.
+- Az admin felhasználó esetleg ott maradt `attase_orszag` sorai a profil- és térkép-listákban nem jelennek meg;
+  a `setAttaseOrszagok` a város/részterület értéket csak a székhely-sorra írja.
+- A `scripts/orszag-kod-migracio.ts` a `user` helyett az `attase_orszag` sorait írja át.
+- A `0007` migráció a build elején fut: a régi verzió a build ideje alatt hibát adhat (README, hosting).
+- Az Alapadatok-űrlap: a főváros és a pénznem példája súgóként a szótárban („Pl. Szöul.”, „Pl. dél-koreai von (KRW).”),
+  a rács sorrendje a súgós mezők párosításával (Főváros | Pénznem, Terület | Lakosság, GDP | GDP/fő,
+  GDP-növekedés | Adatév, Forrás teljes szélességben).
+- Az oldalsáv-kártya attasé-sorában az állapot és a „Szerkesztés →”/„Megnyitás →” művelet két külön elem
+  (flex-wrap, a művelet jobbra igazítva, nem törik), a spec „állapot · művelet” egysoros alakja helyett; a
+  felhasználói blokk „+N”-je előtt nem törő szóköz.
+- Form-reset védelem: a React 19 a `<form action>` után `form.reset()`-et hív, ami a vezérelt natív selectet és
+  checkboxot a DOM-ban a kezdőértékére ugrasztotta (a state közben a választást tartotta, egy változtatás nélküli
+  újraküldés így más értéket vitt). A `NativeSelect` render után a `value`-hoz igazítja az opciók
+  `defaultSelected`-jét, a `VezetoJelolo` a `defaultChecked`-et; ezzel a meglévő `RendezvenySorok` típus-választója
+  is javult.
+- A riport országa: választó nélküli űrlapnál (egy ország) az action a székhelyet veszi, választós űrlapnál a beküldött
+  értéket a saját országokhoz köti. Az „egy országnál azt használja” szabály csak versenyhelyzetben tér el. Ha a lap
+  betöltése óta az admin bővítette az országokat, a bejegyzés a székhelyre kerül, a beküldés nem akad el némán; ha a
+  választottat vette el, látható mezőhiba jön, a választás nem íródik felül.
+- A felhasználó-kezelő a specen túl:
+  - az ország nélküli attasénál „Nincs ország” látszik;
+  - a ★ jelentése a fejlécben szerepel;
+  - a normalizálás az admin felhasználók esetleg ott maradt sorait is törli;
+  - a saját admin szerepkör védelme a validálás előtt fut.
+- Tudatos korlát: a mentés a felhasználó összes hozzárendelését a dialógus állapotára cseréli, a vezető-jelölésekkel
+  együtt. Ha két admin egyszerre dolgozik, egy közben elavult, nyitva hagyott dialógus mentése felülírhatja a másik admin
+  vezetőség-módosítását. Egy-két admin mellett ez ritka, optimista zárolás nincs.
+- A demó fiókok e-mail címe `vezeteknev.keresztnev@demo.test`, kitalált domain, a spec `@niu.hu` helykitöltője helyett.
+  A felhasználó döntése: a repó publikus, és a `@niu.hu` alak valószínűleg létező postafiókokat jelöl. A közös demó
+  jelszó a `.env.example`-ben dokumentálva marad: ez elfogadott kockázat.
+- Tudatos kompromisszum: a főváros/terület/pénznem évfüggetlen adat, de az évenkénti Alapadatok blokkban van, így új
+  évben a lakossághoz és a GDP-hez hasonlóan újra ki kell tölteni (az előző év átmásolása hatókörön kívül maradt).
+- A demó script (`scripts/demo-attasek.ts`) a specen túl:
+  - minden írás előtt ellenőriz, és hiba esetén egyetlen hibalistával, írás nélkül lép ki (ismeretlen országkód,
+    város-, részterület- és régiószám-korlát, ismétlődő ország, a székhely a régiók közt, több kijelölt vezető egy
+    országban, ismétlődő e-mail, jelszó);
+  - a jelszó 8–128 karakter (mint a felületen), az e-mail trim + kisbetű (mint a `scripts/seed.ts`-ben);
+  - meglévő (e-mail szerinti) fióknál a név és a jelszó nem változik, a hozzárendelés a lista szerintire áll vissza;
+  - ha a meglévő fiók nem attasé szerepkörű (pl. admin) vagy tiltott, a script figyelmeztet és kihagyja (a hozzárendelését
+    nem állítja be).
