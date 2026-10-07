@@ -48,7 +48,7 @@ export function ProfilKivonat({
         <div className="flex items-start gap-2">
           <div className="min-w-0">
             <CardTitle>{o.nev}</CardTitle>
-            <CardDescription className="flex flex-col">
+            <CardDescription className="flex flex-col gap-1">
               {o.attasek.length === 0 ? (
                 <span>nincs aktív attasé</span>
               ) : (
@@ -56,6 +56,10 @@ export function ProfilKivonat({
                   <span key={at.userId}>
                     {attaseFelirat(at, o.kod)}
                     {o.attasek.length > 1 && at.vezeto ? ' · relációs vezető' : ''}
+                    {/* A teljes részterület (a tooltip csak 2 sort mutat); a beírt sortörések megmaradnak, mint a profil oldalán. */}
+                    {at.reszterulet && (
+                      <span className="block text-xs break-words whitespace-pre-wrap">{at.reszterulet}</span>
+                    )}
                   </span>
                 ))
               )}
