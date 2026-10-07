@@ -36,7 +36,9 @@ A `data/tet.db` demó-adatbázis a repóban van (felhasználókkal és mintaprof
   ```
   Ha a build a migrációnál bukik, a DB változatlan marad: a migrátor egy tranzakcióban fut, és mindent visszagörget, így a régi verzió fut tovább. A drizzle-kit ilyenkor üzenet nélkül áll le (`exit 1`). Az okot a hosting-DB egy másolatán – `sqlite3 <db> ".backup '<másolat>'"`-tal készítve, mert a sima `cp` a `-wal` tartalmát kihagyhatja – ez a parancs írja ki, a bukott új build mappájából futtatva (ott van a `node_modules` és a 0006/0007-et tartalmazó `drizzle/`). Hiba esetén a másolat nem változik; sikeres futásnál nincs kimenet, és a másolat migrálódik:
   `DATABASE_URL=<másolat> node -e "const D=require('better-sqlite3');const {drizzle}=require('drizzle-orm/better-sqlite3');const {migrate}=require('drizzle-orm/better-sqlite3/migrator');migrate(drizzle(new D(process.env.DATABASE_URL)),{migrationsFolder:'drizzle'})"`.
-  Ha a hoston nincs `sqlite3` CLI, a mentés a build-mappából is elkészíthető: `node -e "require('better-sqlite3')(process.argv[1]).backup(process.argv[2]).then(()=>console.log('kész'))" <db> <db>.pre-0007`.
+
+  Ha a hoston nincs `sqlite3` CLI, a build-mappából `node`-dal is megy – mentés vagy másolat: `node -e "require('better-sqlite3')(process.argv[1]).backup(process.argv[2]).then(()=>console.log('kész'))" <forrás> <cél>` (pl. `<db> <db>.pre-0007`); visszaállítás (futó app mellett is): ugyanez a parancs fordított argumentumokkal (`<db>.pre-0007 <db>`); a 2. pont lekérdezését ekkor a letöltött mentésen, helyben futtasd.
+
   Visszaállításra akkor van szükség, ha a migráció lefutott, de a `next build` elbukott (a régi verzió a megváltozott DB-n hibázik), vagy ha a régi verzióra kell visszaállni: `sqlite3 <db> ".restore '<db>.pre-0007'"` (futó app mellett is működik). Sima `cp`-vel ne: a futó app a `-wal`-ból továbbra is a migrált állapotot látja, és a checkpoint vissza is írja. A mentés óta beírt adatok elvesznek.
 
 ### Adatbázis és auth
