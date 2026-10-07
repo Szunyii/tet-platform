@@ -64,9 +64,10 @@ export function TerkepTooltip({ hover, mutato, rangsor }: { hover: HoverAllapot;
   // A kártya `overflow-hidden`, ezért a tooltip a konténeren belül marad. Függőlegesen arra az oldalra kerül,
   // ahol több a hely (a kurzor fölé, ha ott legalább annyi hely van, mint alatta, különben alá), vízszintesen
   // a kurzor fölé középre; a clamp() mindkét tengelyen bent tartja. A translate %-a a tooltip saját méretére
-  // vonatkozik, így a tényleges szélességgel és magassággal számol; ha a tooltip magasabb a konténernél, a
-  // teteje igazodik. A szélesség a tartalomhoz igazodik (`w-max`), legfeljebb TOOLTIP_SZELESSEG, keskeny
-  // konténerben annak szélessége; a `break-words` (öröklődik) a szóköz nélküli szöveget is tördeli.
+  // vonatkozik, így a tényleges szélességgel és magassággal számol. Ha a tágasabb oldalon sem fér el, a
+  // kurzorra csúszik (nem zavar: pointer-events-none); ha a konténernél is magasabb, a teteje igazodik. A
+  // szélesség a tartalomhoz igazodik (`w-max`), legfeljebb TOOLTIP_SZELESSEG, keskeny konténerben annak
+  // szélessége; a `break-words` (öröklődik) a szóköz nélküli szöveget is tördeli.
   const lent = magassag - y > y;
   const tx = `clamp(${-x}px, -50%, calc(${szelesseg - x}px - 100%))`;
   const ty = `clamp(${-y}px, ${lent ? '16px' : 'calc(-100% - 12px)'}, calc(${magassag - y}px - 100%))`;
