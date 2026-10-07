@@ -14,7 +14,7 @@ import {
 } from '../../../../lib/terkep-mutatok';
 import { Jelmagyarazat } from './Jelmagyarazat';
 import { RegioGombok } from './RegioGombok';
-import { TerkepTooltip, TOOLTIP_SZELESSEG, type HoverAllapot } from './TerkepTooltip';
+import { TerkepTooltip, type HoverAllapot } from './TerkepTooltip';
 import { useVilagAtlasz } from './useVilagAtlasz';
 
 // A térkép: React rendereli az SVG-t, a d3-geo csak a vetületet és a path-okat adja. A zoom
@@ -224,10 +224,8 @@ export function VilagTerkep({
   const onHover = useCallback<HoverFn>((e, nev, o) => {
     const box = wrapRef.current?.getBoundingClientRect();
     if (!box) return;
-    // A tooltip középre igazított (translate -50%): a legnagyobb szélessége felével beljebb tartva nem lóg ki a konténerből.
-    const fel = TOOLTIP_SZELESSEG / 2;
-    const x = Math.min(Math.max(e.clientX - box.left, fel), box.width - fel);
-    setHover({ nev, o, x, y: e.clientY - box.top, magassag: box.height });
+    // A nyers kurzor-pozíció és a konténer mérete: a tooltip maga tartja magát a konténeren belül (TerkepTooltip).
+    setHover({ nev, o, x: e.clientX - box.left, y: e.clientY - box.top, szelesseg: box.width, magassag: box.height });
   }, []);
 
   const nagyit = (f: number) => {

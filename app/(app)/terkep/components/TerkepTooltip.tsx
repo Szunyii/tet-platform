@@ -5,17 +5,17 @@ import { attaseFelirat } from '../../../../lib/attase-orszag';
 import { ALLAPOT_CIMKE } from '../../../../lib/orszagprofil-szotar';
 import { ertekEsHely, type Mutato, type Rangsor } from '../../../../lib/terkep-mutatok';
 
-/** A tooltip legnagyobb szélessége (px). A `VilagTerkep` a kurzor x-ét ennek felével tartja a konténeren belül. */
-export const TOOLTIP_SZELESSEG = 320;
+/** A tooltip legnagyobb szélessége (px); ennél keskenyebb konténerben a konténer szélessége. */
+const TOOLTIP_SZELESSEG = 320;
 
 /** Legfeljebb ennyi attasé látszik, a többi helyén „+N további attasé” (a tooltip nem görgethető). */
 const ATTASE_MAX = 4;
 
 /**
- * A lebegtetett poligon/pin: `o` null, ha az országnak nincs aktív attaséja és profilja; x/y a térkép-konténerhez képest,
- * `magassag` a konténer magassága (a lefelé fordításhoz).
+ * A lebegtetett poligon/pin: `o` null, ha az országnak nincs aktív attaséja és profilja; x/y a kurzor a térkép-konténerhez
+ * képest, `szelesseg`/`magassag` a konténer mérete (ezekkel marad a tooltip a konténeren belül).
  */
-export interface HoverAllapot { nev: string; o: TerkepOrszag | null; x: number; y: number; magassag: number }
+export interface HoverAllapot { nev: string; o: TerkepOrszag | null; x: number; y: number; szelesseg: number; magassag: number }
 
 /** A mutató sora: számszerűnél érték + helyezés (ha a rangsorban van), kategorikusnál a kategória. */
 function mutatoSor(o: TerkepOrszag, mutato: Mutato, rangsor: Rangsor | null): string | null {
@@ -38,13 +38,16 @@ function AttaseSorok({ o }: { o: TerkepOrszag }) {
   const tobb = o.attasek.length > 1;
   const rejtett = o.attasek.length - ATTASE_MAX;
   return (
-    <ul className="my-0.5 flex flex-col gap-1">
+    <ul className="mt-0.5 mb-1 flex flex-col gap-1">
       {o.attasek.slice(0, ATTASE_MAX).map((a) => (
         <li key={a.userId}>
           <p>
             {attaseFelirat(a, o.kod)}
             {tobb && a.vezeto && (
-              <span className="ml-1.5 rounded-sm bg-background/20 px-1 text-[10px] font-medium whitespace-nowrap">relációs vezető</span>
+              <>
+                {' '}
+                <span className="ml-1 rounded-sm bg-background/20 px-1 text-[10px] font-medium whitespace-nowrap">relációs vezető</span>
+              </>
             )}
           </p>
           {a.reszterulet && <p className="line-clamp-2 text-background/60">{a.reszterulet}</p>}
@@ -56,23 +59,22 @@ function AttaseSorok({ o }: { o: TerkepOrszag }) {
 }
 
 export function TerkepTooltip({ hover, mutato, rangsor }: { hover: HoverAllapot; mutato: Mutato; rangsor: Rangsor | null }) {
-  const { o } = hover;
+  const { o, x, y, szelesseg, magassag } = hover;
   const sor = o ? mutatoSor(o, mutato, rangsor) : null;
-  // A kártya `overflow-hidden`, ezért a tooltip arra az oldalra kerül, ahol több a hely: a kurzor
-  // fölé, ha ott legalább annyi hely van, mint alatta, különben alá. A szélesség a tartalomhoz
-  // igazodik (`w-max`, legfeljebb TOOLTIP_SZELESSEG); `w-max` nélkül a jobb szél közelében a
-  // maradék helyre keskenyedne.
-  const lent = hover.magassag - hover.y > hover.y;
+  // A kártya `overflow-hidden`, ezért a tooltip a konténeren belül marad. Függőlegesen arra az oldalra kerül,
+  // ahol több a hely (a kurzor fölé, ha ott legalább annyi hely van, mint alatta, különben alá), vízszintesen
+  // a kurzor fölé középre; a clamp() mindkét tengelyen bent tartja. A translate %-a a tooltip saját méretére
+  // vonatkozik, így a tényleges szélességgel és magassággal számol; ha a tooltip magasabb a konténernél, a
+  // teteje igazodik. A szélesség a tartalomhoz igazodik (`w-max`), legfeljebb TOOLTIP_SZELESSEG, keskeny
+  // konténerben annak szélessége; a `break-words` (öröklődik) a szóköz nélküli szöveget is tördeli.
+  const lent = magassag - y > y;
+  const tx = `clamp(${-x}px, -50%, calc(${szelesseg - x}px - 100%))`;
+  const ty = `clamp(${-y}px, ${lent ? '16px' : 'calc(-100% - 12px)'}, calc(${magassag - y}px - 100%))`;
   return (
     <div
       role="tooltip"
-      className="pointer-events-none absolute z-10 w-max rounded-md bg-foreground px-2.5 py-2 text-[11px] leading-snug text-background shadow-lg"
-      style={{
-        maxWidth: TOOLTIP_SZELESSEG,
-        left: hover.x,
-        top: lent ? hover.y + 16 : hover.y - 12,
-        transform: lent ? 'translate(-50%, 0)' : 'translate(-50%, -100%)',
-      }}
+      className="pointer-events-none absolute z-10 w-max rounded-md bg-foreground px-2.5 py-2 text-[11px] leading-snug break-words text-background shadow-lg"
+      style={{ left: x, top: y, maxWidth: `min(${TOOLTIP_SZELESSEG}px, 100%)`, transform: `translate(${tx}, ${ty})` }}
     >
       <p className="mb-0.5 text-xs font-semibold">{hover.nev}</p>
       {o ? (
