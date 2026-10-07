@@ -4,7 +4,7 @@
 
 **Goal:** A térkép tooltipje minden attasét mutassa (legfeljebb 4-et), több attasénál jelölje a relációs vezetőt, és alattuk 2 sorra vágva a részterületet; a teljes részterület kattintásra a jobb oldali panelen (`ProfilKivonat`) látszik.
 
-**Architecture:** Tisztán megjelenítési változás két kliens-komponensben (`TerkepTooltip`, `ProfilKivonat`) és a `VilagTerkep` vízszintes korlátjában. Az adat már megvan: a `TerkepOrszag.attasek` (`OrszagAttase[]`) a lekérdezésből `rendezAttasek` sorrendben jön (vezető, a többi székhelyes, a régiósak; csoporton belül név szerint), benne `vezeto`, `varos`, `szekhelyKod`, `reszterulet`. Nincs DB-, lekérdezés- és `lib/`-változás.
+**Architecture:** Tisztán megjelenítési változás két kliens-komponensben (`TerkepTooltip`, `ProfilKivonat`) és a `VilagTerkep` hover-adatában (nyers kurzor-pozíció és konténer-méret; az elhelyezést a tooltip maga végzi, CSS `clamp()`-pel). Az adat már megvan: a `TerkepOrszag.attasek` (`OrszagAttase[]`) a lekérdezésből `rendezAttasek` sorrendben jön (vezető, a többi székhelyes, a régiósak; csoporton belül név szerint), benne `vezeto`, `varos`, `szekhelyKod`, `reszterulet`. Nincs DB-, lekérdezés- és `lib/`-változás.
 
 **Tech Stack:** Next.js 16 (App Router), React 19, TypeScript 7, Tailwind v4 (`line-clamp-2`, `w-max`), shadcn/ui v4 (base-nova; a `Card*` elemek `data-slot` attribútummal).
 
@@ -106,6 +106,46 @@ Futtatás: `$B eval "$S/tooltip-qa.js"`, illetve `$B eval "$S/kivonat-qa.js"`. H
 })()
 ```
 
+`$S/tooltip-szel-qa.js` – a tooltip mindkét tengelyen a térkép-konténeren belül marad-e. A DE és az US pinjére küldött pointermove-ot a konténer 9 pontjára teszi (a hover a clientX/Y-t használja, nem a pin helyét). Országonként a tooltip méretét és a `kilog` listát adja: azokat a kurzor-pozíciókat, ahol a tooltip kilép a konténerből. A review nyomán került be, lásd a spec „Megvalósítási eltérések” szakaszát. Kommentben ne legyen aposztróf: a gstack `eval` különben némán üres kimenetet ad.
+
+```js
+(async () => {
+  // A tooltip mindkét tengelyen a térkép-konténeren belül marad-e: a DE és az US pinjére küldött pointermove-ot
+  // a konténer 9 pontjára „tesszük” (sarkok, élközepek, közép) – a hover a clientX/Y-t használja, nem a pin helyét.
+  const varj = (ms) => new Promise((r) => setTimeout(r, ms));
+  const pinek = [...document.querySelectorAll('[data-pinek] > g')];
+  if (pinek.length === 0) return 'NINCS PIN – be vagy jelentkezve, és betöltött a térkép?';
+  const wrap = document.querySelector('[data-pinek]').closest('svg').parentElement;
+  const wr = wrap.getBoundingClientRect();
+  const ki = { kontener: `${Math.round(wr.width)}x${Math.round(wr.height)}` };
+  const celok = {};
+  for (const g of pinek) {
+    const r = g.getBoundingClientRect();
+    g.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: r.x + r.width / 2, clientY: r.y + r.height / 2 }));
+    await varj(30);
+    const cim = document.querySelector('[role=tooltip] p')?.textContent;
+    if (cim === 'Németország' || cim === 'Amerikai Egyesült Államok') celok[cim] = g;
+  }
+  for (const [nev, g] of Object.entries(celok)) {
+    const kilog = [];
+    let meret = '';
+    for (const fy of [0.02, 0.5, 0.98]) {
+      for (const fx of [0.02, 0.5, 0.98]) {
+        g.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: wr.left + wr.width * fx, clientY: wr.top + wr.height * fy }));
+        await varj(30);
+        const t = document.querySelector('[role=tooltip]').getBoundingClientRect();
+        meret = `${Math.round(t.width)}x${Math.round(t.height)}`;
+        if (t.left < wr.left - 0.5 || t.right > wr.right + 0.5 || t.top < wr.top - 0.5 || t.bottom > wr.bottom + 0.5) {
+          kilog.push(`kurzor ${fx}/${fy} → tooltip ${Math.round(t.left - wr.left)},${Math.round(t.top - wr.top)}..${Math.round(t.right - wr.left)},${Math.round(t.bottom - wr.top)}`);
+        }
+      }
+    }
+    ki[nev] = { tooltip: meret, kilog };
+  }
+  return JSON.stringify(ki, null, 1);
+})()
+```
+
 A viewport legyen `1440x900` (`$B viewport 1440x900`), hogy a térkép mérete minden futásnál ugyanaz legyen.
 
 **Fontos tények (ellenőrizve 2026-10-07, a mostani kódon):**
@@ -124,8 +164,8 @@ A viewport legyen `1440x900` (`$B viewport 1440x900`), hogy a térkép mérete m
 
 | Fájl | Művelet | Felelősség | Task |
 | --- | --- | --- | --- |
-| `app/(app)/terkep/components/TerkepTooltip.tsx` | módosít | attasé-lista (legfeljebb 4, „+N további attasé”), vezető-címke, 2 soros részterület, `TOOLTIP_SZELESSEG`, `w-max` | 1 |
-| `app/(app)/terkep/components/VilagTerkep.tsx` | módosít | az `onHover` vízszintes korlátja a `TOOLTIP_SZELESSEG` felével | 1 |
+| `app/(app)/terkep/components/TerkepTooltip.tsx` | módosít | attasé-lista (legfeljebb 4, „+N további attasé”), vezető-címke, 2 soros részterület, elhelyezés (CSS `clamp()` mindkét tengelyen, `w-max`, legfeljebb 320 px), `break-words` | 1, 2 (komment) |
+| `app/(app)/terkep/components/VilagTerkep.tsx` | módosít | az `onHover` a nyers kurzor-pozíciót és a konténer méretét adja (`szelesseg`, `magassag`) | 1 |
 | `app/(app)/terkep/components/ProfilKivonat.tsx` | módosít | a teljes részterület attasénként | 1 |
 | `CLAUDE.md` | módosít | a Térkép bekezdés tooltip-leírása, a `/terkep` route `ProfilKivonat`-ja | 2 |
 
@@ -146,7 +186,7 @@ git checkout -b terkep-tooltip-attasek
 
 **Files:**
 - Modify: `app/(app)/terkep/components/TerkepTooltip.tsx` (az egész fájl)
-- Modify: `app/(app)/terkep/components/VilagTerkep.tsx:17` (import), `:224-230` (`onHover`)
+- Modify: `app/(app)/terkep/components/VilagTerkep.tsx:224-230` (`onHover`)
 - Modify: `app/(app)/terkep/components/ProfilKivonat.tsx:50-62` (`CardDescription`)
 
 - [ ] **Step 1: A bukó ellenőrzés a mostani kódon**
@@ -165,7 +205,7 @@ Expected (bukik): minden ország `"attasek": []`, a németországi `szoveg`-ben 
 
 - [ ] **Step 2: `TerkepTooltip.tsx`**
 
-A teljes fájl:
+A teljes fájl, a minőségi review javításaival együtt (`3e78e21`; az eltérések okát a spec „Megvalósítási eltérések” szakasza írja le):
 
 ```tsx
 'use client';
@@ -175,17 +215,17 @@ import { attaseFelirat } from '../../../../lib/attase-orszag';
 import { ALLAPOT_CIMKE } from '../../../../lib/orszagprofil-szotar';
 import { ertekEsHely, type Mutato, type Rangsor } from '../../../../lib/terkep-mutatok';
 
-/** A tooltip legnagyobb szélessége (px). A `VilagTerkep` a kurzor x-ét ennek felével tartja a konténeren belül. */
-export const TOOLTIP_SZELESSEG = 320;
+/** A tooltip legnagyobb szélessége (px); ennél keskenyebb konténerben a konténer szélessége. */
+const TOOLTIP_SZELESSEG = 320;
 
 /** Legfeljebb ennyi attasé látszik, a többi helyén „+N további attasé” (a tooltip nem görgethető). */
 const ATTASE_MAX = 4;
 
 /**
- * A lebegtetett poligon/pin: `o` null, ha az országnak nincs aktív attaséja és profilja; x/y a térkép-konténerhez képest,
- * `magassag` a konténer magassága (a lefelé fordításhoz).
+ * A lebegtetett poligon/pin: `o` null, ha az országnak nincs aktív attaséja és profilja; x/y a kurzor a térkép-konténerhez
+ * képest, `szelesseg`/`magassag` a konténer mérete (ezekkel marad a tooltip a konténeren belül).
  */
-export interface HoverAllapot { nev: string; o: TerkepOrszag | null; x: number; y: number; magassag: number }
+export interface HoverAllapot { nev: string; o: TerkepOrszag | null; x: number; y: number; szelesseg: number; magassag: number }
 
 /** A mutató sora: számszerűnél érték + helyezés (ha a rangsorban van), kategorikusnál a kategória. */
 function mutatoSor(o: TerkepOrszag, mutato: Mutato, rangsor: Rangsor | null): string | null {
@@ -208,13 +248,16 @@ function AttaseSorok({ o }: { o: TerkepOrszag }) {
   const tobb = o.attasek.length > 1;
   const rejtett = o.attasek.length - ATTASE_MAX;
   return (
-    <ul className="my-0.5 flex flex-col gap-1">
+    <ul className="mt-0.5 mb-1 flex flex-col gap-1">
       {o.attasek.slice(0, ATTASE_MAX).map((a) => (
         <li key={a.userId}>
           <p>
             {attaseFelirat(a, o.kod)}
             {tobb && a.vezeto && (
-              <span className="ml-1.5 rounded-sm bg-background/20 px-1 text-[10px] font-medium whitespace-nowrap">relációs vezető</span>
+              <>
+                {' '}
+                <span className="ml-1 rounded-sm bg-background/20 px-1 text-[10px] font-medium whitespace-nowrap">relációs vezető</span>
+              </>
             )}
           </p>
           {a.reszterulet && <p className="line-clamp-2 text-background/60">{a.reszterulet}</p>}
@@ -226,23 +269,22 @@ function AttaseSorok({ o }: { o: TerkepOrszag }) {
 }
 
 export function TerkepTooltip({ hover, mutato, rangsor }: { hover: HoverAllapot; mutato: Mutato; rangsor: Rangsor | null }) {
-  const { o } = hover;
+  const { o, x, y, szelesseg, magassag } = hover;
   const sor = o ? mutatoSor(o, mutato, rangsor) : null;
-  // A kártya `overflow-hidden`, ezért a tooltip arra az oldalra kerül, ahol több a hely: a kurzor
-  // fölé, ha ott legalább annyi hely van, mint alatta, különben alá. A szélesség a tartalomhoz
-  // igazodik (`w-max`, legfeljebb TOOLTIP_SZELESSEG); `w-max` nélkül a jobb szél közelében a
-  // maradék helyre keskenyedne.
-  const lent = hover.magassag - hover.y > hover.y;
+  // A kártya `overflow-hidden`, ezért a tooltip a konténeren belül marad. Függőlegesen arra az oldalra kerül,
+  // ahol több a hely (a kurzor fölé, ha ott legalább annyi hely van, mint alatta, különben alá), vízszintesen
+  // a kurzor fölé középre; a clamp() mindkét tengelyen bent tartja. A translate %-a a tooltip saját méretére
+  // vonatkozik, így a tényleges szélességgel és magassággal számol; ha a tooltip magasabb a konténernél, a
+  // teteje igazodik. A szélesség a tartalomhoz igazodik (`w-max`), legfeljebb TOOLTIP_SZELESSEG, keskeny
+  // konténerben annak szélessége; a `break-words` (öröklődik) a szóköz nélküli szöveget is tördeli.
+  const lent = magassag - y > y;
+  const tx = `clamp(${-x}px, -50%, calc(${szelesseg - x}px - 100%))`;
+  const ty = `clamp(${-y}px, ${lent ? '16px' : 'calc(-100% - 12px)'}, calc(${magassag - y}px - 100%))`;
   return (
     <div
       role="tooltip"
-      className="pointer-events-none absolute z-10 w-max rounded-md bg-foreground px-2.5 py-2 text-[11px] leading-snug text-background shadow-lg"
-      style={{
-        maxWidth: TOOLTIP_SZELESSEG,
-        left: hover.x,
-        top: lent ? hover.y + 16 : hover.y - 12,
-        transform: lent ? 'translate(-50%, 0)' : 'translate(-50%, -100%)',
-      }}
+      className="pointer-events-none absolute z-10 w-max rounded-md bg-foreground px-2.5 py-2 text-[11px] leading-snug break-words text-background shadow-lg"
+      style={{ left: x, top: y, maxWidth: `min(${TOOLTIP_SZELESSEG}px, 100%)`, transform: `translate(${tx}, ${ty})` }}
     >
       <p className="mb-0.5 text-xs font-semibold">{hover.nev}</p>
       {o ? (
@@ -260,36 +302,24 @@ export function TerkepTooltip({ hover, mutato, rangsor }: { hover: HoverAllapot;
 }
 ```
 
-- [ ] **Step 3: `VilagTerkep.tsx` – a vízszintes korlát a konstansból**
+- [ ] **Step 3: `VilagTerkep.tsx` – nyers kurzor-pozíció és konténer-méret**
 
-Az import (17. sor):
-
-```tsx
-import { TerkepTooltip, type HoverAllapot } from './TerkepTooltip';
-```
-
-helyett:
-
-```tsx
-import { TerkepTooltip, TOOLTIP_SZELESSEG, type HoverAllapot } from './TerkepTooltip';
-```
-
-Az `onHover`-ben ez a két sor:
+Az import (17. sor) marad: `import { TerkepTooltip, type HoverAllapot } from './TerkepTooltip';`. Az `onHover`-ben ez a három sor:
 
 ```tsx
     // 120 = a tooltip fél szélessége (max-w-60 → 240 px), hogy ne lógjon ki a konténerből.
     const x = Math.min(Math.max(e.clientX - box.left, 120), box.width - 120);
+    setHover({ nev, o, x, y: e.clientY - box.top, magassag: box.height });
 ```
 
 helyett:
 
 ```tsx
-    // A tooltip középre igazított (translate -50%): a legnagyobb szélessége felével beljebb tartva nem lóg ki a konténerből.
-    const fel = TOOLTIP_SZELESSEG / 2;
-    const x = Math.min(Math.max(e.clientX - box.left, fel), box.width - fel);
+    // A nyers kurzor-pozíció és a konténer mérete: a tooltip maga tartja magát a konténeren belül (TerkepTooltip).
+    setHover({ nev, o, x: e.clientX - box.left, y: e.clientY - box.top, szelesseg: box.width, magassag: box.height });
 ```
 
-A `useCallback` függőséglistája marad `[]`: a `TOOLTIP_SZELESSEG` modulszintű konstans.
+A `useCallback` függőséglistája marad `[]`. Más nem állít elő `HoverAllapot`-ot (`grep -rn "magassag" 'app/(app)/terkep'`).
 
 - [ ] **Step 4: `ProfilKivonat.tsx` – a teljes részterület**
 
@@ -370,6 +400,7 @@ Expected:
   A felsorolás a teljes szöveg, csonkolás nélkül.
 - **Kivonat, `?o=US`:** két elem. dr. Nagy Gabriella listája „Alabama”-val kezdődik és „Wisconsin”-nal végződik, Mészáros Eleonóráé „Alaszka”-val kezdődik és „Wyoming”-gal végződik.
 - **Kivonat, `?o=AT`:** `["Jávori Balázs · Bécs"]`.
+- **Elhelyezés:** `$B eval "$S/tooltip-szel-qa.js"` 1280x720, 1440x900, 1024x768 és 640x900 viewporton (`$B viewport …`, utána a `/terkep` újratöltése) – a `kilog` üres mindkét országnál. 560x900-on a térkép (270x142) kisebb a tooltipnél: ott a tooltip a térkép szélességére szűkül, a teteje igazodik, csak az alja lóg ki.
 - **Konzol:** `console --errors` → „(no console errors)”.
 
 Ha a lap még a régi kódot mutatja (a HMR lemaradt), `$B reload`, majd újra.
@@ -396,9 +427,37 @@ git commit -m "$(printf 'feat(terkep-tooltip): minden attasé a tooltipben – r
 ### Task 2: Dokumentáció, build, záró ellenőrzés
 
 **Files:**
+- Modify: `app/(app)/terkep/components/TerkepTooltip.tsx` (csak az elhelyezés kommentje; a Task 1 re-review-ja kérte)
 - Modify: `CLAUDE.md` (a 62. sor `/terkep` route-leírása, a 78. sor Térkép bekezdése)
 
-- [ ] **Step 1: `CLAUDE.md` – a `/terkep` route kivonat-panelje**
+- [ ] **Step 1: A tooltip elhelyezés-kommentje**
+
+A `TerkepTooltip` függvényben ez a komment-blokk:
+
+```tsx
+  // A kártya `overflow-hidden`, ezért a tooltip a konténeren belül marad. Függőlegesen arra az oldalra kerül,
+  // ahol több a hely (a kurzor fölé, ha ott legalább annyi hely van, mint alatta, különben alá), vízszintesen
+  // a kurzor fölé középre; a clamp() mindkét tengelyen bent tartja. A translate %-a a tooltip saját méretére
+  // vonatkozik, így a tényleges szélességgel és magassággal számol; ha a tooltip magasabb a konténernél, a
+  // teteje igazodik. A szélesség a tartalomhoz igazodik (`w-max`), legfeljebb TOOLTIP_SZELESSEG, keskeny
+  // konténerben annak szélessége; a `break-words` (öröklődik) a szóköz nélküli szöveget is tördeli.
+```
+
+helyett:
+
+```tsx
+  // A kártya `overflow-hidden`, ezért a tooltip a konténeren belül marad. Függőlegesen arra az oldalra kerül,
+  // ahol több a hely (a kurzor fölé, ha ott legalább annyi hely van, mint alatta, különben alá), vízszintesen
+  // a kurzor fölé középre; a clamp() mindkét tengelyen bent tartja. A translate %-a a tooltip saját méretére
+  // vonatkozik, így a tényleges szélességgel és magassággal számol. Ha a tágasabb oldalon sem fér el, a
+  // kurzorra csúszik (nem zavar: pointer-events-none); ha a konténernél is magasabb, a teteje igazodik. A
+  // szélesség a tartalomhoz igazodik (`w-max`), legfeljebb TOOLTIP_SZELESSEG, keskeny konténerben annak
+  // szélessége; a `break-words` (öröklődik) a szóköz nélküli szöveget is tördeli.
+```
+
+Csak a komment változik, a kód nem.
+
+- [ ] **Step 2: `CLAUDE.md` – a `/terkep` route kivonat-panelje**
 
 Ezt a részt:
 
@@ -414,7 +473,7 @@ a jobb panel `kod` → `ProfilKivonat` (az attasék attasénként a teljes rész
 
 (A záró idézőjelek itt egyenes `"` karakterek, mint a fájlban.)
 
-- [ ] **Step 2: `CLAUDE.md` – a tooltip leírása (Térkép bekezdés)**
+- [ ] **Step 3: `CLAUDE.md` – a tooltip leírása (Térkép bekezdés)**
 
 Ezt a mondatot:
 
@@ -425,10 +484,10 @@ Tooltip (`TerkepTooltip`): név, az attasék rövid sora (`attasekRovid`: az els
 cseréld erre:
 
 ```
-Tooltip (`TerkepTooltip`): név, az attasék listája a `TerkepOrszag.attasek` sorrendjében (vezető, a többi székhelyes, a régiósak; legfeljebb 4, a többi helyén „+N további attasé"): soronként `attaseFelirat` („név · város" (város nélkül csak a név), régiósnál „név · regionálisan (város)" (város nélkül a székhely országával)), több attasénál a vezetőnél „relációs vezető" címke, alatta a részterület legfeljebb 2 sorban (`line-clamp-2`; a teljes szöveg a `ProfilKivonat`-ban); attasé nélkül „nincs aktív attasé"; utána a mutató értéke + helyezés (`ertekEsHely`, a szűrő által kizárt országnál helyezés nélkül), állapot + év, első két kiemelt iparág. Szélessége a tartalomhoz igazodik (`w-max`), legfeljebb `TOOLTIP_SZELESSEG` (320 px, inline `maxWidth`); a `VilagTerkep` `onHover`-je a kurzor x-ét ennek felével tartja a konténeren belül; arra az oldalra kerül, ahol több a hely. Az `attasekRovid` (az első attasé + „+N attasé") már csak az összehasonlító tábla „Attasé" sorát adja.
+Tooltip (`TerkepTooltip`): név, az attasék listája a `TerkepOrszag.attasek` sorrendjében (vezető, a többi székhelyes, a régiósak; legfeljebb 4, a többi helyén „+N további attasé"): soronként `attaseFelirat` („név · város" (város nélkül csak a név), régiósnál „név · regionálisan (város)" (város nélkül a székhely országával)), több attasénál a vezetőnél „relációs vezető" címke, alatta a részterület legfeljebb 2 sorban (`line-clamp-2`; a teljes szöveg a `ProfilKivonat`-ban); attasé nélkül „nincs aktív attasé"; utána a mutató értéke + helyezés (`ertekEsHely`, a szűrő által kizárt országnál helyezés nélkül), állapot + év, első két kiemelt iparág. Szélessége a tartalomhoz igazodik (`w-max`, `break-words`), legfeljebb 320 px, keskeny térképen a térkép szélessége; vízszintesen a kurzor fölé középre, függőlegesen arra az oldalra kerül, ahol több a hely, és mindkét tengelyen CSS `clamp()` tartja a konténeren belül (a `translate()` %-a a tooltip saját méretére vonatkozik, így a tényleges mérettel számol; ha a tágasabb oldalon sem fér el, a kurzorra csúszik – a tooltip `pointer-events-none` –, ha a konténernél is magasabb, a teteje igazodik) – a `HoverAllapot` a konténer méretét is viszi, a `VilagTerkep` csak a nyers kurzor-pozíciót adja. Az `attasekRovid` (az első attasé + „+N attasé") már csak az összehasonlító tábla „Attasé" sorát adja.
 ```
 
-- [ ] **Step 3: Típusellenőrzés és build**
+- [ ] **Step 4: Típusellenőrzés és build**
 
 ```bash
 npx tsc --noEmit
@@ -437,26 +496,28 @@ npm run build
 
 Expected: a `tsc` hibátlan, a build `✓ Compiled successfully`, és a típusellenőrzés lefut. A `db:init` és a `drizzle-kit migrate` a meglévő, naprakész DB-n nem csinál semmit. Ha a build nem létező `app/...` modulra panaszkodik, az a dev szerver elavult `.next/dev/types/validator.ts`-e (lásd CLAUDE.md): szólj a controllernek, ne töröld.
 
-- [ ] **Step 4: Záró ellenőrzés és kijelentkezés**
+- [ ] **Step 5: Záró ellenőrzés és kijelentkezés**
 
 ```bash
+$B viewport 1440x900 >/dev/null
 $B goto http://localhost:3000/terkep >/dev/null && $B wait '[data-pinek] > g'
-$B eval "$S/tooltip-qa.js"      # mint az 1. task 6. lépésében
-$B console --errors             # (no console errors)
+$B eval "$S/tooltip-qa.js"       # mint az 1. task 6. lépésében
+$B eval "$S/tooltip-szel-qa.js"  # a kilog üres mindkét országnál
+$B console --errors              # (no console errors)
 $B js "(() => { const b = [...document.querySelectorAll('aside form button[type=submit]')].find((x) => x.textContent === 'Kijelentkezés'); if (!b) return 'nincs gomb'; b.click(); return 'ok'; })()"   # ok
 $B wait --networkidle >/dev/null; $B url   # http://localhost:3000/login…
 ```
 
 A kijelentkezés törli a QA-session sorát a `data/tet.db`-ből.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add CLAUDE.md
-git commit -m "$(printf 'docs(terkep-tooltip): CLAUDE.md – a tooltip attasé-listája, vezető-címke, 2 soros részterület, TOOLTIP_SZELESSEG; a teljes részterület a kivonatban\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>')"
+git add 'app/(app)/terkep/components/TerkepTooltip.tsx' CLAUDE.md
+git commit -m "$(printf 'docs(terkep-tooltip): CLAUDE.md – a tooltip attasé-listája, vezető-címke, 2 soros részterület, elhelyezés (clamp); a teljes részterület a kivonatban; a tooltip-komment a kurzorra csúszással\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>')"
 git status --short   # legfeljebb a data/tet.db (dev szerver írásai) – nem commitoljuk
 ```
 
-- [ ] **Step 6: Lezárás**
+- [ ] **Step 7: Lezárás**
 
 A branch kész: `superpowers:finishing-a-development-branch`. A felhasználó korábban a lokális fast-forward merge-et választotta, nem PR-t.

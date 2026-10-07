@@ -18,7 +18,7 @@ részterület kié.
 | Vezető jelölése | Kis „relációs vezető” címke a vezető sorában, csak több attasénál | Egyszemélyes országban a vezetőség automatikus; a profiloldal (`AttaseLista`) és a panel is csak több attasénál jelöl. |
 | Attasék száma a tooltipben | Legfeljebb 4, a többi helyén „+N további attasé” | A tooltip nem görgethető; a mai adatokban a maximum 3 (Németország). |
 | Tooltip szélessége | Legfeljebb 320 px (eddig 240), tartalomhoz igazodva; keskenyebb térképen a térkép szélessége | A „dr. Nagy Gabriella · New York” és a címke egy sorba férjen; a jobb szélen se keskenyedjen össze. |
-| Tooltip elhelyezése | Mindkét tengelyen a térkép-konténeren belül: CSS `clamp()` a tooltip tényleges méretével | Minőségi review: a kártya `overflow-hidden`, és 1280x720-on a németországi tooltip teteje már 34 px-re kilógott a térkép fölé. Kitöltött profillal vagy több attaséval ez rosszabb lenne. |
+| Tooltip elhelyezése | Mindkét tengelyen a térkép-konténeren belül: CSS `clamp()` a tooltip tényleges méretével | Minőségi review: a 4 attasés legrosszabb eset (kb. 309 px) a térkép közepén egyik viewporton sem fért el (191–226 px hely), és a kártya `overflow-hidden`. A keskeny tooltip a széleken eltávolodott a kurzortól, 320 px-nél keskenyebb térképen pedig balra kilógott. |
 | Összehasonlító tábla „Attasé” sora | Változatlan (`attasekRovid`) | Keskeny oszlop; nem volt kérés. |
 | Adat | Nincs DB- és lekérdezés-változás | A `TerkepOrszag.attasek` (`OrszagAttase[]`) már tartalmazza a vezetőt, a várost, a székhely-országot és a részterületet, `rendezAttasek` sorrendben. |
 
@@ -56,8 +56,9 @@ legfeljebb 320 px-ig (`TOOLTIP_SZELESSEG`, modulon belüli konstans), keskenyebb
 szélességéig (`max-width: min(320px, 100%)`). Vízszintesen a kurzor fölé középre, függőlegesen
 arra az oldalra kerül, ahol több a hely, és mindkét tengelyen CSS `clamp()` tartja a
 térkép-konténeren belül (a kártya `overflow-hidden`). A `translate()` százaléka a tooltip saját
-méretére vonatkozik, így a clamp a tényleges szélességgel és magassággal számol; ha a tooltip
-magasabb a térképnél, a teteje igazodik. Ehhez a `HoverAllapot` a konténer szélességét is viszi
+méretére vonatkozik, így a clamp a tényleges szélességgel és magassággal számol. Ha a tooltip a
+tágasabb oldalon sem fér el, rácsúszik a kurzorra; ez nem zavar, mert a tooltip nem fogja el az
+egeret. Ha a térképnél is magasabb, a teteje igazodik. Ehhez a `HoverAllapot` a konténer szélességét is viszi
 (`szelesseg`); a `VilagTerkep` csak a nyers kurzor-pozíciót adja, a beégetett `120`-as
 vízszintes korlátja megszűnik.
 
@@ -105,9 +106,13 @@ A Task 1 minőségi review-ja nyomán, a terv kódjához képest:
 
 - **Elhelyezés.** A tervben a `VilagTerkep` a kurzor x-ét a legnagyobb szélesség felével
   (160 px) korlátozta, függőlegesen pedig nem volt korlát. A review kimutatta a hiányosságokat:
-  - 1280x720-on a németországi tooltip teteje 34 px-re kilóg;
-  - a keskeny tooltip a széleken messze kerül a kurzortól;
+  - a 4 attasés legrosszabb eset (kb. 309 px) a térkép közepén egyik vizsgált viewporton sem fér
+    el (191–226 px hely);
+  - a keskeny tooltip a széleken 48–71 px-re kerül a kurzortól;
   - 320 px-nél keskenyebb térképen a tooltip balra kilóg.
+
+  A 9 pontos szintetikus teszten a németországi tooltip 1280x720-on 34 px-re a térkép fölé, a
+  kártya fejlécére lógott. Valódi hovernél ez nem fordult elő, és a fejléc miatt levágás sem volt.
 
   Helyette a `TerkepTooltip` mindkét tengelyen CSS `clamp()`-pel, a tényleges mérettel tartja
   magát a konténeren belül, és a `TOOLTIP_SZELESSEG` nem exportált.
