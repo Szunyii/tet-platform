@@ -3057,6 +3057,18 @@ git add scripts/demo-attasek.ts .env.example
 git commit -m "$(printf 'feat(attase-orszagok): demó attasék a valós TéT-példákkal (scripts/demo-attasek.ts), a két régi tesztfiók törlése, .env.example lista\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>')"
 ```
 
+> **Végrehajtási eltérés (review után, külön `fix` commit).** A végleges kód a repóban van.
+> - **E-mail címek:** `vezeteknev.keresztnev@demo.test`, kitalált domain. A felhasználó döntése: a GitHub-repó publikus, és a `@niu.hu` alak valószínűleg létező postafiókokat jelöl. A már létrehozott 15 `@niu.hu` demó fiókot törölték, majd az új címekkel újra létrejöttek; riport és ticket még nem tartozott hozzájuk.
+> - **Előzetes ellenőrzés minden írás előtt:**
+>   - minden kód a szótárban;
+>   - a korlátok: `VAROS_MAX`, `RESZTERULET_MAX`, `REGIO_MAX`;
+>   - nincs ismétlődő ország;
+>   - országonként legfeljebb egy kijelölt vezető;
+>   - az e-mailek egyediek.
+> - **Jelszó:** 8–128 karakter.
+> - **Meglévő fiók:** admin vagy tiltott fióknál figyelmeztetés, és nincs hozzárendelés.
+> - **Elfogadott kockázat:** a közös demó jelszó dokumentálva marad a `.env.example`-ben, és az admin-sorhoz sem nyúltunk. Ez a felhasználó döntése, a publikus repó tudatában.
+
 ---
 
 ### Task 14: Dokumentáció és build
@@ -3092,7 +3104,7 @@ Keresd meg és írd át a következő helyeket (a többi szöveg változatlan):
    - „Szerepkörök: `admin` (NIÜ) és `attase`. Egy országban több attasé is lehet; közülük egy a relációs vezető, ő az országprofil felelőse és – az adminon kívül – egyedüli szerkesztője (egyszemélyes országban automatikus; ha több attasé marad vezető nélkül, a felhasználó-oldal figyelmeztet). Egy attasé regionálisan több országot is lefedhet; minden lefedett országára riportot adhat be. A főváros, terület, pénznem az országprofil Alapadatok blokkjában van.”
 3. Képernyők tábla, `/orszagprofil/[kod]/szerkesztes`: „(attasé: saját ország, idei év; …)” → „(attasé: az az ország, amelynek relációs vezetője, idei év; …)”.
 4. Hosting szakasz három új pontja:
-   - „A demó attasék (`scripts/demo-attasek.ts`) a repó `data/tet.db`-jében vannak; egy már meglévő hosting-DB-be nem kerülnek be maguktól (a `db:init` csak hiányzó vagy felhasználó nélküli DB-t cserél). Ehhez töröld a hosting DB-fájlt (a következő build a repó DB-jét másolja), vagy futtasd ott a scriptet.”
+   - „A demó attasék (`scripts/demo-attasek.ts`) a repó `data/tet.db`-jében vannak; egy már meglévő hosting-DB-be nem kerülnek be maguktól (a `db:init` csak hiányzó vagy felhasználó nélküli DB-t cserél). Ehhez töröld a hosting DB-fájlt (a következő build a repó DB-jét másolja), vagy futtasd ott a scriptet abszolút `DATABASE_URL`-lel (a `[db]` sor mutatja, melyik fájlt nyitotta meg; nélküle a build-mappa másolatába írna).”
    - „A build előbb migrál, csak utána fordít: a `0007` migráció törli a `user` régi oszlopait (`orszag`, `fovaros`, `terulet`, `penznem`), ezért a build ideje alatt a még futó régi verzió a bejelentkezett kérésekre hibát ad, és ha a `next build` elbukik, így is marad. Csendes időszakban deployolj, és előbb helyben fusson le hibátlanul a `npm run build`.”
    - „A 0006+0007 visszafordíthatatlan. A 0006 a régi `user.fovaros/terulet/penznem` értéket csak akkor viszi át az országprofil Alapadatok blokkjába, ha a `user.orszag` ISO-kód, és az országnak van Alapadatok blokkja. A 0007 utána törli a forrást, és a régi verzióra visszaállás DB-visszaállítás nélkül nem működik. Ha a hosting-DB-ben valós adat van, deploy előtt:
      1. mentés: `sqlite3 <db> ".backup '<db>.pre-0007'"`;
@@ -3185,6 +3197,9 @@ migráció és a tooltip főváros nélkül már a spec része). Ha nem volt elt
 - Tudatos korlát: a mentés a felhasználó összes hozzárendelését a dialógus állapotára cseréli, a vezető-jelölésekkel
   együtt. Ha két admin egyszerre dolgozik, egy közben elavult, nyitva hagyott dialógus mentése felülírhatja a másik admin
   vezetőség-módosítását. Egy-két admin mellett ez ritka, optimista zárolás nincs.
+- A demó fiókok e-mail címe `vezeteknev.keresztnev@demo.test`, kitalált domain, a spec `@niu.hu` helykitöltője helyett.
+  A felhasználó döntése: a repó publikus, és a `@niu.hu` alak valószínűleg létező postafiókokat jelöl. A közös demó
+  jelszó a `.env.example`-ben dokumentálva marad: ez elfogadott kockázat.
 - Tudatos kompromisszum: a főváros/terület/pénznem évfüggetlen adat, de az évenkénti Alapadatok blokkban van, így új
   évben a lakossághoz és a GDP-hez hasonlóan újra ki kell tölteni (az előző év átmásolása hatókörön kívül maradt).
 ```
@@ -3221,14 +3236,14 @@ gstack, `http://localhost:3000`, admin:
 
 - [ ] **Step 2: Nem vezető attasé (Komma Krisztián)**
 
-Jelszó: `sed -n 's/^DEMO_ATTASE_PASSWORD=//p' .env.example` (ne írd ki a logba). Kijelentkezés után `komma.krisztian@niu.hu`:
+Jelszó: `sed -n 's/^DEMO_ATTASE_PASSWORD=//p' .env.example` (ne írd ki a logba). Kijelentkezés után `komma.krisztian@demo.test`:
 1. Oldalsáv: „TéT attasé · Németország”, kártya „Országprofil · <év>”, a sorban az állapot mellett jobbra igazítva „Megnyitás →” (az olvasó nézetre visz).
 2. `/orszagprofil/DE`: nincs Szerkesztés gomb; `/orszagprofil/DE/szerkesztes` → 404; `/terkep`: nincs „Saját országprofil” gomb.
 3. `/uj-riport`: „A bejegyzés a(z) Németország poszthoz kerül” (nincs ország-választó) → hozz létre egy QA-bejegyzést → a részletoldalon Németország → **töröld a bejegyzést**.
 
 - [ ] **Step 3: Több országos vezető attasé (Szántó Szilvia)**
 
-`szanto.szilvia@niu.hu`:
+`szanto.szilvia@demo.test`:
 1. Oldalsáv: „TéT attasé · Franciaország +4” (a „+4” nem törik külön sorba); kártya „Országprofilok · <év>” öt sorral, mindegyikben jobbra igazítva „Szerkesztés →” (az aktuális évben).
 2. `/uj-riport`: „Ország” választó 5 opcióval, alapérték Franciaország; válaszd Marokkót → üres űrlappal beküldés → hibák, a választó Marokkón marad (form-reset védelem) → töltsd ki → beadás → a részletoldalon Marokkó → **töröld a bejegyzést**.
 3. `/orszagprofil/MA/szerkesztes` megnyílik (régiós vezető); ne ments.
