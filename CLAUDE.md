@@ -15,7 +15,7 @@ A projekt átmeneti állapotban van: a tudástár és a monitoring még a `lib/d
 ```bash
 npm run dev            # Next dev (Turbopack). Ha a 3000 foglalt, másik portot választ – nézd meg a kimenetet.
 npm run build          # db:init + drizzle-kit migrate + next build (típusellenőrzéssel) – a hosting build-parancsa is ez
-npm run db:init        # scripts/db-init.mjs: ha a DATABASE_URL célfájlja még nincs, vagy nincs benne felhasználó, a repó demó data/tet.db-jét másolja oda (a régit .ures-<ts> néven megtartja)
+npm run db:init        # scripts/db-init.mjs: ha a DATABASE_URL célfájlja még nincs, vagy nincs benne felhasználó, a repó demó data/tet.db-jét másolja oda (a régit .ures-<ts> néven megtartja); egyszeri csere (DEMO_CSERE, jelölőfájl <db>.demo-csere-<azonosító>): a felhasználós céladatbázist is lecseréli, a régit -wal/-shm-mel együtt .regi-<ts> néven megtartja
 npx tsc --noEmit       # Csak típusellenőrzés
 npm run db:generate    # Drizzle migráció generálása séma-változás után (drizzle/ alá, commitolandó)
 npm run db:migrate     # Migrációk alkalmazása a data/tet.db-re
