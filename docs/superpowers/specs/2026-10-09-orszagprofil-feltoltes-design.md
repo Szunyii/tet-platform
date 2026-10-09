@@ -16,7 +16,7 @@ kérése: töltsük ki az országprofilokat valós adatokkal, és ez a hostingra
 | --- | --- | --- |
 | Tartalom | Valós, teljes profil, mint a KR/JP: mind a 8 blokk, nyilvános forrásokból kutatva | A felhasználó döntése. Kutatott kiinduló vázlat, amelyet a relációs vezetők pontosítanak. |
 | Országok | Mind a 25 üres ország: a 10 székhely-ország és a 15 régiós | A felhasználó döntése; így a térképen mindenhol van profil. |
-| Év | Csak 2026 (az `aktualisEv()`) | A térkép és a profil a fejléc évét mutatja; a 2026-os profil „Adott évi profil”. A JP 2025-ös Alapadatok blokkja érintetlen. |
+| Év | Csak 2026, a futtatóban rögzítve (`EV = 2026`) | A térkép és a profil a fejléc évét mutatja; a 2026-os profil „Adott évi profil”. A kutatás a 2026-os állapotot rögzíti, ezért egy későbbi (pl. 2027-es) futás sem dátumozhatja át. A JP 2025-ös Alapadatok blokkja érintetlen. |
 | KR, JP | Tartalmuk változatlan, csak külön fájlba költöznek | Már teljesek; átnézésük nem része ennek a munkának. |
 | Hosting | Újabb egyszeri DB-csere (`DEMO_CSERE` új azonosítóval) | A felhasználó döntése, tudván, hogy a hostingon 2026-10-07 óta történt minden változás elvész. |
 | Szerző | Az első admin | Mint eddig: a demó-tartalom nem kötődik valós attaséhoz. |
@@ -124,20 +124,37 @@ A számok magyar formában (szóköz ezreselválasztó, tizedesvessző), ahogy a
 
 **Futtató.**
 
-1. Beolvassa az `orszagok/` mappa összes `.ts` fájlját (dinamikus import). Ellenőrzi, hogy a
+1. Beolvassa az `orszagok/` mappa `<két kisbetű>.ts` fájljait (dinamikus import, fájlonként
+   elkapott betöltési hibával). Teljes ellenőrzésnél minden más fájlnév hiba. Ellenőrzi, hogy a
    fájlnév és a `kod` egyezik, és hogy a kód a `lib/orszagok.ts` szótárában van.
 2. Minden ország minden megadott blokkját ellenőrzi:
-   - `validalBlokk(blokk, fd, aktualisEv())`;
-   - a listás mezők (`tagsagok`, `agazatok`, `prioritasok`, `kiemeltIparagak`,
-     `kiemeltAgazatok`) minden értéke a szótár listájában van-e. Ez szigorúbb a validátornál,
-     amely az ismeretlen opciót némán eldobná, így egy elírt opció csendben elveszne.
-3. Ha bárhol hiba van, mindet kiírja, és nem ír a DB-be. Csak hibátlan adatnál
-   `upsertBlokk`-ol blokkonként (idempotens; a meg nem adott blokkhoz nem nyúl).
-4. Országonként egy sort ír ki: kód, mentett blokkok száma, év.
+   - `validalBlokk(blokk, fd, 2026)`;
+   - szigorúbban is. Hiba minden, amit a validátor némán eldobna vagy kicserélne:
+     - ismeretlen mezőnév;
+     - szótáron kívüli listás opció vagy rendezvénytípus;
+     - vezető nullás vagy 10 feletti rendezvény-index;
+     - név vagy típus nélküli, illetve üres rendezvénysor;
+     - nem szöveges érték;
+     - ponttal írt szám (a validátor a `.ddd`-t ezreselválasztónak veszi);
+     - az üres blokk, mert mentve kitöltöttnek számítana.
+3. Ha bárhol hiba van, mindet kiírja `<fájl>: <blokk>.<mező>: <üzenet>` alakban, és nem ír a
+   DB-be.
 
-**Ellenőrző mód.** `--csak DE,AT` (vesszős kódlista): csak a megadott országokat ellenőrzi, és
-nem ír a DB-be. A párhuzamos csomagok ezzel ellenőrzik a saját fájljaikat. Futtatás:
-`NODE_OPTIONS="--conditions=react-server" npx tsx scripts/demo-orszagprofil.ts [--csak KÓDOK]`.
+**Módok.** Mindegyik a repó gyökeréből fut, `NODE_OPTIONS="--conditions=react-server" npx tsx
+scripts/demo-orszagprofil.ts` előtaggal:
+
+| Argumentum | Mit csinál | Megnyitja-e a DB-t |
+| --- | --- | --- |
+| nincs | minden ország ellenőrzése | nem |
+| `--csak DE,AT` vagy `--csak=DE,AT` | csak a megadott országok ellenőrzése (a párhuzamos csomagoké) | nem |
+| `--ir` | minden ország ellenőrzése, hibátlan adatnál írás egy tranzakcióban | igen |
+
+- **Hibás argumentum.** Más argumentum, illetve a `--ir` és a `--csak` együtt használati hiba.
+  Így egy elírt kapcsoló sem írhat az éles DB-be.
+- **Mit ír a `--ir`.** A meg nem adott blokkhoz nem nyúl (részleges profil). Idempotens, a
+  szerző az első admin, és országonként egy sort ír ki.
+- **Figyelmeztetés.** Ha a DB-ben olyan blokk is mentett, ami a fájlban nincs, `FIGYELEM` sort
+  ír, mert a futtató blokkot nem töröl.
 
 ## Hosting
 
@@ -155,8 +172,8 @@ A logika nem változik, csak az azonosító és a kommentje.
 
 ## Demó DB
 
-A futtató a repó `data/tet.db`-jét tölti fel (előtte a DB egy másolatán próbaüzem). Commit
-előtt:
+A futtató `--ir`-rel a repó `data/tet.db`-jét tölti fel (előtte a DB egy másolatán
+próbaüzem). Commit előtt:
 
 ```bash
 sqlite3 data/tet.db "delete from session; VACUUM; PRAGMA wal_checkpoint(TRUNCATE);"
@@ -177,7 +194,7 @@ sor van); a publikus repóba nem kerülhet érvényes session-token.
 - Csomagonként: `--csak <kódok>` hibátlan; a formai és szabály-review, majd a tényellenőrző
   review (független webes ellenőrzés: minden alapadat-szám, GERD, GII-helyezés, stratégia,
   intézmény- és cégnevek, rendezvények, és minden magyar vonatkozású állítás).
-- A teljes futtató a demó DB egy másolatán, majd a `data/tet.db`-n. A 2026-os profilok száma
+- A futtató `--ir`-rel a demó DB egy másolatán, majd a `data/tet.db`-n. A 2026-os profilok száma
   27; a blokkok száma országonként a terv szerinti; a JP 2025-ös sor változatlan.
 - A `db-init` cseréje egy ideiglenes célfájlon:
   - felhasználós DB a régi (`2026-10-07`) jelölővel → csere, mentés és új jelölő;
@@ -208,3 +225,23 @@ sor van); a publikus repóba nem kerülhet érvényes session-token.
    - böngészős ellenőrzés.
 
 Az eredmény kutatott vázlat: a relációs vezetőknek érdemes átnézniük és pontosítaniuk.
+
+## Megvalósítási eltérések
+
+A Task 1 minőségi review-ja nyomán, a terv eredeti futtatójához képest:
+
+- **Módok.** A futtató alapból csak ellenőriz, írni a `--ir` kapcsolóval lehet. Az ismeretlen
+  argumentum használati hiba. A tervben az argumentum nélküli futás írt, így egy elírt kapcsoló
+  (pl. `--csak=KR`) csendben az éles `data/tet.db`-be írt volna, és mivel a futtató blokkot nem
+  töröl, ezt egy későbbi futás sem javítja ki.
+- **Az év.** Rögzítve 2026 (`EV`), nem az `aktualisEv()`.
+- **Újabb szigorú ellenőrzések:**
+  - az üres blokk, mert kitöltöttnek számítana;
+  - a ponttal írt szám;
+  - a vezető nullás rendezvény-index;
+  - a hiányos vagy üres rendezvénysor;
+  - a nem szöveges érték;
+  - a rossz fájlnév;
+  - a fájlonkénti betöltési hiba;
+  - a `--ir` utáni figyelmeztetés a fájlban már nem szereplő, de mentett blokkra.
+- **Hibaformátum.** Egységes: `<fájl>: <blokk>.<mező>: <üzenet>`.

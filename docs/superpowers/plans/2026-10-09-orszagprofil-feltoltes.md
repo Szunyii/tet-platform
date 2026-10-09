@@ -4,7 +4,7 @@
 
 **Goal:** Az attasék 25 üres országának 2026-os profilja valós, kutatott adatokkal kerül a demó DB-be (a KR és a JP marad), és egy újabb egyszeri DB-csere viszi ki a hostingra.
 
-**Architecture:** Országonként egy adatfájl (`scripts/demo-orszagprofil/orszagok/<kod>.ts`, az űrlap-értékek formájában). A `scripts/demo-orszagprofil.ts` futtató előbb mindent ellenőriz:
+**Architecture:** Országonként egy adatfájl (`scripts/demo-orszagprofil/orszagok/<kod>.ts`, az űrlap-értékek formájában). A `scripts/demo-orszagprofil.ts` futtató alapból csak ellenőriz (a DB-t meg sem nyitja), írni a `--ir`-rel lehet; ellenőrzés:
 - a `validalBlokk`-kal, ahogy az űrlapot;
 - szigorúbban is: ismeretlen mező, szótáron kívüli opció, rendezvénytípus.
 
@@ -509,6 +509,13 @@ Ha egy országban nincs rendezvény, a `rendezvenyek` import elhagyható, és cs
 
    A számok magyar formában: `'1 790,0'`, `'34 600'`, `'-0,5'`.
 9. **Pénznem** a `kr.ts` mintájára, magyar névvel és ISO-kóddal: `'euró (EUR)'`, `'amerikai dollár (USD)'`.
+10. **A futtató szigorú szabályai:**
+    - **Üres blokk.** Az üres blokk hiba, mert mentve kitöltöttnek számítana: a valós tartalom nélküli blokkot hagyd ki teljesen (`rendezvenyek([])` sem kell).
+    - **Rendezvénysor.** Minden sornak legyen neve és típusa; a `rendezvenyek()` segéd ezt biztosítja.
+    - **Számok.** A számmezőkben (`terulet`, `lakossag`, `gdp`, `gdpEgyFore`, `gdpNovekedes`, `adatEv`, `gerd`) **soha ne legyen pont**: a tizedesjel vessző, az ezreselválasztó szóköz.
+    - **Fájlnév:** két kisbetű + `.ts`.
+    - **Hibaformátum:** `<fájl>: <blokk>.<mező>: <üzenet>`.
+11. **Csak ellenőrzés.** A csomagok **soha nem futtatják a `--ir`-t**, és nem írnak a DB-be. A `TMPDIR`-t ne állítsd át: a tsx IPC-socketjének útvonala különben túl hosszú lesz, és a párhuzamos futások összeomlanak.
 
 **Kiinduló források:**
 - **IMF WEO 2025. október:** https://www.imf.org/en/Publications/WEO/weo-database/2025/October
@@ -647,9 +654,9 @@ Megjegyzések:
 
 ```bash
 ls scripts/demo-orszagprofil/orszagok/ | wc -l   # 27
-NODE_OPTIONS="--conditions=react-server" npx tsx scripts/demo-orszagprofil.ts --csak AT,BD,BR,CA,CN,DE,DZ,FR,GB,GY,IE,IL,IN,JP,KP,KR,LK,MA,MR,MV,NP,PR,RU,SR,TN,US,VI
+NODE_OPTIONS="--conditions=react-server" npx tsx scripts/demo-orszagprofil.ts   # mind a 27 ellenőrzése, DB nélkül
 T=$(mktemp -d) && sqlite3 data/tet.db ".backup '$T/t.db'"
-DATABASE_URL="$T/t.db" NODE_OPTIONS="--conditions=react-server" npx tsx scripts/demo-orszagprofil.ts
+DATABASE_URL="$T/t.db" NODE_OPTIONS="--conditions=react-server" npx tsx scripts/demo-orszagprofil.ts --ir
 sqlite3 "$T/t.db" "select count(*) from orszagprofil where ev=2026;"
 sqlite3 "$T/t.db" "select orszag_kod, (alapadatok is not null)+(kfi_rendszer is not null)+(intezmenyek is not null)+(vallalati is not null)+(programok is not null)+(rendezvenyek is not null)+(kapcsolatok is not null)+(magyar_ertekeles is not null) from orszagprofil where ev=2026 order by 1;"
 sqlite3 "$T/t.db" "select orszag_kod, ev from orszagprofil where ev<>2026;"
@@ -658,7 +665,7 @@ rm -rf "$T"
 ```
 
 Expected:
-- 27 fájl; az ellenőrző mód hibátlan; a futtató 27 sort ír (`… blokk mentve 2026-ra`).
+- 27 fájl; az ellenőrzés hibátlan (27 `… rendben` sor és `Íráshoz: --ir`); a `--ir` 27 sort ír (`… blokk mentve 2026-ra`), `FIGYELEM` nélkül.
 - `27` profil 2026-ra.
 - A blokkszámok a csomag-jelentések szerint: a teljes profiloknál 8, a részlegeseknél kevesebb.
 - A 2026-on kívül csak a `JP|2025` sor marad.
@@ -667,10 +674,10 @@ Expected:
 - [ ] **Step 2: Futás a `data/tet.db`-n**
 
 ```bash
-NODE_OPTIONS="--conditions=react-server" npx tsx scripts/demo-orszagprofil.ts
+NODE_OPTIONS="--conditions=react-server" npx tsx scripts/demo-orszagprofil.ts --ir
 ```
 
-Expected: 27 sor, `… blokk mentve 2026-ra (szerző: …)`. A futó dev szerver a változást a következő oldalbetöltéskor mutatja.
+Expected: 27 sor, `… blokk mentve 2026-ra (szerző: …)`, `FIGYELEM` sor nélkül. A futó dev szerver a változást a következő oldalbetöltéskor mutatja.
 
 - [ ] **Step 3: `scripts/db-init.mjs` – új csere-azonosító**
 
@@ -717,7 +724,7 @@ Expected:
 A Parancsok blokkban, a `DEMO_ATTASE_PASSWORD=… … scripts/demo-attasek.ts …` sor (26. sor) **után** új sor:
 
 ```
-NODE_OPTIONS="--conditions=react-server" npx tsx scripts/demo-orszagprofil.ts [--csak DE,AT]   # az attasék 27 országának 2026-os demó-profilja (kutatott vázlat; országonként scripts/demo-orszagprofil/orszagok/<kod>.ts, az űrlap-értékek formájában) a DATABASE_URL DB-be: előbb mindent ellenőriz (validalBlokk + szigorú mező-, opció- és rendezvénytípus-ellenőrzés, mert a validátor ezeket némán eldobná), csak hibátlan adatnál ír, egy tranzakcióban, a meg nem adott blokkhoz nem nyúl; --csak: csak ellenőriz, a DB-t meg sem nyitja
+NODE_OPTIONS="--conditions=react-server" npx tsx scripts/demo-orszagprofil.ts [--csak DE,AT | --ir]   # az attasék 27 országának 2026-os demó-profilja (kutatott vázlat; országonként scripts/demo-orszagprofil/orszagok/<kod>.ts, az űrlap-értékek formájában): alapból csak ellenőriz, a DB-t meg sem nyitja (validalBlokk + szigorú ellenőrzés: ismeretlen mező, szótáron kívüli opció vagy rendezvénytípus, hiányos rendezvénysor, ponttal írt szám, üres blokk – a validátor ezeket némán eldobná); --csak: csak a megadott országok; --ir: mind ellenőrzése után írás a DATABASE_URL DB-be egy tranzakcióban, a meg nem adott blokkhoz nem nyúl (FIGYELEM, ha a DB-ben a fájlban nem szereplő blokk is mentett); az év rögzítve: 2026
 ```
 
 - [ ] **Step 6: `README.md` – két mondat**
