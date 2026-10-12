@@ -74,6 +74,7 @@ const REGI_NEVEK = {
   'Agrár- és élelmiszertechnológia': 'Agrár- és élelmiszeripar',
   'Védelmi technológia': 'Védelmi ipar',
 } as const satisfies Record<string, Agazat> & Partial<Record<Agazat, never>>;
+/** A `REGI_NEVEK` tábla `Map`-ként: a keresés csak a saját kulcsokra talál (a `constructor` vagy a `__proto__` nem képződik le). */
 export const REGI_AGAZAT_NEVEK: ReadonlyMap<string, Agazat> = new Map(Object.entries(REGI_NEVEK));
 
 export const ALLAPOTOK = ['friss', 'elavult', 'nincs'] as const;
