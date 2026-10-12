@@ -240,7 +240,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 git status --short
 ```
 
-Elvárt `git status --short`: egyetlen sor, ` M data/tet.db`.
+Elvárt `git status --short`: üres, vagy egyetlen sor: ` M data/tet.db`. (A DB WAL módú, és a futó dev szerver nyitva tartja: a migráció a gitignore-olt `data/tet.db-wal`-ban él, a fő fájl az 5. task checkpointjáig változatlan maradhat. Checkpointot emiatt ne futtass.)
 
 ---
 
@@ -708,7 +708,7 @@ Elvárt `git status --short`, az indexben:
 - `app/(app)/orszagprofil/`: 2 új űrlap, a törölt `KapcsolatokMezok.tsx` (a git az egyik új fájlt átnevezésként is mutathatja), és 3 módosított fájl (`[kod]/szerkesztes/page.tsx`, `components/BlokkForm.tsx`, `actions.ts`);
 - `scripts/demo-orszagprofil/orszagok/`: mind a 27 fájl módosított (25 átalakított, plusz a `pr.ts` és a `vi.ts` kommentje).
 
-Az indexen kívül egyetlen sor: ` M data/tet.db`. A `scripts/_egyezes.ts` ne szerepeljen.
+Az indexen kívül semmi, vagy egyetlen sor: ` M data/tet.db` (a migráció a WAL-ban él, a fő fájl az 5. taskig változatlan maradhat). A `scripts/_egyezes.ts` ne szerepeljen.
 
 ```bash
 git commit -m "feat(kapcsolatok-bontas): a 6. blokk két önálló blokk – 6.1. Két- és többoldalú kapcsolatok, 6.2. Magyar–fogadó országbeli kapcsolatok (szótár, validátor, űrlap, olvasó nézet, a 27 országfájl)
@@ -784,7 +784,23 @@ ALTER TABLE `orszagprofil` DROP COLUMN `kapcsolatok`;
 
 Ha a drizzle-kit kérdést tesz fel, vagy a fájlban más utasítás is van (különösen `__new_orszagprofil` + `DROP TABLE`), **állj meg és jelezd**. A fájlt ne írd át.
 
-- [ ] **Step 5: A migráció alkalmazása**
+- [ ] **Step 5: A mentés óta senki nem írt a régi blokkba**
+
+A `0008` egyszeri másolat volt: ami azóta a régi `kapcsolatok` oszlopba került (a 2. task átállásáig a futó kód még oda mentett), az nincs az új oszlopokban, és a törléssel elveszne. A törlés **előtt** ellenőrizd:
+
+```bash
+SCRATCH=/private/tmp/claude-501/-Users-szunyoghdavid-Downloads-tet-platform-tet-platform-next/eccc1dfb-b720-4b81-8b6f-a02136044935/scratchpad
+sqlite3 -readonly data/tet.db <<'SQL'
+ATTACH 'file:/private/tmp/claude-501/-Users-szunyoghdavid-Downloads-tet-platform-tet-platform-next/eccc1dfb-b720-4b81-8b6f-a02136044935/scratchpad/tet-pre-0008.db?immutable=1' AS regi;
+SELECT 'regi_blokk_valtozatlan', count(*) FROM orszagprofil u JOIN regi.orszagprofil r ON r.id = u.id WHERE u.kapcsolatok IS r.kapcsolatok;
+SELECT 'mentes_sorai', count(*) FROM regi.orszagprofil;
+SELECT 'uj_sor_regi_blokkal', count(*) FROM orszagprofil u WHERE u.kapcsolatok IS NOT NULL AND u.id NOT IN (SELECT id FROM regi.orszagprofil);
+SQL
+```
+
+Elvárt: `regi_blokk_valtozatlan|28`, `mentes_sorai|28`, `uj_sor_regi_blokkal|0`. Ha bármelyik eltér, **állj meg és jelezd** – a migrációt ne futtasd (az érintett sor tartalmát előbb kézzel át kell vinni az új oszlopokba).
+
+- [ ] **Step 6: A migráció alkalmazása**
 
 ```bash
 npm run db:migrate
@@ -792,10 +808,9 @@ npm run db:migrate
 
 Elvárt: hiba nélkül lefut (`exit 0`).
 
-- [ ] **Step 6: Adat-összevetés a mentéssel**
+- [ ] **Step 7: Adat-összevetés a mentéssel**
 
 ```bash
-SCRATCH=/private/tmp/claude-501/-Users-szunyoghdavid-Downloads-tet-platform-tet-platform-next/eccc1dfb-b720-4b81-8b6f-a02136044935/scratchpad
 sqlite3 -readonly data/tet.db < "$SCRATCH/bontas-ellenorzes.sql"
 ```
 
@@ -813,7 +828,7 @@ regi_oszlop|0
 migraciok|10
 ```
 
-- [ ] **Step 7: Típusellenőrzés és build**
+- [ ] **Step 8: Típusellenőrzés és build**
 
 ```bash
 npx tsc --noEmit
@@ -824,7 +839,7 @@ Elvárt: a `tsc` kimenet nélkül; a build végén a route-lista, hiba nélkül.
 
 Ha a build típusellenőrzése nem létező `app/...` modulra panaszkodik, az a futó dev szerver elavult `.next/dev/types/validator.ts`-e: `rm .next/dev/types/validator.ts`, majd újra `npm run build` (lásd CLAUDE.md).
 
-- [ ] **Step 8: Commit** (a `data/tet.db` nélkül)
+- [ ] **Step 9: Commit** (a `data/tet.db` nélkül)
 
 ```bash
 git add lib/orszagprofil-szotar.ts db/schema/orszagprofil.ts drizzle/0009_kapcsolatok_oszlop_torles.sql drizzle/meta/0009_snapshot.json drizzle/meta/_journal.json
@@ -834,7 +849,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 git status --short
 ```
 
-Elvárt `git status --short`: egyetlen sor, ` M data/tet.db`.
+Elvárt `git status --short`: üres, vagy egyetlen sor: ` M data/tet.db`. (A DB WAL módú, és a futó dev szerver nyitva tartja: a migráció a gitignore-olt `data/tet.db-wal`-ban él, a fő fájl az 5. task checkpointjáig változatlan maradhat. Checkpointot emiatt ne futtass.)
 
 ---
 
@@ -889,7 +904,7 @@ Elvárt: `0`, majd legalább `3` (a találatok több sorra esnek).
 A „### Hosting (Hostinger Node.js)” lista **végére**, közvetlenül a „### Adatbázis és auth” fejléc előtti üres sor elé (a „Visszaállításra akkor van szükség…” bekezdés után, üres sorral elválasztva) szúrd be ezt a listaelemet:
 
 ```markdown
-- A `0008`/`0009` migráció az országprofil `kapcsolatok` oszlopát két oszlopra osztja (`nemzetkozi_kapcsolatok`, `magyar_kapcsolatok`; a tartalom mezőnként átkerül), majd a régit törli – visszafordíthatatlan. A build ideje alatt a még futó régi verzió hibát ad mindenhol, ahol teljes profilsort olvas (térkép, országprofil; adminnak az oldalsáv állapotkártyája miatt minden oldalon), mert a törölt oszlopot is lekérdezi, és ha a `next build` elbukik, így is marad. Ha a hosting-DB-ben valós adat van, deploy előtt ments (`sqlite3 <db> ".backup '<db>.pre-0008'"`); a visszaállítás a fenti `.restore` módon megy.
+- A `0008`/`0009` migráció az országprofil `kapcsolatok` oszlopát két oszlopra osztja (`nemzetkozi_kapcsolatok`, `magyar_kapcsolatok`; a tartalom mezőnként átkerül), majd a régit törli – visszafordíthatatlan. A build ideje alatt a még futó régi verzió hibát ad mindenhol, ahol teljes profilsort olvas (térkép, országprofil; adminnak az oldalsáv állapotkártyája miatt minden oldalon), mert a törölt oszlopot is lekérdezi, és ha a `next build` elbukik, így is marad. A két migráció csak együtt mehet ki (egy build egy tranzakcióban futtatja őket): a `0008` egyszeri másolat, ezért ha csak az kerülne ki, a régi kóddal közben mentett 6. blokk a `0009`-cel elveszne. Ha a hosting-DB-ben valós adat van, deploy előtt ments (`sqlite3 <db> ".backup '<db>.pre-0008'"`); a visszaállítás a fenti `.restore` módon megy.
 ```
 
 Ellenőrzés:
@@ -961,7 +976,7 @@ sqlite3 -readonly data/tet.db < "$SCRATCH/bontas-ellenorzes.sql"
 sqlite3 -readonly data/tet.db "select count(*) from session; select count(*) from orszagprofil where ev=2020;"
 ```
 
-Elvárt: az összevetés ugyanaz, mint a 3. task 6. lépésében (`sorok|28` … `regi_oszlop|0`, `migraciok|10`); majd `0` és `0`.
+Elvárt: az összevetés ugyanaz, mint a 3. task 7. lépésében (`sorok|28` … `regi_oszlop|0`, `migraciok|10`); majd `0` és `0`.
 
 A `delete from session` a felhasználó saját böngészős munkamenetét is törli a helyi dev szerveren (a commitolt demó DB-ben nem lehet session): ezt a záró üzenetben jelezni kell.
 
@@ -970,6 +985,7 @@ A `delete from session` a felhasználó saját böngészős munkamenetét is tö
 ```bash
 sqlite3 data/tet.db "PRAGMA wal_checkpoint(TRUNCATE); VACUUM; PRAGMA wal_checkpoint(TRUNCATE);"
 sqlite3 -readonly data/tet.db "PRAGMA integrity_check; select count(*) from user; select count(*) from orszagprofil;"
+sqlite3 "file:data/tet.db?immutable=1" "select count(*) from __drizzle_migrations; select count(*) from session; select count(*) from pragma_table_info('orszagprofil') where name in ('nemzetkozi_kapcsolatok','magyar_kapcsolatok','kapcsolatok');"
 git add data/tet.db
 git commit -m "chore(kapcsolatok-bontas): a demó DB a 0008/0009 migrációval – a kapcsolatok blokk két oszlopban
 
@@ -977,7 +993,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 git status --short
 ```
 
-Elvárt: `ok`, a felhasználók száma változatlan (16), `28`; a `git status --short` üres. Ha a `VACUUM` „database is locked” hibát ad (a dev szerver éppen olvas), ismételd meg.
+Elvárt: a `wal_checkpoint(TRUNCATE)` sorai `0|0|0`; `ok`, a felhasználók száma változatlan (16), `28`; a fő fájl önmagában (`immutable=1`, a WAL nélkül – a hosting `db:init`-je csak a fő fájlt másolja) `10`, `0`, `2`; a `git status --short` a commit után üres. Ha a checkpoint első száma nem `0` (foglalt), vagy a fő fájl régi állapotot mutat, ismételd meg a checkpointot, és ne commitolj, amíg nem stimmel. Ha a `VACUUM` „database is locked” hibát ad (a dev szerver éppen olvas), ismételd meg.
 
 ---
 
