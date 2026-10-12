@@ -213,7 +213,7 @@ a DB-t a migráció állítja át, és az `--ir` minden profil `updated_at`-jét
 ## Megvalósítási eltérések
 
 - **Fejléc-kommentek az országfájlokban.** A spec csak a blokkok szétosztását írta le. A fájlok
-  elején álló kommentek a régi blokknévvel hivatkoztak mezőkre és blokkokra, ezért 10 fájlban 13
+  elején álló kommentek a régi blokknévvel hivatkoztak mezőkre és blokkokra, ezért 9 fájlban 13
   szövegrész is változott (`ca` ×2, `ie`, `kp` ×2, `mr`, `gy` ×2, `sr` ×2, `pr`, `vi`, `us`). A
   profilok megjelenő szövegei bájtra változatlanok.
 - **Változatlanul hagyott kereszthivatkozások a tartalomban.** Négy megjelenő szöveg
@@ -225,7 +225,8 @@ a DB-t a migráció állítja át, és az `--ir` minden profil `updated_at`-jét
 - **Bővebb DB-ellenőrzés** (a review-k nyomán). A régi oszlop törlése előtt külön ellenőrzés
   futott arra, hogy a mentés óta senki nem írt a régi blokkba (a `0008` egyszeri másolat). A DB
   commitja előtt a fő fájl önmagában (`immutable=1`, a WAL nélkül) és a commitra kijelölt változat
-  is ellenőrizve lett, mert a hosting `db:init`-je csak a fő fájlt másolja.
+  is ellenőrizve lett, mert a hosting `db:init`-je csak a fő fájlt másolja. A checkpoint mellett
+  `VACUUM` is futott (a törölt oszlop helye felszabadult, a fájl mérete nem nőtt).
 - **WAL.** A futó dev szerver nyitva tartotta a DB-t, ezért a két migráció a `data/tet.db-wal`-ban
   élt, és a `data/tet.db` a záró checkpointig a git szerint változatlan maradt. Az ág köztes
   commitjaiban ezért a követett DB-fájl még a `0007`-es állapot.
