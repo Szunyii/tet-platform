@@ -14,6 +14,12 @@ Csak hibátlan adatnál ír, egy tranzakcióban, és van ellenőrző módja (`--
 
 **Spec:** `docs/superpowers/specs/2026-10-09-orszagprofil-feltoltes-design.md`.
 
+**Végrehajtási megjegyzés (2026-10-12):**
+- **Task 1.** A lépések az eredeti tervet mutatják. A futtató végleges működése (alapból csak ellenőriz, írás `--ir`-rel, rögzített év, további szigorú ellenőrzések) a `2573369` commitban és a spec „Megvalósítási eltérések” szakaszában van. A Step 4 kódja ezért nem egyezik a végleges fájllal, és a Step 6 és 8 író futásaihoz ma `--ir` kell.
+- **KR és JP.** A terv szerint változatlanok maradtak volna; a végrehajtás során egy hetedik csomag átnézte és javította őket (lásd a „Task 7b” szakaszt).
+- **Tartalmi döntések.** A csomagok review-i során született döntések (határok és területforrás, IMF- és GERD-forrás, `forras` mező, fejlécek, top 10 lista, időminősítés) a spec „Megvalósítási eltérések” szakaszában vannak.
+- **Node.** A gépen 2026-10-09 óta Node 24 fut (a terv Node 22-vel számolt); a `better-sqlite3`-at újra kellett fordítani.
+
 **Ellenőrzés:** Nincs tesztkeretrendszer.
 - **Futtató:** a „teszt” egy regressziós összevetés (a régi és az új futtató KR/JP kimenete bájtra azonos) és egy szándékosan hibás adatfájl (a szigorú ellenőrzésnek el kell utasítania). Mindkettő a demó DB **másolatán** fut.
 - **Csomagok:** a `--csak` ellenőrző mód, a `tsc`, majd a két review.
@@ -640,6 +646,18 @@ Megjegyzések:
 - **A Maldív-szigetek:** részleges profil.
 - **India:** teljes profil.
 - **Banglades, Srí Lanka és Nepál:** annyi blokk, amennyihez van valós tartalom.
+
+### Task 7b: KR és JP átnézése (utólag hozzáadva)
+
+**Files:** Modify `scripts/demo-orszagprofil/orszagok/{kr,jp}.ts`
+
+A két meglévő profil a Task 1-ben változatlanul költözött át. A csomagok review-i közben kiderült, hogy a régi adatok egy része hibás vagy elavult, ezért ugyanazzal az eljárással (implementer, formai review, tényellenőrzés) át lettek írva:
+- **Alapadatok:** az IMF 2025. októberi kiadása szerint, a terület a Világbankból.
+- **KFI-rendszer:** GII 2025, OECD MSTI 2024; a hatályos alaptervek (KR: 6. Tudomány- és Technológiai Alapterv 2026–2030; JP: 7. alapterv, 2026–2030-as pénzügyi évek).
+- **Kapcsolatok:** az egyezmények éve az NKFIH szerint (KR 1989, JP 1979); Japán 2026. július 30. óta a Horizont Európa II. pillérének társult országa; a nem ellenőrizhető intézményi kapcsolatok törölve.
+- **Fejléc:** a többi országéval azonos forma, forrásokkal.
+
+Commit: `fix(orszagprofil-feltoltes): KR, JP 2026-os profiljának átnézése és javítása (…)`.
 
 ---
 
