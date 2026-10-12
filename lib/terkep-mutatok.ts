@@ -9,7 +9,7 @@ import { interpolateLab, piecewise } from 'd3-interpolate';
 import { scaleLinear, scaleSymlog } from 'd3-scale';
 import { formatSzam } from './szam';
 import type { TerkepOrszag } from '../db/queries/orszagprofil';
-import { ALLAPOTOK, ALLAPOT_CIMKE, ALLAPOT_SZINEK, BLOKK_KULCSOK, IPARAGAK, IPARAG_SZINEK } from './orszagprofil-szotar';
+import { AGAZATOK, AGAZAT_SZINEK, ALLAPOTOK, ALLAPOT_CIMKE, ALLAPOT_SZINEK, BLOKK_KULCSOK } from './orszagprofil-szotar';
 
 export const MUTATO_KULCSOK = [
   'iparag', 'allapot',
@@ -46,14 +46,14 @@ export interface KategoriaMutato {
 export type Mutato = SzamMutato | KategoriaMutato;
 
 /** Az iparágnál a kategória neve maga a felirat; az egységes `cimkek` mező kedvéért azonosság-térkép. */
-const IPARAG_CIMKEK: Record<string, string> = Object.fromEntries(IPARAGAK.map((i) => [i, i]));
+const IPARAG_CIMKEK: Record<string, string> = Object.fromEntries(AGAZATOK.map((i) => [i, i]));
 
 /** Kulcsonként egy mutató; a kimerítő kulcs-térkép miatt egy kihagyott kulcs fordítási hiba. */
 const MUTATO_TABLA: { [K in MutatoKulcs]: Mutato & { kulcs: K } } = {
   iparag: {
     kulcs: 'iparag', tipus: 'kategoria', cimke: 'Kiemelt iparág',
     kategoria: (o) => o.iparagak[0] ?? null,
-    sorrend: IPARAGAK, szinek: IPARAG_SZINEK, cimkek: IPARAG_CIMKEK, csakHasznalt: true,
+    sorrend: AGAZATOK, szinek: AGAZAT_SZINEK, cimkek: IPARAG_CIMKEK, csakHasznalt: true,
     nincsCimke: 'nincs kiemelt iparág',
   },
   allapot: {

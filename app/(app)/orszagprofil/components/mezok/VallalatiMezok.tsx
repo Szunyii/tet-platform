@@ -3,7 +3,7 @@
 import { CimkeValaszto } from '../../../../../components/form/CimkeValaszto';
 import { SzovegMezo } from '../../../../../components/form/Mezo';
 import {
-  IPARAGAK, MEZO_CIMKEK, ROVID_MAX, SZOVEG_MAX, TOP_VALLALAT_MAX, type Vallalati,
+  AGAZATOK, MEZO_CIMKEK, ROVID_MAX, SZOVEG_MAX, TOP_VALLALAT_MAX, type Vallalati,
 } from '../../../../../lib/orszagprofil-szotar';
 import { BlokkForm, mezoId, useBlokkAllapot, type BlokkMezokProps } from '../BlokkForm';
 
@@ -19,7 +19,7 @@ export function VallalatiMezok({
     <BlokkForm kod={kod} ev={ev} blokk={B} mentve={mentve} action={action}>
       {(errors) => (
         <>
-          <CimkeValaszto id={mezoId(B, 'kiemeltAgazatok')} name="kiemeltAgazatok" cimke={C.kiemeltAgazatok.cimke} items={IPARAGAK} value={e.kiemeltAgazatok} onChange={set('kiemeltAgazatok')} errors={errors}
+          <CimkeValaszto id={mezoId(B, 'kiemeltAgazatok')} name="kiemeltAgazatok" cimke={C.kiemeltAgazatok.cimke} items={AGAZATOK} value={e.kiemeltAgazatok} onChange={set('kiemeltAgazatok')} errors={errors}
             egyeb={{ id: mezoId(B, 'agazatEgyeb'), name: 'agazatEgyeb', cimke: C.agazatEgyeb.cimke, value: e.agazatEgyeb, onChange: set('agazatEgyeb'), max: ROVID_MAX }} />
           <SzovegMezo id={mezoId(B, 'topVallalatok')} name="topVallalatok" cimke={C.topVallalatok.cimke} sugo={C.topVallalatok.sugo} value={e.topVallalatok} onChange={set('topVallalatok')}
             max={ROVID_MAX * TOP_VALLALAT_MAX + TOP_VALLALAT_MAX} sorok={10} errors={errors} />

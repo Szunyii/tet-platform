@@ -10,13 +10,6 @@ export const TAGSAGOK = [
 ] as const;
 export type Tagsag = (typeof TAGSAGOK)[number];
 
-export const GAZDASAGI_AGAZATOK = [
-  'Autóipar', 'Gépipar', 'Elektronika és félvezetők', 'Gyógyszeripar', 'Vegyipar', 'Energetika',
-  'Bányászat és nyersanyagok', 'Mezőgazdaság és élelmiszeripar', 'IKT és szoftver',
-  'Pénzügyi szolgáltatások', 'Turizmus', 'Logisztika', 'Építőipar', 'Védelmi ipar', 'Kreatív ipar',
-] as const;
-export type GazdasagiAgazat = (typeof GAZDASAGI_AGAZATOK)[number];
-
 export const KFI_PRIORITASOK = [
   'Digitalizáció és MI', 'Zöld átállás és klímasemlegesség', 'Egészség és élettudomány',
   'Ipar 4.0 és gyártás', 'Energiabiztonság', 'Űr', 'Védelem és biztonság', 'Alapkutatási kiválóság',
@@ -25,18 +18,23 @@ export const KFI_PRIORITASOK = [
 ] as const;
 export type KfiPrioritas = (typeof KFI_PRIORITASOK)[number];
 
-/** Kiemelt iparágak és kiemelt ágazatok közös listája; az első kiemelt iparág adja a térkép színét. */
-export const IPARAGAK = [
-  'Mesterséges intelligencia és adatgazdaság', 'Félvezetők és mikroelektronika', 'Kvantumtechnológia',
-  'Biotechnológia és gyógyszeripar', 'Digitális egészségügy', 'Energetika és fenntarthatóság',
-  'Hidrogén és akkumulátor', 'Űripar', 'Mobilitás és autóipar', 'Agrár- és élelmiszertechnológia',
-  'Anyagtudomány', 'IKT és digitalizáció', 'Védelmi technológia', 'Kreatív ipar és média',
+/**
+ * Ágazatok: az Alapadatok „Legfontosabb gazdasági ágazatok", a KFI-blokk „Kiemelt iparágak" és a
+ * vállalati blokk „Kiemelt ágazatok" mezőjének közös listája. Az első kiemelt iparág adja a térkép színét.
+ */
+export const AGAZATOK = [
+  'Mesterséges intelligencia és adatgazdaság', 'IKT és digitalizáció', 'Elektronika és félvezetők',
+  'Kvantumtechnológia', 'Biotechnológia és gyógyszeripar', 'Digitális egészségügy',
+  'Energetika és fenntarthatóság', 'Hidrogén és akkumulátor', 'Űripar', 'Mobilitás és autóipar',
+  'Gépipar', 'Vegyipar', 'Anyagtudomány', 'Agrár- és élelmiszeripar', 'Bányászat és nyersanyagok',
+  'Védelmi ipar', 'Kreatív ipar és média', 'Pénzügyi szolgáltatások', 'Turizmus', 'Logisztika', 'Építőipar',
 ] as const;
-export type Iparag = (typeof IPARAGAK)[number];
+export type Agazat = (typeof AGAZATOK)[number];
 
-export const IPARAG_SZINEK: Record<Iparag, string> = {
+export const AGAZAT_SZINEK: Record<Agazat, string> = {
   'Mesterséges intelligencia és adatgazdaság': '#1f4e9c',
-  'Félvezetők és mikroelektronika': '#b45309',
+  'IKT és digitalizáció': '#2563eb',
+  'Elektronika és félvezetők': '#b45309',
   'Kvantumtechnológia': '#6b46c1',
   'Biotechnológia és gyógyszeripar': '#0f7a68',
   'Digitális egészségügy': '#a8326f',
@@ -44,12 +42,35 @@ export const IPARAG_SZINEK: Record<Iparag, string> = {
   'Hidrogén és akkumulátor': '#0e7490',
   'Űripar': '#334155',
   'Mobilitás és autóipar': '#9a3412',
-  'Agrár- és élelmiszertechnológia': '#8a6d1f',
+  'Gépipar': '#4338ca',
+  'Vegyipar': '#a21caf',
   'Anyagtudomány': '#525c6b',
-  'IKT és digitalizáció': '#2563eb',
-  'Védelmi technológia': '#7f1d1d',
+  'Agrár- és élelmiszeripar': '#8a6d1f',
+  'Bányászat és nyersanyagok': '#6b3f1d',
+  'Védelmi ipar': '#7f1d1d',
   'Kreatív ipar és média': '#be185d',
+  'Pénzügyi szolgáltatások': '#4d7c0f',
+  'Turizmus': '#e11d48',
+  'Logisztika': '#0369a1',
+  'Építőipar': '#78716c',
 };
+
+/**
+ * A 2026-10-12 előtti két lista (gazdasági ágazatok, iparágak) nevei → a közös lista neve. A két
+ * régi listának nem volt közös neve, ezért a tábla mezőtől független. Tartósan marad: a régi
+ * nevet tároló DB (hosting, visszaállított mentés) így migráció nélkül is helyesen olvasódik.
+ */
+export const REGI_AGAZAT_NEVEK: ReadonlyMap<string, Agazat> = new Map<string, Agazat>([
+  ['Autóipar', 'Mobilitás és autóipar'],
+  ['Gyógyszeripar', 'Biotechnológia és gyógyszeripar'],
+  ['Energetika', 'Energetika és fenntarthatóság'],
+  ['Mezőgazdaság és élelmiszeripar', 'Agrár- és élelmiszeripar'],
+  ['IKT és szoftver', 'IKT és digitalizáció'],
+  ['Kreatív ipar', 'Kreatív ipar és média'],
+  ['Félvezetők és mikroelektronika', 'Elektronika és félvezetők'],
+  ['Agrár- és élelmiszertechnológia', 'Agrár- és élelmiszeripar'],
+  ['Védelmi technológia', 'Védelmi ipar'],
+]);
 
 export const ALLAPOTOK = ['friss', 'elavult', 'nincs'] as const;
 export type Allapot = (typeof ALLAPOTOK)[number];
@@ -127,7 +148,7 @@ export interface Alapadatok {
   forras: string;
   tagsagok: Tagsag[];
   tagsagEgyeb: string;
-  agazatok: GazdasagiAgazat[];
+  agazatok: Agazat[];
   agazatEgyeb: string;
 }
 export interface KfiRendszer {
@@ -136,7 +157,7 @@ export interface KfiRendszer {
   strategia: string;
   prioritasok: KfiPrioritas[];
   prioritasEgyeb: string;
-  kiemeltIparagak: Iparag[];
+  kiemeltIparagak: Agazat[];
   iparagEgyeb: string;
   erossegek: string;
   kihivasok: string;
@@ -148,7 +169,7 @@ export interface Intezmenyek {
   infrastrukturak: string;
 }
 export interface Vallalati {
-  kiemeltAgazatok: Iparag[];
+  kiemeltAgazatok: Agazat[];
   agazatEgyeb: string;
   topVallalatok: string[];
   startupok: string;
@@ -206,6 +227,15 @@ export function szurtLista<T extends string>(v: unknown, engedett: readonly T[])
   const eng = engedett as readonly string[];
   return Array.from(new Set(v.filter((x): x is T => typeof x === 'string' && eng.includes(x))));
 }
+/**
+ * A három ágazat-mező listája: a régi neveket a közös lista nevére képezi (`REGI_AGAZAT_NEVEK`),
+ * utána `szurtLista`. A sorrend megmarad (az első kiemelt iparág adja a térkép színét); ha két elem
+ * ugyanarra a névre képződik, az egyszer szerepel, az első előfordulás helyén.
+ */
+export function agazatLista(v: unknown): Agazat[] {
+  if (!Array.isArray(v)) return [];
+  return szurtLista(v.map((x: unknown) => (typeof x === 'string' ? (REGI_AGAZAT_NEVEK.get(x) ?? x) : x)), AGAZATOK);
+}
 function szovegLista(v: unknown, max: number): string[] {
   return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string' && x !== '').slice(0, max) : [];
 }
@@ -221,12 +251,12 @@ const NORMALIZALOK: { [K in BlokkKulcs]: (r: Record<string, unknown>) => ProfilB
     lakossag: szam(r.lakossag), gdp: szam(r.gdp), gdpEgyFore: szam(r.gdpEgyFore),
     gdpNovekedes: szam(r.gdpNovekedes), adatEv: szam(r.adatEv), forras: szoveg(r.forras),
     tagsagok: szurtLista(r.tagsagok, TAGSAGOK), tagsagEgyeb: szoveg(r.tagsagEgyeb),
-    agazatok: szurtLista(r.agazatok, GAZDASAGI_AGAZATOK), agazatEgyeb: szoveg(r.agazatEgyeb),
+    agazatok: agazatLista(r.agazatok), agazatEgyeb: szoveg(r.agazatEgyeb),
   }),
   kfiRendszer: (r) => ({
     teljesitmeny: szoveg(r.teljesitmeny), gerd: szam(r.gerd), strategia: szoveg(r.strategia),
     prioritasok: szurtLista(r.prioritasok, KFI_PRIORITASOK), prioritasEgyeb: szoveg(r.prioritasEgyeb),
-    kiemeltIparagak: szurtLista(r.kiemeltIparagak, IPARAGAK), iparagEgyeb: szoveg(r.iparagEgyeb),
+    kiemeltIparagak: agazatLista(r.kiemeltIparagak), iparagEgyeb: szoveg(r.iparagEgyeb),
     erossegek: szoveg(r.erossegek), kihivasok: szoveg(r.kihivasok),
   }),
   intezmenyek: (r) => ({
@@ -234,7 +264,7 @@ const NORMALIZALOK: { [K in BlokkKulcs]: (r: Record<string, unknown>) => ProfilB
     kutatokozpontok: szoveg(r.kutatokozpontok), infrastrukturak: szoveg(r.infrastrukturak),
   }),
   vallalati: (r) => ({
-    kiemeltAgazatok: szurtLista(r.kiemeltAgazatok, IPARAGAK), agazatEgyeb: szoveg(r.agazatEgyeb),
+    kiemeltAgazatok: agazatLista(r.kiemeltAgazatok), agazatEgyeb: szoveg(r.agazatEgyeb),
     topVallalatok: szovegLista(r.topVallalatok, TOP_VALLALAT_MAX), startupok: szoveg(r.startupok),
     klaszterek: szoveg(r.klaszterek), technologiatranszfer: szoveg(r.technologiatranszfer),
   }),

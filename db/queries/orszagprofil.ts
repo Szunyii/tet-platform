@@ -8,7 +8,7 @@ import { listAttasekOrszagonkent } from './attase-orszag';
 import type { OrszagAttase } from '../../lib/attase-orszag';
 import {
   BLOKK_KULCSOK, normalizalBlokk, profilAllapot,
-  type Alapadatok, type Allapot, type BlokkKulcs, type Iparag, type KfiPrioritas, type ProfilBlokkok,
+  type Agazat, type Alapadatok, type Allapot, type BlokkKulcs, type KfiPrioritas, type ProfilBlokkok,
 } from '../../lib/orszagprofil-szotar';
 
 export interface Profil {
@@ -90,7 +90,7 @@ export interface TerkepOrszag {
   attasek: OrszagAttase[];
   ev: number | null;
   allapot: Allapot;
-  iparagak: Iparag[];
+  iparagak: Agazat[];
   /** K+F ráfordítás a GDP %-ában (KFI-blokk), ha a blokk mentett. */
   gerd: number | null;
   /** KFI-prioritások (KFI-blokk) az összehasonlító táblához; nem mentett blokknál üres. */

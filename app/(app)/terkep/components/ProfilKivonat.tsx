@@ -4,7 +4,7 @@ import { Check, Plus, X } from 'lucide-react';
 import Link from 'next/link';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { AllapotBadge } from '../../../../components/orszagprofil/AllapotBadge';
-import { IparagBadge } from '../../../../components/orszagprofil/IparagBadge';
+import { AgazatBadge } from '../../../../components/orszagprofil/AgazatBadge';
 import { SzerkesztesGomb } from '../../../../components/orszagprofil/SzerkesztesGomb';
 import { Badge } from '../../../../components/ui/badge';
 import { Button, buttonVariants } from '../../../../components/ui/button';
@@ -125,7 +125,7 @@ export function ProfilKivonat({
             {o.iparagak.length > 0 && (
               <div>
                 <p className="mb-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">Kiemelt iparágak</p>
-                <div className="flex flex-wrap gap-1.5">{o.iparagak.map((i) => <IparagBadge key={i} iparag={i} />)}</div>
+                <div className="flex flex-wrap gap-1.5">{o.iparagak.map((i) => <AgazatBadge key={i} agazat={i} />)}</div>
               </div>
             )}
             {o.osszegzes && (

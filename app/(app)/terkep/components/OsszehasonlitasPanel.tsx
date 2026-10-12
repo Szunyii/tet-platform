@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { NativeSelect } from '../../../../components/form/NativeSelect';
 import { AllapotBadge } from '../../../../components/orszagprofil/AllapotBadge';
-import { IparagBadge } from '../../../../components/orszagprofil/IparagBadge';
+import { AgazatBadge } from '../../../../components/orszagprofil/AgazatBadge';
 import { Button } from '../../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../components/ui/table';
@@ -112,7 +112,7 @@ export function OsszehasonlitasPanel({ orszagok, jeloltek, mutato, onKivalaszt, 
               {(o) => <AllapotBadge allapot={o.allapot} ev={o.ev} />}
             </Sor>
             <Sor cimke="Kiemelt iparágak" orszagok={orszagok} plusz={plusz}>
-              {(o) => (o.iparagak.length ? <span className="flex flex-wrap gap-1">{o.iparagak.map((i) => <IparagBadge key={i} iparag={i} />)}</span> : '–')}
+              {(o) => (o.iparagak.length ? <span className="flex flex-wrap gap-1">{o.iparagak.map((i) => <AgazatBadge key={i} agazat={i} />)}</span> : '–')}
             </Sor>
             {SZAM_MUTATOK.map((m) => {
               // Félkövér csak valódi összevetésnél: legalább két különböző értéknél (egyetlen érték vagy döntetlen nem „legnagyobb”).

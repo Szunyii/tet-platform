@@ -6,8 +6,8 @@
  */
 import { mezo, type MezoHibak } from './urlap';
 import {
-  EV_MIN, GAZDASAGI_AGAZATOK, IPARAGAK, KFI_PRIORITASOK, MEZO_CIMKEK, OSSZEGZES_MAX, RENDEZVENY_MAX,
-  ROVID_MAX, SZOVEG_MAX, TAGSAGOK, TOP_VALLALAT_MAX, rendezvenyTipus, szurtLista,
+  EV_MIN, KFI_PRIORITASOK, MEZO_CIMKEK, OSSZEGZES_MAX, RENDEZVENY_MAX,
+  ROVID_MAX, SZOVEG_MAX, TAGSAGOK, TOP_VALLALAT_MAX, agazatLista, rendezvenyTipus, szurtLista,
   type BlokkKulcs, type ProfilBlokkok, type Rendezveny,
 } from './orszagprofil-szotar';
 
@@ -101,7 +101,7 @@ const VALIDALOK: { [K in BlokkKulcs]: (fd: FormData, errors: MezoHibak, aktualis
       forras: szoveg(fd, b, 'forras', ROVID_MAX, errors),
       tagsagok: szurtLista(fd.getAll('tagsagok'), TAGSAGOK),
       tagsagEgyeb: szoveg(fd, b, 'tagsagEgyeb', ROVID_MAX, errors),
-      agazatok: szurtLista(fd.getAll('agazatok'), GAZDASAGI_AGAZATOK),
+      agazatok: agazatLista(fd.getAll('agazatok')),
       agazatEgyeb: szoveg(fd, b, 'agazatEgyeb', ROVID_MAX, errors),
     };
   },
@@ -113,7 +113,7 @@ const VALIDALOK: { [K in BlokkKulcs]: (fd: FormData, errors: MezoHibak, aktualis
       strategia: szoveg(fd, b, 'strategia', ROVID_MAX, errors),
       prioritasok: szurtLista(fd.getAll('prioritasok'), KFI_PRIORITASOK),
       prioritasEgyeb: szoveg(fd, b, 'prioritasEgyeb', ROVID_MAX, errors),
-      kiemeltIparagak: szurtLista(fd.getAll('kiemeltIparagak'), IPARAGAK),
+      kiemeltIparagak: agazatLista(fd.getAll('kiemeltIparagak')),
       iparagEgyeb: szoveg(fd, b, 'iparagEgyeb', ROVID_MAX, errors),
       erossegek: szoveg(fd, b, 'erossegek', SZOVEG_MAX, errors),
       kihivasok: szoveg(fd, b, 'kihivasok', SZOVEG_MAX, errors),
@@ -131,7 +131,7 @@ const VALIDALOK: { [K in BlokkKulcs]: (fd: FormData, errors: MezoHibak, aktualis
   vallalati: (fd, errors) => {
     const b = 'vallalati';
     return {
-      kiemeltAgazatok: szurtLista(fd.getAll('kiemeltAgazatok'), IPARAGAK),
+      kiemeltAgazatok: agazatLista(fd.getAll('kiemeltAgazatok')),
       agazatEgyeb: szoveg(fd, b, 'agazatEgyeb', ROVID_MAX, errors),
       topVallalatok: topVallalatokSorok(fd, errors),
       startupok: szoveg(fd, b, 'startupok', SZOVEG_MAX, errors),

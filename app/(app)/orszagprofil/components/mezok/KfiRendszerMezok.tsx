@@ -4,7 +4,7 @@ import { CimkeValaszto } from '../../../../../components/form/CimkeValaszto';
 import { RovidMezo, SzovegMezo } from '../../../../../components/form/Mezo';
 import { SzamMezo } from '../../../../../components/form/SzamMezo';
 import {
-  IPARAGAK, KFI_PRIORITASOK, MEZO_CIMKEK, ROVID_MAX, SZAM_MAX_HOSSZ, SZOVEG_MAX, type KfiRendszer,
+  AGAZATOK, KFI_PRIORITASOK, MEZO_CIMKEK, ROVID_MAX, SZAM_MAX_HOSSZ, SZOVEG_MAX, type KfiRendszer,
 } from '../../../../../lib/orszagprofil-szotar';
 import { BlokkForm, mezoId, szamStr, useBlokkAllapot, type BlokkMezokProps } from '../BlokkForm';
 
@@ -26,7 +26,7 @@ export function KfiRendszerMezok({
           </div>
           <CimkeValaszto id={mezoId(B, 'prioritasok')} name="prioritasok" cimke={C.prioritasok.cimke} items={KFI_PRIORITASOK} value={e.prioritasok} onChange={set('prioritasok')} errors={errors}
             egyeb={{ id: mezoId(B, 'prioritasEgyeb'), name: 'prioritasEgyeb', cimke: C.prioritasEgyeb.cimke, value: e.prioritasEgyeb, onChange: set('prioritasEgyeb'), max: ROVID_MAX }} />
-          <CimkeValaszto id={mezoId(B, 'kiemeltIparagak')} name="kiemeltIparagak" cimke={C.kiemeltIparagak.cimke} sugo={C.kiemeltIparagak.sugo} items={IPARAGAK} value={e.kiemeltIparagak} onChange={set('kiemeltIparagak')} errors={errors}
+          <CimkeValaszto id={mezoId(B, 'kiemeltIparagak')} name="kiemeltIparagak" cimke={C.kiemeltIparagak.cimke} sugo={C.kiemeltIparagak.sugo} items={AGAZATOK} value={e.kiemeltIparagak} onChange={set('kiemeltIparagak')} errors={errors}
             egyeb={{ id: mezoId(B, 'iparagEgyeb'), name: 'iparagEgyeb', cimke: C.iparagEgyeb.cimke, value: e.iparagEgyeb, onChange: set('iparagEgyeb'), max: ROVID_MAX }} />
           <SzovegMezo id={mezoId(B, 'erossegek')} name="erossegek" cimke={C.erossegek.cimke} value={e.erossegek} onChange={set('erossegek')} max={SZOVEG_MAX} errors={errors} />
           <SzovegMezo id={mezoId(B, 'kihivasok')} name="kihivasok" cimke={C.kihivasok.cimke} value={e.kihivasok} onChange={set('kihivasok')} max={SZOVEG_MAX} errors={errors} />

@@ -11,7 +11,7 @@ import {
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { elsoVezetettKod } from '../../../../lib/attase-orszag';
 import { canEditProfil } from '../../../../lib/orszagprofil-jog';
-import { IPARAGAK } from '../../../../lib/orszagprofil-szotar';
+import { AGAZATOK } from '../../../../lib/orszagprofil-szotar';
 import {
   csoportok as szamolCsoportok, jeloltek, KATEGORIA_MUTATOK, MUTATOK, rangsor as szamolRangsor, szures, SZAM_MUTATOK,
   tartomany as szamolTartomany,
@@ -24,7 +24,7 @@ import { VilagTerkep } from './VilagTerkep';
 /** A „Mind" opció értéke: a Base UI Select üres stringet nem tud választható értékként kezelni. */
 const MIND = '__mind';
 const MUTATO_ITEMS: Record<string, string> = Object.fromEntries(MUTATOK.map((m) => [m.kulcs, m.cimke]));
-const IPARAG_ITEMS: Record<string, string> = { [MIND]: 'Mind', ...Object.fromEntries(IPARAGAK.map((i) => [i, i])) };
+const IPARAG_ITEMS: Record<string, string> = { [MIND]: 'Mind', ...Object.fromEntries(AGAZATOK.map((i) => [i, i])) };
 
 export function TerkepNezet({
   adatok, ev, most, kezdoKod, valasztEvAction,
@@ -92,7 +92,7 @@ export function TerkepNezet({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={MIND}>Mind</SelectItem>
-                  {IPARAGAK.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
+                  {AGAZATOK.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

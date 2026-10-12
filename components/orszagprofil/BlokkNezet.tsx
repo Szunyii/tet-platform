@@ -2,10 +2,10 @@ import type { ReactNode } from 'react';
 import { Badge } from '../ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import {
-  blokkCim, MEZO_CIMKEK, rendezvenyTipusCimke, type BlokkKulcs, type Iparag, type ProfilBlokkok,
+  blokkCim, MEZO_CIMKEK, rendezvenyTipusCimke, type Agazat, type BlokkKulcs, type ProfilBlokkok,
 } from '../../lib/orszagprofil-szotar';
 import { formatSzam } from '../../lib/szam';
-import { IparagBadge } from './IparagBadge';
+import { AgazatBadge } from './AgazatBadge';
 
 function Ures() {
   return <span className="text-muted-foreground">–</span>;
@@ -31,12 +31,12 @@ function Cimkek({ lista, egyeb }: { lista: readonly string[]; egyeb?: string }) 
     </span>
   );
 }
-/** Iparág-jelvények színnel (KFI kiemelt iparágak, vállalati kiemelt ágazatok) + „egyéb" szabadszöveg. */
-function Iparagak({ lista, egyeb }: { lista: readonly Iparag[]; egyeb: string }) {
+/** Ágazat-jelvények színnel (Alapadatok ágazatai, KFI kiemelt iparágak, vállalati kiemelt ágazatok) + „egyéb" szabadszöveg. */
+function Agazatok({ lista, egyeb }: { lista: readonly Agazat[]; egyeb: string }) {
   if (lista.length === 0 && !egyeb) return <Ures />;
   return (
     <span className="flex flex-wrap gap-1.5">
-      {lista.map((i) => <IparagBadge key={i} iparag={i} />)}
+      {lista.map((a) => <AgazatBadge key={a} agazat={a} />)}
       {egyeb && <span>{egyeb}</span>}
     </span>
   );
@@ -61,7 +61,7 @@ const NEZETEK: { [K in BlokkKulcs]: (b: ProfilBlokkok[K]) => ReactNode } = {
         <Sor cimke={C.adatEv.cimke}>{b.adatEv ?? '–'}</Sor>
         <Sor cimke={C.forras.cimke}><Szoveg v={b.forras} /></Sor>
         <Sor cimke={C.tagsagok.cimke}><Cimkek lista={b.tagsagok} egyeb={b.tagsagEgyeb} /></Sor>
-        <Sor cimke={C.agazatok.cimke}><Cimkek lista={b.agazatok} egyeb={b.agazatEgyeb} /></Sor>
+        <Sor cimke={C.agazatok.cimke}><Agazatok lista={b.agazatok} egyeb={b.agazatEgyeb} /></Sor>
       </dl>
     );
   },
@@ -73,7 +73,7 @@ const NEZETEK: { [K in BlokkKulcs]: (b: ProfilBlokkok[K]) => ReactNode } = {
         <Sor cimke={C.gerd.cimke}>{formatSzam(b.gerd, ' %')}</Sor>
         <Sor cimke={C.strategia.cimke}><Szoveg v={b.strategia} /></Sor>
         <Sor cimke={C.prioritasok.cimke}><Cimkek lista={b.prioritasok} egyeb={b.prioritasEgyeb} /></Sor>
-        <Sor cimke={C.kiemeltIparagak.cimke}><Iparagak lista={b.kiemeltIparagak} egyeb={b.iparagEgyeb} /></Sor>
+        <Sor cimke={C.kiemeltIparagak.cimke}><Agazatok lista={b.kiemeltIparagak} egyeb={b.iparagEgyeb} /></Sor>
         <Sor cimke={C.erossegek.cimke}><Szoveg v={b.erossegek} /></Sor>
         <Sor cimke={C.kihivasok.cimke}><Szoveg v={b.kihivasok} /></Sor>
       </dl>
@@ -93,7 +93,7 @@ const NEZETEK: { [K in BlokkKulcs]: (b: ProfilBlokkok[K]) => ReactNode } = {
     const C = MEZO_CIMKEK.vallalati;
     return (
       <dl className="flex flex-col gap-3">
-        <Sor cimke={C.kiemeltAgazatok.cimke}><Iparagak lista={b.kiemeltAgazatok} egyeb={b.agazatEgyeb} /></Sor>
+        <Sor cimke={C.kiemeltAgazatok.cimke}><Agazatok lista={b.kiemeltAgazatok} egyeb={b.agazatEgyeb} /></Sor>
         <Sor cimke={C.topVallalatok.cimke}>
           {b.topVallalatok.length
             ? <ol className="list-decimal pl-5">{b.topVallalatok.map((v, i) => <li key={i}>{v}</li>)}</ol>

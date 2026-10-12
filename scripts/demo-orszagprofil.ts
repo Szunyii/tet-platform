@@ -39,7 +39,7 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { orszagByKod } from '../lib/orszagok';
 import {
-  BLOKK_KULCSOK, GAZDASAGI_AGAZATOK, IPARAGAK, KFI_PRIORITASOK, MEZO_CIMKEK, RENDEZVENY_MAX, RENDEZVENY_TIPUSOK,
+  AGAZATOK, BLOKK_KULCSOK, KFI_PRIORITASOK, MEZO_CIMKEK, RENDEZVENY_MAX, RENDEZVENY_TIPUSOK,
   TAGSAGOK, isBlokkKulcs, type BlokkKulcs, type ProfilBlokkok,
 } from '../lib/orszagprofil-szotar';
 import { validalBlokk } from '../lib/orszagprofil-validacio';
@@ -51,11 +51,15 @@ const EV = 2026;
 const MAPPA = resolve(process.cwd(), 'scripts/demo-orszagprofil/orszagok');
 const ORSZAGFAJL = /^[a-z]{2}\.ts$/;
 
-/** Listás mezők engedett opciói blokkonként: a validátor a szótáron kívülit némán eldobná. A kulcsok típusosak. */
+/**
+ * Listás mezők engedett opciói blokkonként: a validátor a szótáron kívülit némán eldobná. A kulcsok típusosak.
+ * A három ágazat-mezőnél a régi név (`REGI_AGAZAT_NEVEK`) is hiba: a validátor megfeleltetné, de az
+ * országfájlokban csak a közös lista nevei állhatnak.
+ */
 const LISTAK: { [K in BlokkKulcs]?: Partial<Record<keyof ProfilBlokkok[K], readonly string[]>> } = {
-  alapadatok: { tagsagok: TAGSAGOK, agazatok: GAZDASAGI_AGAZATOK },
-  kfiRendszer: { prioritasok: KFI_PRIORITASOK, kiemeltIparagak: IPARAGAK },
-  vallalati: { kiemeltAgazatok: IPARAGAK },
+  alapadatok: { tagsagok: TAGSAGOK, agazatok: AGAZATOK },
+  kfiRendszer: { prioritasok: KFI_PRIORITASOK, kiemeltIparagak: AGAZATOK },
+  vallalati: { kiemeltAgazatok: AGAZATOK },
 };
 /** Számmezők blokkonként: magyar formátum kell, a validátor az „1.234”-et némán 1234-nek venné. A kulcsok típusosak. */
 const SZAM_MEZOK: { [K in BlokkKulcs]?: readonly (keyof ProfilBlokkok[K])[] } = {
