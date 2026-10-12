@@ -12,7 +12,7 @@
  *   https://data.uis.unesco.org ; https://data.worldbank.org/indicator/GB.XPD.RSDV.GD.ZS?locations=BD
  * - Stratégia és hazai programok (National Science and Technology Policy 2011, National Biotechnology Policy 2012, kutatási
  *   támogatási és ösztöndíj-szabályzatok): a Tudományos és Technológiai Minisztérium szabályzatlistája – https://most.gov.bd/pages/policies
- * - Rooppuri atomerőmű (2 × VVER-1200, Roszatom/AtomStroyExport; a 2. blokk építés alatt) és a 3 MW-os TRIGA kutatóreaktor (1986 óta) –
+ * - Rooppuri atomerőmű (2 × VVER-1200, Rosatom/AtomStroyExport; a 2. blokk építés alatt) és a 3 MW-os TRIGA kutatóreaktor (1986 óta) –
  *   https://world-nuclear.org/information-library/country-profiles/countries-a-f/bangladesh ; az 1. blokk üzemeltetési engedélye
  *   (2026. április 16.) – https://www.world-nuclear-news.org/articles/operating-licence-issued-for-first-bangladesh-nuclear-power-unit ;
  *   a fűtőelem-betöltés kezdete (2026. április 28., a BAEC szerint az 1. blokk „fizikai indítása”) –
@@ -95,7 +95,7 @@ const orszag: DemoOrszag = {
         + 'Bangladesh Rice Research Institute (BRRI) és Bangladesh Agricultural Research Institute (BARI); a BCSIR laboratóriumai; '
         + 'National Institute of Biotechnology; a BAEC atomenergia-kutató intézetei.',
       infrastrukturak:
-        'A Rooppuri atomerőmű (két VVER-1200 blokk, egyenként 1200 MW, a Roszatom fővállalkozásában; az 1. blokk 2026 áprilisában üzemeltetési '
+        'A Rooppuri atomerőmű (két VVER-1200 blokk, egyenként 1200 MW, a Rosatom fővállalkozásában; az 1. blokk 2026 áprilisában üzemeltetési '
         + 'engedélyt kapott, a fűtőelemek betöltése 2026. április 28-án kezdődött és májusban befejeződött, 2026. október 8-án a nukleáris hatóság (BAERA) '
         + 'engedélyezte az első kritikusság elérését, a hálózatra kapcsolást 2026 végére tervezik; a 2. blokk épül); a BAEC savari kutatóközpontjának '
         + '3 MW-os TRIGA kutatóreaktora (1986 óta); a Bangladesh Hi-Tech Park Authority technológiai parkjai.',
@@ -116,7 +116,7 @@ const orszag: DemoOrszag = {
       euMultilateralis:
         'Horizont Európa: automatikusan EU-finanszírozásra jogosult ország (EC-lista, 2026). A Nemzetközösség, a SAARC, a BIMSTEC (titkársága Dakkában), '
         + 'a D-8 és az Iszlám Együttműködési Szervezet tagja.',
-      partnerorszagok: 'Oroszország – a Rooppuri atomerőművet a Roszatom építi.',
+      partnerorszagok: 'Oroszország – a Rooppuri atomerőművet a Rosatom építi.',
       egyezmeny: 'Magyar–bangladesi műszaki-tudományos együttműködési egyezmény (1973)',
       ketoldalu:
         'A 2016-os vízügyi együttműködési megállapodás közös munkacsoportja 2020 februárjában Dakkában ülésezett; 2022 júniusában Budapesten '

@@ -40,7 +40,9 @@
  * - In-Q-Tel (a CIA által 1999-ben alapított független nonprofit stratégiai befektető) – https://www.iqt.org/about-iqt
  * - EU–USA S&T-megállapodás és Horizont Európa-részvétel – https://research-and-innovation.ec.europa.eu/news/all-research-and-innovation-news/council-approves-renewal-eu-us-science-technology-agreement-2023-10-05_en
  * - Technology Prosperity Deal-ek (UK: 2025. szeptember; Japán, Korea: 2025. október) –
- *   https://www.whitehouse.gov/releases/2025/10/the-united-states-signs-technology-prosperity-deals-with-japan-and-korea
+ *   https://www.whitehouse.gov/releases/2025/10/the-united-states-signs-technology-prosperity-deals-with-japan-and-korea ;
+ *   a brit megállapodás végrehajtásának felfüggesztése (2025. december; hozzáférés: 2026-10-12) –
+ *   https://www.freemalaysiatoday.com/category/world/2025/12/17/uk-looks-to-restart-cooperation-after-us-suspends-tech-deal
  * - Kilépések: WHO (HHS) – https://www.hhs.gov/press-room/fact-sheet-us-withdrawal-from-the-world-health-organization.html ;
  *   Párizsi Megállapodás – https://eelp.law.harvard.edu/tracker/paris-climate-agreement ;
  *   66 szervezet (2026. január 7-i memorandum, 91 FR 2281–2284; 35 nem ENSZ- és 31 ENSZ-szervezet, köztük az IPCC és az UNFCCC) –
@@ -152,7 +154,7 @@ const orszag: DemoOrszag = {
         'Johnson & Johnson', 'Intel', 'Merck & Co.', 'NVIDIA', 'Eli Lilly',
       ].join('\n'),
       startupok:
-        'A GII 2025 szerint az egyszarvúak értékeltsége a GDP 8,45%-a, a késői fázisú kockázatitőke-ügyletek száma is világelső. '
+        'A GII 2025 szerint az unikornisok értékeltsége a GDP 8,45%-a, a késői fázisú kockázatitőke-ügyletek száma is világelső. '
         + 'Az SBIR/STTR szakaszos, vissza nem térítendő KKV-támogatása évente kb. 4 milliárd USD, kb. 4000 vállalkozásnak (2026 áprilisában 2031-ig újraengedélyezve). '
         + 'Védelmi és biztonsági célú technológiaszerzés és befektetés: Defense Innovation Unit (a Védelmi Minisztérium egysége), In-Q-Tel (a CIA által 1999-ben alapított független nonprofit befektető).',
       klaszterek:
@@ -190,17 +192,17 @@ const orszag: DemoOrszag = {
         + '2026 januárjában kilépett a WHO-ból és a Párizsi Megállapodásból; egy 2026. januári elnöki memorandum 66 nemzetközi szervezetből (köztük az UNFCCC-ből és az IPCC-ből) rendelte el a kilépést; '
         + 'az UNESCO-ból 2026. december 31-i hatállyal lép ki.',
       partnerorszagok:
-        'Egyesült Királyság, Japán és Dél-Korea (Technology Prosperity Deal-ek, 2025; többek között MI, kvantum, nukleáris és fúziós energia, 6G), Kanada és Mexikó (USMCA), Ausztrália (AUKUS), EU-tagállamok.',
+        'Egyesült Királyság, Japán és Dél-Korea (Technology Prosperity Deal-ek, 2025; többek között MI, kvantum, nukleáris és fúziós energia, 6G; a brit megállapodás végrehajtását az USA 2025 decemberében felfüggesztette), Kanada és Mexikó (USMCA), Ausztrália (AUKUS), EU-tagállamok.',
       egyezmeny: 'Magyar–amerikai tudományos és technológiai együttműködési megállapodás (Budapest, 2010; 2010. évi XXX. törvény): vegyes bizottság, tízévente automatikus meghosszabbítás',
       ketoldalu:
-        'Az USA Európán kívül Magyarország legfontosabb exportpartnere és egyik legnagyobb befektetője; 2025-ben indult az MIT–Hungary HUN-REN Seed Fund (2026-ban három közös projekt nyert). '
+        'Az USA a 2024/25-ös New York-i TéT-beszámoló szerint Európán kívül Magyarország legfontosabb exportpartnere és egyik legnagyobb befektetője; 2025-ben indult az MIT–Hungary HUN-REN Seed Fund (2026-ban három közös projekt nyert). '
         + 'Nukleáris energia: szándéknyilatkozat (2025. november; kis moduláris reaktorok, kiégett üzemanyag tárolása), Westinghouse–MVM fűtőelem-szerződés (Paks), '
-        + 'kormányközi nukleáris megállapodás (Budapest, 2026. február 16.). Az akkori New York-i TéT-attasé, Novák Tamás szervezte a John von Neumann Series rendezvénysorozatot (2023–2024), '
+        + 'kormányközi nukleáris megállapodás (Budapest, 2026. február 16.). Az akkori New York-i TéT-attasé szervezte a John von Neumann Series rendezvénysorozatot (2023–2024), '
         + 'és társalapítója volt a Roosevelt House Science-to-Diplomacy Forumnak (2025). '
         + 'A magyar diaszpóra kiemelkedő alakja Karikó Katalin (Pennsylvaniai Egyetem, Nobel-díj, 2023).',
       mobilitas:
         'Fulbright-program (Magyar–Amerikai Oktatási Csereprogram Bizottság, 2007-es kormányközi egyezmény) és kiegészítő Fulbright–MTA ösztöndíj (2026–27: 5 millió Ft keret). '
-        + '2023/24-ben 758 magyar hallgató tanult az USA-ban; a Diaszpóra Felsőoktatási Ösztöndíjprogram pályázóinak jelentős része az USA-ból érkezett. Az USA nem Stipendium Hungaricum-partnerország.',
+        + '2023/24-ben 758 magyar hallgató tanult az USA-ban; a 2024-es San Franciscó-i TéT-beszámoló szerint a Diaszpóra Felsőoktatási Ösztöndíjprogram pályázóinak jelentős része az USA-ból érkezett. Az USA nem Stipendium Hungaricum-partnerország.',
     },
     magyarErtekeles: {
       osszegzes:

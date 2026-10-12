@@ -204,10 +204,10 @@ const orszag: DemoOrszag = {
         'Magyar–indiai TéT-vegyesbizottság (utolsó ismert ülés: 11., online, 2020); NKFIH–DST közös felhívások (pl. 2019-2.1.13-TÉT_IN, '
         + '300 millió Ft); INSA–MTA akadémiai csere. Intézményi megállapodások (2021–22): HUN-REN Wigner FK–IIT Indore, Széchenyi István '
         + 'Egyetem–IIT Indore, NKE–IIT Kanpur, NKE–Marwadi University; vízügyi MoU (2016), Fővárosi Vízművek–WAPCOS (2019). '
-        + 'Indiai befektetések: mintegy 3,3 milliárd USD (Apollo Tyres, TCS, Sun Pharma).',
+        + 'Indiai befektetések: mintegy 3,3 milliárd USD (Apollo Tyres, TCS, Sun Pharma; indiai külügyminisztérium, 2025).',
       mobilitas:
         'Stipendium Hungaricum: India partnerország (küldő fél: University Grants Commission; főként természet- és élettudományok, informatika, '
-        + 'gazdaságtudomány, mérnöki képzés); a 2022/23-as körben 200 helyre 1924 pályázat érkezett. Az indiai külügyminisztérium szerint '
+        + 'gazdaságtudomány, mérnöki képzés); a 2022/23-as körben 200 helyre 1924 pályázat érkezett. Az indiai külügyminisztérium 2025-ös összefoglalója szerint '
         + 'mintegy 1200 indiai hallgató tanul Magyarországon.',
     },
     magyarErtekeles: {

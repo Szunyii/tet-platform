@@ -4,7 +4,7 @@
  * - Alapadatok: IMF World Economic Outlook, 2025. október (IMF Data, WEO_2025_OCT_VINTAGE adatfolyam) –
  *   https://data.imf.org/Datasets/WEO ; lekérdezés:
  *   https://api.imf.org/external/sdmx/2.1/data/IMF.RES,WEO_2025_OCT_VINTAGE,1.0.0/FRA.NGDPD+NGDPDPC+NGDP_RPCH+LP.A?startPeriod=2025&endPeriod=2025
- *   (GDP 3361,557 Md USD; GDP/fő 48 981,965 USD; reálnövekedés 0,671%; lakosság 68,628 millió – 2025, becslés).
+ *   (GDP 3361,557 Mrd USD; GDP/fő 48 981,965 USD; reálnövekedés 0,671%; lakosság 68,628 millió – 2025, becslés).
  * - Terület: CIA World Factbook (2025. szeptember 26-i állapot; 643 801 km² a tengerentúli régiókkal, a
  *   kontinentális rész 551 500 km²) – https://www.cia.gov/the-world-factbook/countries/france/ (a Factbook
  *   2026-ban megszűnt; archív: web.archive.org, 2025-10-25-i page-data.json).
@@ -13,7 +13,7 @@
  * - GERD: OECD MSTI, 2024 (előzetes): 2,18%; BERD 1,44% – https://sdmx.oecd.org/public/rest/data/OECD.STI.STP,DSD_MSTI@DF_MSTI,1.3/FRA.A.G+B.PT_B1GQ..?startPeriod=2014
  *   (UNESCO UIS / Világbank GB.XPD.RSDV.GD.ZS, 2023: 2,18% – https://data.worldbank.org/indicator/GB.XPD.RSDV.GD.ZS?locations=FR).
  * - Stratégia: LPR (2020-1674. sz. törvény, 2021–2030, 3%-os cél) – https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000042738027 ;
- *   France 2030 (54 Md EUR, 2021; az ANR kb. 12 Md EUR-t kezel; PEPR 3 Md EUR) – https://anr.fr/fr/france-2030/france-2030/ ,
+ *   France 2030 (54 Mrd EUR, 2021; az ANR kb. 12 Mrd EUR-t kezel; PEPR 3 Mrd EUR) – https://anr.fr/fr/france-2030/france-2030/ ,
  *   https://anr.fr/fr/france-2030/programmes-et-equipements-prioritaires-de-recherche-pepr/ ; a tíz célkitűzés –
  *   https://www.elysee.fr/emmanuel-macron/france2030 [2026-10-12] ; az SGPI szerepe (irányítás a miniszterelnök megbízásából) –
  *   https://www.banquedesterritoires.fr/france-2030 [2026-10-12]
@@ -76,7 +76,7 @@ const orszag: DemoOrszag = {
         + 'a párizsi tudományos-technológiai klaszter a világ 12. legnagyobbja. A K+F-ráfordítás 2024-ben a GDP 2,18%-a (OECD MSTI, előzetes adat): egy évtizede 2,2% körül '
         + 'stagnál; a K+F kétharmadát vállalatok végzik.',
       gerd: '2,18',
-      strategia: 'Kutatási programozási törvény (LPR, 2021–2030); France 2030 beruházási terv (54 Md EUR, 2021-től)',
+      strategia: 'Kutatási programozási törvény (LPR, 2021–2030); France 2030 beruházási terv (54 Mrd EUR, 2021-től)',
       prioritasok: [
         'Zöld átállás és klímasemlegesség', 'Energiabiztonság', 'Digitalizáció és MI', 'Egészség és élettudomány', 'Űr',
         'Technológiai szuverenitás', 'Ipar 4.0 és gyártás', 'Alapkutatási kiválóság',
@@ -124,8 +124,8 @@ const orszag: DemoOrszag = {
         'TotalEnergies', 'Air Liquide',
       ].join('\n'),
       startupok:
-        'A GII 2025 szerint a legértékesebb unikornisok a Doctolib, a Mistral AI és a Back Market; a Mistral AI 2025 szeptemberében 1,7 Md EUR-t vont be '
-        + '11,7 Md EUR-s értékeléssel (az ASML vezetésével). A French Tech Next40/120 (2019 óta) a scale-upokat támogatja; a párizsi Station F '
+        'A GII 2025 szerint a legértékesebb unikornisok a Doctolib, a Mistral AI és a Back Market; a Mistral AI 2025 szeptemberében 1,7 Mrd EUR-t vont be '
+        + '11,7 Mrd EUR-s értékeléssel (az ASML vezetésével). A French Tech Next40/120 (2019 óta) a scale-upokat támogatja; a párizsi Station F '
         + 'a világ legnagyobb startup-campusa.',
       klaszterek:
         'Párizs és Paris-Saclay, Lyon (vegyipar), Grenoble (mikroelektronika: CEA-Leti, STMicroelectronics, Soitec), Toulouse (repülőgép- és űripar), '
@@ -136,10 +136,10 @@ const orszag: DemoOrszag = {
     },
     programok: {
       palyazatok:
-        'ANR általános (AAPG) és tematikus felhívások; France 2030: prioritási kutatási programok és infrastruktúrák (PEPR, 3 Md EUR); '
+        'ANR általános (AAPG) és tematikus felhívások; France 2030: prioritási kutatási programok és infrastruktúrák (PEPR, 3 Mrd EUR); '
         + 'a Bpifrance innovációs versenyei (i-Nov, i-Lab, i-PhD); ERC- és MSCA-pályázatok.',
       tamogatasiProgramok:
-        'France 2030 (közel 12 Md EUR-t az ANR kezel), amely a korábbi beruházási programok (PIA 1–4) kiválósági '
+        'France 2030 (közel 12 Mrd EUR-t az ANR kezel), amely a korábbi beruházási programok (PIA 1–4) kiválósági '
         + 'kezdeményezéseit (IdEx, LabEx) is továbbviszi; nemzeti gyorsítási stratégiák (pl. MI, kvantum, hidrogén).',
       finanszirozasiEszkozok:
         'Kutatási adójóváírás (CIR): a K+F-kiadások 30%-a 100 M EUR-ig, felette 5%; fiatal innovatív vállalkozás (JEI) státusz munkáltatói '

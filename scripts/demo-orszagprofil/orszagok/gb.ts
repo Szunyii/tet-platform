@@ -185,7 +185,7 @@ const orszag: DemoOrszag = {
       ketoldalu:
         'Az 1987-es egyezmény az akadémiák, kutatóintézetek és egyetemek közvetlen együttműködését és közös K+F-programot irányoz elő; az MTA a Skót Királyi '
         + 'Társasággal (RSE) akadémiai mobilitást támogat (2026). A brit kormány szerint több mint 900 brit cég működik Magyarországon (2023). '
-        + 'A brit Science and Technology Network Ausztriában és Németországban jelen van, Magyarországon nem.',
+        + 'A brit Science and Technology Network Ausztriában és Németországban jelen van, Magyarországon nem (2026).',
       mobilitas:
         'Az Egyesült Királyság a 2027/28-as tanévtől újra részt vesz az Erasmus+ programban (megállapodás: 2025. december; a jogi szöveg aláírása: 2026. április); '
         + 'a Horizont Európában a brit szervezetek 2024 óta ismét teljes jogú, uniós finanszírozású résztvevők (pl. Marie Skłodowska-Curie); Chevening-ösztöndíj '

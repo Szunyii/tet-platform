@@ -4,7 +4,7 @@
  * - Alapadatok: IMF World Economic Outlook, 2025. október (IMF Data, WEO_2025_OCT_VINTAGE adatfolyam) –
  *   https://data.imf.org/Datasets/WEO ; lekérdezés:
  *   https://api.imf.org/external/sdmx/2.1/data/IMF.RES,WEO_2025_OCT_VINTAGE,1.0.0/MRT.NGDPD+NGDPDPC+NGDP_RPCH+LP.A?startPeriod=2025&endPeriod=2025
- *   (GDP 11,953 Md USD; GDP/fő 2582,099 USD; reálnövekedés 3,953%; lakosság 4,629 millió – 2025, becslés).
+ *   (GDP 11,953 Mrd USD; GDP/fő 2582,099 USD; reálnövekedés 3,953%; lakosság 4,629 millió – 2025, becslés).
  * - Terület: CIA World Factbook (2025. szeptember 17-i állapot: 1 030 700 km²) –
  *   https://www.cia.gov/the-world-factbook/countries/mauritania/ (a Factbook 2026-ban megszűnt; archív: web.archive.org,
  *   2025-11-20-i page-data.json); Világbank AG.SRF.TOTL.K2 ugyanennyi.
@@ -33,11 +33,11 @@
  *   https://rabat.mfa.gov.hu/hu/kapcsolat ; a Magyarországra kijelölt, berlini székhelyű mauritániai nagykövet kinevezéséhez adott
  *   hozzájárulás (276/2025. (X. 30.) KE határozat) – https://njt.jog.gov.hu/jogszabaly/2025-276-30-76 ;
  *   Stipendium Hungaricum: a 281/2019. (XI. 25.) Korm. rendelet partnerlistáján szerepel (40.) – https://njt.jog.gov.hu/jogszabaly/2019-281-20-22 ,
- *   de a program partnerországai között nem – https://stipendiumhungaricum.hu/partners/ ; a Nemzeti Jogszabálytárban nincs kétoldalú
- *   magyar–mauritániai szerződés (cím szerinti keresés, 2026-10-09).
+ *   de a program partnerországai között nem – https://stipendiumhungaricum.hu/partners/ ; a Nemzeti Jogszabálytár címkeresése (2026-10-09)
+ *   nem ad kétoldalú magyar–mauritániai szerződést.
  * Kimaradt blokkok és mezők: a Programok és a Rendezvények blokk (nincs ellenőrizhető tartalom); a kfiRendszer blokk stratégia,
- * prioritások, egyéb prioritás, kiemelt iparágak és egyéb iparág mezője (hatályos nemzeti KFI-stratégia és hivatalos KFI-prioritás nem
- * ismert); az intezmenyek.infrastrukturak, a vallalati.klaszterek és vallalati.technologiatranszfer, a kapcsolatok.egyezmeny és
+ * prioritások, egyéb prioritás és egyéb iparág mezője (hatályos nemzeti KFI-stratégia és hivatalos KFI-prioritás nem ismert; a kiemelt
+ * iparágak a vállalati blokk kiemelt ágazatait követik); az intezmenyek.infrastrukturak, a vallalati.klaszterek és vallalati.technologiatranszfer, a kapcsolatok.egyezmeny és
  * a magyarErtekeles.joGyakorlatok mező. A minisztérium honlapjának egyes számszerű kutatási adatai és jogszabálylistája nem
  * ellenőrizhetők, ezért kimaradtak.
  */
@@ -64,9 +64,10 @@ const orszag: DemoOrszag = {
     kfiRendszer: {
       teljesitmeny:
         'A Global Innovation Index 2025-ben a 131. hely a 139 gazdaság között (2024-ben a 126.); a WIPO szerint fejlettségi szintje alatt teljesít, '
-        + 'az alsó-közepes jövedelmű országok átlaga alatt van minden pillérben, a szubszaharai átlagot a humán tőke és kutatás, valamint az '
+        + 'az alsó-közepes jövedelmű országok átlaga alatt van minden pillérben, a szubszaharai átlagot a humántőke és kutatás, valamint az '
         + 'infrastruktúra pillérben meghaladja. A legutóbbi K+F-adat a GDP 0,01%-a (2018, UNESCO UIS).',
       gerd: '0,01',
+      kiemeltIparagak: ['Energetika és fenntarthatóság', 'Agrár- és élelmiszertechnológia'],
       erossegek:
         'A GII 2025 szerint kiemelkedő a beruházási ráta (5. hely), az ifjúsági demográfiai osztalék (8.), a működőtőke-beáramlás (9.) és a természettudományi '
         + 'és mérnöki diplomások aránya (9.). A Szenegállal közös Greater Tortue Ahmeyim LNG-projekt 2025-ben kezdte meg az exportot; '

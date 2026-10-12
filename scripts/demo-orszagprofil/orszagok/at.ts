@@ -183,8 +183,8 @@ const orszag: DemoOrszag = {
       egyezmeny: 'Magyar–osztrák tudományos és műszaki együttműködési egyezmény (Bécs, 1969. május 28.; hatályos 1972. március 12-től)',
       ketoldalu:
         'Az 1969-es egyezmény vegyes bizottságot hozott létre, az 1976-os kulturális és tudományos egyezmény az akadémiákra is kiterjed. Az osztrák reláció '
-        + 'az NKFIH TéT-felhívásaiban legutóbb 2023-ban szerepelt, az OeAD WTZ-partnerei között Magyarország nincs. Az osztrák külügyminisztérium '
-        + 'szerint Ausztria a második legnagyobb befektető Magyarországon; az AVL 2022 novemberében Zalaegerszegen, a ZalaZONE mellett járműfejlesztési központot nyitott.',
+        + 'az NKFIH TéT-felhívásaiban legutóbb 2023-ban szerepelt, az OeAD WTZ-partnerei között Magyarország nincs. Az osztrák külügyminisztérium honlapja '
+        + 'szerint (2026. októberi állapot) Ausztria a második legnagyobb befektető Magyarországon; az AVL 2022 novemberében Zalaegerszegen, a ZalaZONE mellett járműfejlesztési központot nyitott.',
       mobilitas:
         'Aktion Österreich–Ungarn (tudományos csere és nyelvtanulás, ösztöndíjak és projektek; osztrák oldalon az OeAD kezeli); CEEPUS (központi irodája Bécsben); '
         + 'MTA–ÖAW akadémiai mobilitás (2026); '

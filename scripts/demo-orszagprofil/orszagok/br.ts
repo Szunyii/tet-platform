@@ -192,7 +192,7 @@ const orszag: DemoOrszag = {
       mobilitas:
         'Stipendium Hungaricum: a 2025. február 7-én aláírt megállapodással egy kihagyott kör után ismét pályázhatnak brazil hallgatók (jelenleg mesteri és doktori részképzésre); '
         + 'a program indulása óta 985 brazil hallgató iratkozott be, a 2024/25-ös tanévben 230 brazil hallgató tanult Magyarországon (114 SH-, 23 Diaszpóra-ösztöndíjas). '
-        + 'A São Pauló-i TéT-beszámoló szerint Magyarország programország a brazil PEC-G ösztöndíjprogramban; a KKM–USP vendégoktatói megállapodás 2030-ig érvényes.',
+        + 'A 2024/25-ös São Pauló-i TéT-beszámoló szerint Magyarország programország a brazil PEC-G ösztöndíjprogramban; a KKM–USP vendégoktatói megállapodás 2030-ig érvényes.',
     },
     magyarErtekeles: {
       osszegzes:

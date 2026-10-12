@@ -6,7 +6,7 @@
  * - Alapadatok: IMF World Economic Outlook, 2025. október (IMF Data, WEO_2025_OCT_VINTAGE adatfolyam) –
  *   https://data.imf.org/Datasets/WEO ; lekérdezés:
  *   https://api.imf.org/external/sdmx/2.1/data/IMF.RES,WEO_2025_OCT_VINTAGE,1.0.0/MAR.NGDPD+NGDPDPC+NGDP_RPCH+LP.A?startPeriod=2025&endPeriod=2025
- *   (GDP 179,612 Md USD; GDP/fő 4762,729 USD; reálnövekedés 4,394%; lakosság 37,712 millió – 2025, becslés).
+ *   (GDP 179,612 Mrd USD; GDP/fő 4762,729 USD; reálnövekedés 4,394%; lakosság 37,712 millió – 2025, becslés).
  * - Terület: Világbank AG.SRF.TOTL.K2 – 446 550 km², Nyugat-Szahara nélkül (ENSZ-gyakorlat) –
  *   https://data.worldbank.org/indicator/AG.SRF.TOTL.K2?locations=MA . A CIA World Factbook utolsó (2025. decemberi)
  *   kiadása Nyugat-Szaharával együtt 716 550 km²-t közöl (archív page-data.json, web.archive.org, 2025-12-12); ezt a
@@ -174,7 +174,7 @@ const orszag: DemoOrszag = {
     ]),
     kapcsolatok: {
       euMultilateralis:
-        'EU–Marokkó társulási (2000) és tudományos-technológiai megállapodás (2003); Horizont Európa-társulási tárgyalások 2021 óta; '
+        'EU–Marokkó társulási megállapodás (hatályos 2000 óta) és tudományos-technológiai megállapodás (aláírva 2003-ban); Horizont Európa-társulási tárgyalások 2021 óta; '
         + 'az Unió a Mediterrán Térségért kutatási ütemtervei (egészség, éghajlat, megújuló energia). 2017 óta ismét az Afrikai Unió tagja.',
       partnerorszagok:
         'Franciaország (a CNRST első partnere a CNRS, 1984; PHC Toubkal, PHC Maghreb), Németország (Power-to-X Hub; DFG), Spanyolország '

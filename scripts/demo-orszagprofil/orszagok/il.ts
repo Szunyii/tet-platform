@@ -168,10 +168,10 @@ const orszag: DemoOrszag = {
         + 'űrtevékenységről szóló keretmegállapodás (aláírva: Budapest, 2025. szeptember 16.). '
         + 'Az NKFIH és az izraeli MIST 2019 óta első közös K+F-pályázatára (2024) 53 pályázat érkezett, 7 közös projekt nyert (magyar keret 2025-re: '
         + '400 millió Ft). Intézményi szálak: HUN-REN Kísérleti Orvostudományi Kutatóintézet (KOKI) – Weizmann Intézet (idegtudomány), Technion – Széchenyi István Egyetem; '
-        + 'napirenden a Magyar–Izrael Tudós Társaság újjáélesztése.',
+        + 'a 2024-es tel-avivi TéT-beszámoló szerint napirenden volt a Magyar–Izrael Tudós Társaság újjáélesztése.',
       mobilitas:
         'Stipendium Hungaricum-partnerország minden képzési szinten; a magyar (orvosi) képzés népszerű az izraeli hallgatók körében, a magyar ösztöndíjjal tanult alumnik száma '
-        + 'becslés szerint néhány száz fő. Izraelben nincs jelentős, magyar hallgatóknak meghirdetett ösztöndíjprogram; a Technion és a Széchenyi István Egyetem '
+        + 'a 2024-es tel-avivi TéT-beszámoló becslése szerint néhány száz fő. A beszámoló szerint Izraelben nincs jelentős, magyar hallgatóknak meghirdetett ösztöndíjprogram; a Technion és a Széchenyi István Egyetem '
         + 'közös Erasmus+ KA171 pályázatot nyújtott be (2025).',
     },
     magyarErtekeles: {

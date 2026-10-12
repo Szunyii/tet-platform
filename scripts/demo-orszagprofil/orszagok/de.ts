@@ -119,7 +119,7 @@ const orszag: DemoOrszag = {
         + 'Leibniz-intézetek és a tartományok egyetemei. Erős, gyártásra épülő vállalati K+F, ezen belül a gépjárműipar a legnagyobb K+F-ágazat; '
         + 'sűrű infrastruktúra-hálózat (JUPITER, European XFEL); a GII szerint hét klaszterével Európa élén.',
       kihivasok:
-        'A gazdasági bizonytalanság és a gyenge ipari konjunktúra feltehetően visszafogja a vállalati K+F-et: 2024-ben a vegyipar és a gyógyszeripar belső K+F-je csökkent, '
+        'A Stifterverband szerint a tartós gazdasági bizonytalanság visszafogja a vállalati K+F-et (2024-ben a feldolgozóipar hozzáadott értéke 3%-kal csökkent): a vegyipar és a gyógyszeripar belső K+F-je 2024-ben csökkent, '
         + 'a K+F-intenzitásban Finnország megelőzte Németországot. Kihívás a digitalizáció üteme, a növekedési szakaszú kockázati tőke és a szakemberhiány; '
         + 'a GII-ben az intézményi környezet csak a 23.',
     },

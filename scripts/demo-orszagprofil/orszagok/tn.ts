@@ -4,7 +4,7 @@
  * - Alapadatok: IMF World Economic Outlook, 2025. október (IMF Data, WEO_2025_OCT_VINTAGE adatfolyam) –
  *   https://data.imf.org/Datasets/WEO ; lekérdezés:
  *   https://api.imf.org/external/sdmx/2.1/data/IMF.RES,WEO_2025_OCT_VINTAGE,1.0.0/TUN.NGDPD+NGDPDPC+NGDP_RPCH+LP.A?startPeriod=2025&endPeriod=2025
- *   (GDP 59,069 Md USD; GDP/fő 4751,548 USD; reálnövekedés 2,464%; lakosság 12,432 millió – 2025, becslés).
+ *   (GDP 59,069 Mrd USD; GDP/fő 4751,548 USD; reálnövekedés 2,464%; lakosság 12,432 millió – 2025, becslés).
  * - Terület: CIA World Factbook (2025. április 23-i állapot: 163 610 km²) – https://www.cia.gov/the-world-factbook/countries/tunisia/
  *   (a Factbook 2026-ban megszűnt; archív: web.archive.org, 2025-04-28-i page-data.json); Világbank AG.SRF.TOTL.K2 ugyanennyi.
  * - GII 2025 (76. hely; 2024: 81.; alsó-közepes jövedelműek közt 6.; erősségek, gyengeségek; egyetemek):

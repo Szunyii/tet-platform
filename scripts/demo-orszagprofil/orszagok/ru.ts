@@ -1,6 +1,6 @@
 /**
  * Oroszország (RU) 2026-os profilja – kutatott vázlat, a relációs vezető pontosítja.
- * Források (hozzáférés: 2026-10-09):
+ * Források (hozzáférés: 2026-10-09; a [*] jelűeké: 2026-10-12):
  * - Alapadatok: GDP, 1 főre jutó GDP és reálnövekedés: IMF World Economic Outlook, 2025. október (WEO_2025_OCT_VINTAGE,
  *   2025: GDP 2540,656 Mrd USD, 1 főre 17 445,75 USD, reálnövekedés 0,609%) –
  *   https://api.imf.org/external/sdmx/2.1/data/IMF.RES,WEO_2025_OCT_VINTAGE,1.0.0/RUS.NGDPD+NGDPDPC+NGDP_RPCH+LP.A?startPeriod=2025&endPeriod=2025
@@ -51,17 +51,22 @@
  *     a két szándéknyilatkozat, SH-jelentkezők (600 fő, 200 hely, 2025/2026), magyar nyelvoktatás 7 egyetemen (2025), ITER, BRICS-elnökség
  *     2024, egyetemi kampuszprogram 2030-ig, az adatgazdasági nemzeti projekt, kutatói elvándorlás, importfüggőség
  *   - Stipendium Hungaricum partnerország – https://stipendiumhungaricum.hu/partners/
- * - Rendezvények: SPIEF – https://en.wikipedia.org/wiki/St._Petersburg_International_Economic_Forum ;
- *   Eastern Economic Forum – https://en.wikipedia.org/wiki/Eastern_Economic_Forum ; INNOPROM – https://innoprom.com/en/ ;
+ * - Rendezvények: SPIEF (évente, 1997 óta; a 29. fórum: 2026. június 3–6., Expoforum; szervező: Roscongress Alapítvány) – TASS:
+ *   https://tass.com/economy/2140121 [*] ; Keleti Gazdasági Fórum (évente, 2015 óta, Vlagyivosztok, Távol-keleti Szövetségi Egyetem;
+ *   a 11. fórum: 2026. szeptember 1–4.) – TASS: https://tass.com/economy/2179867 [*] ; INNOPROM – https://innoprom.com/en/ ;
  *   AI Journey (2026. november 25–27.) – https://aij.ru/en
- * - Egyéb: RSF (2013) – https://rscf.ru/en/about/ ; Skolkovo (2010) – https://en.wikipedia.org/wiki/Skolkovo_Innovation_Center ;
- *   NTI (2014) – https://ru.wikipedia.org/wiki/Национальная_технологическая_инициатива ; Minobrnauki (2018) –
- *   https://en.wikipedia.org/wiki/Ministry_of_Science_and_Higher_Education_(Russia) ; megagrantok (2010) – https://ru.wikipedia.org/wiki/Мегагрант ;
+ * - Egyéb: RSF (2013) – https://rscf.ru/en/about/ ; Skolkovo (a Skolkovo Innovációs Központról szóló 244-FZ szövetségi törvény,
+ *   2010. 09. 28.) – https://www.wipo.int/wipolex/en/legislation/details/17086 [*] ; NTI (a 2014. december 4-i elnöki üzenet) –
+ *   https://nti2035.ru/nti/ [*] ; Minobrnauki (a 215. sz. elnöki rendelet, 2018. 05. 15.: az Oktatási és Tudományos Minisztérium
+ *   kettéválasztása) – https://rg.ru/2018/05/15/struktura-site-dok.html [*] ; megagrantok (a 220. sz. kormányrendelet, 2010. 04. 09.) –
+ *   https://megagrant.ru/ [*] ;
  *   Prioritet 2030 – https://priority2030.ru/ ; a 2025-től futó nemzeti projektek (pl. Новые атомные и энергетические технологии,
  *   Новые материалы и химия, Средства производства и автоматизации, Беспилотные авиационные системы, Экономика данных) –
- *   https://xn--80aapampemcchfmo7a3c9ehj.xn--p1ai/ (национальныепроекты.рф) ; VEB.RF – https://en.wikipedia.org/wiki/VEB.RF ; Baikal-GVD –
- *   https://en.wikipedia.org/wiki/Baikal_Deep_Underwater_Neutrino_Telescope ; tagságok: https://en.wikipedia.org/wiki/Asia-Pacific_Economic_Cooperation ,
- *   https://en.wikipedia.org/wiki/Eurasian_Economic_Union , https://en.wikipedia.org/wiki/Shanghai_Cooperation_Organisation
+ *   https://xn--80aapampemcchfmo7a3c9ehj.xn--p1ai/ (национальныепроекты.рф) ; VEB.RF (a „VEB.RF” állami fejlesztési korporációról szóló
+ *   82-FZ szövetségi törvény, 2007. 05. 17.) – https://www.consultant.ru/document/cons_doc_LAW_68404/ [*] ; Interfax, 2022. 10. 03.:
+ *   https://interfax.com/newsroom/top-stories/83474/ [*] ; Baikal-GVD (a Bajkál-tó déli részén) – https://baikalgvd.jinr.ru/ [*] ;
+ *   tagságok: APEC (Oroszország: 1998. november) – https://www.apec.org/who-we-are/our-members [*] ; EAEU (öt tagállam) –
+ *   https://www.eaeunion.org/?lang=en [*] ; SCO (tíz tagállam) – https://eng.sectsco.org/20170109/192193.html [*]
  * Kimaradt blokkok és mezők: nincs kimaradt blokk.
  */
 import { rendezvenyek, type DemoOrszag } from '../tipusok';
@@ -87,8 +92,8 @@ const orszag: DemoOrszag = {
     },
     kfiRendszer: {
       teljesitmeny:
-        'A Global Innovation Index 2025-ben a 60. hely a 139 gazdaság között (2021-ben a 45.); legerősebb pillére a humán tőke és kutatás (28.), '
-        + 'leggyengébb az intézmények pillére (131.). A K+F ráfordítás 2024-ben a GDP 0,94%-a (UNESCO UIS/Világbank), döntően állami forrásból '
+        'A Global Innovation Index 2025-ben a 60. hely a 139 gazdaság között (2021-ben a 45.); legerősebb pillére a humántőke és kutatás (28.), '
+        + 'leggyengébb az intézmények pillére (131.). A K+F-ráfordítás 2024-ben a GDP 0,94%-a (UNESCO UIS/Világbank), döntően állami forrásból '
         + '(OECD MSTI, 2020: 67,8%). Nemzeti cél a 2%-os K+F-intenzitás 2030-ig; 2022 óta a hangsúly az importhelyettesítésen és a technológiai szuverenitáson van.',
       gerd: '0,94',
       strategia:
@@ -181,7 +186,7 @@ const orszag: DemoOrszag = {
         + 'Oroszország megfigyelői státuszát, megállapodása 2024. november 30-án lejárt. Oroszország az ITER tagja, 2024-ben a BRICS soros elnöke volt.',
       partnerorszagok:
         'A 2024-es stratégia kiemelt partnerként a Belarusszal alkotott Uniós Államot, a FÁK-tagállamokat és a „barátságos” országokat nevezi meg (keretek: BRICS, SCO, '
-        + 'EAEU). A moszkvai TéT-szakdiplomata szerint az orosz egyetemek elsősorban Kína, India, Közép- és Délkelet-Ázsia felé építenek új kapcsolatokat.',
+        + 'EAEU). A moszkvai TéT-szakdiplomata 2023–2025-ös beszámolói szerint az orosz egyetemek elsősorban Kína, India, Közép- és Délkelet-Ázsia felé építenek új kapcsolatokat.',
       egyezmeny:
         'Magyar–orosz egyezmény a kultúra, a tudomány és az oktatás területén folyó együttműködésről (Moszkva, 1993; kihirdetve: 148/1998. Korm. rendelet)',
       ketoldalu:

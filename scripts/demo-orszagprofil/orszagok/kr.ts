@@ -43,7 +43,9 @@
  *   EUREKA teljes jogú tagság (2022) – https://www.researchprofessionalnews.com/?p=441813 ;
  *   az EU–Korea Tudományos és Technológiai Vegyesbizottság 8. ülése (Szöul, 2025. március 7.; az EK számozása, a szöuli TéT-beszámoló 7.-ként említi) –
  *   https://research-and-innovation.ec.europa.eu/news/all-research-and-innovation-news/8th-republic-korea-eu-joint-scientific-technological-cooperation-committee-meeting-2025-03-10_en [*] ;
- *   ITER-tagság – https://www.iter.org/about/iter-members [*]
+ *   ITER-tagság – https://www.iter.org/about/iter-members [*] ;
+ *   USA–Korea Technology Prosperity Deal (2025. október) –
+ *   https://www.whitehouse.gov/releases/2025/10/the-united-states-signs-technology-prosperity-deals-with-japan-and-korea [*]
  * - Rendezvények: SEMICON Korea – https://www.semi.org/en/semi-press-release/semicon-korea-2026-to-showcase-core-semiconductor-technologies-for-the-ai-era ,
  *   https://semiconkorea.org/ ; InterBattery 2027 – https://ib2027.ems.coex.co.kr/sub-5-1?hl=en ;
  *   BIO KOREA (a szervező oldala; 2026: április 28–30., 2025: május 7–9.) – https://www.biokorea.org/index.do [*] ,
@@ -99,7 +101,7 @@ const orszag: DemoOrszag = {
     kfiRendszer: {
       teljesitmeny:
         'A Global Innovation Index 2025-ben a 4. hely a 139 gazdaság közül (2024-ben a 6.), régiójában (Kelet- és Délkelet-Ázsia, Óceánia) az első; '
-        + 'a humán tőke és kutatás pillérben világelső. A K+F-ráfordítás 2024-ben a GDP 5,13%-a volt (OECD MSTI, előzetes adat), ami a világ egyik '
+        + 'a humántőke és kutatás pillérben világelső. A K+F-ráfordítás 2024-ben a GDP 5,13%-a volt (OECD MSTI, előzetes adat), ami a világ egyik '
         + 'legmagasabb aránya; ennek mintegy négyötödét a vállalatok végzik, abszolút értékben pedig Korea az ötödik legnagyobb K+F-ráfordító '
         + '(Kína, az USA, Japán és Németország után).',
       gerd: '5,13',
@@ -192,7 +194,7 @@ const orszag: DemoOrszag = {
         'Horizont Európa-társult ország (II. pillér) a 2025-ös költségvetési évtől; az EU–Korea Tudományos és Technológiai Vegyesbizottság 8. ülése 2025 márciusában '
         + 'Szöulban volt. EU–Korea Digitális Partnerség (2022) és Zöld Partnerség (2023); az EUREKA teljes jogú tagja (2022), az ITER és az OECD tagja.',
       partnerorszagok:
-        'EU (Horizont Európa-társulás, digitális és zöld partnerség), visegrádi országok (2021-es együttműködési szándéknyilatkozat).',
+        'USA (Technology Prosperity Deal, 2025. október), EU (Horizont Európa-társulás, digitális és zöld partnerség), visegrádi országok (2021-es együttműködési szándéknyilatkozat).',
       egyezmeny: 'Magyar–koreai kormányközi egyezmény a tudományos és műszaki együttműködésről (1989); ötévente megújul, ennek alapján működik a TéT-vegyesbizottság',
       ketoldalu:
         'A terv szerint kétévente ülésező TéT-vegyesbizottság 10. ülése 2021-ben hibrid formában zajlott, a 11. ülést Magyarország rendezi (a 2025. júniusi TéT-beszámoló szerint '

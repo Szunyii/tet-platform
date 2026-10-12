@@ -31,7 +31,7 @@
  *   https://ised-isde.canada.ca/site/global-innovation-clusters/en
  * - Horizont Európa II. pillér-társulás (Montréal, 2024. július 3.; közvetlen uniós finanszírozás) –
  *   https://euraxess.ec.europa.eu/worldwide/north-america/news/canada-joins-horizon-europe
- * - Eureka: teljes jogú tagság (2022. június 22.; 2012 óta társult tag) –
+ * - EUREKA: teljes jogú tagság (2022. június 22.; 2012 óta társult tag) –
  *   https://www.canada.ca/en/national-research-council/news/2022/06/canada-announces-full-membership-in-the-eureka-network.html ;
  *   kanadai finanszírozó: NRC IRAP – https://www.eurekanetwork.org/country/canada/ ; magyar finanszírozó: NKFIH – https://www.eurekanetwork.org/country/hungary/
  * - Rendezvények: PDAC 2026 – https://www.globalminingreview.com/exploration-development/25022026/toronto-to-host-global-mineral-sector-for-pdac-2026/ ;
@@ -43,7 +43,7 @@
  *   CSPC 2026 – https://sciencepolicy.ca/wp-content/uploads/2026/01/CSPC2026-Partnership-Prospectus.pdf
  * - Magyar vonatkozás: kétoldalú TéT-egyezmény nem ismert (a fiatalok ideiglenes munkavállalásáról szóló megállapodás 2007-es
  *   tárgyalási felhatalmazása – 10/2007. (IV. 3.) ME határozat, https://adozona.hu/jogtar/35932_10_2007_IV_3_ME_hatarozat_Magyar_Koztarsasag –
- *   nem TéT-egyezmény). A közös keretek (Horizont Európa, Eureka) forrásai fent. Kanada nem Stipendium Hungaricum-partnerország –
+ *   nem TéT-egyezmény). A közös keretek (Horizont Európa, EUREKA) forrásai fent. Kanada nem Stipendium Hungaricum-partnerország –
  *   https://stipendiumhungaricum.hu/partners/
  * Kimaradt mezők: kapcsolatok.egyezmeny (nincs ellenőrzött kétoldalú TéT-egyezmény), kapcsolatok.mobilitas (nincs ellenőrzött
  * kétoldalú mobilitási program).
@@ -140,7 +140,7 @@ const orszag: DemoOrszag = {
         'SR&ED-adóhitel: a kiemelt, 35%-os jóváírás kiadási plafonja 6 millió CAD (a 2024. december 16-tól kezdődő adóévektől), és a jogosult kanadai tőzsdei társaságokra is kiterjed; '
         + 'a Budget 2025 szerint 2026. április 1-jétől választható előzetes (pre-claim) jóváhagyás. Termelékenységi szuperleírás (pl. gépek, kutatási beruházások azonnali leírása); NRC IRAP; BDC Capital.',
       nemzetkoziReszvetel:
-        'Horizont Európa II. pillér: a kanadai résztvevők közvetlenül a programból kaphatnak finanszírozást; Eureka (Eurostars, Network Projects): a kanadai résztvevők finanszírozója az NRC IRAP.',
+        'Horizont Európa II. pillér: a kanadai résztvevők közvetlenül a programból kaphatnak finanszírozást; EUREKA (Eurostars, Network Projects): a kanadai résztvevők finanszírozója az NRC IRAP.',
     },
     rendezvenyek: rendezvenyek([
       { nev: 'PDAC Convention', tipus: 'szakkiallitas', idopont: 'március, Toronto (Metro Toronto Convention Centre)', megjegyzes: 'Ásványkutatás és bányászat (2026-ban 94. alkalommal)' },
@@ -152,17 +152,17 @@ const orszag: DemoOrszag = {
     ]),
     kapcsolatok: {
       euMultilateralis:
-        'Horizont Európa II. pillér-társulás (Montréal, 2024. július 3.); az Eureka teljes jogú tagja 2022 óta (2012-től társult tag); CETA az EU-val (2017 óta ideiglenesen alkalmazva); '
+        'Horizont Európa II. pillér-társulás (Montréal, 2024. július 3.); az EUREKA teljes jogú tagja 2022 óta (2012-től társult tag); CETA az EU-val (2017 óta ideiglenesen alkalmazva); '
         + 'OECD, G7, G20, Nemzetközösség, Frankofónia.',
       partnerorszagok: 'Egyesült Államok (USMCA/CUSMA), EU-tagállamok (Horizont Európa, CETA), Egyesült Királyság, Franciaország, Japán (CPTPP).',
       egyezmeny: '',
       ketoldalu:
-        'A közös projektek keretei: a kanadai partnerek társult országként vehetnek részt magyar részvételű Horizont Európa II. pillér-konzorciumokban; az Eureka-projektekben a magyar résztvevőket az NKFIH finanszírozza.',
+        'A közös projektek keretei: a kanadai partnerek társult országként vehetnek részt magyar részvételű Horizont Európa II. pillér-konzorciumokban; az EUREKA-projektekben a magyar résztvevőket az NKFIH finanszírozza.',
       mobilitas: '',
     },
     magyarErtekeles: {
       osszegzes:
-        'Kanada erős alapkutatással és MI-ökoszisztémával rendelkező, de a vállalati K+F-ben gyengébb G7-ország. A magyar–kanadai együttműködés a Horizont Európa és az Eureka keretében, '
+        'Kanada erős alapkutatással és MI-ökoszisztémával rendelkező, de a vállalati K+F-ben gyengébb G7-ország. A magyar–kanadai együttműködés a Horizont Európa és az EUREKA keretében, '
         + 'külön kétoldalú megállapodás nélkül is bővíthető, elsősorban az MI, a kvantumtechnológia és a tiszta energia területén.',
       egyuttmukodesiLehetosegek:
         'Közös Horizont Európa II. pillér-konzorciumok kanadai partnerekkel (digitális, ipari, éghajlati és energetikai témák); Eurostars-projektek magyar és kanadai KKV-kkal; '

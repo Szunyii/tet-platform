@@ -1,6 +1,6 @@
 /**
  * Koreai NDK / Észak-Korea (KP) 2026-os profilja – kutatott vázlat, a relációs vezető pontosítja.
- * Források (hozzáférés: 2026-10-09):
+ * Források (hozzáférés: 2026-10-09; a [*] jelűeké: 2026-10-12):
  * - Alapadatok: az IMF World Economic Outlook nem közöl adatot a KNDK-ról (a 2025. októberi WEO-ban nincs PRK-sorozat),
  *   ezért becslések:
  *   - GDP-növekedés: Bank of Korea, „2025년 북한 경제성장률 추정 결과” (2026. július 31.): 2025-ben +3,5% (2024: +3,7%,
@@ -14,16 +14,18 @@
  *     https://population.un.org/wpp/assets/Excel%20Files/1_Indicator%20(Standard)/CSV_FILES/WPP2024_TotalPopulationBySex.csv.gz
  *   - Terület: ENSZ Demográfiai Évkönyv 2024, 3. tábla (120 538 km²) –
  *     https://unstats.un.org/unsd/demographic-social/products/dyb/documents/dyb2024/table03.pdf
- * - Tagságok: ENSZ (1991. 09. 17.) – https://www.un.org/en/about-us/member-states ; El Nem Kötelezett Országok Mozgalma (1975) –
- *   https://en.wikipedia.org/wiki/Non-Aligned_Movement
+ * - Tagságok: ENSZ (1991. 09. 17.) – https://www.un.org/en/about-us/member-states ; El Nem Kötelezett Országok Mozgalma: tagállam
+ *   (a mozgalom hivatalos oldala, Ázsia és a csendes-óceáni térség) – https://nam.go.ug/member-states/Asia-and-Pacific [*] ;
+ *   felvétel a külügyminiszterek 1975-ös limai értekezletén – Wilson Center, 2021. 10. 04.:
+ *   https://wilsoncenter.org/blog-post/tito-kim-correspondence-joining-movement-1973-1975 [*]
  * - ENSZ BT 2321 (2016), 10. és 11. pont – https://documents.un.org/api/symbol/access?s=S/RES/2321(2016)&l=en&t=pdf
  * - ENSZ BT 2270 (2016), 17. pont – https://documents.un.org/api/symbol/access?s=S/RES/2270(2016)&l=en&t=pdf
  * - EU korlátozó intézkedések: a Tanács (KKBP) 2016/849 határozata (2016. május 27.) és (EU) 2017/1509 rendelete (2017. augusztus 30.)
  *   a KNDK-val szembeni korlátozó intézkedésekről – https://eur-lex.europa.eu/eli/dec/2016/849/oj ;
  *   https://eur-lex.europa.eu/eli/reg/2017/1509/oj (a rendelet Hivatalos Lap-beli szövegében a 2016/849 határozatra hivatkozik:
  *   https://www.legislation.gov.uk/eur/2017/1509/pdfs/eur_20171509_adopted_en.pdf)
- * - Orosz–észak-koreai átfogó stratégiai partnerségi szerződés (2024. június, Phenjan) –
- *   https://en.wikipedia.org/wiki/North_Korea%E2%80%93Russia_relations
+ * - Orosz–észak-koreai átfogó stratégiai partnerségi szerződés (aláírva Phenjanban, 2024. június 19-én; hatályos 2024. december 4-től) –
+ *   Interfax, 2024. 12. 05.: https://interfax.com/newsroom/top-stories/108291/ [*]
  * - Stipendium Hungaricum partnerlista (a KNDK nem szerepel) – https://stipendiumhungaricum.hu/partners/
  * Kimaradt blokkok és mezők:
  * - Csak az Alapadatok, a Kapcsolatok és a Magyar értékelés blokk szerepel; a KFI-rendszer, az intézmények,

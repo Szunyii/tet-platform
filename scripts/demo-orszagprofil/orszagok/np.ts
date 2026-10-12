@@ -59,7 +59,7 @@ const orszag: DemoOrszag = {
     kfiRendszer: {
       teljesitmeny:
         'A Global Innovation Index 2025-ben a 107. hely a 139 gazdaság közül (2024-ben 109.); a 37 alsó-közepes jövedelmű ország között 20., '
-        + 'Közép- és Dél-Ázsia 10 országa közül 9. Legerősebb pillére a piaci kifinomultság (61.) – a mikrohitelek GDP-arányában a GII-ben első –, '
+        + 'Közép- és Dél-Ázsia 10 országa közül 9. Legerősebb pillére a piaci fejlettség (61.) – a mikrohitelek GDP-arányában a GII-ben első –, '
         + 'leggyengébb a humántőke és kutatás (127.). Megbízható GDP-arányos K+F-ráfordítási adat nincs: az UNESCO UIS utolsó, 2010-es értéke (0,30%) '
         + 'költségvetési előirányzaton alapuló, részleges adat.',
       gerd: '',

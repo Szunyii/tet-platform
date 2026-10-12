@@ -4,7 +4,7 @@
  * - Alapadatok: IMF World Economic Outlook, 2025. október (IMF Data, WEO_2025_OCT_VINTAGE adatfolyam) –
  *   https://data.imf.org/Datasets/WEO ; lekérdezés:
  *   https://api.imf.org/external/sdmx/2.1/data/IMF.RES,WEO_2025_OCT_VINTAGE,1.0.0/DZA.NGDPD+NGDPDPC+NGDP_RPCH+LP.A?startPeriod=2025&endPeriod=2025
- *   (GDP 288,013 Md USD; GDP/fő 6095,322 USD; reálnövekedés 3,357%; lakosság 47,251 millió – 2025, becslés).
+ *   (GDP 288,013 Mrd USD; GDP/fő 6095,322 USD; reálnövekedés 3,357%; lakosság 47,251 millió – 2025, becslés).
  * - Terület: CIA World Factbook (2026. január 21-i állapot: 2 381 740 km²) – https://www.cia.gov/the-world-factbook/countries/algeria/
  *   (a Factbook 2026-ban megszűnt; archív: web.archive.org, 2026-01-30-i page-data.json); Világbank AG.SRF.TOTL.K2 ugyanennyi.
  * - GII 2025 (115. hely; 2024: 115.; felső-közepes jövedelműek közt 35. a 36-ból; erősségek, gyengeségek; vállalati K+F 2017):
