@@ -10,6 +10,13 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-12-mezo-sugo-tooltip-design.md` (a szövegek forrása is).
 
+**Végrehajtási megjegyzések** (a terv a végleges, működő kódot és parancsokat mutatja):
+
+- **Task 1.** A minőségi review nyomán külön commitban (`751c2cf`) bekerült a felugró dialógus neve és leírása (`PopoverTitle` rejtve + `PopoverDescription`), a `memo`, a sormagasságot nem növelő `-my-[3px]`, a `break-words` és az `outline-hidden`; a záró review a `focus-visible:outline-hidden` alakra finomította (`6ed2dc1`): nagy kontrasztú módban a kérdőjel csak fókuszban kap körvonalat. A `SugoGomb` kódblokkja már ezt mutatja. A `popover.tsx`-ben a `PopoverPrimitive.Trigger` két sorban szerepel (típus és elem), nem egyben.
+- **Task 2.** A review nyomán (`21e5219`) a szövegek pontosítása: az infrastruktúra/klaszter lehatárolása, az ágazat-mező félrevezető zárójele, a kiemelt iparágak sorrend-módosítási tippje, a Top 10 vállalat sorrendje, a Megjegyzés példája; a korlátok számai (`EV_MIN - 10`, `TOP_VALLALAT_MAX`, `RENDEZVENY_MAX`, `OSSZEGZES_MAX`) konstansból jönnek, hogy ne csússzanak el. A Step 3 kódblokkja a végleges szótár.
+- **Task 3, QA.** A gstack `click` több találatnál hibázik, ezért a rendezvénysor-gomb szelektora az 1. sor mezőjéhez kötött; a teljes oldalas `screenshot` olvashatatlan, helyette `--viewport`; a shell zsh, ezért nincs `PIPESTATUS` (a build kimenete fájlba megy, az exit kódot külön echo adja). A hoverrel nyitott felugró kb. 500 ms utáni kattintásra bezárul: ez a Base UI „patient click”-je, megfigyelésként szerepel.
+- **Záró review.** A `CLAUDE.md` „`sugo` prop hívói” mondata pontosítva (csak az `OrszagMezok` hívja a `Mezo`-t `sugo`-val, a burkolók `sugo`-ja hívó nélküli), és bekerült a patient click leírása.
+
 **Ellenőrzés:** Nincs tesztkeretrendszer. A „teszt”: (1) a `MEZO_CIMKEK` kimerítő típusa (hiányzó `magyarazat` fordítási hiba), (2) eldobható script, amely a példa-értékeket a valódi validátoron futtatja (`scripts/_sugo-ellenorzes.ts`), (3) gstack böngészős QA a futó dev szerveren. Minden task végén `npx tsc --noEmit`.
 
 **Környezet:**
@@ -88,7 +95,7 @@ npx shadcn@latest add popover -y
 git status --short
 ```
 
-Várt: egyetlen új fájl, `components/ui/popover.tsx`; `package.json` és más fájl nem módosul. Ha a CLI más fájlt is módosítana, állj meg és jelezd. Ellenőrzés: `grep -c "PopoverPrimitive.Trigger" components/ui/popover.tsx` → `1`.
+Várt: egyetlen új fájl, `components/ui/popover.tsx`; `package.json` és más fájl nem módosul. Ha a CLI más fájlt is módosítana, állj meg és jelezd. Ellenőrzés: `grep -c "PopoverPrimitive.Trigger" components/ui/popover.tsx` → `2` (a `PopoverPrimitive.Trigger.Props` típus-hivatkozás és az elem sora).
 
 - [ ] **Step 3: `SugoGomb` létrehozása**
 
@@ -97,8 +104,9 @@ Várt: egyetlen új fájl, `components/ui/popover.tsx`; `package.json` és más 
 ```tsx
 'use client';
 
+import { memo } from 'react';
 import { CircleQuestionMark } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Popover, PopoverContent, PopoverDescription, PopoverTitle, PopoverTrigger } from '../ui/popover';
 
 /**
  * Kérdőjeles gomb a mező címkéje mellett: hoverre, koppintásra vagy Enter/Space-re felugró
@@ -108,7 +116,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
  *
  * A `pelda` `\n`-nel több soros is lehet (pl. a vállalatlista soronként jelenik meg).
  */
-export function SugoGomb({
+export const SugoGomb = memo(function SugoGomb({
   cimke, magyarazat, pelda,
 }: { cimke: string; magyarazat: string; pelda?: string }) {
   return (
@@ -119,22 +127,23 @@ export function SugoGomb({
         delay={150}
         closeDelay={100}
         aria-label={`Magyarázat: ${cimke}`}
-        className="inline-flex size-5 shrink-0 cursor-help items-center justify-center rounded-full text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="-my-[3px] inline-flex size-5 shrink-0 cursor-help items-center justify-center rounded-full text-muted-foreground focus-visible:outline-hidden transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
       >
         <CircleQuestionMark aria-hidden className="size-4" />
       </PopoverTrigger>
       <PopoverContent side="top" align="start" className="w-80 max-w-[calc(100vw-2rem)]">
-        <p>{magyarazat}</p>
+        <PopoverTitle className="sr-only">{cimke}</PopoverTitle>
+        <PopoverDescription className="break-words text-popover-foreground">{magyarazat}</PopoverDescription>
         {pelda && (
           <div className="flex flex-col gap-1">
             <span className="text-xs font-medium text-muted-foreground">Példa</span>
-            <p className="whitespace-pre-line rounded-md bg-muted px-2 py-1.5 text-xs">{pelda}</p>
+            <p className="whitespace-pre-line break-words rounded-md bg-muted px-2 py-1.5 text-xs">{pelda}</p>
           </div>
         )}
       </PopoverContent>
     </Popover>
   );
-}
+});
 ```
 
 - [ ] **Step 4: `CimkeSor` létrehozása**
@@ -459,16 +468,17 @@ A `lib/orszagprofil-szotar.ts`-ben a `/** Mezőcímkék és súgó: …` komment
 
 ```ts
 /**
- * Mezőcímkék és kérdőjeles magyarázat: az űrlap és az olvasó nézet ugyanebből ír (az olvasó
- * nézet csak a `cimke`-t). Kulcs = a mező neve. A `magyarazat` kötelező: a `MEZO_CIMKEK` típusa
- * mezőnév szerint kimerítő, ezért fordítási hiba, ha egy mezőhöz nincs. A példák Dél-Koreáról
- * szólnak (a `kr.ts` demó-profilból), a szabályok a `lib/orszagprofil-validacio.ts`-éi.
+ * Mezőcímkék és kérdőjeles magyarázat: az űrlap, az olvasó nézet és a validátor hibaüzenetei
+ * ugyanebből a szótárból írnak (az olvasó nézet és a validátor csak a `cimke`-t). Kulcs = a mező
+ * neve. A `magyarazat` kötelező: a `MEZO_CIMKEK` típusa mezőnév szerint kimerítő, ezért fordítási
+ * hiba, ha egy mezőhöz nincs. A példák Dél-Koreáról szólnak
+ * (`scripts/demo-orszagprofil/orszagok/kr.ts`), a szabályok a `lib/orszagprofil-validacio.ts`-éi.
  */
 export interface MezoCimke {
   cimke: string;
   /** Mit kell a mezőbe írni (a validátor szabályaival egyezően). */
   magyarazat: string;
-  /** Példa-érték; több soros mezőnél `\n`-nel elválasztva. */
+  /** Példa-érték; többsoros mezőnél `\n`-nel elválasztva. */
   pelda?: string;
   /** @deprecated A `magyarazat` váltja. */
   sugo?: string;
@@ -493,57 +503,57 @@ export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], Me
     },
     gdp: {
       cimke: 'GDP (milliárd USD)',
-      magyarazat: 'Az ország nominális (folyó áras) GDP-je milliárd amerikai dollárban az Adatévre; egy tizedesjegyig, tizedesvesszővel.',
+      magyarazat: 'Az ország nominális (folyó áras) GDP-je milliárd amerikai dollárban az Adatévre; legfeljebb egy tizedesjeggyel, tizedesvesszővel. Az ezreseket szóközzel tagolhatod.',
       pelda: '1 858,6',
     },
     gdpEgyFore: {
       cimke: 'Egy főre jutó GDP (USD)',
-      magyarazat: 'Az egy főre jutó nominális GDP amerikai dollárban az Adatévre; egész szám.',
+      magyarazat: 'Az egy főre jutó nominális GDP amerikai dollárban az Adatévre; egész szám, az ezreseket szóközzel tagolhatod.',
       pelda: '35 962',
     },
     gdpNovekedes: {
       cimke: 'GDP-növekedés (%)',
-      magyarazat: 'A reál-GDP éves növekedése az Adatévre, százalékban, egy tizedesjegyig, tizedesvesszővel; csökkenésnél negatív előjellel.',
+      magyarazat: 'A reál-GDP éves növekedése az Adatévre, százalékban; legfeljebb egy tizedesjeggyel, tizedesvesszővel, csökkenésnél mínusz előjellel.',
       pelda: '0,9 vagy -1,2',
     },
     adatEv: {
       cimke: 'Adatév',
-      magyarazat: 'Az az év, amelyre a fenti számok (lakosság, GDP, növekedés) vonatkoznak. Nem lehet későbbi az aktuális évnél.',
+      magyarazat: `Az az év, amelyre a lakosság és a GDP-adatok vonatkoznak; ${EV_MIN - 10} és az aktuális év között.`,
       pelda: '2025',
     },
     forras: {
       cimke: 'Forrás',
-      magyarazat: 'Az adatok forrása: a szervezet és a kiadás vagy az időpont. Több forrást vesszővel válassz el.',
+      magyarazat: 'Az adatok forrása (pl. IMF, Világbank, nemzeti statisztikai hivatal), a kiadással vagy az időponttal. Több forrást vesszővel válassz el.',
       pelda: 'IMF World Economic Outlook (2025. október), Világbank',
     },
     tagsagok: {
       cimke: 'Nemzetközi szervezeti tagság',
-      magyarazat: 'Jelöld ki a listából azokat a szervezeteket, amelyeknek az ország tagja. Ami nincs a listán, azt az „Egyéb tagság” mezőbe írd.',
+      magyarazat: 'Válaszd ki a listából azokat a szervezeteket, amelyeknek az ország tagja. Ami nincs a listán, azt az „Egyéb tagság” mezőbe írd.',
     },
     tagsagEgyeb: {
       cimke: 'Egyéb tagság',
-      magyarazat: 'A listában nem szereplő szervezeti tagságok, vesszővel elválasztva.',
+      magyarazat: 'A listán nem szereplő szervezeti tagságok, vesszővel elválasztva.',
       pelda: 'APEC, RCEP, IPEF',
     },
     agazatok: {
       cimke: 'Legfontosabb gazdasági ágazatok',
-      magyarazat: 'Azok az ágazatok, amelyek az ország gazdaságában a legnagyobb súlyúak (a K+F-prioritások a KFI-blokkban szerepelnek). Ami nincs a listán, azt az „Egyéb ágazat” mezőbe írd.',
+      magyarazat: 'Válaszd ki a listából az ország gazdaságában legnagyobb súlyú ágazatokat (a KFI-politika kiemelt iparágai külön, az 1. blokk „Kiemelt iparágak” mezőjébe kerülnek). Ami nincs a listán, azt az „Egyéb ágazat” mezőbe írd.',
     },
     agazatEgyeb: {
       cimke: 'Egyéb ágazat',
-      magyarazat: 'A listában nem szereplő gazdasági ágazatok, vesszővel elválasztva.',
-      pelda: 'Hajógyártás, acélipar, akkumulátorgyártás',
+      magyarazat: 'A listán nem szereplő gazdasági ágazatok, vesszővel elválasztva.',
+      pelda: 'Hajógyártás, acélipar',
     },
   },
   kfiRendszer: {
     teljesitmeny: {
       cimke: 'KFI-teljesítmény',
-      magyarazat: 'Az ország innovációs és K+F pozíciója nemzetközi mutatók alapján: index, helyezés, az elmúlt évek iránya. Add meg a forrást és az évet.',
+      magyarazat: 'Az ország KFI-pozíciója nemzetközi mutatók alapján: index, helyezés, az elmúlt évek iránya. Add meg a forrást és az évet.',
       pelda: 'Global Innovation Index 2025: 4. hely a 139 gazdaság közül (2024: 6.), régiójában az első. A K+F-ráfordítás 2024-ben a GDP 5,13%-a (OECD MSTI).',
     },
     gerd: {
       cimke: 'K+F ráfordítás a GDP %-ában',
-      magyarazat: 'Az összes K+F-ráfordítás (GERD) a GDP százalékában, legfeljebb két tizedesjegyig, tizedesvesszővel. Az érték évét a KFI-teljesítmény szövegében add meg.',
+      magyarazat: 'A bruttó hazai K+F-ráfordítás (GERD) a GDP százalékában, legfeljebb két tizedesjeggyel, tizedesvesszővel. Az érték évét a KFI-teljesítmény szövegében add meg.',
       pelda: '5,13',
     },
     strategia: {
@@ -553,26 +563,26 @@ export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], Me
     },
     prioritasok: {
       cimke: 'Prioritások',
-      magyarazat: 'Az ország KFI-politikájának kiemelt témái a listából. Ami nincs a listán, azt az „Egyéb prioritás” mezőbe írd.',
+      magyarazat: 'Válaszd ki a listából az ország KFI-politikájának kiemelt témáit. Ami nincs a listán, azt az „Egyéb prioritás” mezőbe írd.',
     },
     prioritasEgyeb: {
       cimke: 'Egyéb prioritás',
-      magyarazat: 'A listában nem szereplő KFI-prioritások, vesszővel elválasztva.',
+      magyarazat: 'A listán nem szereplő KFI-prioritások, vesszővel elválasztva.',
       pelda: '6G-fejlesztés, bioökonómia',
     },
     kiemeltIparagak: {
       cimke: 'Kiemelt iparágak',
-      magyarazat: 'Azok az iparágak, amelyekre az ország a KFI-politikájában a leginkább épít. A sorrend számít: az első kiemelt iparág színe jelenik meg a térképen, ezért a legfontosabbat jelöld ki elsőnek. Ami nincs a listán, azt az „Egyéb iparág” mezőbe írd.',
+      magyarazat: 'Válaszd ki a listából azokat az iparágakat, amelyekre az ország a KFI-politikájában a leginkább épít. A sorrend számít: a térképen az első színe jelenik meg, ezért a legfontosabbal kezdd (a sorrend módosításához távolítsd el, majd válaszd ki újra az elemeket). Ami nincs a listán, azt az „Egyéb iparág” mezőbe írd.',
     },
     iparagEgyeb: {
       cimke: 'Egyéb iparág',
-      magyarazat: 'A listában nem szereplő kiemelt iparágak, vesszővel elválasztva.',
+      magyarazat: 'A listán nem szereplő kiemelt iparágak, vesszővel elválasztva.',
       pelda: 'Fejlett robotika, atomenergia',
     },
     erossegek: {
       cimke: 'Erősségek',
       magyarazat: 'A KFI-rendszer legfontosabb erősségei, néhány mondatban vagy felsorolásban; lehetőleg számmal vagy helyezéssel alátámasztva.',
-      pelda: 'Erős nagyvállalati K+F: a legnagyobb befektetők a Samsung Electronics, az SK hynix és a Hyundai Motor. A GII 2025 szerint Korea első a vállalati K+F-ráfordításban.',
+      pelda: 'Erős nagyvállalati K+F: a legnagyobb befektetők a Samsung Electronics, az SK hynix és a Hyundai Motor. A GII 2025 szerint Korea első a GDP-arányos vállalati K+F-ráfordításban.',
     },
     kihivasok: {
       cimke: 'Kihívások',
@@ -588,43 +598,43 @@ export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], Me
     },
     egyetemek: {
       cimke: 'Meghatározó egyetemek',
-      magyarazat: 'A KFI szempontjából legfontosabb egyetemek a székhely városával; ha releváns, a fő szakterülettel.',
+      magyarazat: 'A KFI szempontjából legfontosabb egyetemek, zárójelben a városukkal; ha releváns, a fő szakterülettel is.',
       pelda: 'KAIST (Tedzson), Szöuli Nemzeti Egyetem (Szöul), POSTECH (Pohang)',
     },
     kutatokozpontok: {
       cimke: 'Kutatóközpontok, intézetek',
-      magyarazat: 'A meghatározó állami és nem egyetemi kutatóintézetek, kutatóhálózatok, szakterületükkel.',
-      pelda: 'Koreai Tudományos és Technológiai Intézet (KIST), ETRI (elektronika és távközlés), KRISS (metrológia)',
+      magyarazat: 'A meghatározó, nem egyetemi kutatóintézetek és kutatóhálózatok (állami vagy magán), a szakterületükkel.',
+      pelda: 'Koreai Tudományos és Technológiai Intézet (KIST) – multidiszciplináris; ETRI – elektronika és távközlés; KRISS – metrológia',
     },
     infrastrukturak: {
       cimke: 'Kutatási infrastruktúrák',
-      magyarazat: 'A nagy kutatási infrastruktúrák: kutatóreaktor, gyorsító, szuperszámítógép, tudományos park – név és hely.',
-      pelda: 'PAL-XFEL röntgenlézer (Pohang); KSTAR szupravezető tokamak (Tedzson); a KISTI Nurion szuperszámítógépe',
+      magyarazat: 'A nagy kutatási infrastruktúrák: kutatóreaktor, részecskegyorsító, röntgenlézer, fúziós berendezés, szuperszámítógép – név és hely. A tudományos és technológiai parkok a 3. blokk „Klaszterek, inkubátorok” mezőjébe kerülnek.',
+      pelda: 'PAL-XFEL röntgenlézer (Pohang); KSTAR szupravezető tokamak (Tedzson); a KISTI nemzeti szuperszámítógépe (Tedzson)',
     },
   },
   vallalati: {
     kiemeltAgazatok: {
       cimke: 'Kiemelt ágazatok',
-      magyarazat: 'Azok az ágazatok, amelyekben az ország innovatív vállalatai a legerősebbek, a listából. Ami nincs a listán, azt az „Egyéb ágazat” mezőbe írd.',
+      magyarazat: 'Válaszd ki a listából azokat az ágazatokat, amelyekben az ország innovatív vállalatai a legerősebbek. Ami nincs a listán, azt az „Egyéb ágazat” mezőbe írd.',
     },
     agazatEgyeb: {
       cimke: 'Egyéb ágazat',
-      magyarazat: 'A listában nem szereplő ágazatok, vesszővel elválasztva.',
+      magyarazat: 'A listán nem szereplő ágazatok, vesszővel elválasztva.',
       pelda: 'Hajógyártás, kijelzőgyártás',
     },
     topVallalatok: {
       cimke: 'Top 10 vállalat',
-      magyarazat: 'Az ország KFI szempontjából meghatározó legnagyobb vállalatai. Soronként egy név, legfeljebb 10 sor (sortöréssel válaszd el őket).',
+      magyarazat: `Az ország KFI szempontjából legfontosabb vállalatai, fontossági sorrendben (az országprofil oldalán számozott listaként jelenik meg). Soronként egy név, legfeljebb ${TOP_VALLALAT_MAX}.`,
       pelda: 'Samsung Electronics\nSK hynix\nHyundai Motor',
     },
     startupok: {
       cimke: 'Startupok, KKV-k',
       magyarazat: 'A startup- és KKV-ökoszisztéma jellemzői: ismert startupok, unikornisok, támogató programok, számok.',
-      pelda: 'A legnagyobb értékű unikornisok a Toss, a Yello Mobile és a Kurly. A TIPS program 2026-ban 800 startupot támogat.',
+      pelda: 'Ismert unikornisok: Toss, Kurly. A TIPS program 2026-ban 800 startupot támogat.',
     },
     klaszterek: {
       cimke: 'Klaszterek, inkubátorok',
-      magyarazat: 'A meghatározó innovációs klaszterek, tudományos és technológiai parkok, inkubátorok, gyorsítók – név, hely, szakterület.',
+      magyarazat: 'A meghatározó innovációs klaszterek, tudományos és technológiai parkok, inkubátorok és gyorsítóprogramok (akcelerátorok) – név, hely, szakterület.',
       pelda: 'Pangyo Techno Valley (IKT, játékipar, fintech); Songdo (biotechnológia); 19 Kreatív Gazdasági Innovációs Központ (CCEI) régiós inkubátorként.',
     },
     technologiatranszfer: {
@@ -636,29 +646,29 @@ export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], Me
   programok: {
     palyazatok: {
       cimke: 'Pályázatok',
-      magyarazat: 'Az országban elérhető fő KFI-pályázati programok: kiíró, a program neve és témája, ha ismert, a jellemző beadási időszak.',
+      magyarazat: 'Az országban elérhető fő KFI-pályázati programok: kiíró, a program neve és témája, valamint – ha ismert – a jellemző beadási időszak.',
       pelda: 'NRF alapkutatási pályázatok (egyéni, fiatal kutatói, csoportos sémák); IITP IKT K+F felhívások; KEIT ipari technológiai programok.',
     },
     tamogatasiProgramok: {
       cimke: 'Támogatási programok',
       magyarazat: 'Állami támogatási és ösztönző programok (startup-, inkubációs, mobilitási, tehetséggondozási): név, kezelő szerv, célcsoport.',
-      pelda: 'TIPS startup-program (MSS); Brain Pool – külföldi kutatók meghívása koreai egyetemekre.',
+      pelda: 'TIPS (MSS) – technológiai startupok, magánbefektetői előszűréssel; Brain Pool (MSIT, NRF) – külföldi kutatók meghívása koreai egyetemekre és kutatóintézetekbe.',
     },
     finanszirozasiEszkozok: {
       cimke: 'Finanszírozási eszközök',
       magyarazat: 'A pályázaton kívüli finanszírozási eszközök: kockázati tőke, alapok alapja, hitelgarancia, kedvezményes hitel, adókedvezmény.',
-      pelda: 'KVIC alapok alapja; KOTEC technológiaalapú hitelgaranciák; K+F adójóváírás.',
+      pelda: 'KVIC alapok alapja; KOTEC technológiaalapú hitelgaranciák; K+F-adójóváírás.',
     },
     nemzetkoziReszvetel: {
       cimke: 'Nemzetközi részvételi lehetőségek',
-      magyarazat: 'Milyen nemzetközi programokban vehet részt az ország, és így magyar partnerrel együtt: EU-s keretprogram, EUREKA, kétoldalú vagy regionális felhívások.',
-      pelda: 'A Horizont Európa II. pillérének társult országa és az EUREKA teljes jogú tagja; kétoldalú NKFIH–NRF felhívások.',
+      magyarazat: 'Azok a nemzetközi programok, amelyekben az ország szervezetei – akár magyar partnerrel közösen – részt vehetnek: EU-s keretprogram, EUREKA, kétoldalú vagy regionális felhívások.',
+      pelda: 'Közös konzorcium a Horizont Európa II. pillérében (Korea társult ország); EUREKA-projektek; kétoldalú NKFIH–NRF felhívások.',
     },
   },
   rendezvenyek: {
     lista: {
       cimke: 'Rendezvények',
-      magyarazat: 'Az országban rendszeresen megrendezett jelentősebb KFI-rendezvények. Legfeljebb 10 sor, a rendezvény neve kötelező; a teljesen üres sor kimarad.',
+      magyarazat: `Az országban rendszeresen megrendezett jelentősebb KFI-rendezvények. Legfeljebb ${RENDEZVENY_MAX} rendezvény, a rendezvény neve kötelező; a teljesen üres sor kimarad.`,
     },
   },
   kapcsolatok: {
@@ -670,7 +680,7 @@ export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], Me
     partnerorszagok: {
       cimke: 'Partnerországok',
       magyarazat: 'Azok az országok, amelyekkel a fogadó ország KFI-együttműködése a legintenzívebb, az együttműködés jellegével.',
-      pelda: 'USA (Technology Prosperity Deal, 2025), visegrádi országok (együttműködési szándéknyilatkozat, 2021).',
+      pelda: 'USA (Technology Prosperity Deal, 2025), EU (Horizont Európa-társulás, digitális és zöld partnerség).',
     },
     egyezmeny: {
       cimke: 'Érvényes TéT-egyezmény',
@@ -685,14 +695,14 @@ export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], Me
     mobilitas: {
       cimke: 'Mobilitás',
       magyarazat: 'Ösztöndíjak, kutatócsere, hallgatói és kutatói mozgás a két ország között: program, létszám, év.',
-      pelda: 'Stipendium Hungaricum: évi 100 hely, 2025/26-ban 63 ösztöndíjas; Global Korea Scholarship: 4 nagykövetségi hely.',
+      pelda: 'Stipendium Hungaricum: évi 100 hely, 2025/26-ban 63 ösztöndíjas; Global Korea Scholarship: 2026-ban 4 nagykövetségi hely.',
     },
   },
   magyarErtekeles: {
     osszegzes: {
       cimke: 'Összegzés',
-      magyarazat: 'Az ország KFI-profiljának és a magyar együttműködési lehetőségeknek a rövid összefoglalója, 2–4 mondatban, legfeljebb 500 karakter. Ez kerül a térkép-panel kivonatába.',
-      pelda: 'Dél-Korea a világ egyik legintenzívebb K+F-befektetője (2024: a GDP 5,13%-a), a GII 2025 4. helyezettje. A magyar–koreai TéT-kapcsolat az 1989-es egyezményre és a közös NKFIH–NRF felhívásokra épül; a legnagyobb potenciál az akkumulátor- és gyógyszerkutatásban van.',
+      magyarazat: `Az ország KFI-profiljának és a magyar együttműködési lehetőségeknek a rövid összefoglalója, 2–4 mondatban, legfeljebb ${OSSZEGZES_MAX} karakterben. Ez jelenik meg a térképen, az ország kiválasztásakor megnyíló panelen.`,
+      pelda: 'Dél-Korea a világ egyik legintenzívebb K+F-befektetője (2024: a GDP 5,13%-a), a GII 2025-ös rangsorában 4. A magyar–koreai TéT-kapcsolat az 1989-es egyezményre és a közös NKFIH–NRF felhívásokra épül; a legnagyobb potenciál az akkumulátor- és gyógyszerkutatásban van.',
     },
     egyuttmukodesiLehetosegek: {
       cimke: 'Együttműködési lehetőségek',
@@ -714,19 +724,19 @@ export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], Me
 
 /** A rendezvénysorok mezői: nem a `MEZO_CIMKEK` kulcsai, mert a sor a `Rendezvenyek.lista` eleme. */
 export const REND_MEZO_CIMKEK: Record<keyof Rendezveny, MezoCimke> = {
-  nev: { cimke: 'Név', magyarazat: 'A rendezvény hivatalos neve.', pelda: 'BIO KOREA' },
+  nev: { cimke: 'Név', magyarazat: 'A rendezvény hivatalos neve. Kötelező: név nélkül a sor nem menthető (a teljesen üres sor kimarad).', pelda: 'BIO KOREA' },
   tipus: {
     cimke: 'Típus',
-    magyarazat: 'Szakkiállítás, konferencia vagy egyéb fórum (pl. startup-fesztivál, hivatalos tudománydiplomáciai fórum).',
+    magyarazat: 'Szakkiállítás, konferencia vagy egyéb fórum (pl. startup-fesztivál, kormányzati tudománydiplomáciai fórum).',
   },
   idopont: {
     cimke: 'Időpont',
-    magyarazat: 'Mikor és hol tartják, szabadszövegben; visszatérő rendezvénynél a szokásos hónap.',
+    magyarazat: 'Mikor és hol tartják, szabadon megfogalmazva; visszatérő rendezvénynél a szokásos hónap.',
     pelda: 'április–május, Szöul (COEX)',
   },
   megjegyzes: {
     cimke: 'Megjegyzés',
-    magyarazat: 'Rövid leírás: témája, szervezője, a legközelebbi alkalom pontos dátuma.',
+    magyarazat: 'Rövid leírás: a rendezvény témája, szervezője, és ha ismert, a következő (vagy a legutóbbi) alkalom pontos dátuma.',
     pelda: 'Biotechnológia és gyógyszeripar, partnering; 2026: április 28–30.',
   },
 };
@@ -1238,30 +1248,21 @@ Várt: nincs találat, `grep exit=1`. (A `components/form/*` és a `felhasznalok
 ```bash
 npx tsc --noEmit; echo "tsc exit=$?"
 npx tsx scripts/_sugo-ellenorzes.ts; echo "script exit=$?"
-npm run build 2>&1 | tail -15; echo "build exit=${PIPESTATUS[0]}"
+S=/private/tmp/claude-501/-Users-szunyoghdavid-Downloads-tet-platform-tet-platform-next/ef6a87f5-9f1e-493e-b5b9-56105f03b762/scratchpad
+npm run build > "$S/build.log" 2>&1; echo "build exit=$?"; tail -15 "$S/build.log"
 ```
 
 Várt: `tsc exit=0`; `Rendben: …` és `script exit=0`; a build végén a route-lista (`/orszagprofil/[kod]/szerkesztes` szerepel), `build exit=0`. A build percekig tarthat: a Bash-hívásnak adj legalább 600000 ms időtúllépést. (Ha a build a nem létező `app/...` modulra panaszkodik: `rm .next/dev/types/validator.ts`, majd újra; a dev szervert ne állítsd le.)
 
 - [ ] **Step 12: `CLAUDE.md` frissítése**
 
-Három szerkesztés (mind pontosan egyszer fordul elő; ellenőrizd `grep -c`-vel):
+Három szerkesztés a `CLAUDE.md`-ben (mindegyik régi szövege pontosan egyszer fordul elő; ellenőrizd `grep -c`-vel). A végleges szöveg a `git show a498be2 6ed2dc1 -- CLAUDE.md` kimenetében van; lényegük:
 
-1. Az „Országprofil” bekezdésben a mondat:
+1. Az „Országprofil” bekezdésben a `MEZO_CIMKEK` leírása: a `cimke` + opcionális `sugo` helyett `cimke` + kötelező `magyarazat` + opcionális `pelda` (a kötelező `magyarazat` miatt fordítási hiba, ha egy mezőhöz nincs); az űrlap a címke mellett kérdőjeles felugróban mutatja (`components/form/SugoGomb`; a felugró `role="dialog"`, neve a címke, leírása a magyarázat), az olvasó nézet csak a `cimke`-t írja; a rendezvénysorok négy mezőjéé a `REND_MEZO_CIMKEK`.
+2. A „Közös építőelemek `components/form/`” felsorolásban: `Mezo` (címke + opcionális kérdőjeles magyarázat + súgósor + hiba); `NativeSelect`, után `CimkeSor` (a `Label` + a kérdőjeles gomb egy sorban; `magyarazat` nélkül puszta `Label`), `SugoGomb` (Base UI Popover `openOnHover`-rel: hoverre, koppintásra, Enter/Space-re nyílik; valódi `type="button"`; a hoverrel nyitott felugrón a kb. 500 ms-on belüli kattintás rögzíti, egy későbbi bezárja – a Base UI „patient click”-je, nincs rá publikus kapcsoló; `memo`-zott).
+3. Az „Amire figyelni kell” listában, a `CimkeValaszto` `name`-ről szóló pont után új pont (a `Mezo` régi `sugo` propjának hívója: csak az `OrszagMezok`):
 
-   régi: ``…`Record<keyof ProfilBlokkok[K], MezoCimke> }`, `cimke` + opcionális `sugo`), az űrlap és az olvasó nézet ugyanebből ír.``
-
-   új: ``…`Record<keyof ProfilBlokkok[K], MezoCimke> }`, `cimke` + kötelező `magyarazat` + opcionális `pelda`; a kötelező `magyarazat` miatt fordítási hiba, ha egy mezőhöz nincs), az űrlap a címke mellett kérdőjeles felugróban mutatja a `magyarazat`-ot és a `pelda`-t (`components/form/SugoGomb`), az olvasó nézet csak a `cimke`-t írja; a rendezvénysorok négy mezőjéé a `REND_MEZO_CIMKEK`.``
-
-2. A „Közös építőelemek `components/form/`” felsorolásban:
-
-   régi: `` `NativeSelect`; `MezoHiba.tsx` ``
-
-   új: `` `NativeSelect`, `CimkeSor` (a `Label` + a kérdőjeles gomb egy sorban; `magyarazat` nélkül puszta `Label`), `SugoGomb` (Base UI Popover `openOnHover`-rel: hoverre, koppintásra, Enter/Space-re nyílik; valódi `type="button"`); `MezoHiba.tsx` ``
-
-3. Az „Amire figyelni kell” listában, a `CimkeValaszto` `name`-ről szóló pont után új pont:
-
-   `- A kérdőjeles magyarázat gombja (`SugoGomb`) a `Label` **testvére**, nem a gyereke: a `<label>`-ben a rákattintás a mezőre fókuszálna (`CimkeSor`). Az országprofilban nincs mindig látható súgósor: a szöveg a `MEZO_CIMKEK` `magyarazat`/`pelda` mezőjében van, a hívóhelyen `{...C.mezo}` szórással jut a komponensekhez. A `Mezo`-komponensek régi `sugo` string propja (látható sor, `<id>-sugo` id-val, az `aria-describedby` hivatkozik rá) a többi űrlapnak (riport, felhasználók) marad. Új országprofil-mezőnél a `MEZO_CIMKEK`-be kötelező `magyarazat` kell.`
+   `- A kérdőjeles magyarázat gombja (`SugoGomb`) a `Label` **testvére**, nem a gyereke: a `<label>`-ben a rákattintás a mezőre fókuszálna (`CimkeSor`). Az országprofilban nincs mindig látható súgósor: a szöveg a `MEZO_CIMKEK` `magyarazat`/`pelda` mezőjében van, a hívóhelyen `{...C.mezo}` szórással jut a komponensekhez. A `Mezo` régi `sugo` string propja (látható sor, `<id>-sugo` id-val, az `aria-describedby` hivatkozik rá) a felhasználó-űrlapé (`OrszagMezok`) marad; a `SzovegMezo`/`RovidMezo`/`SzamMezo`/`CimkeValaszto` `sugo`-ja jelenleg hívó nélküli. Új országprofil-mezőnél a `MEZO_CIMKEK`-be kötelező `magyarazat` kell. A `magyarazat` szövegek a validátor szabályait írják le (számformátum, korlátok): a korlátokat a szótár konstansaiból veszik (`EV_MIN`, `TOP_VALLALAT_MAX`, `RENDEZVENY_MAX`, `OSSZEGZES_MAX`), a tizedes- és min/max szabályok viszont szövegesek, ezért a `lib/orszagprofil-validacio.ts` szabályváltozásakor a szöveget is frissíteni kell.`
 
 - [ ] **Step 13: Böngészős QA – a QA-scriptek**
 
@@ -1308,6 +1309,8 @@ Hozd létre a két scriptet (ha hiányoznak). **Aszinkron QA-script kommentjébe
     fokusz: aktiv ? (aktiv.getAttribute('aria-label') || aktiv.id || aktiv.tagName) : null,
     comboNyitva: combo ? combo.getAttribute('aria-expanded') : null,
     toast: document.querySelectorAll('[data-sonner-toast]').length,
+    dialogNev: p ? p.getAttribute('aria-labelledby') : null,
+    dialogLeiras: p ? p.getAttribute('aria-describedby') : null,
   });
 })()
 ```
@@ -1338,6 +1341,12 @@ echo '--- CimkeValaszto (Nemzetközi szervezeti tagság)'
 $B click '[aria-label="Magyarázat: Nemzetközi szervezeti tagság"]' >/dev/null; $B wait '[data-slot="popover-content"][data-open]' >/dev/null
 $B eval "$S/sugo-popup-qa.js"
 $B press Escape >/dev/null
+echo '--- hover, majd kb. 1 s múlva kattintás (megfigyelés)'
+$B hover '[aria-label="Magyarázat: Főváros"]' >/dev/null; $B wait '[data-slot="popover-content"][data-open]' >/dev/null
+$B wait --networkidle >/dev/null
+$B click '[aria-label="Magyarázat: Főváros"]' >/dev/null
+$B eval "$S/sugo-popup-qa.js"
+$B press Escape >/dev/null
 echo '--- konzol'; $B console --errors
 ```
 
@@ -1348,6 +1357,8 @@ Várt:
 - Hover (Terület): `nyitva: true`, a szövegben `100 460`.
 - Billentyűzet (Pénznem): `nyitva: true`, a szövegben `dél-koreai von (KRW)`.
 - CimkeValaszto: `nyitva: true`, a szövegben `Egyéb tagság`; `comboNyitva` `false` (a magyarázat gombja nem nyitotta a legördülőt).
+- Minden nyitott állapotban a `dialogNev` és a `dialogLeiras` nem `null` (a felugró `role="dialog"`, neve a rejtett cím = a címke, leírása a magyarázat); a `szoveg` a címkével kezdődik (a `sr-only` cím), utána a magyarázat, „Példa”, a példa.
+- Hover, majd kb. 1 s múlva kattintás: a felugró **bezárul** (Base UI „patient click”: a hoverrel nyitott felugrón a kb. 500 ms-on belüli kattintás rögzíti, a későbbi bezárja). Ez megfigyelés, nem hiba; hover nélküli kattintás megnyitja.
 - `console --errors`: `(no console errors)`.
 
 - [ ] **Step 15: Böngészős QA – keskeny ablak, rendezvénysor, vizuális ellenőrzés**
@@ -1360,20 +1371,20 @@ $B goto 'http://localhost:3000/orszagprofil/DE/szerkesztes' >/dev/null; $B wait 
 echo '--- keskeny ablak (Összegzés)'
 $B click '[aria-label="Magyarázat: Összegzés"]' >/dev/null; $B wait '[data-slot="popover-content"][data-open]' >/dev/null
 $B eval "$S/sugo-popup-qa.js"
-$B screenshot "$S/sugo-keskeny.png" >/dev/null
+$B screenshot --viewport "$S/sugo-keskeny.png" >/dev/null
 $B press Escape >/dev/null
 $B viewport 1280x900 >/dev/null
 echo '--- rendezvénysor (Időpont, 1. sor; a KR demó-profilban 7 rendezvény van)'
 $B goto 'http://localhost:3000/orszagprofil/KR/szerkesztes' >/dev/null; $B wait '#alapadatok\.fovaros' >/dev/null; $B wait --networkidle >/dev/null
-$B click '[aria-label="Magyarázat: Időpont"]' >/dev/null; $B wait '[data-slot="popover-content"][data-open]' >/dev/null
+$B click 'div:has(> #rendezvenyek\.rendezveny\.0\.idopont) > div > [aria-label="Magyarázat: Időpont"]' >/dev/null; $B wait '[data-slot="popover-content"][data-open]' >/dev/null
 $B eval "$S/sugo-popup-qa.js"
-$B screenshot "$S/sugo-rendezveny.png" >/dev/null
+$B screenshot --viewport "$S/sugo-rendezveny.png" >/dev/null
 $B press Escape >/dev/null
 ```
 
 Várt: a keskeny ablaknál `bal >= 0` és `jobb <= ablak` (`375`): a felugró nem lóg ki; a rendezvénysornál a szövegben `április–május, Szöul (COEX)`. Nézd meg a két képernyőképet (`Read` az `$S/sugo-keskeny.png` és `$S/sugo-rendezveny.png` fájlokon): a kérdőjel a címke mellett, vízszintesen a szöveg vonalában, a felugró olvasható, a „Példa” halvány hátterű blokkban.
 
-Ha az `Időpont` címkéhez több gomb illeszkedik (több rendezvénysor), a `click` az első találatot használja, ez megfelel. Ha a `wait` mégis időtúllépne, a KR profilban nincs rendezvény: válassz másik, rendezvényes országot (pl. DE, AT).
+A gstack `click` több találatnál **hibázik** („Selector matched multiple elements”), ezért az Időpont-gomb szelektora az 1. sor mezőjéhez kötött (a `div:has(> #…) > div > …` forma). A teljes oldalas `screenshot` ehhez a hosszú űrlaphoz olvashatatlan, ezért `--viewport`. Ha a `wait` időtúllépne, a KR profilban nincs rendezvény: válassz másik, rendezvényes országot (pl. DE, AT).
 
 - [ ] **Step 16: Takarítás és commit**
 
