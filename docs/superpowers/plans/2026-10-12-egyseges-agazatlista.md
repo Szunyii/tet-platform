@@ -359,6 +359,20 @@ assert.deepEqual(Object.keys(AGAZAT_SZINEK).sort(), [...LISTA].sort());
 assert.equal(new Set(Object.values(AGAZAT_SZINEK)).size, 21);
 for (const szin of Object.values(AGAZAT_SZINEK)) assert.match(szin, /^#[0-9a-f]{6}$/);
 
+// 1b. A sorrend és a színek pontosan a spec táblázata szerint.
+const SPEC: [string, string][] = [
+  ['Mesterséges intelligencia és adatgazdaság', '#1f4e9c'], ['IKT és digitalizáció', '#2563eb'],
+  ['Elektronika és félvezetők', '#b45309'], ['Kvantumtechnológia', '#6b46c1'],
+  ['Biotechnológia és gyógyszeripar', '#0f7a68'], ['Digitális egészségügy', '#a8326f'],
+  ['Energetika és fenntarthatóság', '#2f7d32'], ['Hidrogén és akkumulátor', '#0e7490'], ['Űripar', '#334155'],
+  ['Mobilitás és autóipar', '#9a3412'], ['Gépipar', '#4338ca'], ['Vegyipar', '#a21caf'], ['Anyagtudomány', '#525c6b'],
+  ['Agrár- és élelmiszeripar', '#8a6d1f'], ['Bányászat és nyersanyagok', '#6b3f1d'], ['Védelmi ipar', '#7f1d1d'],
+  ['Kreatív ipar és média', '#be185d'], ['Pénzügyi szolgáltatások', '#4d7c0f'], ['Turizmus', '#d11541'],
+  ['Logisztika', '#0369a1'], ['Építőipar', '#736a5f'],
+];
+assert.deepEqual([...LISTA], SPEC.map(([nev]) => nev));
+assert.deepEqual(Object.entries(AGAZAT_SZINEK), SPEC);
+
 // 2. A megfeleltetés: kilenc régi név, mind létező közös névre; régi név nincs a közös listában.
 const REGI: [string, string][] = [
   ['Autóipar', 'Mobilitás és autóipar'],
@@ -506,27 +520,31 @@ export const AGAZAT_SZINEK: Record<Agazat, string> = {
   'Védelmi ipar': '#7f1d1d',
   'Kreatív ipar és média': '#be185d',
   'Pénzügyi szolgáltatások': '#4d7c0f',
-  'Turizmus': '#e11d48',
+  'Turizmus': '#d11541',
   'Logisztika': '#0369a1',
-  'Építőipar': '#78716c',
+  'Építőipar': '#736a5f',
 };
 
 /**
  * A 2026-10-12 előtti két lista (gazdasági ágazatok, iparágak) nevei → a közös lista neve. A két
  * régi listának nem volt közös neve, ezért a tábla mezőtől független. Tartósan marad: a régi
  * nevet tároló DB (hosting, visszaállított mentés) így migráció nélkül is helyesen olvasódik.
+ * Ezek a nevek foglaltak: az `AGAZATOK`-ba nem kerülhetnek vissza, mert a megfeleltetés a szűrés
+ * előtt fut, és a visszavett nevet mentéskor némán átírná. Ezt a `satisfies` őrzi: ha egy kulcs
+ * egyben `Agazat` is, az fordítási hiba.
  */
-export const REGI_AGAZAT_NEVEK: ReadonlyMap<string, Agazat> = new Map<string, Agazat>([
-  ['Autóipar', 'Mobilitás és autóipar'],
-  ['Gyógyszeripar', 'Biotechnológia és gyógyszeripar'],
-  ['Energetika', 'Energetika és fenntarthatóság'],
-  ['Mezőgazdaság és élelmiszeripar', 'Agrár- és élelmiszeripar'],
-  ['IKT és szoftver', 'IKT és digitalizáció'],
-  ['Kreatív ipar', 'Kreatív ipar és média'],
-  ['Félvezetők és mikroelektronika', 'Elektronika és félvezetők'],
-  ['Agrár- és élelmiszertechnológia', 'Agrár- és élelmiszeripar'],
-  ['Védelmi technológia', 'Védelmi ipar'],
-]);
+const REGI_NEVEK = {
+  'Autóipar': 'Mobilitás és autóipar',
+  'Gyógyszeripar': 'Biotechnológia és gyógyszeripar',
+  'Energetika': 'Energetika és fenntarthatóság',
+  'Mezőgazdaság és élelmiszeripar': 'Agrár- és élelmiszeripar',
+  'IKT és szoftver': 'IKT és digitalizáció',
+  'Kreatív ipar': 'Kreatív ipar és média',
+  'Félvezetők és mikroelektronika': 'Elektronika és félvezetők',
+  'Agrár- és élelmiszertechnológia': 'Agrár- és élelmiszeripar',
+  'Védelmi technológia': 'Védelmi ipar',
+} as const satisfies Record<string, Agazat> & Partial<Record<Agazat, never>>;
+export const REGI_AGAZAT_NEVEK: ReadonlyMap<string, Agazat> = new Map(Object.entries(REGI_NEVEK));
 ```
 
 Ugyanebben a fájlban a három interfész-mező típusa:
@@ -549,6 +567,9 @@ A `szurtLista` függvény után (a `szovegLista` elé) szúrd be:
  * A három ágazat-mező listája: a régi neveket a közös lista nevére képezi (`REGI_AGAZAT_NEVEK`),
  * utána `szurtLista`. A sorrend megmarad (az első kiemelt iparág adja a térkép színét); ha két elem
  * ugyanarra a névre képződik, az egyszer szerepel, az első előfordulás helyén.
+ * Két helyen fut: a normalizálóban (a DB-ből olvasott JSON régi nevet is tárolhat) és az
+ * űrlap-validátorban (hogy a két belépési pont ugyanúgy olvasson). A demó-profil futtató szigorú
+ * ellenőrzése szándékosan nem alkalmazza: az országfájlokban a régi név hiba.
  */
 export function agazatLista(v: unknown): Agazat[] {
   if (!Array.isArray(v)) return [];
@@ -632,6 +653,7 @@ import {
 ```
 
 ```ts
+  /** A KFI-blokk kiemelt iparágai a közös ágazatlistából; az első adja a térkép színét. */
   iparagak: Agazat[];
 ```
 
@@ -968,7 +990,7 @@ $B js "[...document.getElementById('vallalati.kiemeltAgazatok-doboz').querySelec
 Várt:
 
 - `mentes-qa.js`: `{"chipek":[…, "Anyagtudomány","Turizmus"],"toast":"Blokk mentve","hibak":[]}`;
-- az olvasó nézetben a „Kiemelt ágazatok” sor végén `"nev": "Turizmus"`, `"szin": "rgb(225, 29, 72)"`;
+- az olvasó nézetben a „Kiemelt ágazatok” sor végén `"nev": "Turizmus"`, `"szin": "rgb(209, 21, 65)"`;
 - újratöltés után a szerkesztő chipjei: `Mobilitás és autóipar | IKT és digitalizáció | Biotechnológia és gyógyszeripar | Elektronika és félvezetők | Mesterséges intelligencia és adatgazdaság | Anyagtudomány | Turizmus`.
 
 Ez a mentés a `data/tet.db`-be írt (és a blokk régi neveit az újakra cserélte); az 5. lépés állítja vissza.

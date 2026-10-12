@@ -66,13 +66,15 @@ viszi tovább.
 | 16 | Védelmi ipar | `#7f1d1d` | Védelmi technológia |
 | 17 | Kreatív ipar és média | `#be185d` | Kreatív ipar |
 | 18 | Pénzügyi szolgáltatások | `#4d7c0f` (új) | |
-| 19 | Turizmus | `#e11d48` (új) | |
+| 19 | Turizmus | `#d11541` (új) | |
 | 20 | Logisztika | `#0369a1` (új) | |
-| 21 | Építőipar | `#78716c` (új) | |
+| 21 | Építőipar | `#736a5f` (új) | |
 
-A hét új szín fehér háttéren legalább 4,7:1 kontrasztú (a jelvény a színt betűszínként használja),
-és egyik sincs közelebb egy másik színhez, mint a meglévő legközelebbi párok (CIE76 Lab-távolság:
-az újak legkisebb távolsága 16,6, a meglévőké 12,3 és 16,4).
+A hét új szín a jelvény tényleges hátterén (a saját szín 8%-os árnyalata fehéren, a jelvény a
+színt betűszínként használja) legalább 4,5:1 kontrasztú. Egyik sincs közelebb egy másik
+ágazat-színhez vagy a térkép „nincs kiemelt iparág” szürkéjéhez (`TERKEP_SZINEK.semleges`), mint
+a meglévő legközelebbi párok (CIE76 Lab-távolság: az újak legkisebb távolsága 16,6, a meglévőké
+12,3 és 16,4).
 
 ## Megfeleltetés (`lib/orszagprofil-szotar.ts`)
 
@@ -93,6 +95,11 @@ az újak legkisebb távolsága 16,6, a meglévőké 12,3 és 16,4).
 A két régi listának nem volt közös neve, ezért a megfeleltetés mezőtől független: egyetlen tábla
 szolgálja mindhárom mezőt.
 
+A kilenc régi név foglalt: a közös listába nem kerülhet vissza, mert a megfeleltetés a szűrés előtt
+fut, és a visszavett nevet mentéskor némán átírná. Ezt fordítási idejű őr védi (a tábla
+`satisfies Record<string, Agazat> & Partial<Record<Agazat, never>>`): ha egy régi név egyben
+`Agazat` is, a `tsc` hibát ad.
+
 `agazatLista(v: unknown): Agazat[]`: a bemenet (JSON-ból vagy `fd.getAll()`-ból jövő tömb, vagy
 bármi más) elemeit egyenként megfelelteti, majd a meglévő `szurtLista`-val szűri.
 
@@ -107,8 +114,11 @@ bármi más) elemeit egyenként megfelelteti, majd a meglévő `szurtLista`-val 
 - a `NORMALIZALOK` három mezőjénél (`alapadatok.agazatok`, `kfiRendszer.kiemeltIparagak`,
   `vallalati.kiemeltAgazatok`): a DB-ből olvasott profil mindig az új neveket adja, tehát a
   szerkesztő, az olvasó nézet és a térkép is;
-- a `VALIDALOK` ugyanezen három mezőjénél (`lib/orszagprofil-validacio.ts`): a telepítés előtt
-  megnyitott szerkesztő a kliens-állapotában még a régi neveket küldi, ezek így nem vesznek el.
+- a `VALIDALOK` ugyanezen három mezőjénél (`lib/orszagprofil-validacio.ts`): a két belépési pont
+  így ugyanúgy olvas. A telepítés előtt megnyitott szerkesztő a kliens-állapotában még a régi
+  neveket küldi; ha a mentése eljut a validátorig, ezek nem vesznek el. (Új deploy után a server
+  action azonosítója jellemzően megváltozik, ilyenkor a régi kliens mentése űrlap-hibát kap, és
+  újratöltés után már az új neveket látja.)
 
 **Hol nem fut:** a demó-profil futtató szigorú ellenőrzésében (`scripts/demo-orszagprofil.ts`,
 `LISTAK`). Az országfájlokban a régi név ezentúl „szótáron kívüli opció” hiba; ott csak a közös
@@ -230,3 +240,28 @@ Tesztkeretrendszer nincs; az ellenőrzés fordítás, eldobható scriptek és b�
     színe nem változott; az iparág-szűrő 21 elemű, egy új elemre (pl. Turizmus) a szűrés szerinti
     üres állapot jelenik meg;
   - a konzol hibamentes.
+
+## Megvalósítási eltérések
+
+Az 1. task minőségi review-ja nyomán, az eredeti spechez (`bb64a9a`) képest:
+
+- **Két új szín.** A Turizmus `#e11d48` helyett `#d11541`, az Építőipar `#78716c` helyett
+  `#736a5f`. Az eredeti kritérium fehér háttérre mért; a jelvény saját, 8%-os hátterén a két
+  eredeti szín 4,15:1, illetve 4,36:1 volt. Az Építőipar eredeti szürkéje a térkép „nincs kiemelt
+  iparág” színétől is csak 14,3-ra állt.
+- **A régi nevek foglaltságának őre.** Az eredeti spec `Map`-et írt elő őr nélkül; az invariánst
+  csak az eldobható assert-script ellenőrizte volna.
+- **A validátorbeli megfeleltetés indoka** pontosabb lett: a régi kliens mentése új deploy után
+  jellemzően el sem jut a validátorig.
+
+Nem készült el, későbbi csiszolásnak maradt (a review „apró” pontjai, a hatókörön kívül):
+
+- A szerkesztő legördülője 21 elemből nyolcat mutat egyszerre, görgetősáv nélkül
+  (`components/ui/combobox.tsx`, `no-scrollbar`); a lista gépeléssel szűrhető és görgethető.
+- A térkép iparág-szűrője szűk felugróban nyílik újra, ha a lista végéről van elem kiválasztva
+  (`alignItemWithTrigger`).
+- A szűrő mind a 21 elemet kínálja, pedig csak az adatokban előforduló iparágakra ad találatot.
+
+**Visszaút.** Az új néven mentett vagy újragenerált DB-t a régi kód olvasáskor megcsonkítaná (a
+régi `szurtLista` eldobná pl. az Alapadatokból a „Mobilitás és autóipar”-t). A kód visszaállítása
+ezért a DB visszaállításával együtt jár.
