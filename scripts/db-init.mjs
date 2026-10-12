@@ -13,10 +13,11 @@ const forras = resolve(process.cwd(), 'data/tet.db');
 const cel = resolve(process.cwd(), process.env.DATABASE_URL ?? './data/tet.db');
 
 // Egyszeri csere: a felhasználókat tartalmazó céladatbázis helyére is a repó demó adatbázisa kerül
-// (2026-10-07: a 15 demó attasé a hostingra; a hPanel nélkül csak a build ér el a hosting-DB-hez).
-// A régi fájl a -wal/-shm párjával együtt átnevezve megmarad. Minden demó-másolás után jelölőfájl
+// (2026-10-07: a 15 demó attasé; 2026-10-09: a 27 ország 2026-os profilja – a hPanel nélkül csak a
+// build ér el a hosting-DB-hez). A hostingon az előző csere óta történt minden változás elvész; a
+// régi fájl a -wal/-shm párjával együtt átnevezve megmarad. Minden demó-másolás után jelölőfájl
 // készül a cél mellé, ezért ugyanarra az útvonalra csak egyszer fut le. Újabb cseréhez új azonosító kell.
-const DEMO_CSERE = '2026-10-07';
+const DEMO_CSERE = '2026-10-09';
 const csereJelolo = `${cel}.demo-csere-${DEMO_CSERE}`;
 
 /** A célfájl felhasználóinak száma; nincs tábla / nem SQLite / üres fájl → 0. */
