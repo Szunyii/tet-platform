@@ -335,8 +335,6 @@ export interface MezoCimke {
   magyarazat: string;
   /** Példa-érték; többsoros mezőnél `\n`-nel elválasztva. */
   pelda?: string;
-  /** @deprecated A `magyarazat` váltja. */
-  sugo?: string;
 }
 export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], MezoCimke> } = {
   alapadatok: {

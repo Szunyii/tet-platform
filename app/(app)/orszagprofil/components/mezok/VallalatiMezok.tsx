@@ -19,13 +19,13 @@ export function VallalatiMezok({
     <BlokkForm kod={kod} ev={ev} blokk={B} mentve={mentve} action={action}>
       {(errors) => (
         <>
-          <CimkeValaszto id={mezoId(B, 'kiemeltAgazatok')} name="kiemeltAgazatok" cimke={C.kiemeltAgazatok.cimke} items={AGAZATOK} value={e.kiemeltAgazatok} onChange={set('kiemeltAgazatok')} errors={errors}
-            egyeb={{ id: mezoId(B, 'agazatEgyeb'), name: 'agazatEgyeb', cimke: C.agazatEgyeb.cimke, value: e.agazatEgyeb, onChange: set('agazatEgyeb'), max: ROVID_MAX }} />
-          <SzovegMezo id={mezoId(B, 'topVallalatok')} name="topVallalatok" cimke={C.topVallalatok.cimke} sugo={C.topVallalatok.sugo} value={e.topVallalatok} onChange={set('topVallalatok')}
+          <CimkeValaszto id={mezoId(B, 'kiemeltAgazatok')} name="kiemeltAgazatok" {...C.kiemeltAgazatok} items={AGAZATOK} value={e.kiemeltAgazatok} onChange={set('kiemeltAgazatok')} errors={errors}
+            egyeb={{ id: mezoId(B, 'agazatEgyeb'), name: 'agazatEgyeb', ...C.agazatEgyeb, value: e.agazatEgyeb, onChange: set('agazatEgyeb'), max: ROVID_MAX }} />
+          <SzovegMezo id={mezoId(B, 'topVallalatok')} name="topVallalatok" {...C.topVallalatok} value={e.topVallalatok} onChange={set('topVallalatok')}
             max={ROVID_MAX * TOP_VALLALAT_MAX + TOP_VALLALAT_MAX} sorok={10} errors={errors} />
-          <SzovegMezo id={mezoId(B, 'startupok')} name="startupok" cimke={C.startupok.cimke} value={e.startupok} onChange={set('startupok')} max={SZOVEG_MAX} errors={errors} />
-          <SzovegMezo id={mezoId(B, 'klaszterek')} name="klaszterek" cimke={C.klaszterek.cimke} value={e.klaszterek} onChange={set('klaszterek')} max={SZOVEG_MAX} errors={errors} />
-          <SzovegMezo id={mezoId(B, 'technologiatranszfer')} name="technologiatranszfer" cimke={C.technologiatranszfer.cimke} value={e.technologiatranszfer} onChange={set('technologiatranszfer')} max={SZOVEG_MAX} errors={errors} />
+          <SzovegMezo id={mezoId(B, 'startupok')} name="startupok" {...C.startupok} value={e.startupok} onChange={set('startupok')} max={SZOVEG_MAX} errors={errors} />
+          <SzovegMezo id={mezoId(B, 'klaszterek')} name="klaszterek" {...C.klaszterek} value={e.klaszterek} onChange={set('klaszterek')} max={SZOVEG_MAX} errors={errors} />
+          <SzovegMezo id={mezoId(B, 'technologiatranszfer')} name="technologiatranszfer" {...C.technologiatranszfer} value={e.technologiatranszfer} onChange={set('technologiatranszfer')} max={SZOVEG_MAX} errors={errors} />
         </>
       )}
     </BlokkForm>

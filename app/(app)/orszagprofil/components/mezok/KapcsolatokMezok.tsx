@@ -32,7 +32,7 @@ export function KapcsolatokMezok({
           <SzovegMezo
             id={mezoId(B, "euMultilateralis")}
             name="euMultilateralis"
-            cimke={C.euMultilateralis.cimke}
+            {...C.euMultilateralis}
             value={e.euMultilateralis}
             onChange={set("euMultilateralis")}
             max={SZOVEG_MAX}
@@ -41,7 +41,7 @@ export function KapcsolatokMezok({
           <SzovegMezo
             id={mezoId(B, "partnerorszagok")}
             name="partnerorszagok"
-            cimke={C.partnerorszagok.cimke}
+            {...C.partnerorszagok}
             value={e.partnerorszagok}
             onChange={set("partnerorszagok")}
             max={SZOVEG_MAX}
@@ -50,8 +50,7 @@ export function KapcsolatokMezok({
           <RovidMezo
             id={mezoId(B, "egyezmeny")}
             name="egyezmeny"
-            cimke={C.egyezmeny.cimke}
-            sugo={C.egyezmeny.sugo}
+            {...C.egyezmeny}
             value={e.egyezmeny}
             onChange={set("egyezmeny")}
             max={ROVID_MAX}
@@ -60,7 +59,7 @@ export function KapcsolatokMezok({
           <SzovegMezo
             id={mezoId(B, "ketoldalu")}
             name="ketoldalu"
-            cimke={C.ketoldalu.cimke}
+            {...C.ketoldalu}
             value={e.ketoldalu}
             onChange={set("ketoldalu")}
             max={SZOVEG_MAX}
@@ -69,8 +68,7 @@ export function KapcsolatokMezok({
           <SzovegMezo
             id={mezoId(B, "mobilitas")}
             name="mobilitas"
-            cimke={C.mobilitas.cimke}
-            sugo={C.mobilitas.sugo}
+            {...C.mobilitas}
             value={e.mobilitas}
             onChange={set("mobilitas")}
             max={SZOVEG_MAX}

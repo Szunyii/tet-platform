@@ -15,10 +15,10 @@ export function IntezmenyekMezok({
     <BlokkForm kod={kod} ev={ev} blokk={B} mentve={mentve} action={action}>
       {(errors) => (
         <>
-          <SzovegMezo id={mezoId(B, 'iranyitoSzervek')} name="iranyitoSzervek" cimke={C.iranyitoSzervek.cimke} sugo={C.iranyitoSzervek.sugo} value={e.iranyitoSzervek} onChange={set('iranyitoSzervek')} max={SZOVEG_MAX} errors={errors} />
-          <SzovegMezo id={mezoId(B, 'egyetemek')} name="egyetemek" cimke={C.egyetemek.cimke} value={e.egyetemek} onChange={set('egyetemek')} max={SZOVEG_MAX} errors={errors} />
-          <SzovegMezo id={mezoId(B, 'kutatokozpontok')} name="kutatokozpontok" cimke={C.kutatokozpontok.cimke} value={e.kutatokozpontok} onChange={set('kutatokozpontok')} max={SZOVEG_MAX} errors={errors} />
-          <SzovegMezo id={mezoId(B, 'infrastrukturak')} name="infrastrukturak" cimke={C.infrastrukturak.cimke} value={e.infrastrukturak} onChange={set('infrastrukturak')} max={SZOVEG_MAX} errors={errors} />
+          <SzovegMezo id={mezoId(B, 'iranyitoSzervek')} name="iranyitoSzervek" {...C.iranyitoSzervek} value={e.iranyitoSzervek} onChange={set('iranyitoSzervek')} max={SZOVEG_MAX} errors={errors} />
+          <SzovegMezo id={mezoId(B, 'egyetemek')} name="egyetemek" {...C.egyetemek} value={e.egyetemek} onChange={set('egyetemek')} max={SZOVEG_MAX} errors={errors} />
+          <SzovegMezo id={mezoId(B, 'kutatokozpontok')} name="kutatokozpontok" {...C.kutatokozpontok} value={e.kutatokozpontok} onChange={set('kutatokozpontok')} max={SZOVEG_MAX} errors={errors} />
+          <SzovegMezo id={mezoId(B, 'infrastrukturak')} name="infrastrukturak" {...C.infrastrukturak} value={e.infrastrukturak} onChange={set('infrastrukturak')} max={SZOVEG_MAX} errors={errors} />
         </>
       )}
     </BlokkForm>

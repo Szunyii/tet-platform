@@ -1,10 +1,12 @@
 'use client';
 
+import { SugoGomb } from '../../../../../components/form/SugoGomb';
 import { MEZO_CIMKEK, type Rendezvenyek } from '../../../../../lib/orszagprofil-szotar';
 import { BlokkForm, useBlokkAllapot, type BlokkMezokProps } from '../BlokkForm';
 import { RendezvenySorok } from '../RendezvenySorok';
 
 const B = 'rendezvenyek';
+const L = MEZO_CIMKEK.rendezvenyek.lista;
 
 export function RendezvenyekMezok({
   kod, ev, initial, mentve, action,
@@ -14,7 +16,10 @@ export function RendezvenyekMezok({
     <BlokkForm kod={kod} ev={ev} blokk={B} mentve={mentve} action={action}>
       {(errors) => (
         <>
-          <p className="text-xs text-muted-foreground">{MEZO_CIMKEK.rendezvenyek.lista.sugo}</p>
+          <div className="flex items-center gap-1 text-sm font-medium">
+            <span>{L.cimke}</span>
+            <SugoGomb cimke={L.cimke} magyarazat={L.magyarazat} pelda={L.pelda} />
+          </div>
           <RendezvenySorok value={e.lista} onChange={set('lista')} errors={errors} />
         </>
       )}
