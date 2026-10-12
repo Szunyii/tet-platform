@@ -1113,7 +1113,7 @@ opciólisták `TAGSAGOK`, `GAZDASAGI_AGAZATOK`, `KFI_PRIORITASOK`, `IPARAGAK` + 
 erre:
 
 ```
-opciólisták `TAGSAGOK`, `KFI_PRIORITASOK`, `AGAZATOK` + `AGAZAT_SZINEK` (21 elem: az Alapadatok `agazatok`, a KFI-blokk `kiemeltIparagak` és a vállalati blokk `kiemeltAgazatok` mezőjének közös listája; az első kiemelt iparág színe a térképé), `REGI_AGAZAT_NEVEK` + `agazatLista()` (a 2026-10-12 előtti két lista kilenc régi neve → közös név; a normalizáló és a validátor a három mezőt ezen át olvassa, ezért a régi nevet tároló DB és a telepítés előtt megnyitott szerkesztő értéke sem vész el, migráció nélkül; a demó-profil futtató szigorú ellenőrzése viszont a régi nevet hibának veszi), `ALLAPOTOK`
+opciólisták `TAGSAGOK`, `KFI_PRIORITASOK`, `AGAZATOK` + `AGAZAT_SZINEK` (21 elem: az Alapadatok `agazatok`, a KFI-blokk `kiemeltIparagak` és a vállalati blokk `kiemeltAgazatok` mezőjének közös listája; az első kiemelt iparág színe a térképé), `REGI_AGAZAT_NEVEK` + `agazatLista()` (a 2026-10-12 előtti két lista kilenc régi neve → közös név; a normalizáló és a validátor a három mezőt ezen át olvassa, ezért a régi nevet tároló DB migráció nélkül is helyesen olvasódik – a nyers JSON-oszlopban tehát régi név is állhat; a kilenc régi név foglalt, az `AGAZATOK`-ba nem kerülhet vissza, ezt a tábla `satisfies`-őre fordításkor ellenőrzi; a demó-profil futtató szigorú ellenőrzése a régi nevet hibának veszi), `ALLAPOTOK`
 ```
 
 Erről:
@@ -1128,18 +1128,26 @@ erre:
 `AllapotBadge` a legnagyobb profil-év ≤ nézett év állapotával, `AgazatBadge` (mindhárom ágazat-mező színes jelvénye, a térképpel közös `AGAZAT_SZINEK`-ből);
 ```
 
+A `lib/orszagprofil-szotar.ts`-ben az exportált `REGI_AGAZAT_NEVEK` sora fölé egy sor doc-komment (az 1. task újra-review-jának apró pontja: a magyarázat eddig csak a privát `REGI_NEVEK`-en ült):
+
+```ts
+/** A `REGI_NEVEK` tábla `Map`-ként: a keresés csak a saját kulcsokra talál (a `constructor` vagy a `__proto__` nem képződik le). */
+export const REGI_AGAZAT_NEVEK: ReadonlyMap<string, Agazat> = new Map(Object.entries(REGI_NEVEK));
+```
+
 Utána:
 
 ```bash
+npx tsx scripts/_agazat-proba.ts
 rm -f scripts/_agazat-proba.ts scripts/_agazat-dump.ts
 grep -nE "IPARAGAK|IPARAG_SZINEK|GAZDASAGI_AGAZATOK|IparagBadge" CLAUDE.md README.md; echo "grep exit=$?"
 npx tsc --noEmit; echo "tsc exit=$?"
 npm run build 2>&1 | tail -15
-git add CLAUDE.md
-git commit -m "$(printf 'docs(egyseges-agazatlista): CLAUDE.md – a közös AGAZATOK lista, a régi nevek megfeleltetése (REGI_AGAZAT_NEVEK, agazatLista) és az AgazatBadge\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>')"
+git add CLAUDE.md lib/orszagprofil-szotar.ts
+git commit -m "$(printf 'docs(egyseges-agazatlista): CLAUDE.md – a közös AGAZATOK lista, a régi nevek megfeleltetése (REGI_AGAZAT_NEVEK, agazatLista) és az AgazatBadge; komment az exportált megfeleltető táblán\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>')"
 ```
 
-Várt: a `grep` nem talál semmit (`grep exit=1`); `tsc exit=0`; a build hibátlanul lefut (a végén a route-lista). Ha a build nem létező `app/...` modulra panaszkodik: `rm .next/dev/types/validator.ts`, majd újra build (lásd `CLAUDE.md`).
+Várt: az assert-script `Rendben: …` (még a törlése előtt); a `grep` nem talál semmit (`grep exit=1`); `tsc exit=0`; a build hibátlanul lefut (a végén a route-lista). Ha a build nem létező `app/...` modulra panaszkodik: `rm .next/dev/types/validator.ts`, majd újra build (lásd `CLAUDE.md`).
 
 - [ ] **Step 8: A demó DB véglegesítése és commitja**
 

@@ -249,8 +249,8 @@ Az 1. task minőségi review-ja nyomán, az eredeti spechez (`bb64a9a`) képest:
   `#736a5f`. Az eredeti kritérium fehér háttérre mért; a jelvény saját, 8%-os hátterén a két
   eredeti szín 4,15:1, illetve 4,36:1 volt. Az Építőipar eredeti szürkéje a térkép „nincs kiemelt
   iparág” színétől is csak 14,3-ra állt.
-- **A régi nevek foglaltságának őre.** Az eredeti spec `Map`-et írt elő őr nélkül; az invariánst
-  csak az eldobható assert-script ellenőrizte volna.
+- **A régi nevek foglaltságának őre.** Az eredeti spec őr nélküli táblát írt elő (`Object.hasOwn`
+  vagy `Map`); az invariánst csak az eldobható assert-script ellenőrizte volna.
 - **A validátorbeli megfeleltetés indoka** pontosabb lett: a régi kliens mentése új deploy után
   jellemzően el sem jut a validátorig.
 
