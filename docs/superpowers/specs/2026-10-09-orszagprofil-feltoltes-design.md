@@ -253,30 +253,41 @@ A tartalmi csomagok review-i nyomán (2026-10-09 – 2026-10-12):
   a kétoldalú egyezmények évét (az NKFIH szerint KR 1989, JP 1979), a már lecserélt stratégiákat,
   Japán Horizont Európa-státuszát és több nem ellenőrizhető intézményi kapcsolatot. Ezért egy
   hetedik csomag ugyanazzal a két review-val átírta őket. A JP 2025-ös sora érintetlen.
-- **Terület és határok.** A profilok a nemzetközileg elismert határokat követik:
-  - Oroszország lakossága (ENSZ WPP 2024) és területe (ENSZ Demográfiai Évkönyv) a Krím nélkül
-    szerepel. A GDP IMF-adat marad (a Rosstat a Krímmel számol); a `forras` ezt jelzi.
-  - Marokkó területe Nyugat-Szahara nélkül szerepel (Világbank).
+- **Terület és határok.** Vitatott területeknél a `forras` megnevezi, mit tartalmaz az adat:
+  - Oroszország lakossága (ENSZ WPP 2024) és területe (ENSZ Demográfiai Évkönyv) a nemzetközileg
+    elismert határok szerint, a Krím nélkül szerepel. A GDP IMF-adat marad (a Rosstat a Krímmel
+    számol).
+  - Marokkó területe a nemzetközileg elismert határok szerint, Nyugat-Szahara nélkül szerepel
+    (Világbank).
   - Izrael területe a statisztikai hivatal adata, amely Kelet-Jeruzsálemet és a Golán-fennsíkot
-    is tartalmazza; a `forras` ezt jelzi.
+    is tartalmazza.
 - **Területforrás.** A CIA World Factbook 2026 februárjában megszűnt. A terület a Világbank
   (`AG.SRF.TOTL.K2`), a nemzeti statisztikai hivatal, az ENSZ Demográfiai Évkönyve vagy a
   Factbook archív változata szerint szerepel; a `forras` megnevezi, melyik. Kanadánál a
   Statistics Canada adata áll, mert a Világbank-érték a parti vizekkel a szokásos terület
   másfélszerese.
 - **IMF-adatok.** Az IMF SDMX API `IMF.RES:WEO_2025_OCT_VINTAGE` folyamából jönnek, mert a `WEO`
-  folyam már a 2026. áprilisi kiadást adja. Ahol az IMF 2025-ös értéke pénzügyi évre vonatkozik
+  folyam már a 2026. áprilisi kiadást adja; a BD, IN, LK, MV és NP fejléce a `WEO` folyam 9.0.0-s
+  verzióját kérdezi le `asOf=2025-11-01` paraméterrel, ami ugyanazt a kiadást adja. Ahol az IMF
+  2025-ös értéke pénzügyi évre vonatkozik
   (BD, IN, NP, PR), a `forras` jelzi. Srí Lankára az IMF nem közöl 2025-ös adatot, ott a
   központi bank előzetes adata szerepel.
-- **GERD.** OECD-tagoknál az OECD MSTI, máshol az UNESCO UIS vagy a Világbank legfrissebb éve.
+- **GERD.** OECD-tagoknál az OECD MSTI (Izraelnél az UNESCO UIS és a Világbank adata), máshol az
+  UNESCO UIS vagy a Világbank legfrissebb éve.
 - **`forras`.** A spec mintája helyett csak a ténylegesen használt forrásokat sorolja.
 - **Fejlécek.** A repó nyilvános, ezért a fejléc nem tartalmaz első személyű vagy a kutatás
   menetére utaló megjegyzést, és a Wikipedia önmagában nem forrás. A 2026-10-09 utáni
   hozzáférésű forrásokat a fejléc külön jelöli.
-- **Top 10 vállalat.** Az EU Industrial R&D Investment Scoreboard 2025 országos listája, székhely
-  szerint. Ausztriánál a megszűnt Hookipa Pharma nélkül 9 név áll; a külföldi tulajdonú Infineon
-  Austria, amely saját közlése szerint az ország legnagyobb K+F-ráfordítója, a szövegben
-  szerepel. Kis országoknál a lista rövidebb.
+- **Top 10 vállalat.** Az AT, DE, GB, IE, CA és US profilban az EU Industrial R&D Investment
+  Scoreboard 2025 országos listája áll, székhely szerint. A többi országnál a lista az ország
+  ismert, meghatározó vállalatait sorolja, rangsor és egységes forrás nélkül; kis országoknál
+  rövidebb. Ausztriánál a megszűnt Hookipa Pharma
+  nélkül 9 név áll; a külföldi tulajdonú Infineon Austria, amely saját közlése szerint az ország
+  legnagyobb K+F-ráfordítója, a szövegben szerepel.
+- **Fájlok közötti egyeztetés.** A záró review a külön csomagokban készült fájlokat egymással is
+  összevetette: a több fájlban szereplő tények (pl. a 2026-os NKFIH-felhívás relációi, a
+  Technology Prosperity Deal állapota) és az írásmód egységesek lettek, a magyar vonatkozású
+  állítások mellé pedig a forrásuk éve került.
 - **Időminősítés.** A később elavuló állítások a forrásukkal és az évükkel szerepelnek (pl. „a
   2024 végi állapot szerint”). Ahol egy tervezett esemény megtörténte nem igazolható, a szöveg a
   tervet rögzíti. A változó időpontú rendezvényeknél az időpont „változó hónap”.

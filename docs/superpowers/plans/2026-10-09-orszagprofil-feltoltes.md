@@ -18,7 +18,8 @@ Csak hibátlan adatnál ír, egy tranzakcióban, és van ellenőrző módja (`--
 - **Task 1.** A lépések az eredeti tervet mutatják. A futtató végleges működése (alapból csak ellenőriz, írás `--ir`-rel, rögzített év, további szigorú ellenőrzések) a `2573369` commitban és a spec „Megvalósítási eltérések” szakaszában van. A Step 4 kódja ezért nem egyezik a végleges fájllal, és a Step 6 és 8 író futásaihoz ma `--ir` kell.
 - **KR és JP.** A terv szerint változatlanok maradtak volna; a végrehajtás során egy hetedik csomag átnézte és javította őket (lásd a „Task 7b” szakaszt).
 - **Tartalmi döntések.** A csomagok review-i során született döntések (határok és területforrás, IMF- és GERD-forrás, `forras` mező, fejlécek, top 10 lista, időminősítés) a spec „Megvalósítási eltérések” szakaszában vannak.
-- **Node.** A gépen 2026-10-09 óta Node 24 fut (a terv Node 22-vel számolt); a `better-sqlite3`-at újra kellett fordítani.
+- **Node.** A gépen 2026-10-09 óta Node 24 fut (a terv Node 22-vel számolt); a `better-sqlite3`-at újra kellett fordítani. A Task 8 5. lépésén túl a `CLAUDE.md` ezért egy hibaelhárítási bekezdést is kapott (a `f364aa9` commitban).
+- **Záró review.** A teljes ágra kiterjedő review a fájlok közötti következetlenségeket javíttatta (több fájlban szereplő tények, írásmód, a magyar vonatkozású állítások forrásának éve); utána a demó DB újra lett generálva.
 
 **Ellenőrzés:** Nincs tesztkeretrendszer.
 - **Futtató:** a „teszt” egy regressziós összevetés (a régi és az új futtató KR/JP kimenete bájtra azonos) és egy szándékosan hibás adatfájl (a szigorú ellenőrzésnek el kell utasítania). Mindkettő a demó DB **másolatán** fut.
