@@ -5,9 +5,9 @@ import {
   ComboboxItem, ComboboxList, ComboboxValue, useComboboxAnchor,
 } from '../ui/combobox';
 import { Input } from '../ui/input';
-import { Label } from '../ui/label';
 import { useState } from 'react';
 import type { MezoHibak } from '../../lib/urlap';
+import { CimkeSor } from './CimkeSor';
 import { hibaAttr, leiroAttr, MezoHiba } from './MezoHiba';
 
 /**
@@ -19,18 +19,21 @@ import { hibaAttr, leiroAttr, MezoHiba } from './MezoHiba';
  * inputokat is renderelne, és az értékek duplán mennének be a submitba.
  */
 export function CimkeValaszto<T extends string>({
-  id, name, cimke, sugo, items, value, onChange, errors, egyeb,
+  id, name, cimke, sugo, magyarazat, pelda, items, value, onChange, errors, egyeb,
 }: {
-  id: string; name: string; cimke: string; sugo?: string; items: readonly T[];
-  value: T[]; onChange: (v: T[]) => void; errors: MezoHibak;
-  /** „Egyéb" mező: id/name + vezérelt érték. */
-  egyeb?: { id: string; name: string; cimke: string; value: string; onChange: (v: string) => void; max: number };
+  id: string; name: string; cimke: string; sugo?: string; magyarazat?: string; pelda?: string;
+  items: readonly T[]; value: T[]; onChange: (v: T[]) => void; errors: MezoHibak;
+  /** „Egyéb" mező: id/name + vezérelt érték; a `magyarazat`/`pelda` a kérdőjeles felugrót adja. */
+  egyeb?: {
+    id: string; name: string; cimke: string; magyarazat?: string; pelda?: string;
+    value: string; onChange: (v: string) => void; max: number;
+  };
 }) {
   const anchor = useComboboxAnchor();
   const [nyitva, setNyitva] = useState(false);
   return (
     <div className="flex flex-col gap-1.5">
-      <Label id={`${id}-label`} htmlFor={id}>{cimke}</Label>
+      <CimkeSor id={`${id}-label`} htmlFor={id} cimke={cimke} magyarazat={magyarazat} pelda={pelda} />
       {sugo && <p id={`${id}-sugo`} className="text-xs text-muted-foreground">{sugo}</p>}
       {value.map((v) => <input key={v} type="hidden" name={name} value={v} />)}
       <Combobox multiple items={items} value={value} onValueChange={(v) => onChange(v as T[])} onOpenChange={setNyitva}>
@@ -62,7 +65,8 @@ export function CimkeValaszto<T extends string>({
       <MezoHiba mezo={id} errors={errors} />
       {egyeb && (
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor={egyeb.id} className="text-xs text-muted-foreground">{egyeb.cimke}</Label>
+          <CimkeSor htmlFor={egyeb.id} cimke={egyeb.cimke} magyarazat={egyeb.magyarazat} pelda={egyeb.pelda}
+            labelClassName="text-xs text-muted-foreground" />
           <Input id={egyeb.id} name={egyeb.name} maxLength={egyeb.max} autoComplete="off" value={egyeb.value}
             onChange={(e) => egyeb.onChange(e.target.value)} {...hibaAttr(errors, egyeb.id)} />
           <MezoHiba mezo={egyeb.id} errors={errors} />
