@@ -497,6 +497,9 @@ export type KfiPrioritas = (typeof KFI_PRIORITASOK)[number];
 /**
  * Ágazatok: az Alapadatok „Legfontosabb gazdasági ágazatok", a KFI-blokk „Kiemelt iparágak" és a
  * vállalati blokk „Kiemelt ágazatok" mezőjének közös listája. Az első kiemelt iparág adja a térkép színét.
+ * Elemet átnevezni csak a `REGI_NEVEK` bővítésével szabad (régi név → új név): a listából kikerült
+ * név tárolt értéke olvasáskor kiesik, és a blokk következő mentésekor végleg elvész. Ezt a típus
+ * nem tudja jelezni.
  */
 export const AGAZATOK = [
   'Mesterséges intelligencia és adatgazdaság', 'IKT és digitalizáció', 'Elektronika és félvezetők',
@@ -1119,7 +1122,7 @@ opciólisták `TAGSAGOK`, `GAZDASAGI_AGAZATOK`, `KFI_PRIORITASOK`, `IPARAGAK` + 
 erre:
 
 ```
-opciólisták `TAGSAGOK`, `KFI_PRIORITASOK`, `AGAZATOK` + `AGAZAT_SZINEK` (21 elem: az Alapadatok `agazatok`, a KFI-blokk `kiemeltIparagak` és a vállalati blokk `kiemeltAgazatok` mezőjének közös listája; az első kiemelt iparág színe a térképé), `REGI_AGAZAT_NEVEK` + `agazatLista()` (a 2026-10-12 előtti két lista kilenc régi neve → közös név; a normalizáló és a validátor a három mezőt ezen át olvassa, ezért a régi nevet tároló DB migráció nélkül is helyesen olvasódik – a nyers JSON-oszlopban tehát régi név is állhat; a kilenc régi név foglalt, az `AGAZATOK`-ba nem kerülhet vissza, ezt a tábla `satisfies`-őre fordításkor ellenőrzi; a demó-profil futtató szigorú ellenőrzése a régi nevet hibának veszi), `ALLAPOTOK`
+opciólisták `TAGSAGOK`, `KFI_PRIORITASOK`, `AGAZATOK` + `AGAZAT_SZINEK` (21 elem: az Alapadatok `agazatok`, a KFI-blokk `kiemeltIparagak` és a vállalati blokk `kiemeltAgazatok` mezőjének közös listája; az első kiemelt iparág színe a térképé), `REGI_AGAZAT_NEVEK` + `agazatLista()` (a 2026-10-12 előtti két lista kilenc régi neve → közös név; a normalizáló és a validátor a három mezőt ezen át olvassa, ezért a régi nevet tároló DB migráció nélkül is helyesen olvasódik – a nyers JSON-oszlopban tehát régi név is állhat; a kilenc régi név foglalt, az `AGAZATOK`-ba nem kerülhet vissza, ezt a tábla `satisfies`-őre fordításkor ellenőrzi; listaelemet átnevezni csak a tábla bővítésével szabad, különben a tárolt érték olvasáskor kiesik, a következő mentéskor pedig elvész, és új ágazat-mező `agazatLista()`-t hívjon, ne `szurtLista`-t; a demó-profil futtató szigorú ellenőrzése a régi nevet hibának veszi), `ALLAPOTOK`
 ```
 
 Erről:

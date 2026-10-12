@@ -21,6 +21,9 @@ export type KfiPrioritas = (typeof KFI_PRIORITASOK)[number];
 /**
  * Ágazatok: az Alapadatok „Legfontosabb gazdasági ágazatok", a KFI-blokk „Kiemelt iparágak" és a
  * vállalati blokk „Kiemelt ágazatok" mezőjének közös listája. Az első kiemelt iparág adja a térkép színét.
+ * Elemet átnevezni csak a `REGI_NEVEK` bővítésével szabad (régi név → új név): a listából kikerült
+ * név tárolt értéke olvasáskor kiesik, és a blokk következő mentésekor végleg elvész. Ezt a típus
+ * nem tudja jelezni.
  */
 export const AGAZATOK = [
   'Mesterséges intelligencia és adatgazdaság', 'IKT és digitalizáció', 'Elektronika és félvezetők',

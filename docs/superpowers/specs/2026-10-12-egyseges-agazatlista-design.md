@@ -264,4 +264,10 @@ Nem készült el, későbbi csiszolásnak maradt (a review „apró” pontjai, 
 
 **Visszaút.** Az új néven mentett vagy újragenerált DB-t a régi kód olvasáskor megcsonkítaná (a
 régi `szurtLista` eldobná pl. az Alapadatokból a „Mobilitás és autóipar”-t). A kód visszaállítása
-ezért a DB visszaállításával együtt jár.
+ezért a DB visszaállításával együtt jár. A hosting-DB-hez csak a `scripts/db-init.mjs` egyszeri
+cseréje ér el: ott a visszaálláshoz új `DEMO_CSERE` azonosító kell (ez a hostingon addig történt
+változásokat is eldobja), vagy a hibát előre kell javítani.
+
+A záró review nyomán az `AGAZATOK` kommentje és a `CLAUDE.md` azt is rögzíti, hogy listaelemet
+átnevezni csak a megfeleltető tábla bővítésével szabad: a fordítási idejű őr csak a fordított
+irányt (régi név visszavétele) fogja meg.
