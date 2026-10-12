@@ -904,7 +904,7 @@ Elvárt: `0`, majd legalább `3` (a találatok több sorra esnek).
 A „### Hosting (Hostinger Node.js)” lista **végére**, közvetlenül a „### Adatbázis és auth” fejléc előtti üres sor elé (a „Visszaállításra akkor van szükség…” bekezdés után, üres sorral elválasztva) szúrd be ezt a listaelemet:
 
 ```markdown
-- A `0008`/`0009` migráció az országprofil `kapcsolatok` oszlopát két oszlopra osztja (`nemzetkozi_kapcsolatok`, `magyar_kapcsolatok`; a tartalom mezőnként átkerül), majd a régit törli – visszafordíthatatlan. A build ideje alatt a még futó régi verzió hibát ad mindenhol, ahol teljes profilsort olvas (térkép, országprofil; adminnak az oldalsáv állapotkártyája miatt minden oldalon), mert a törölt oszlopot is lekérdezi, és ha a `next build` elbukik, így is marad. A két migráció csak együtt mehet ki (egy build egy tranzakcióban futtatja őket): a `0008` egyszeri másolat, ezért ha csak az kerülne ki, a régi kóddal közben mentett 6. blokk a `0009`-cel elveszne. Ha a hosting-DB-ben valós adat van, deploy előtt ments (`sqlite3 <db> ".backup '<db>.pre-0008'"`); a visszaállítás a fenti `.restore` módon megy.
+- A `0008`/`0009` migráció az országprofil `kapcsolatok` oszlopát két oszlopra osztja (`nemzetkozi_kapcsolatok`, `magyar_kapcsolatok`; a tartalom mezőnként átkerül), majd a régit törli – visszafordíthatatlan. A build ideje alatt a még futó régi verzió hibát ad mindenhol, ahol teljes profilsort olvas (térkép, országprofil; adminnak az oldalsáv állapotkártyája miatt minden oldalon), mert a törölt oszlopot is lekérdezi, és ha a `next build` elbukik, így is marad. A két migráció csak együtt mehet ki (egy build egy tranzakcióban futtatja őket): a `0008` egyszeri másolat, ezért ha csak az kerülne ki, a régi kóddal közben mentett 6. blokk a `0009`-cel elveszne. Ha a hosting-DB-ben valós adat van, deploy előtt ments (`sqlite3 <db> ".backup '<db>.pre-0008'"`); a visszaállítás a fenti `.restore` módon megy. Mindez a csere nélküli DB-re vonatkozik: az egyszeri `DEMO_CSERE` buildjénél a `db:init` a már migrált demó DB-t másolja a hosting-DB helyére, ott a két migráció le sem fut, a még futó régi verzió pedig az átnevezett `<db>.regi-<időbélyeg>` fájlon dolgozik tovább (hibát csak újraindulás után ad), és a visszaállítás forrása is ez a fájl.
 ```
 
 Ellenőrzés:
@@ -987,13 +987,15 @@ sqlite3 data/tet.db "PRAGMA wal_checkpoint(TRUNCATE); VACUUM; PRAGMA wal_checkpo
 sqlite3 -readonly data/tet.db "PRAGMA integrity_check; select count(*) from user; select count(*) from orszagprofil;"
 sqlite3 "file:data/tet.db?immutable=1" "select count(*) from __drizzle_migrations; select count(*) from session; select count(*) from pragma_table_info('orszagprofil') where name in ('nemzetkozi_kapcsolatok','magyar_kapcsolatok','kapcsolatok');"
 git add data/tet.db
+git show :data/tet.db > "$SCRATCH/staged.db"
+sqlite3 "file:$SCRATCH/staged.db?immutable=1" "PRAGMA integrity_check; select count(*) from __drizzle_migrations; select count(*) from session; select count(*) from user; select count(*) from orszagprofil; select count(*) from orszagprofil where ev=2020;"
 git commit -m "chore(kapcsolatok-bontas): a demó DB a 0008/0009 migrációval – a kapcsolatok blokk két oszlopban
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 git status --short
 ```
 
-Elvárt: a `wal_checkpoint(TRUNCATE)` sorai `0|0|0`; `ok`, a felhasználók száma változatlan (16), `28`; a fő fájl önmagában (`immutable=1`, a WAL nélkül – a hosting `db:init`-je csak a fő fájlt másolja) `10`, `0`, `2`; a `git status --short` a commit után üres. Ha a checkpoint első száma nem `0` (foglalt), vagy a fő fájl régi állapotot mutat, ismételd meg a checkpointot, és ne commitolj, amíg nem stimmel. Ha a `VACUUM` „database is locked” hibát ad (a dev szerver éppen olvas), ismételd meg.
+Elvárt: a `wal_checkpoint(TRUNCATE)` sorai `0|0|0`; `ok`, a felhasználók száma változatlan (16), `28`; a fő fájl önmagában (`immutable=1`, a WAL nélkül – a hosting `db:init`-je csak a fő fájlt másolja) `10`, `0`, `2`; a `git status --short` a commit után üres. Ha a checkpoint első száma nem `0` (foglalt), vagy a fő fájl régi állapotot mutat, ismételd meg a checkpointot, és ne commitolj, amíg nem stimmel. A `git add` után a commitra kijelölt változat (`git show :data/tet.db`, szintén `immutable=1`-gyel) külön is ellenőrzendő, mert a két lépés között a dev szerver írhat: elvárt `ok`, `10`, `0`, `16`, `28`, `0`; eltérésnél `git restore --staged data/tet.db`, új checkpoint, és újra. Ha a `VACUUM` „database is locked” hibát ad (a dev szerver éppen olvas), ismételd meg.
 
 ---
 
