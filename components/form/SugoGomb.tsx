@@ -23,7 +23,7 @@ export const SugoGomb = memo(function SugoGomb({
         delay={150}
         closeDelay={100}
         aria-label={`Magyarázat: ${cimke}`}
-        className="-my-[3px] inline-flex size-5 shrink-0 cursor-help items-center justify-center rounded-full text-muted-foreground outline-hidden transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="-my-[3px] inline-flex size-5 shrink-0 cursor-help items-center justify-center rounded-full text-muted-foreground focus-visible:outline-hidden transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
       >
         <CircleQuestionMark aria-hidden className="size-4" />
       </PopoverTrigger>
