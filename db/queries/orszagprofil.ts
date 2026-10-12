@@ -90,6 +90,7 @@ export interface TerkepOrszag {
   attasek: OrszagAttase[];
   ev: number | null;
   allapot: Allapot;
+  /** A KFI-blokk kiemelt iparágai a közös ágazatlistából; az első adja a térkép színét. */
   iparagak: Agazat[];
   /** K+F ráfordítás a GDP %-ában (KFI-blokk), ha a blokk mentett. */
   gerd: number | null;

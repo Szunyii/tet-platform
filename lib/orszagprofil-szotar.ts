@@ -50,27 +50,31 @@ export const AGAZAT_SZINEK: Record<Agazat, string> = {
   'Védelmi ipar': '#7f1d1d',
   'Kreatív ipar és média': '#be185d',
   'Pénzügyi szolgáltatások': '#4d7c0f',
-  'Turizmus': '#e11d48',
+  'Turizmus': '#d11541',
   'Logisztika': '#0369a1',
-  'Építőipar': '#78716c',
+  'Építőipar': '#736a5f',
 };
 
 /**
  * A 2026-10-12 előtti két lista (gazdasági ágazatok, iparágak) nevei → a közös lista neve. A két
  * régi listának nem volt közös neve, ezért a tábla mezőtől független. Tartósan marad: a régi
  * nevet tároló DB (hosting, visszaállított mentés) így migráció nélkül is helyesen olvasódik.
+ * Ezek a nevek foglaltak: az `AGAZATOK`-ba nem kerülhetnek vissza, mert a megfeleltetés a szűrés
+ * előtt fut, és a visszavett nevet mentéskor némán átírná. Ezt a `satisfies` őrzi: ha egy kulcs
+ * egyben `Agazat` is, az fordítási hiba.
  */
-export const REGI_AGAZAT_NEVEK: ReadonlyMap<string, Agazat> = new Map<string, Agazat>([
-  ['Autóipar', 'Mobilitás és autóipar'],
-  ['Gyógyszeripar', 'Biotechnológia és gyógyszeripar'],
-  ['Energetika', 'Energetika és fenntarthatóság'],
-  ['Mezőgazdaság és élelmiszeripar', 'Agrár- és élelmiszeripar'],
-  ['IKT és szoftver', 'IKT és digitalizáció'],
-  ['Kreatív ipar', 'Kreatív ipar és média'],
-  ['Félvezetők és mikroelektronika', 'Elektronika és félvezetők'],
-  ['Agrár- és élelmiszertechnológia', 'Agrár- és élelmiszeripar'],
-  ['Védelmi technológia', 'Védelmi ipar'],
-]);
+const REGI_NEVEK = {
+  'Autóipar': 'Mobilitás és autóipar',
+  'Gyógyszeripar': 'Biotechnológia és gyógyszeripar',
+  'Energetika': 'Energetika és fenntarthatóság',
+  'Mezőgazdaság és élelmiszeripar': 'Agrár- és élelmiszeripar',
+  'IKT és szoftver': 'IKT és digitalizáció',
+  'Kreatív ipar': 'Kreatív ipar és média',
+  'Félvezetők és mikroelektronika': 'Elektronika és félvezetők',
+  'Agrár- és élelmiszertechnológia': 'Agrár- és élelmiszeripar',
+  'Védelmi technológia': 'Védelmi ipar',
+} as const satisfies Record<string, Agazat> & Partial<Record<Agazat, never>>;
+export const REGI_AGAZAT_NEVEK: ReadonlyMap<string, Agazat> = new Map(Object.entries(REGI_NEVEK));
 
 export const ALLAPOTOK = ['friss', 'elavult', 'nincs'] as const;
 export type Allapot = (typeof ALLAPOTOK)[number];
@@ -231,6 +235,9 @@ export function szurtLista<T extends string>(v: unknown, engedett: readonly T[])
  * A három ágazat-mező listája: a régi neveket a közös lista nevére képezi (`REGI_AGAZAT_NEVEK`),
  * utána `szurtLista`. A sorrend megmarad (az első kiemelt iparág adja a térkép színét); ha két elem
  * ugyanarra a névre képződik, az egyszer szerepel, az első előfordulás helyén.
+ * Két helyen fut: a normalizálóban (a DB-ből olvasott JSON régi nevet is tárolhat) és az
+ * űrlap-validátorban (hogy a két belépési pont ugyanúgy olvasson). A demó-profil futtató szigorú
+ * ellenőrzése szándékosan nem alkalmazza: az országfájlokban a régi név hiba.
  */
 export function agazatLista(v: unknown): Agazat[] {
   if (!Array.isArray(v)) return [];
