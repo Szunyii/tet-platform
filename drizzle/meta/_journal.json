@@ -57,6 +57,13 @@
       "when": 1791311562940,
       "tag": "0007_user_poszt_oszlopok",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1791823215877,
+      "tag": "0008_kapcsolatok_bontas",
+      "breakpoints": true
     }
   ]
 }

@@ -206,6 +206,15 @@ export interface Kapcsolatok {
   ketoldalu: string;
   mobilitas: string;
 }
+export interface NemzetkoziKapcsolatok {
+  partnerorszagok: string;
+  euMultilateralis: string;
+}
+export interface MagyarKapcsolatok {
+  egyezmeny: string;
+  ketoldalu: string;
+  mobilitas: string;
+}
 export interface MagyarErtekeles {
   osszegzes: string;
   egyuttmukodesiLehetosegek: string;

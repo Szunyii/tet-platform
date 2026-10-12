@@ -2,7 +2,8 @@ import { sql } from 'drizzle-orm';
 import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { user } from './auth';
 import type {
-  Alapadatok, Intezmenyek, Kapcsolatok, KfiRendszer, MagyarErtekeles, Programok, Rendezvenyek, Vallalati,
+  Alapadatok, Intezmenyek, Kapcsolatok, KfiRendszer, MagyarErtekeles, MagyarKapcsolatok, NemzetkoziKapcsolatok,
+  Programok, Rendezvenyek, Vallalati,
 } from '../../lib/orszagprofil-szotar';
 
 // Országprofil: országonként (ISO-kód, lib/orszagok.ts) és évenként egy sor. Blokkonként
@@ -22,6 +23,8 @@ export const orszagprofil = sqliteTable(
     programok: text('programok', { mode: 'json' }).$type<Programok>(),
     rendezvenyek: text('rendezvenyek', { mode: 'json' }).$type<Rendezvenyek>(),
     kapcsolatok: text('kapcsolatok', { mode: 'json' }).$type<Kapcsolatok>(),
+    nemzetkoziKapcsolatok: text('nemzetkozi_kapcsolatok', { mode: 'json' }).$type<NemzetkoziKapcsolatok>(),
+    magyarKapcsolatok: text('magyar_kapcsolatok', { mode: 'json' }).$type<MagyarKapcsolatok>(),
     magyarErtekeles: text('magyar_ertekeles', { mode: 'json' }).$type<MagyarErtekeles>(),
     createdAt: integer('created_at', { mode: 'timestamp_ms' })
       .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
