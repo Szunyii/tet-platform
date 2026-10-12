@@ -174,13 +174,15 @@ const orszag: DemoOrszag = {
       { nev: 'Salon de la Compétitivité Industrielle Automobile au Maroc', tipus: 'szakkiallitas', idopont: 'változó időpont és helyszín', megjegyzes: 'Autóipari beszállítói kiállítás (AMICA); 2026: 8. kiadás, június 24–26., Kenitra' },
       { nev: 'International Mining Congress (IMC Morocco)', tipus: 'konferencia', idopont: 'ősz, változó helyszín', megjegyzes: 'Bányászati kongresszus; 2026: 3. kiadás, október 6–7., Rabat (2024–2025: Marrákes)' },
     ]),
-    kapcsolatok: {
-      euMultilateralis:
-        'EU–Marokkó társulási megállapodás (hatályos 2000 óta) és tudományos-technológiai megállapodás (aláírva 2003-ban); Horizont Európa-társulási tárgyalások 2021 óta; '
-        + 'az Unió a Mediterrán Térségért kutatási ütemtervei (egészség, éghajlat, megújuló energia). 2017 óta ismét az Afrikai Unió tagja.',
+    nemzetkoziKapcsolatok: {
       partnerorszagok:
         'Franciaország (a CNRST első partnere a CNRS, 1984; PHC Toubkal, PHC Maghreb), Németország (Power-to-X Hub; DFG), Spanyolország '
         + '(INNO-ESPAMAROC ENERGY, IRESEN–CDTI közös energetikai felhívás), Olaszország (CNR), Portugália (FCT), Törökország (TÜBİTAK), Egyesült Királyság (British Council).',
+      euMultilateralis:
+        'EU–Marokkó társulási megállapodás (hatályos 2000 óta) és tudományos-technológiai megállapodás (aláírva 2003-ban); Horizont Európa-társulási tárgyalások 2021 óta; '
+        + 'az Unió a Mediterrán Térségért kutatási ütemtervei (egészség, éghajlat, megújuló energia). 2017 óta ismét az Afrikai Unió tagja.',
+    },
+    magyarKapcsolatok: {
       egyezmeny: 'CNRST–NKFIH (korábban NIH) tudományos és technológiai együttműködési megállapodás; kormányközi gazdasági együttműködési megállapodás (2009)',
       ketoldalu:
         'Közös CNRST–NKFIH mobilitási felhívások (2017–2018, 2019–2020); az NKFIH magyar–marokkói alkalmazott K+F-felhívása (2021-1.2.6-TÉT-IPARI-MA) '

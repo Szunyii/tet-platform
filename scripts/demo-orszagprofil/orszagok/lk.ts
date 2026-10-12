@@ -117,13 +117,15 @@ const orszag: DemoOrszag = {
         'Horizont Európa: Srí Lanka alacsony és közepes jövedelmű országként szerepel az Európai Bizottság automatikus finanszírozási listáján (2026), '
         + 'így a Srí Lanka-i résztvevők automatikusan jogosultak EU-finanszírozásra.',
     },
-    kapcsolatok: {
-      euMultilateralis:
-        'Horizont Európa: alacsony és közepes jövedelmű országként automatikusan jogosult EU-finanszírozásra (EC-lista, 2026). '
-        + 'A Nemzetközösség, a SAARC, a BIMSTEC és az IORA tagja.',
+    nemzetkoziKapcsolatok: {
       partnerorszagok:
         'India (indiai–Srí Lanka-i közös kutatási program, indiai kutatói ösztöndíjak – NKFIH, 2017); Dél-Korea (a STEPI K-Innovation szakpolitikai '
         + 'tanácsadása az STI-politika és -intézményrendszer fejlesztésére, 2019–2020).',
+      euMultilateralis:
+        'Horizont Európa: alacsony és közepes jövedelmű országként automatikusan jogosult EU-finanszírozásra (EC-lista, 2026). '
+        + 'A Nemzetközösség, a SAARC, a BIMSTEC és az IORA tagja.',
+    },
+    magyarKapcsolatok: {
       egyezmeny: 'Magyar–Srí Lanka-i műszaki-tudományos együttműködési egyezmény (1975)',
       ketoldalu:
         'A 2007-es kormányközi megállapodás alapján nyújtott magyar kötött segélyhitelből (51 millió euró) a Fővárosi Vízművek közreműködésével '

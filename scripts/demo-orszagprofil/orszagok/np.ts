@@ -92,11 +92,13 @@ const orszag: DemoOrszag = {
         + 'nyolc országának kormányközi tudásközpontja.',
       infrastrukturak: '',
     },
-    kapcsolatok: {
+    nemzetkoziKapcsolatok: {
+      partnerorszagok: '',
       euMultilateralis:
         'Horizont Európa: alacsony és közepes jövedelmű országként automatikusan jogosult EU-finanszírozásra (EC-lista, 2026). '
         + 'A SAARC (titkársága Katmanduban) és a BIMSTEC tagja; az ICIMOD székhelye.',
-      partnerorszagok: '',
+    },
+    magyarKapcsolatok: {
       egyezmeny: '',
       ketoldalu: '',
       mobilitas:

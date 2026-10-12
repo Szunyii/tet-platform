@@ -45,7 +45,7 @@
  *   tárgyalási felhatalmazása – 10/2007. (IV. 3.) ME határozat, https://adozona.hu/jogtar/35932_10_2007_IV_3_ME_hatarozat_Magyar_Koztarsasag –
  *   nem TéT-egyezmény). A közös keretek (Horizont Európa, EUREKA) forrásai fent. Kanada nem Stipendium Hungaricum-partnerország –
  *   https://stipendiumhungaricum.hu/partners/
- * Kimaradt mezők: kapcsolatok.egyezmeny (nincs ellenőrzött kétoldalú TéT-egyezmény), kapcsolatok.mobilitas (nincs ellenőrzött
+ * Kimaradt mezők: magyarKapcsolatok.egyezmeny (nincs ellenőrzött kétoldalú TéT-egyezmény), magyarKapcsolatok.mobilitas (nincs ellenőrzött
  * kétoldalú mobilitási program).
  */
 import { rendezvenyek, type DemoOrszag } from '../tipusok';
@@ -151,11 +151,13 @@ const orszag: DemoOrszag = {
       { nev: 'ALL IN', tipus: 'konferencia', idopont: 'szeptember, Montréal (2026: szeptember 16–17.)', megjegyzes: 'MI-konferencia (szervezők: Scale AI és Mila)' },
       { nev: 'Canadian Science Policy Conference (CSPC)', tipus: 'konferencia', idopont: 'november, Ottawa (2026: november 25–27.)', megjegyzes: 'Tudomány- és innovációpolitikai konferencia' },
     ]),
-    kapcsolatok: {
+    nemzetkoziKapcsolatok: {
+      partnerorszagok: 'Egyesült Államok (USMCA/CUSMA), EU-tagállamok (Horizont Európa, CETA), Egyesült Királyság, Franciaország, Japán (CPTPP).',
       euMultilateralis:
         'Horizont Európa II. pillér-társulás (Montréal, 2024. július 3.); az EUREKA teljes jogú tagja 2022 óta (2012-től társult tag); CETA az EU-val (2017 óta ideiglenesen alkalmazva); '
         + 'OECD, G7, G20, Nemzetközösség, Frankofónia.',
-      partnerorszagok: 'Egyesült Államok (USMCA/CUSMA), EU-tagállamok (Horizont Európa, CETA), Egyesült Királyság, Franciaország, Japán (CPTPP).',
+    },
+    magyarKapcsolatok: {
       egyezmeny: '',
       ketoldalu:
         'A közös projektek keretei: a kanadai partnerek társult országként vehetnek részt magyar részvételű Horizont Európa II. pillér-konzorciumokban; az EUREKA-projektekben a magyar résztvevőket az NKFIH finanszírozza.',

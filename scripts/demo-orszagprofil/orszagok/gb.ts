@@ -176,14 +176,16 @@ const orszag: DemoOrszag = {
       { nev: 'Royal Society Summer Science Exhibition', tipus: 'forum', idopont: 'június–július, London', megjegyzes: 'A brit kutatás eredményei a nagyközönségnek; 2026: június 30.–július 5.' },
       { nev: 'British Science Festival', tipus: 'forum', idopont: 'szeptember, évente más városban', megjegyzes: 'British Science Association; 2026: Southampton, szeptember 16–20.' },
     ]),
-    kapcsolatok: {
-      euMultilateralis:
-        'A 2023. szeptemberi megállapodás alapján 2024-től ismét a Horizont Európa és a Copernicus társult országa (az Euratomhoz nem csatlakozott); '
-        + 'OECD- és G7-tag; a CERN alapító tagja, az ESA, az ESO (2002 óta) és az EMBL tagja.',
+    nemzetkoziKapcsolatok: {
       partnerorszagok:
         'USA (2025-ös Technology Prosperity Deal, amelynek végrehajtását az USA 2025 decemberében felfüggesztette), Németország (2025-ös barátsági szerződés '
         + 'stratégiai tudományos-technológiai partnerséggel), Japán, Kanada, '
         + 'Ausztrália (AUKUS), India, Franciaország, Svájc.',
+      euMultilateralis:
+        'A 2023. szeptemberi megállapodás alapján 2024-től ismét a Horizont Európa és a Copernicus társult országa (az Euratomhoz nem csatlakozott); '
+        + 'OECD- és G7-tag; a CERN alapító tagja, az ESA, az ESO (2002 óta) és az EMBL tagja.',
+    },
+    magyarKapcsolatok: {
       egyezmeny: 'Magyar–brit oktatási, kulturális, tudományos és technológiai együttműködési egyezmény (Budapest, 1987. március 9.)',
       ketoldalu:
         'Az 1987-es egyezmény az akadémiák, kutatóintézetek és egyetemek közvetlen együttműködését és közös K+F-programot irányoz elő; az MTA a Skót Királyi '

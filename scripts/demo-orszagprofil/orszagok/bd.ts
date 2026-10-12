@@ -110,11 +110,13 @@ const orszag: DemoOrszag = {
         'Horizont Európa: Banglades alacsony és közepes jövedelmű országként szerepel az Európai Bizottság automatikus finanszírozási listáján (2026), '
         + 'így a bangladesi résztvevők automatikusan jogosultak EU-finanszírozásra.',
     },
-    kapcsolatok: {
+    nemzetkoziKapcsolatok: {
+      partnerorszagok: 'Oroszország – a Rooppuri atomerőművet a Rosatom építi.',
       euMultilateralis:
         'Horizont Európa: automatikusan EU-finanszírozásra jogosult ország (EC-lista, 2026). A Nemzetközösség, a SAARC, a BIMSTEC (titkársága Dakkában), '
         + 'a D-8 és az Iszlám Együttműködési Szervezet tagja.',
-      partnerorszagok: 'Oroszország – a Rooppuri atomerőművet a Rosatom építi.',
+    },
+    magyarKapcsolatok: {
       egyezmeny: 'Magyar–bangladesi műszaki-tudományos együttműködési egyezmény (1973)',
       ketoldalu:
         'A 2016-os vízügyi együttműködési megállapodás közös munkacsoportja 2020 februárjában Dakkában ülésezett; 2022 júniusában Budapesten '

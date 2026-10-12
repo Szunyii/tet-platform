@@ -28,8 +28,8 @@
  * - Magyar vonatkozás: Guyana nem Stipendium Hungaricum-partnerország – https://stipendiumhungaricum.hu/partners/ ;
  *   a São Pauló-i TéT-szakdiplomata NKFIH-beszámolói Guyanát nem említik.
  * Kimaradt blokkok és mezők: vallalati és programok (nincs forrással alátámasztott tartalom); kfiRendszer.gerd (nincs adat);
- * intezmenyek.infrastrukturak (kutatási infrastruktúra nem ismert); kapcsolatok.euMultilateralis (az egyetlen ide illő tény, az ART TREES-
- * kreditértékesítés, a kfiRendszer.erossegek mezőben szerepel), .egyezmeny és .ketoldalu (kétoldalú TéT-megállapodás vagy -program nem ismert).
+ * intezmenyek.infrastrukturak (kutatási infrastruktúra nem ismert); nemzetkoziKapcsolatok.euMultilateralis (az egyetlen ide illő tény, az ART TREES-
+ * kreditértékesítés, a kfiRendszer.erossegek mezőben szerepel), magyarKapcsolatok.egyezmeny és .ketoldalu (kétoldalú TéT-megállapodás vagy -program nem ismert).
  */
 import { rendezvenyek, type DemoOrszag } from '../tipusok';
 
@@ -89,12 +89,14 @@ const orszag: DemoOrszag = {
     rendezvenyek: rendezvenyek([
       { nev: 'Guyana Energy Conference and Supply Chain Expo', tipus: 'konferencia', idopont: 'február, Georgetown (Guyana Marriott)', megjegyzes: 'Évente; energetikai és ellátásilánc-konferencia kiállítással; 2026: február 17–20.' },
     ]),
-    kapcsolatok: {
-      euMultilateralis: '',
+    nemzetkoziKapcsolatok: {
       partnerorszagok:
         'USA (az ExxonMobil üzemelteti az offshore Stabroek- és Canje-blokkot, 2015 óta több mint 30 jelentős felfedezéssel, és 2026-ban 10 éves, 100 millió USD-s '
         + 'STEM-oktatási kezdeményezést indított); '
         + 'Brazília (szomszédos amazóniai partner az ACTO-ban); a CARICOM-tagállamok; Kína (Konfuciusz Intézet a University of Guyanán).',
+      euMultilateralis: '',
+    },
+    magyarKapcsolatok: {
       egyezmeny: '',
       ketoldalu: '',
       mobilitas: 'Guyana nem szerepel a Stipendium Hungaricum partnerországai között (2026).',

@@ -142,11 +142,21 @@ const NEZETEK: { [K in BlokkKulcs]: (b: ProfilBlokkok[K]) => ReactNode } = {
       </div>
     );
   },
-  kapcsolatok: (b) => {
-    const C = MEZO_CIMKEK.kapcsolatok;
+  nemzetkoziKapcsolatok: (b) => {
+    const C = MEZO_CIMKEK.nemzetkoziKapcsolatok;
     return (
       <dl className="flex flex-col gap-3">
-        {(['euMultilateralis', 'partnerorszagok', 'egyezmeny', 'ketoldalu', 'mobilitas'] as const).map((k) => (
+        {(['partnerorszagok', 'euMultilateralis'] as const).map((k) => (
+          <Sor key={k} cimke={C[k].cimke}><Szoveg v={b[k]} /></Sor>
+        ))}
+      </dl>
+    );
+  },
+  magyarKapcsolatok: (b) => {
+    const C = MEZO_CIMKEK.magyarKapcsolatok;
+    return (
+      <dl className="flex flex-col gap-3">
+        {(['egyezmeny', 'ketoldalu', 'mobilitas'] as const).map((k) => (
           <Sor key={k} cimke={C[k].cimke}><Szoveg v={b[k]} /></Sor>
         ))}
       </dl>

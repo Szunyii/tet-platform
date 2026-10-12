@@ -38,7 +38,7 @@ export async function mentBlokkAction(_prev: MuveletState, formData: FormData): 
   if (!canEditProfil(session, kod, ev, most)) return { errors: { form: NINCS_JOG } };
 
   const eredmeny = validalBlokk(blokk, formData, most);
-  // A szerkesztő oldalon 8 blokk van egy DOM-ban, a mező id-ja ezért `<blokk>.<mezo>`
+  // A szerkesztő oldalon 9 blokk van egy DOM-ban, a mező id-ja ezért `<blokk>.<mezo>`
   // (a name a puszta mezőnév). A hibakulcs = id, hogy a useMuveletForm a jó blokkra fókuszáljon.
   if (!eredmeny.ok) {
     return { errors: Object.fromEntries(Object.entries(eredmeny.errors).map(([k, v]) => [`${blokk}.${k}`, v])) };

@@ -177,12 +177,14 @@ const orszag: DemoOrszag = {
       { nev: 'Lange Nacht der Forschung', tipus: 'forum', idopont: 'április–május, országszerte', megjegyzes: 'Kétévente; 2026-ban több mint 3000 program, 192 ezer látogató; következő: 2028. május 19.' },
       { nev: 'ViennaUP', tipus: 'forum', idopont: 'május, Bécs', megjegyzes: 'Startup- és innovációs fesztivál (Vienna Business Agency); 2027: május 10–14.' },
     ]),
-    kapcsolatok: {
+    nemzetkoziKapcsolatok: {
+      partnerorszagok:
+        'Németország (a legszorosabb ipari és kutatási partner), Svájc, Olaszország, USA, Japán, Kína; a Duna-régió és Közép-Európa országai, köztük Magyarország.',
       euMultilateralis:
         'EU-tag 1995 óta, a Horizont Európa aktív résztvevője; CERN-tag 1959 óta, az ESA és az ESO tagja, az EMBL alapító tagja; Bécs ENSZ-székhely '
         + '(pl. NAÜ, UNIDO), Laxenburgban működik az IIASA; az EU Duna Régió Stratégiájának tagja.',
-      partnerorszagok:
-        'Németország (a legszorosabb ipari és kutatási partner), Svájc, Olaszország, USA, Japán, Kína; a Duna-régió és Közép-Európa országai, köztük Magyarország.',
+    },
+    magyarKapcsolatok: {
       egyezmeny: 'Magyar–osztrák tudományos és műszaki együttműködési egyezmény (Bécs, 1969. május 28.; hatályos 1972. március 12-től)',
       ketoldalu:
         'Az 1969-es egyezmény vegyes bizottságot hozott létre, az 1976-os kulturális és tudományos egyezmény az akadémiákra is kiterjed. Az osztrák reláció '

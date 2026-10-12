@@ -62,7 +62,7 @@ export function useBlokkAllapot<T extends object>(initial: T) {
 }
 
 /**
- * A mező id-ja `<blokk>.<mezo>`: egyedi a 8 blokkos DOM-ban, erre fókuszál a
+ * A mező id-ja `<blokk>.<mezo>`: egyedi a 9 blokkos DOM-ban, erre fókuszál a
  * `useMuveletForm`, és a mentés action ilyen kulccsal adja vissza a hibát. A `name` a
  * puszta mezőnév marad (azt olvassa a validátor).
  */

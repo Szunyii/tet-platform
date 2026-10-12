@@ -189,12 +189,14 @@ const orszag: DemoOrszag = {
       { nev: 'COMEUP', tipus: 'forum', idopont: 'december, Szöul (COEX)', megjegyzes: 'Nemzetközi startup-fesztivál (MSS); 2026: december 9–11.' },
       { nev: 'K-Science and Technology Global Forum', tipus: 'forum', idopont: 'december, Szöul', megjegyzes: 'Az MSIT éves tudománydiplomáciai fóruma (2025-ben a Külügyminisztériummal közösen, mintegy 200 résztvevővel); 2025: december 9.' },
     ]),
-    kapcsolatok: {
+    nemzetkoziKapcsolatok: {
+      partnerorszagok:
+        'USA (Technology Prosperity Deal, 2025. október), EU (Horizont Európa-társulás, digitális és zöld partnerség), visegrádi országok (2021-es együttműködési szándéknyilatkozat).',
       euMultilateralis:
         'Horizont Európa-társult ország (II. pillér) a 2025-ös költségvetési évtől; az EU–Korea Tudományos és Technológiai Vegyesbizottság 8. ülése 2025 márciusában '
         + 'Szöulban volt. EU–Korea Digitális Partnerség (2022) és Zöld Partnerség (2023); az EUREKA teljes jogú tagja (2022), az ITER és az OECD tagja.',
-      partnerorszagok:
-        'USA (Technology Prosperity Deal, 2025. október), EU (Horizont Európa-társulás, digitális és zöld partnerség), visegrádi országok (2021-es együttműködési szándéknyilatkozat).',
+    },
+    magyarKapcsolatok: {
       egyezmeny: 'Magyar–koreai kormányközi egyezmény a tudományos és műszaki együttműködésről (1989); ötévente megújul, ennek alapján működik a TéT-vegyesbizottság',
       ketoldalu:
         'A terv szerint kétévente ülésező TéT-vegyesbizottság 10. ülése 2021-ben hibrid formában zajlott, a 11. ülést Magyarország rendezi (a 2025. júniusi TéT-beszámoló szerint '

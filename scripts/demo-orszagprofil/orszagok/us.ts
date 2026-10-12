@@ -76,7 +76,7 @@
  *   https://www.selectusasummit.us/ ; https://convention.bio.org/ ;
  *   SEMI-közlemény (2026. július) – https://www.semi.org/en/semi-press-release/semi-announces-new-spring-schedule-for-semicon-west-beginning-march-30-april-1-2027 ;
  *   https://techcrunch.com/events/tc-disrupt-2026/
- * Kimaradt blokkok és mezők: nincs, mind a 8 blokk kitöltve. A John von Neumann Series (2023–2024) nem szerepel a rendezvények
+ * Kimaradt blokkok és mezők: nincs, mind a 9 blokk kitöltve. A John von Neumann Series (2023–2024) nem szerepel a rendezvények
  * között, mert a folytatása nem ellenőrizhető.
  */
 import { rendezvenyek, type DemoOrszag } from '../tipusok';
@@ -186,13 +186,15 @@ const orszag: DemoOrszag = {
       { nev: 'SEMICON West', tipus: 'szakkiallitas', idopont: '2026. október 13–15., San Francisco; 2027-től tavasszal (2027: március 30. – április 1., Phoenix)', megjegyzes: 'Félvezetőipari kiállítás és konferencia (SEMI)' },
       { nev: 'TechCrunch Disrupt', tipus: 'konferencia', idopont: 'október, San Francisco (2026: október 13–15.)', megjegyzes: 'Startupok és kockázati tőke' },
     ]),
-    kapcsolatok: {
+    nemzetkoziKapcsolatok: {
+      partnerorszagok:
+        'Egyesült Királyság, Japán és Dél-Korea (Technology Prosperity Deal-ek, 2025; többek között MI, kvantum, nukleáris és fúziós energia, 6G; a brit megállapodás végrehajtását az USA 2025 decemberében felfüggesztette), Kanada és Mexikó (USMCA), Ausztrália (AUKUS), EU-tagállamok.',
       euMultilateralis:
         'OECD, G7, G20; az EU–USA tudományos és technológiai megállapodás 1998 óta hatályos (2023-ban öt évre megújítva), és az USA a Horizont Európa legaktívabb nem társult résztvevője. '
         + '2026 januárjában kilépett a WHO-ból és a Párizsi Megállapodásból; egy 2026. januári elnöki memorandum 66 nemzetközi szervezetből (köztük az UNFCCC-ből és az IPCC-ből) rendelte el a kilépést; '
         + 'az UNESCO-ból 2026. december 31-i hatállyal lép ki.',
-      partnerorszagok:
-        'Egyesült Királyság, Japán és Dél-Korea (Technology Prosperity Deal-ek, 2025; többek között MI, kvantum, nukleáris és fúziós energia, 6G; a brit megállapodás végrehajtását az USA 2025 decemberében felfüggesztette), Kanada és Mexikó (USMCA), Ausztrália (AUKUS), EU-tagállamok.',
+    },
+    magyarKapcsolatok: {
       egyezmeny: 'Magyar–amerikai tudományos és technológiai együttműködési megállapodás (Budapest, 2010; 2010. évi XXX. törvény): vegyes bizottság, tízévente automatikus meghosszabbítás',
       ketoldalu:
         'Az USA a 2024/25-ös New York-i TéT-beszámoló szerint Európán kívül Magyarország legfontosabb exportpartnere és egyik legnagyobb befektetője; 2025-ben indult az MIT–Hungary HUN-REN Seed Fund (2026-ban három közös projekt nyert). '

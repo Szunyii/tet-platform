@@ -179,14 +179,16 @@ const orszag: DemoOrszag = {
       { nev: 'Keleti Gazdasági Fórum (EEF)', tipus: 'forum', idopont: 'szeptember, Vlagyivosztok (Távol-keleti Szövetségi Egyetem)', megjegyzes: 'Ázsiai–csendes-óceáni gazdasági fórum' },
       { nev: 'AI Journey', tipus: 'konferencia', idopont: 'november, Moszkva', megjegyzes: 'Mesterséges intelligencia (Sber); 2026: november 25–27.' },
     ]),
-    kapcsolatok: {
+    nemzetkoziKapcsolatok: {
+      partnerorszagok:
+        'A 2024-es stratégia kiemelt partnerként a Belarusszal alkotott Uniós Államot, a FÁK-tagállamokat és a „barátságos” országokat nevezi meg (keretek: BRICS, SCO, '
+        + 'EAEU). A moszkvai TéT-szakdiplomata 2023–2025-ös beszámolói szerint az orosz egyetemek elsősorban Kína, India, Közép- és Délkelet-Ázsia felé építenek új kapcsolatokat.',
       euMultilateralis:
         'Az Európai Bizottság 2022. március 3-án felfüggesztette a kutatási és innovációs együttműködést az orosz szervezetekkel; az 5. szankciós csomag '
         + '(2022. április 8.) után az állami hátterű szervezetek részvétele a folyamatban lévő projektekben is megszűnt. A CERN 2022-ben felfüggesztette '
         + 'Oroszország megfigyelői státuszát, megállapodása 2024. november 30-án lejárt. Oroszország az ITER tagja, 2024-ben a BRICS soros elnöke volt.',
-      partnerorszagok:
-        'A 2024-es stratégia kiemelt partnerként a Belarusszal alkotott Uniós Államot, a FÁK-tagállamokat és a „barátságos” országokat nevezi meg (keretek: BRICS, SCO, '
-        + 'EAEU). A moszkvai TéT-szakdiplomata 2023–2025-ös beszámolói szerint az orosz egyetemek elsősorban Kína, India, Közép- és Délkelet-Ázsia felé építenek új kapcsolatokat.',
+    },
+    magyarKapcsolatok: {
       egyezmeny:
         'Magyar–orosz egyezmény a kultúra, a tudomány és az oktatás területén folyó együttműködésről (Moszkva, 1993; kihirdetve: 148/1998. Korm. rendelet)',
       ketoldalu:

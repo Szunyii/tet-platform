@@ -156,14 +156,16 @@ const orszag: DemoOrszag = {
       { nev: 'Global Industrie', tipus: 'szakkiallitas', idopont: 'március, felváltva Párizs (Villepinte) és Lyon (Eurexpo)', megjegyzes: 'Ipari technológiák, Ipar 4.0; 2027: március 15–18., Lyon' },
       { nev: 'Fête de la science', tipus: 'forum', idopont: 'október, országszerte', megjegyzes: 'A kutatási tárca országos tudományünnepe; 2026: október 2–12.' },
     ]),
-    kapcsolatok: {
-      euMultilateralis:
-        'Az EU (EGK) alapító tagja; az ESA, a CERN, az ESO és az EMBL tagja, az ITER gazdaországa, a grenoble-i ESRF és ILL társtulajdonosa; '
-        + 'Párizsban működik az OECD és az UNESCO központja.',
+    nemzetkoziKapcsolatok: {
       partnerorszagok:
         'Németország (aacheni szerződés, 2019), USA, Egyesült Királyság, Japán, India (indiai–francia kutatástámogató központ, CEFIPRA), Kanada; '
         + 'a Maghreb-országokkal Hubert Curien-partnerségek: Toubkal (Marokkó), Utique (Tunézia), regionálisan PHC Maghreb (a 2027-es felhívásban '
         + 'Marokkó és Tunézia); az algériai Tassili+ legutóbbi közzétett felhívása 2024-ben zárult.',
+      euMultilateralis:
+        'Az EU (EGK) alapító tagja; az ESA, a CERN, az ESO és az EMBL tagja, az ITER gazdaországa, a grenoble-i ESRF és ILL társtulajdonosa; '
+        + 'Párizsban működik az OECD és az UNESCO központja.',
+    },
+    magyarKapcsolatok: {
       egyezmeny: 'Magyar–francia műszaki és tudományos együttműködési egyezmény (Budapest, 1966; kihirdetve: 122/2008. Korm. rendelet)',
       ketoldalu:
         'Az 1966-os egyezmény francia–magyar albizottságot hozott létre a végrehajtásra. A Balaton program (PHC Balaton) a közös projektek kutatói '

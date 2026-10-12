@@ -18,7 +18,8 @@ import { IntezmenyekMezok } from '../../components/mezok/IntezmenyekMezok';
 import { VallalatiMezok } from '../../components/mezok/VallalatiMezok';
 import { ProgramokMezok } from '../../components/mezok/ProgramokMezok';
 import { RendezvenyekMezok } from '../../components/mezok/RendezvenyekMezok';
-import { KapcsolatokMezok } from '../../components/mezok/KapcsolatokMezok';
+import { NemzetkoziKapcsolatokMezok } from '../../components/mezok/NemzetkoziKapcsolatokMezok';
+import { MagyarKapcsolatokMezok } from '../../components/mezok/MagyarKapcsolatokMezok';
 import { MagyarErtekelesMezok } from '../../components/mezok/MagyarErtekelesMezok';
 
 export const metadata: Metadata = { title: 'Országprofil szerkesztése' };
@@ -59,7 +60,7 @@ export default async function SzerkesztesPage({ params }: { params: Promise<{ ko
         Minden blokk külön menthető; a mentett blokkok azonnal megjelennek a térképen és a profil oldalon.
       </p>
       {/* key={ev}: az App Router a cookie-ból jövő évet nem veszi az állapot-kulcsba, így
-          évváltásnál a 8 blokk kliens-állapota (a beírt, nem mentett értékek) különben
+          évváltásnál a 9 blokk kliens-állapota (a beírt, nem mentett értékek) különben
           átcsúszna a másik évre. */}
       <Fragment key={ev}>
         <AlapadatokMezok {...kozos} initial={b.alapadatok ?? uresBlokk('alapadatok')} mentve={m('alapadatok')} />
@@ -68,7 +69,8 @@ export default async function SzerkesztesPage({ params }: { params: Promise<{ ko
         <VallalatiMezok {...kozos} initial={b.vallalati ?? uresBlokk('vallalati')} mentve={m('vallalati')} />
         <ProgramokMezok {...kozos} initial={b.programok ?? uresBlokk('programok')} mentve={m('programok')} />
         <RendezvenyekMezok {...kozos} initial={b.rendezvenyek ?? uresBlokk('rendezvenyek')} mentve={m('rendezvenyek')} />
-        <KapcsolatokMezok {...kozos} initial={b.kapcsolatok ?? uresBlokk('kapcsolatok')} mentve={m('kapcsolatok')} />
+        <NemzetkoziKapcsolatokMezok {...kozos} initial={b.nemzetkoziKapcsolatok ?? uresBlokk('nemzetkoziKapcsolatok')} mentve={m('nemzetkoziKapcsolatok')} />
+        <MagyarKapcsolatokMezok {...kozos} initial={b.magyarKapcsolatok ?? uresBlokk('magyarKapcsolatok')} mentve={m('magyarKapcsolatok')} />
         <MagyarErtekelesMezok {...kozos} initial={b.magyarErtekeles ?? uresBlokk('magyarErtekeles')} mentve={m('magyarErtekeles')} />
       </Fragment>
     </div>

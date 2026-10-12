@@ -193,14 +193,16 @@ const orszag: DemoOrszag = {
       { nev: 'China International Import Expo (CIIE)', tipus: 'szakkiallitas', idopont: 'november, Sanghaj', megjegyzes: 'Nemzetközi importkiállítás; 2026: 9. CIIE, november 5–10.' },
       { nev: 'Airshow China', tipus: 'szakkiallitas', idopont: 'páros években november–december, Csuhaj', megjegyzes: 'Repülő- és űripari kiállítás; 2026: december 7–13. (2024-ben novemberben volt)' },
     ]),
-    kapcsolatok: {
+    nemzetkoziKapcsolatok: {
+      partnerorszagok:
+        'USA (az 1979-es TéT-megállapodást 2024 decemberében módosítva öt évre meghosszabbították), Oroszország és a BRICS-országok, valamint az Övezet és Út partnerei '
+        + '(Csengtui Nyilatkozat az Övezet és Út TéT-közösség építéséről, 2025); a MOST 2023-ban Nemzetközi TéT-együttműködési Kezdeményezést hirdetett.',
       euMultilateralis:
         'EU–Kína TéT-megállapodás (1998). Kína nem társult ország a Horizont Európában; a 2026–2027-es munkaprogram szerint kínai jogi személyek innovációs akciókban '
         + 'nem, kutatási-innovációs akciókban csak megnevezett területeken (pl. a 2., 5. és 6. klaszter egyes részei, missziók, Widening) vehetnek részt, a MIIT-hez '
         + 'tartozó állami egyetemek egyikben sem. Kína az ITER tagja; BRICS-, SCO- és APEC-együttműködés.',
-      partnerorszagok:
-        'USA (az 1979-es TéT-megállapodást 2024 decemberében módosítva öt évre meghosszabbították), Oroszország és a BRICS-országok, valamint az Övezet és Út partnerei '
-        + '(Csengtui Nyilatkozat az Övezet és Út TéT-közösség építéséről, 2025); a MOST 2023-ban Nemzetközi TéT-együttműködési Kezdeményezést hirdetett.',
+    },
+    magyarKapcsolatok: {
       egyezmeny: 'Magyar–kínai tudományos és technológiai együttműködési megállapodás (2002)',
       ketoldalu:
         'A 2002-es megállapodás alapján közös pályázatok (2019-ig kétévente; a kétoldalú TéT-felhívás kínai relációja legutóbb a 2024-1.2.5-TÉT és a 2026-1.2.2-TÉT felhívásban szerepelt) és vegyes bizottság '

@@ -160,14 +160,16 @@ const orszag: DemoOrszag = {
       { nev: 'SIPSA-Filaha', tipus: 'szakkiallitas', idopont: 'május, Algír', megjegyzes: 'Mezőgazdaság és állattenyésztés; 2026: május 18–21.' },
       { nev: 'Kahraba Expo', tipus: 'szakkiallitas', idopont: 'ősz, Algír', megjegyzes: 'Villamos energia és megújuló energia; 2025-ben indult (1. kiadás: 2025. november 17–19.); 2026: október 13–15.' },
     ]),
-    kapcsolatok: {
+    nemzetkoziKapcsolatok: {
+      partnerorszagok:
+        'Franciaország (PHC Tassili+; űrügyi megállapodás a CNES-szel), Kína (Alsat-3A, Alcomsat-1), India (az Alsat-2B indítása), Argentína és Ukrajna '
+        + '(űrügyi megállapodások), Oroszország, Németország, Egyesült Királyság (űrügyi memorandumok), Mauritánia (felsőoktatási program).',
       euMultilateralis:
         'EU–Algéria társulási megállapodás (hatályos 2005) és tudományos-technológiai megállapodás (2012; 5. vegyes bizottsági ülés: 2023); '
         + 'energetikai stratégiai partnerség 2015 óta – Algéria 2025-ben az EU második legnagyobb vezetékesföldgáz-szállítója. Az Afrikai Unió alapító tagja, '
         + 'az Arab Liga és az OPEC tagja.',
-      partnerorszagok:
-        'Franciaország (PHC Tassili+; űrügyi megállapodás a CNES-szel), Kína (Alsat-3A, Alcomsat-1), India (az Alsat-2B indítása), Argentína és Ukrajna '
-        + '(űrügyi megállapodások), Oroszország, Németország, Egyesült Királyság (űrügyi memorandumok), Mauritánia (felsőoktatási program).',
+    },
+    magyarKapcsolatok: {
       egyezmeny: 'Magyar–algériai egyezmény a kulturális és tudományos együttműködésről (1965)',
       ketoldalu:
         'A 2012-es, 2014-től hatályos gazdasági együttműködési megállapodás vegyes bizottsága a tudományos-műszaki együttműködést is lefedi '

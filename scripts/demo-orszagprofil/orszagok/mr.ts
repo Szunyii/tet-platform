@@ -37,7 +37,7 @@
  *   nem ad kétoldalú magyar–mauritániai szerződést.
  * Kimaradt blokkok és mezők: a Programok és a Rendezvények blokk (nincs ellenőrizhető tartalom); a kfiRendszer blokk stratégia,
  * prioritások, egyéb prioritás és egyéb iparág mezője (hatályos nemzeti KFI-stratégia és hivatalos KFI-prioritás nem ismert; a kiemelt
- * iparágak a vállalati blokk kiemelt ágazatait követik); az intezmenyek.infrastrukturak, a vallalati.klaszterek és vallalati.technologiatranszfer, a kapcsolatok.egyezmeny és
+ * iparágak a vállalati blokk kiemelt ágazatait követik); az intezmenyek.infrastrukturak, a vallalati.klaszterek és vallalati.technologiatranszfer, a magyarKapcsolatok.egyezmeny és
  * a magyarErtekeles.joGyakorlatok mező. A minisztérium honlapjának egyes számszerű kutatási adatai és jogszabálylistája nem
  * ellenőrizhetők, ezért kimaradtak.
  */
@@ -95,15 +95,17 @@ const orszag: DemoOrszag = {
       startupok:
         'A technológiai és innovatív startupokról szóló 2024-002. sz. törvény megteremtette a startup-minősítés jogi keretét.',
     },
-    kapcsolatok: {
+    nemzetkoziKapcsolatok: {
+      partnerorszagok:
+        'Franciaország, Németország és Spanyolország (Team Europe), Algéria (felsőoktatási végrehajtási program 2025–2027), '
+        + 'Törökország (egyetemi együttműködési memorandum a YÖK-kel, 2026), Brazília (mester- és doktori ösztöndíjak).',
       euMultilateralis:
         'Az Afrikai Unió alapító tagja, az Arab Liga tagja. A Horizont Európában nem társult, de automatikusan finanszírozható ország; a PRIMA-nak '
         + 'nem résztvevője. Az EU 2014–2024 között több mint 1 milliárd eurót fordított Mauritániára; 2023-ban zöldhidrogén Team Europe-kezdeményezés '
         + 'indult, 2024-ben közös nyilatkozat született; a halászati jegyzőkönyv 2026. november 14-ig érvényes (megújításáról 2026-ban tárgyalások folytak; '
         + '2026 júniusáig megállapodás nem született).',
-      partnerorszagok:
-        'Franciaország, Németország és Spanyolország (Team Europe), Algéria (felsőoktatási végrehajtási program 2025–2027), '
-        + 'Törökország (egyetemi együttműködési memorandum a YÖK-kel, 2026), Brazília (mester- és doktori ösztöndíjak).',
+    },
+    magyarKapcsolatok: {
       ketoldalu:
         'Kétoldalú TéT-egyezmény nem ismert. Magyarországnak Nouakchottban tiszteletbeli konzulja van (a rabati magyar nagykövetség '
         + 'konzuli hálózatában). Mauritánia Magyarországra kijelölt nagykövete berlini székhelyű (kinevezéséhez a köztársasági '

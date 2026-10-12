@@ -20,8 +20,8 @@
  *   a São Pauló-i TéT-szakdiplomata NKFIH-beszámolói Surinamét nem említik.
  * Kimaradt blokkok és üres mezők: vallalati és programok (nincs forrással alátámasztott tartalom); kfiRendszer.gerd (nincs adat), .strategia,
  * .prioritasok és .prioritasEgyeb (nemzeti KFI-stratégia vagy -prioritáslista nem ismert); intezmenyek.infrastrukturak (kutatási
- * infrastruktúra nem ismert); kapcsolatok.euMultilateralis (a tagságokon – lásd tagsagEgyeb – túl nincs forrással alátámasztott
- * KFI-vonatkozású tartalom), .egyezmeny és .ketoldalu (kétoldalú TéT-megállapodás vagy -program nem ismert);
+ * infrastruktúra nem ismert); nemzetkoziKapcsolatok.euMultilateralis (a tagságokon – lásd tagsagEgyeb – túl nincs forrással alátámasztott
+ * KFI-vonatkozású tartalom), magyarKapcsolatok.egyezmeny és .ketoldalu (kétoldalú TéT-megállapodás vagy -program nem ismert);
  * magyarErtekeles.joGyakorlatok (átvehető jó gyakorlat nem ismert).
  */
 import { rendezvenyek, type DemoOrszag } from '../tipusok';
@@ -78,12 +78,14 @@ const orszag: DemoOrszag = {
     rendezvenyek: rendezvenyek([
       { nev: 'Suriname Energy, Oil and Gas Summit and Exhibition (SEOGS)', tipus: 'konferencia', idopont: 'június, Paramaribo', megjegyzes: 'Energetikai és olajipari csúcstalálkozó és kiállítás, házigazda: Staatsolie; 2026: június 23–26. (6. alkalommal)' },
     ]),
-    kapcsolatok: {
-      euMultilateralis: '',
+    nemzetkoziKapcsolatok: {
       partnerorszagok:
         'Hollandia (történelmi és nyelvi kapcsolatok – a holland a hivatalos nyelv); '
         + 'USA (amerikai–suriname-i akadémiai kapcsolat- és kutatáskapacitás-építő workshop az AdeKUS-on); Franciaország (TotalEnergies – GranMorgu); '
         + 'Kína (Konfuciusz Intézet az AdeKUS-on).',
+      euMultilateralis: '',
+    },
+    magyarKapcsolatok: {
       egyezmeny: '',
       ketoldalu: '',
       mobilitas: 'Suriname nem szerepel a Stipendium Hungaricum partnerországai között (2026).',

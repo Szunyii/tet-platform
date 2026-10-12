@@ -154,14 +154,16 @@ const orszag: DemoOrszag = {
       { nev: 'Cyber Week', tipus: 'konferencia', idopont: 'változó hónap, Tel-Aviv (Tel-avivi Egyetem)', megjegyzes: 'Évente, korábban jellemzően júniusban; 2025: december 8–11., 2026: november 9–12.; több mint 11 ezer résztvevő (Blavatnik ICRC)' },
       { nev: 'AI Week', tipus: 'konferencia', idopont: 'változó hónap, Tel-Aviv (Tel-avivi Egyetem)', megjegyzes: 'Mesterséges intelligencia konferencia, a Cyber Week-kel párhuzamosan (2025: december 10–11.; 2026: november 9–11.)' },
     ]),
-    kapcsolatok: {
+    nemzetkoziKapcsolatok: {
+      partnerorszagok:
+        'USA (BIRD és BSF binacionális alapok, amerikai multinacionális K+F-központok), Németország (GIF), EU-tagállamok a Horizont Európában; '
+        + 'az Ábrahám-megállapodások (2020) után az Egyesült Arab Emírségek és Marokkó; a V4–Izrael pályázati együttműködés 2025 közepén szünetelt.',
       euMultilateralis:
         'Az EU kutatási keretprogramjaiban 1996 óta társult (elsőként Európán kívül), a Horizont Európához 2021-ben társult. A Bizottság 2025 júliusában '
         + 'javasolta az izraeli szervezetek EIC Accelerator-részvételének felfüggesztését (a kollaboratív kutatást nem érintette volna); a javaslat 2025 nyarán '
         + 'nem kapott elegendő támogatást a Tanácsban.',
-      partnerorszagok:
-        'USA (BIRD és BSF binacionális alapok, amerikai multinacionális K+F-központok), Németország (GIF), EU-tagállamok a Horizont Európában; '
-        + 'az Ábrahám-megállapodások (2020) után az Egyesült Arab Emírségek és Marokkó; a V4–Izrael pályázati együttműködés 2025 közepén szünetelt.',
+    },
+    magyarKapcsolatok: {
       egyezmeny: 'Magyar–izraeli tudományos és műszaki együttműködési megállapodás (Jeruzsálem, 1991)',
       ketoldalu:
         'Hatályos megállapodások: tudományos és műszaki (Jeruzsálem, 1991), műszaki (1997); emellett a tudományos tárcák szándéknyilatkozata (2021) és a békés célú '

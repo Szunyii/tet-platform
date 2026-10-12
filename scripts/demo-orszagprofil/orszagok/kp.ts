@@ -32,7 +32,7 @@
  *   a vállalati ökoszisztéma, a programok és a rendezvények mentetlenek (megbízható nyílt adat nincs, és az ENSZ BT
  *   2321 (2016) határozata a tudományos-műszaki együttműködést felfüggeszti).
  * - alapadatok.gdp és gdpEgyFore: üres, mert a Bank of Korea a GNI-t wonban becsli, USD-ben nem közöl hivatalos becslést.
- * - alapadatok.tagsagok: a szótár egyik szervezetének sem tagja. kapcsolatok.egyezmeny és ketoldalu: hatályos TéT-egyezmény
+ * - alapadatok.tagsagok: a szótár egyik szervezetének sem tagja. magyarKapcsolatok.egyezmeny és ketoldalu: hatályos TéT-egyezmény
  *   és kétoldalú TéT-program nem ismert. magyarErtekeles.joGyakorlatok: nem releváns.
  */
 import type { DemoOrszag } from '../tipusok';
@@ -55,7 +55,11 @@ const orszag: DemoOrszag = {
       agazatok: ['Agrár- és élelmiszeripar', 'Bányászat és nyersanyagok'],
       agazatEgyeb: 'Feldolgozóipar (a GDP 20,9%-a), szolgáltatások (29,6%) – Bank of Korea, 2025',
     },
-    kapcsolatok: {
+    nemzetkoziKapcsolatok: {
+      partnerorszagok:
+        'A Bank of Korea szerint a 2025-ös 3,5%-os becsült növekedést az Oroszországgal bővülő együttműködés, a Kínával folytatott kereskedelem növekedése és állami '
+        + 'projektek hajtották; a külkereskedelmi forgalom (a két Korea közötti forgalom nélkül) 2025-ben 3,13 milliárd USD volt (+16%). '
+        + 'Oroszországgal 2024-ben átfogó stratégiai partnerségi szerződést kötött.',
       euMultilateralis:
         'A KNDK-t az ENSZ BT 1718 (2006) határozata óta fokozatosan bővülő szankciós rendszer érinti. A 2321 (2016) határozat 11. pontja szerint minden tagállam felfüggeszti '
         + 'a KNDK által hivatalosan támogatott vagy azt képviselő személyekkel, csoportokkal folytatott tudományos és műszaki együttműködést, az orvosi cserék kivételével. '
@@ -63,10 +67,8 @@ const orszag: DemoOrszag = {
         + 'az 1718-as Szankcióbizottság eseti alapon megállapítja, hogy a tevékenység nem segíti a KNDK proliferációs szempontból érzékeny nukleáris tevékenységét '
         + 'vagy ballisztikusrakéta-programjait; (b) minden más területen az együttműködő állam állapítja meg ugyanezt, és erről előzetesen értesíti a Bizottságot. '
         + 'Magyarország az ENSZ-határozatok mellett az EU korlátozó intézkedéseit is alkalmazza (a Tanács (KKBP) 2016/849 határozata és (EU) 2017/1509 rendelete).',
-      partnerorszagok:
-        'A Bank of Korea szerint a 2025-ös 3,5%-os becsült növekedést az Oroszországgal bővülő együttműködés, a Kínával folytatott kereskedelem növekedése és állami '
-        + 'projektek hajtották; a külkereskedelmi forgalom (a két Korea közötti forgalom nélkül) 2025-ben 3,13 milliárd USD volt (+16%). '
-        + 'Oroszországgal 2024-ben átfogó stratégiai partnerségi szerződést kötött.',
+    },
+    magyarKapcsolatok: {
       egyezmeny: '',
       ketoldalu: '',
       mobilitas:

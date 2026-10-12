@@ -63,11 +63,13 @@ const orszag: DemoOrszag = {
       kutatokozpontok: 'Maldives Marine Research Institute (MMRI) – tengeri és halászati kutatás.',
       infrastrukturak: '',
     },
-    kapcsolatok: {
+    nemzetkoziKapcsolatok: {
+      partnerorszagok: '',
       euMultilateralis:
         'Horizont Európa: alacsony és közepes jövedelmű országként automatikusan jogosult EU-finanszírozásra (EC-lista, 2026). '
         + 'A Nemzetközösség (2020-ban újra csatlakozott), a SAARC és a Kis Szigetállamok Szövetsége (AOSIS) tagja.',
-      partnerorszagok: '',
+    },
+    magyarKapcsolatok: {
       egyezmeny: '',
       ketoldalu:
         '2021. november 17-én az újdelhi magyar nagykövetség és a „Maldív Tiszteletbeli Konzuli Iroda” közös online konferenciáján tíz magyar vízügyi cég mutatta be '

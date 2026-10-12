@@ -23,7 +23,7 @@
  *   https://www.nsf.gov/funding/initiatives/epscor/state-websites ; https://www.viepscor.org/
  * - University of the Virgin Islands (alapítás 1962, land-grant 1972, egyetem és HBCU 1986; kutatóközpontok; Cooperative Extension
  *   Service) – https://www.uvi.edu/about/history.html ; https://www.uvi.edu/research/index.html ; https://www.uvi.edu/about/programs-centers.html
- * Kimaradt blokkok és mezők: vallalati, rendezvenyek, kapcsolatok (nincs ellenőrzött tartalom, magyar vonatkozás sem);
+ * Kimaradt blokkok és mezők: vallalati, rendezvenyek, nemzetkoziKapcsolatok, magyarKapcsolatok (nincs ellenőrzött tartalom, magyar vonatkozás sem);
  * alapadatok.gdpEgyFore (nincs hivatalos egy főre jutó becslés; a GDP 2022-es, a lakosság 2025-ös becslés), alapadatok.tagsagok (a szótár
  * egyik szervezetének sem tagja), kfiRendszer.gerd (csak elavult, 2007-es adat), kfiRendszer.strategia (nincs ellenőrzött
  * KFI-stratégia), intezmenyek.infrastrukturak, programok.finanszirozasiEszkozok és programok.nemzetkoziReszvetel (nincs

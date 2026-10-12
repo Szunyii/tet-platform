@@ -50,7 +50,7 @@
  *   https://nkfih.gov.hu/hivatalrol/ketoldalu-kapcsolatok/szerzodeses-orszagok ; CHARM-EU európai egyetemi szövetség (tagjai között
  *   a Trinity College Dublin és az ELTE) – https://www.charm-eu.eu/ ; Stipendium Hungaricum: Írország nem partnerország –
  *   https://stipendiumhungaricum.hu/partners/
- * Kimaradt blokkok és mezők: a kapcsolatok.egyezmeny üres (nincs kétoldalú TéT-egyezmény); a rendezvényeknél két visszatérő országos
+ * Kimaradt blokkok és mezők: a magyarKapcsolatok.egyezmeny üres (nincs kétoldalú TéT-egyezmény); a rendezvényeknél két visszatérő országos
  *   esemény szerepel; a top vállalatok listája hat nevet tartalmaz.
  */
 import { rendezvenyek, type DemoOrszag } from '../tipusok';
@@ -154,12 +154,14 @@ const orszag: DemoOrszag = {
       { nev: 'Stripe Young Scientist and Technology Exhibition', tipus: 'forum', idopont: 'január, Dublin (Royal Dublin Society)', megjegyzes: '1965 óta; 2025-ig 25 éven át a BT Ireland szervezte és szponzorálta; iskolai tudományos verseny és kiállítás; 2027: január 6–9.' },
       { nev: 'Science Week', tipus: 'forum', idopont: 'november, országszerte', megjegyzes: 'Országos tudományos hét a Research Ireland szervezésében; 2026: november 8–15.' },
     ]),
-    kapcsolatok: {
-      euMultilateralis:
-        'EU-tag 1973 óta, euróövezeti ország; a Horizont Európa résztvevője; ESA-tag, 2003 óta EMBL-, 2018 óta ESO-tag, 2025. október 22-től a CERN társult tagja; OECD-tag.',
+    nemzetkoziKapcsolatok: {
       partnerorszagok:
         'Egyesült Államok (US–Ireland R&D Partnership), Egyesült Királyság, ezen belül Észak-Írország (észak–déli együttműködés, Shared Island), az EU-tagállamok; '
         + 'a Research Ireland partnerei között az UKRI, az NSF és a Royal Society.',
+      euMultilateralis:
+        'EU-tag 1973 óta, euróövezeti ország; a Horizont Európa résztvevője; ESA-tag, 2003 óta EMBL-, 2018 óta ESO-tag, 2025. október 22-től a CERN társult tagja; OECD-tag.',
+    },
+    magyarKapcsolatok: {
       egyezmeny: '',
       ketoldalu:
         'Kormányközi TéT-egyezmény nincs (Írország nem szerepel az NKFIH szerződéses országai között); a kutatási együttműködés fő kerete az uniós keretprogram '

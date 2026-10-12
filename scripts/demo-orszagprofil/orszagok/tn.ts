@@ -160,13 +160,15 @@ const orszag: DemoOrszag = {
     rendezvenyek: rendezvenyek([
       { nev: 'SIAT – mezőgazdasági beruházási és technológiai vásár', tipus: 'szakkiallitas', idopont: 'páros években október, Tunisz (Kram vásárközpont)', megjegyzes: 'Szervező: APIA (agrárberuházás-ösztönző ügynökség); 2026: 16. kiadás, október 28–31.' },
     ]),
-    kapcsolatok: {
-      euMultilateralis:
-        '2003. június 26-án – Marokkóval egy napon – írta alá az EU-val a tudományos-technológiai megállapodást (hatályos 2004 áprilisától); '
-        + 'a 2023-as EU–Tunézia memorandum a Horizont Európa-részvételt is érinti. Az Afrikai Unió alapító tagja, az Arab Liga tagja.',
+    nemzetkoziKapcsolatok: {
       partnerorszagok:
         'Franciaország (PHC Utique, PHC Maghreb, kutatásértékelési együttműködés), Olaszország (memorandum 2024; közös kutatási projektek előkészítése 2025), Kína '
         + '(tudományos-technológiai megállapodás 2025), Németország (GIZ, KfW), Egyesült Királyság (vegyes bizottság).',
+      euMultilateralis:
+        '2003. június 26-án – Marokkóval egy napon – írta alá az EU-val a tudományos-technológiai megállapodást (hatályos 2004 áprilisától); '
+        + 'a 2023-as EU–Tunézia memorandum a Horizont Európa-részvételt is érinti. Az Afrikai Unió alapító tagja, az Arab Liga tagja.',
+    },
+    magyarKapcsolatok: {
       egyezmeny: 'Magyar–tunéziai kulturális és tudományos együttműködési egyezmény (Budapest, 1966; kihirdetve: 131/2008. Korm. rendelet)',
       ketoldalu:
         'A 2004-es gazdasági együttműködési megállapodás vegyes bizottsága a 2024 végi állapot szerint legutóbb 2023-ban ülésezett; a gazdasági együttműködés fő '

@@ -175,16 +175,18 @@ const orszag: DemoOrszag = {
       { nev: 'ROG.e (Rio Oil & Gas)', tipus: 'szakkiallitas', idopont: 'szeptember, Rio de Janeiro', megjegyzes: 'Kétévente (páros években); az IBP energetikai kiállítása és konferenciája; 2026: szeptember 21–24., Riocentro' },
       { nev: 'LAAD Defence & Security', tipus: 'szakkiallitas', idopont: 'április, Rio de Janeiro (Riocentro)', megjegyzes: 'Kétévente (páratlan években); védelmi és biztonsági szakvásár; következő: 2027. április 13–16.' },
     ]),
-    kapcsolatok: {
+    nemzetkoziKapcsolatok: {
+      partnerorszagok:
+        'Kína (CBERS közös földmegfigyelő műholdprogram, 1988 óta), USA (Artemis-egyezmények, 2021), EU-tagállamok (Horizont Európa-konzorciumok), BRICS-partnerek; '
+        + 'a brazil hallgatók legnépszerűbb célországai az USA, Portugália, Kanada és Németország. '
+        + 'A 2017-ben indított Innovációs Diplomácia Program keretében 64 brazil külképviseleten – köztük Budapesten – működik tudományos-technológiai (Sectec) képviselet.',
       euMultilateralis:
         'EU–Brazília tudományos és technológiai együttműködési megállapodás (aláírva 2004, hatályos 2007-től, többször megújítva); digitális párbeszéd '
         + '(MI, 5G/6G, adatgazdaság), Copernicus-együttműködés, BELLA adatkábel-program; CERN társult tagállam 2024 óta, elsőként az amerikai kontinensen. '
         + 'Az EU–Mercosur megállapodást 2026 januárjában aláírták; az átmeneti kereskedelmi megállapodást 2026 májusa óta ideiglenesen alkalmazzák, '
         + 'a teljes megállapodás ratifikációja folyamatban.',
-      partnerorszagok:
-        'Kína (CBERS közös földmegfigyelő műholdprogram, 1988 óta), USA (Artemis-egyezmények, 2021), EU-tagállamok (Horizont Európa-konzorciumok), BRICS-partnerek; '
-        + 'a brazil hallgatók legnépszerűbb célországai az USA, Portugália, Kanada és Németország. '
-        + 'A 2017-ben indított Innovációs Diplomácia Program keretében 64 brazil külképviseleten – köztük Budapesten – működik tudományos-technológiai (Sectec) képviselet.',
+    },
+    magyarKapcsolatok: {
       egyezmeny: 'Magyar–brazil műszaki-tudományos együttműködési megállapodás (aláírva 1986, hatályba lépett 1992. január 2-án) és kiegészítő egyezménye (1987); ötévente megújulnak',
       ketoldalu:
         'Az NKFIH–Embrapii megállapodás (2022) közös projekteket irányzott elő, de a 2024/25-ös (2025. júniusi) TéT-beszámoló szerint az NKFIH programstratégiája '

@@ -149,11 +149,16 @@ const VALIDALOK: { [K in BlokkKulcs]: (fd: FormData, errors: MezoHibak, aktualis
     };
   },
   rendezvenyek: (fd, errors) => ({ lista: rendezvenySorok(fd, errors) }),
-  kapcsolatok: (fd, errors) => {
-    const b = 'kapcsolatok';
+  nemzetkoziKapcsolatok: (fd, errors) => {
+    const b = 'nemzetkoziKapcsolatok';
     return {
-      euMultilateralis: szoveg(fd, b, 'euMultilateralis', SZOVEG_MAX, errors),
       partnerorszagok: szoveg(fd, b, 'partnerorszagok', SZOVEG_MAX, errors),
+      euMultilateralis: szoveg(fd, b, 'euMultilateralis', SZOVEG_MAX, errors),
+    };
+  },
+  magyarKapcsolatok: (fd, errors) => {
+    const b = 'magyarKapcsolatok';
+    return {
       egyezmeny: szoveg(fd, b, 'egyezmeny', ROVID_MAX, errors),
       ketoldalu: szoveg(fd, b, 'ketoldalu', SZOVEG_MAX, errors),
       mobilitas: szoveg(fd, b, 'mobilitas', SZOVEG_MAX, errors),

@@ -130,7 +130,8 @@ export const BLOKKOK = [
   { kulcs: 'vallalati', cim: '3. Innovációs és vállalati ökoszisztéma' },
   { kulcs: 'programok', cim: '4. KFI programok és finanszírozási lehetőségek' },
   { kulcs: 'rendezvenyek', cim: '5. Jelentősebb KFI rendezvények' },
-  { kulcs: 'kapcsolatok', cim: '6. Nemzetközi és magyar–fogadó országbeli KFI/TéT kapcsolatok' },
+  { kulcs: 'nemzetkoziKapcsolatok', cim: '6.1. Két- és többoldalú kapcsolatok' },
+  { kulcs: 'magyarKapcsolatok', cim: '6.2. Magyar–fogadó országbeli kapcsolatok' },
   { kulcs: 'magyarErtekeles', cim: '7. Magyar szempontú értékelés és lehetőségek' },
 ] as const;
 export type BlokkKulcs = (typeof BLOKKOK)[number]['kulcs'];
@@ -228,7 +229,8 @@ export interface ProfilBlokkok {
   vallalati: Vallalati;
   programok: Programok;
   rendezvenyek: Rendezvenyek;
-  kapcsolatok: Kapcsolatok;
+  nemzetkoziKapcsolatok: NemzetkoziKapcsolatok;
+  magyarKapcsolatok: MagyarKapcsolatok;
   magyarErtekeles: MagyarErtekeles;
 }
 
@@ -307,8 +309,10 @@ const NORMALIZALOK: { [K in BlokkKulcs]: (r: Record<string, unknown>) => ProfilB
         .slice(0, RENDEZVENY_MAX),
     };
   },
-  kapcsolatok: (r) => ({
-    euMultilateralis: szoveg(r.euMultilateralis), partnerorszagok: szoveg(r.partnerorszagok),
+  nemzetkoziKapcsolatok: (r) => ({
+    partnerorszagok: szoveg(r.partnerorszagok), euMultilateralis: szoveg(r.euMultilateralis),
+  }),
+  magyarKapcsolatok: (r) => ({
     egyezmeny: szoveg(r.egyezmeny), ketoldalu: szoveg(r.ketoldalu), mobilitas: szoveg(r.mobilitas),
   }),
   magyarErtekeles: (r) => ({
@@ -533,17 +537,19 @@ export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], Me
       magyarazat: `Az országban rendszeresen megrendezett jelentősebb KFI-rendezvények. Legfeljebb ${RENDEZVENY_MAX} rendezvény, a rendezvény neve kötelező; a teljesen üres sor kimarad.`,
     },
   },
-  kapcsolatok: {
+  nemzetkoziKapcsolatok: {
+    partnerorszagok: {
+      cimke: 'Legfőbb partnerországok',
+      magyarazat: 'Azok az országok, amelyekkel a fogadó ország KFI-együttműködése a legintenzívebb, az együttműködés jellegével.',
+      pelda: 'USA (Technology Prosperity Deal, 2025), EU (Horizont Európa-társulás, digitális és zöld partnerség).',
+    },
     euMultilateralis: {
       cimke: 'EU és multilaterális kapcsolatok',
       magyarazat: 'Az ország kapcsolata az EU-val és többoldalú szervezetekkel, programokkal a KFI területén: társulás, partnerségek, tagság, vegyesbizottság.',
       pelda: 'Horizont Európa-társult ország (II. pillér) 2025-től; EU–Korea Digitális Partnerség (2022) és Zöld Partnerség (2023); az EUREKA teljes jogú tagja.',
     },
-    partnerorszagok: {
-      cimke: 'Partnerországok',
-      magyarazat: 'Azok az országok, amelyekkel a fogadó ország KFI-együttműködése a legintenzívebb, az együttműködés jellegével.',
-      pelda: 'USA (Technology Prosperity Deal, 2025), EU (Horizont Európa-társulás, digitális és zöld partnerség).',
-    },
+  },
+  magyarKapcsolatok: {
     egyezmeny: {
       cimke: 'Érvényes TéT-egyezmény',
       magyarazat: 'A Magyarországgal kötött hatályos tudományos-technológiai egyezmény megnevezése és aláírásának éve, egy sorban. Ha nincs, hagyd üresen.',
@@ -555,7 +561,7 @@ export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], Me
       pelda: 'TéT-vegyesbizottság 10. ülése (2021); NKFIH–NRF közös felhívás (2022: 5 magyar nyertes); V4–Korea közös felhívás (2023).',
     },
     mobilitas: {
-      cimke: 'Mobilitás',
+      cimke: 'Mobilitási lehetőségek',
       magyarazat: 'Ösztöndíjak, kutatócsere, hallgatói és kutatói mozgás a két ország között: program, létszám, év.',
       pelda: 'Stipendium Hungaricum: évi 100 hely, 2025/26-ban 63 ösztöndíjas; Global Korea Scholarship: 2026-ban 4 nagykövetségi hely.',
     },

@@ -169,13 +169,15 @@ const orszag: DemoOrszag = {
       { nev: 'Science Agora', tipus: 'forum', idopont: 'ősz, Tokió (Odaiba)', megjegyzes: 'A JST tudomány–társadalom fóruma; 2026: szeptember 12–13.' },
       { nev: 'STS forum (Science and Technology in Society)', tipus: 'konferencia', idopont: 'október, Kiotó', megjegyzes: 'Tudománypolitikai vezetők éves fóruma; 2027: október 3–5.' },
     ]),
-    kapcsolatok: {
-      euMultilateralis:
-        'EU–Japán tudományos és technológiai együttműködési megállapodás (2011-ben lépett hatályba; a közös bizottság 7. ülése: 2023. december); '
-        + 'a Horizont Európa II. pillérének társult országa 2026. július 30. óta; EU–Japán Digitális Partnerség (2022). G7- és OECD-tag.',
+    nemzetkoziKapcsolatok: {
       partnerorszagok:
         'A 7. alapterv a szövetséges és hasonlóan gondolkodó országokra épít: a G7-országok (köztük az USA) és Európa (Horizont Európa-társulás, ASPIRE program), '
         + 'valamint az ASEAN-országok (NEXUS) és India (LOTUS program); ezen felül az EIG CONCERT-Japan és a visegrádi országok (V4–Japán közös kutatási program 2015 óta).',
+      euMultilateralis:
+        'EU–Japán tudományos és technológiai együttműködési megállapodás (2011-ben lépett hatályba; a közös bizottság 7. ülése: 2023. december); '
+        + 'a Horizont Európa II. pillérének társult országa 2026. július 30. óta; EU–Japán Digitális Partnerség (2022). G7- és OECD-tag.',
+    },
+    magyarKapcsolatok: {
       egyezmeny: 'Kormányközi egyezmény a magyar–japán műszaki, tudományos és technológiai együttműködésről (1979)',
       ketoldalu:
         'A kormányközi TéT-konzultációk 1993 óta felváltva zajlanak a két fővárosban: a 12. konzultáció 2015-ben, a 13. 2023 februárjában Budapesten volt, '

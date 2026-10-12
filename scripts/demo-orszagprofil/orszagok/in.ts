@@ -190,15 +190,17 @@ const orszag: DemoOrszag = {
       { nev: 'Nasscom Technology & Leadership Forum (NTLF)', tipus: 'konferencia', idopont: 'február, Mumbai', megjegyzes: 'Az indiai IT-iparági szövetség éves vezetői fóruma; 2027: február 24–25.' },
       { nev: 'India International Science Festival (IISF)', tipus: 'forum', idopont: 'évente, változó időpontban és helyszínen', megjegyzes: 'Tudományos fesztivál; 2025: december 6–9., Panchkula' },
     ]),
-    kapcsolatok: {
+    nemzetkoziKapcsolatok: {
+      partnerorszagok:
+        'USA (IUSSTF; kritikus és feltörekvő technológiák), Németország (IGSTC), Franciaország (CEFIPRA), Japán, Egyesült Királyság '
+        + '(Technology Security Initiative, 2024), Oroszország (atomenergia – Kudankulam), Izrael (mezőgazdasági kiválósági központok).',
       euMultilateralis:
         'EU–India TéT-megállapodás (2001; 2030-ig megújítva, a megújítás 2025. november 27-én lépett hatályba); EU–India Kereskedelmi és Technológiai Tanács '
         + '(3. ülés: Brüsszel, 2026. július); a szabadkereskedelmi tárgyalások 2026 januárjában lezárultak; Horizont Európa-társulási tárgyalások. '
         + 'Multilaterálisan: G20 (2023-as elnökség), BRICS, Quad, SCO; a Nemzetközi Napenergia Szövetség (ISA) Franciaországgal közös alapítója, '
         + 'közgyűlésének elnöke (társelnök: Franciaország) és székhelye (Gurugram).',
-      partnerorszagok:
-        'USA (IUSSTF; kritikus és feltörekvő technológiák), Németország (IGSTC), Franciaország (CEFIPRA), Japán, Egyesült Királyság '
-        + '(Technology Security Initiative, 2024), Oroszország (atomenergia – Kudankulam), Izrael (mezőgazdasági kiválósági központok).',
+    },
+    magyarKapcsolatok: {
       egyezmeny: 'Magyar–indiai tudományos és technológiai együttműködési megállapodás (1992); közös stratégiai kutatási alap (szándéknyilatkozat, 2008. január 18.)',
       ketoldalu:
         'Magyar–indiai TéT-vegyesbizottság (utolsó ismert ülés: 11., online, 2020); NKFIH–DST közös felhívások (pl. 2019-2.1.13-TÉT_IN, '

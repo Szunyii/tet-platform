@@ -192,13 +192,15 @@ const orszag: DemoOrszag = {
       { nev: 'World Health Summit', tipus: 'konferencia', idopont: 'október, Berlin', megjegyzes: 'Globális egészségügyi csúcstalálkozó; 2026: október 11–13.' },
       { nev: 'Lindau Nobel Laureate Meeting', tipus: 'konferencia', idopont: 'június–július, Lindau (Bodeni-tó)', megjegyzes: 'Nobel-díjasok és fiatal kutatók; 2027: június 27.–július 2. (élettan/orvostudomány)' },
     ]),
-    kapcsolatok: {
-      euMultilateralis:
-        'Az uniós kutatási keretprogramok egyik legnagyobb résztvevője; a CERN alapító tagja, az ESA, az ESO és az EMBL tagja; több európai kutatási '
-        + 'infrastruktúra székhelye (European XFEL, FAIR, EMBL, ESO); OECD- és G7-tag.',
+    nemzetkoziKapcsolatok: {
       partnerorszagok:
         'Franciaország (aacheni szerződés, 2019), Egyesült Királyság (a 2025-ös barátsági szerződés stratégiai tudományos-technológiai partnerséget indít), '
         + 'USA, Japán, Izrael, India; Kína a kutatásbiztonsági szempontok mérlegelésével.',
+      euMultilateralis:
+        'Az uniós kutatási keretprogramok egyik legnagyobb résztvevője; a CERN alapító tagja, az ESA, az ESO és az EMBL tagja; több európai kutatási '
+        + 'infrastruktúra székhelye (European XFEL, FAIR, EMBL, ESO); OECD- és G7-tag.',
+    },
+    magyarKapcsolatok: {
       egyezmeny: 'Magyar–német kormányközi egyezmény a tudományos kutatásban és a műszaki fejlesztésben való együttműködésről (Bonn, 1987. október 7.)',
       ketoldalu:
         'Az 1987-es egyezmény közös bizottságot hozott létre; német relációjú TéT-pályázat legutóbb 2013-ban jelent meg. Németország messze Magyarország legnagyobb '

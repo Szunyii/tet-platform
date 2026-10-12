@@ -24,7 +24,7 @@
  *   21st Century Techforce Initiative; aguadillai repülőgépipari korridor; Puerto Rico Space Grant Consortium) –
  *   https://www.investpr.org/key-sectors/biosciences/ ; https://www.investpr.org/key-sectors/advanced-manufacturing/ ;
  *   https://www.investpr.org/key-sectors/aerospace/ ; https://www.investpr.org/key-sectors/technology-and-ict/
- * Kimaradt blokkok és mezők: rendezvenyek (nincs ellenőrzött, rendszeres KFI-rendezvény), kapcsolatok (nincs ellenőrzött magyar
+ * Kimaradt blokkok és mezők: rendezvenyek (nincs ellenőrzött, rendszeres KFI-rendezvény), nemzetkoziKapcsolatok és magyarKapcsolatok (nincs ellenőrzött magyar
  * vonatkozás; az ECLAC-társult tagság az Alapadatokban); kfiRendszer.strategia (nincs ellenőrzött, hatályos KFI-stratégia),
  * alapadatok.tagsagok (a szótár egyik szervezetének sem tagja).
  */
