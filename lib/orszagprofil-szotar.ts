@@ -132,7 +132,7 @@ export const BLOKKOK = [
   { kulcs: 'rendezvenyek', cim: '5. Jelentősebb KFI rendezvények' },
   { kulcs: 'nemzetkoziKapcsolatok', cim: '6.1. Két- és többoldalú kapcsolatok' },
   { kulcs: 'magyarKapcsolatok', cim: '6.2. Magyar–fogadó országbeli kapcsolatok' },
-  { kulcs: 'magyarErtekeles', cim: '7. Magyar szempontú értékelés és lehetőségek' },
+  { kulcs: 'magyarErtekeles', cim: '7. Magyar szempontú értékelés, lehetőségek és javaslatok' },
 ] as const;
 export type BlokkKulcs = (typeof BLOKKOK)[number]['kulcs'];
 export const BLOKK_KULCSOK = BLOKKOK.map((b) => b.kulcs) as readonly BlokkKulcs[];
@@ -571,12 +571,12 @@ export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], Me
       pelda: 'Akkumulátor-technológia és -újrahasznosítás a magyarországi koreai gyártóbázisra építve; gyógyszer- és orvosbiológiai kutatás (a 2025-ös NKFIH–NRF projektek témái).',
     },
     joGyakorlatok: {
-      cimke: 'Jó gyakorlatok, hazai adaptáció',
+      cimke: 'Jó gyakorlatok, hazai adaptációs lehetőségek',
       magyarazat: 'Az országban bevált KFI-megoldások, amelyeket Magyarországon is érdemes lehet alkalmazni, a hazai adaptálás lehetőségével.',
       pelda: 'A TIPS modellje: a magánbefektetői szűrés megelőzi a közpénzt; a kiemelt technológiák elkülönített, ötéves K+F-kerete.',
     },
     diplomaciaiPrioritasok: {
-      cimke: 'Diplomáciai prioritások',
+      cimke: 'TéT diplomáciai prioritások',
       magyarazat: 'A magyar–fogadó országbeli KFI-kapcsolatok erősítéséhez javasolt következő lépések: tárgyalandó témák, kezdeményezések, intézményi teendők.',
       pelda: 'A TéT-vegyesbizottság kétévenkénti ülésezésének biztosítása; az NKFIH–NRF közös felhívások folytatása; közös Horizont Európa-konzorciumok szervezése.',
     },
