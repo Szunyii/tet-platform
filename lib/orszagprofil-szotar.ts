@@ -322,72 +322,275 @@ export function uresBlokk<K extends BlokkKulcs>(kulcs: K): ProfilBlokkok[K] {
   return NORMALIZALOK[kulcs]({});
 }
 
-/** Mezőcímkék és súgó: az űrlap és az olvasó nézet ugyanezt írja. Kulcs = a mező neve. */
+/**
+ * Mezőcímkék és kérdőjeles magyarázat: az űrlap és az olvasó nézet ugyanebből ír (az olvasó
+ * nézet csak a `cimke`-t). Kulcs = a mező neve. A `magyarazat` kötelező: a `MEZO_CIMKEK` típusa
+ * mezőnév szerint kimerítő, ezért fordítási hiba, ha egy mezőhöz nincs. A példák Dél-Koreáról
+ * szólnak (a `kr.ts` demó-profilból), a szabályok a `lib/orszagprofil-validacio.ts`-éi.
+ */
 export interface MezoCimke {
   cimke: string;
+  /** Mit kell a mezőbe írni (a validátor szabályaival egyezően). */
+  magyarazat: string;
+  /** Példa-érték; több soros mezőnél `\n`-nel elválasztva. */
+  pelda?: string;
+  /** @deprecated A `magyarazat` váltja. */
   sugo?: string;
 }
 export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], MezoCimke> } = {
   alapadatok: {
-    fovaros: { cimke: 'Főváros', sugo: 'Pl. Szöul.' },
-    terulet: { cimke: 'Terület (km²)' },
-    penznem: { cimke: 'Pénznem', sugo: 'Pl. dél-koreai von (KRW).' },
-    lakossag: { cimke: 'Lakosság (fő)' },
-    gdp: { cimke: 'GDP (milliárd USD)' },
-    gdpEgyFore: { cimke: 'Egy főre jutó GDP (USD)' },
-    gdpNovekedes: { cimke: 'GDP-növekedés (%)' },
-    adatEv: { cimke: 'Adatév', sugo: 'Melyik évre vonatkoznak a számok.' },
-    forras: { cimke: 'Forrás', sugo: 'Pl. Világbank, IMF, nemzeti statisztikai hivatal.' },
-    tagsagok: { cimke: 'Nemzetközi szervezeti tagság' },
-    tagsagEgyeb: { cimke: 'Egyéb tagság' },
-    agazatok: { cimke: 'Legfontosabb gazdasági ágazatok' },
-    agazatEgyeb: { cimke: 'Egyéb ágazat' },
+    fovaros: { cimke: 'Főváros', magyarazat: 'Az ország fővárosának neve magyarul.', pelda: 'Szöul' },
+    terulet: {
+      cimke: 'Terület (km²)',
+      magyarazat: 'Az ország teljes területe négyzetkilométerben, egész számként. Az ezreseket szóközzel tagolhatod.',
+      pelda: '100 460',
+    },
+    penznem: {
+      cimke: 'Pénznem',
+      magyarazat: 'A hivatalos pénznem magyar neve, utána zárójelben az ISO-kódja.',
+      pelda: 'dél-koreai von (KRW)',
+    },
+    lakossag: {
+      cimke: 'Lakosság (fő)',
+      magyarazat: 'Az ország lakossága főben, az Adatév szerinti állapotban; egész szám, az ezreseket szóközzel tagolhatod.',
+      pelda: '51 681 000',
+    },
+    gdp: {
+      cimke: 'GDP (milliárd USD)',
+      magyarazat: 'Az ország nominális (folyó áras) GDP-je milliárd amerikai dollárban az Adatévre; egy tizedesjegyig, tizedesvesszővel.',
+      pelda: '1 858,6',
+    },
+    gdpEgyFore: {
+      cimke: 'Egy főre jutó GDP (USD)',
+      magyarazat: 'Az egy főre jutó nominális GDP amerikai dollárban az Adatévre; egész szám.',
+      pelda: '35 962',
+    },
+    gdpNovekedes: {
+      cimke: 'GDP-növekedés (%)',
+      magyarazat: 'A reál-GDP éves növekedése az Adatévre, százalékban, egy tizedesjegyig, tizedesvesszővel; csökkenésnél negatív előjellel.',
+      pelda: '0,9 vagy -1,2',
+    },
+    adatEv: {
+      cimke: 'Adatév',
+      magyarazat: 'Az az év, amelyre a fenti számok (lakosság, GDP, növekedés) vonatkoznak. Nem lehet későbbi az aktuális évnél.',
+      pelda: '2025',
+    },
+    forras: {
+      cimke: 'Forrás',
+      magyarazat: 'Az adatok forrása: a szervezet és a kiadás vagy az időpont. Több forrást vesszővel válassz el.',
+      pelda: 'IMF World Economic Outlook (2025. október), Világbank',
+    },
+    tagsagok: {
+      cimke: 'Nemzetközi szervezeti tagság',
+      magyarazat: 'Jelöld ki a listából azokat a szervezeteket, amelyeknek az ország tagja. Ami nincs a listán, azt az „Egyéb tagság” mezőbe írd.',
+    },
+    tagsagEgyeb: {
+      cimke: 'Egyéb tagság',
+      magyarazat: 'A listában nem szereplő szervezeti tagságok, vesszővel elválasztva.',
+      pelda: 'APEC, RCEP, IPEF',
+    },
+    agazatok: {
+      cimke: 'Legfontosabb gazdasági ágazatok',
+      magyarazat: 'Azok az ágazatok, amelyek az ország gazdaságában a legnagyobb súlyúak (a K+F-prioritások a KFI-blokkban szerepelnek). Ami nincs a listán, azt az „Egyéb ágazat” mezőbe írd.',
+    },
+    agazatEgyeb: {
+      cimke: 'Egyéb ágazat',
+      magyarazat: 'A listában nem szereplő gazdasági ágazatok, vesszővel elválasztva.',
+      pelda: 'Hajógyártás, acélipar, akkumulátorgyártás',
+    },
   },
   kfiRendszer: {
-    teljesitmeny: { cimke: 'KFI-teljesítmény', sugo: 'Nemzetközi indexek, pozíció, trendek.' },
-    gerd: { cimke: 'K+F ráfordítás a GDP %-ában' },
-    strategia: { cimke: 'KFI stratégia', sugo: 'Érvényes stratégia neve és időtávja.' },
-    prioritasok: { cimke: 'Prioritások' },
-    prioritasEgyeb: { cimke: 'Egyéb prioritás' },
-    kiemeltIparagak: { cimke: 'Kiemelt iparágak', sugo: 'Az első adja a térkép színét.' },
-    iparagEgyeb: { cimke: 'Egyéb iparág' },
-    erossegek: { cimke: 'Erősségek' },
-    kihivasok: { cimke: 'Kihívások' },
+    teljesitmeny: {
+      cimke: 'KFI-teljesítmény',
+      magyarazat: 'Az ország innovációs és K+F pozíciója nemzetközi mutatók alapján: index, helyezés, az elmúlt évek iránya. Add meg a forrást és az évet.',
+      pelda: 'Global Innovation Index 2025: 4. hely a 139 gazdaság közül (2024: 6.), régiójában az első. A K+F-ráfordítás 2024-ben a GDP 5,13%-a (OECD MSTI).',
+    },
+    gerd: {
+      cimke: 'K+F ráfordítás a GDP %-ában',
+      magyarazat: 'Az összes K+F-ráfordítás (GERD) a GDP százalékában, legfeljebb két tizedesjegyig, tizedesvesszővel. Az érték évét a KFI-teljesítmény szövegében add meg.',
+      pelda: '5,13',
+    },
+    strategia: {
+      cimke: 'KFI stratégia',
+      magyarazat: 'A hatályos nemzeti KFI- vagy tudomány- és technológiastratégia neve és időtávja, egy sorban; ha van, a fő célkitűzéssel.',
+      pelda: '6. Tudomány- és Technológiai Alapterv (2026–2030): több mint 200 billió von állami K+F',
+    },
+    prioritasok: {
+      cimke: 'Prioritások',
+      magyarazat: 'Az ország KFI-politikájának kiemelt témái a listából. Ami nincs a listán, azt az „Egyéb prioritás” mezőbe írd.',
+    },
+    prioritasEgyeb: {
+      cimke: 'Egyéb prioritás',
+      magyarazat: 'A listában nem szereplő KFI-prioritások, vesszővel elválasztva.',
+      pelda: '6G-fejlesztés, bioökonómia',
+    },
+    kiemeltIparagak: {
+      cimke: 'Kiemelt iparágak',
+      magyarazat: 'Azok az iparágak, amelyekre az ország a KFI-politikájában a leginkább épít. A sorrend számít: az első kiemelt iparág színe jelenik meg a térképen, ezért a legfontosabbat jelöld ki elsőnek. Ami nincs a listán, azt az „Egyéb iparág” mezőbe írd.',
+    },
+    iparagEgyeb: {
+      cimke: 'Egyéb iparág',
+      magyarazat: 'A listában nem szereplő kiemelt iparágak, vesszővel elválasztva.',
+      pelda: 'Fejlett robotika, atomenergia',
+    },
+    erossegek: {
+      cimke: 'Erősségek',
+      magyarazat: 'A KFI-rendszer legfontosabb erősségei, néhány mondatban vagy felsorolásban; lehetőleg számmal vagy helyezéssel alátámasztva.',
+      pelda: 'Erős nagyvállalati K+F: a legnagyobb befektetők a Samsung Electronics, az SK hynix és a Hyundai Motor. A GII 2025 szerint Korea első a vállalati K+F-ráfordításban.',
+    },
+    kihivasok: {
+      cimke: 'Kihívások',
+      magyarazat: 'A KFI-rendszer fő gyengeségei, szűk keresztmetszetei, kockázatai; lehetőleg számmal alátámasztva.',
+      pelda: 'A K+F néhány nagy konglomerátumon belül összpontosul, a tudományos cikkeknek csak mintegy negyede készül nemzetközi társszerzőséggel.',
+    },
   },
   intezmenyek: {
-    iranyitoSzervek: { cimke: 'Irányító szervek', sugo: 'Minisztérium, ügynökség, tanács.' },
-    egyetemek: { cimke: 'Meghatározó egyetemek' },
-    kutatokozpontok: { cimke: 'Kutatóközpontok, intézetek' },
-    infrastrukturak: { cimke: 'Kutatási infrastruktúrák' },
+    iranyitoSzervek: {
+      cimke: 'Irányító szervek',
+      magyarazat: 'A KFI-politikát irányító és finanszírozó szervek: minisztériumok, ügynökségek, tanácsok. Szervenként egy sor: név (rövidítés) – feladata egy mondatban.',
+      pelda: 'Tudományos és IKT Minisztérium (MSIT) – az állami K+F és a KFI-stratégia gazdája.\nNemzeti Kutatási Alapítvány (NRF) – a kutatási pályázatok fő finanszírozója.',
+    },
+    egyetemek: {
+      cimke: 'Meghatározó egyetemek',
+      magyarazat: 'A KFI szempontjából legfontosabb egyetemek a székhely városával; ha releváns, a fő szakterülettel.',
+      pelda: 'KAIST (Tedzson), Szöuli Nemzeti Egyetem (Szöul), POSTECH (Pohang)',
+    },
+    kutatokozpontok: {
+      cimke: 'Kutatóközpontok, intézetek',
+      magyarazat: 'A meghatározó állami és nem egyetemi kutatóintézetek, kutatóhálózatok, szakterületükkel.',
+      pelda: 'Koreai Tudományos és Technológiai Intézet (KIST), ETRI (elektronika és távközlés), KRISS (metrológia)',
+    },
+    infrastrukturak: {
+      cimke: 'Kutatási infrastruktúrák',
+      magyarazat: 'A nagy kutatási infrastruktúrák: kutatóreaktor, gyorsító, szuperszámítógép, tudományos park – név és hely.',
+      pelda: 'PAL-XFEL röntgenlézer (Pohang); KSTAR szupravezető tokamak (Tedzson); a KISTI Nurion szuperszámítógépe',
+    },
   },
   vallalati: {
-    kiemeltAgazatok: { cimke: 'Kiemelt ágazatok' },
-    agazatEgyeb: { cimke: 'Egyéb ágazat' },
-    topVallalatok: { cimke: 'Top 10 vállalat', sugo: 'Soronként egy név.' },
-    startupok: { cimke: 'Startupok, KKV-k' },
-    klaszterek: { cimke: 'Klaszterek, inkubátorok' },
-    technologiatranszfer: { cimke: 'Technológiatranszfer' },
+    kiemeltAgazatok: {
+      cimke: 'Kiemelt ágazatok',
+      magyarazat: 'Azok az ágazatok, amelyekben az ország innovatív vállalatai a legerősebbek, a listából. Ami nincs a listán, azt az „Egyéb ágazat” mezőbe írd.',
+    },
+    agazatEgyeb: {
+      cimke: 'Egyéb ágazat',
+      magyarazat: 'A listában nem szereplő ágazatok, vesszővel elválasztva.',
+      pelda: 'Hajógyártás, kijelzőgyártás',
+    },
+    topVallalatok: {
+      cimke: 'Top 10 vállalat',
+      magyarazat: 'Az ország KFI szempontjából meghatározó legnagyobb vállalatai. Soronként egy név, legfeljebb 10 sor (sortöréssel válaszd el őket).',
+      pelda: 'Samsung Electronics\nSK hynix\nHyundai Motor',
+    },
+    startupok: {
+      cimke: 'Startupok, KKV-k',
+      magyarazat: 'A startup- és KKV-ökoszisztéma jellemzői: ismert startupok, unikornisok, támogató programok, számok.',
+      pelda: 'A legnagyobb értékű unikornisok a Toss, a Yello Mobile és a Kurly. A TIPS program 2026-ban 800 startupot támogat.',
+    },
+    klaszterek: {
+      cimke: 'Klaszterek, inkubátorok',
+      magyarazat: 'A meghatározó innovációs klaszterek, tudományos és technológiai parkok, inkubátorok, gyorsítók – név, hely, szakterület.',
+      pelda: 'Pangyo Techno Valley (IKT, játékipar, fintech); Songdo (biotechnológia); 19 Kreatív Gazdasági Innovációs Központ (CCEI) régiós inkubátorként.',
+    },
+    technologiatranszfer: {
+      cimke: 'Technológiatranszfer',
+      magyarazat: 'Hogyan jut el a kutatási eredmény a vállalatokhoz: transzferirodák, hasznosítási programok, spin-off-támogatás, vállalati kockázati tőke.',
+      pelda: 'Egyetemi és intézeti technológiatranszfer-irodák (KAIST, ETRI, KIST); a KIAT technológiatranszfer-programjai.',
+    },
   },
   programok: {
-    palyazatok: { cimke: 'Pályázatok' },
-    tamogatasiProgramok: { cimke: 'Támogatási programok' },
-    finanszirozasiEszkozok: { cimke: 'Finanszírozási eszközök' },
-    nemzetkoziReszvetel: { cimke: 'Nemzetközi részvételi lehetőségek' },
+    palyazatok: {
+      cimke: 'Pályázatok',
+      magyarazat: 'Az országban elérhető fő KFI-pályázati programok: kiíró, a program neve és témája, ha ismert, a jellemző beadási időszak.',
+      pelda: 'NRF alapkutatási pályázatok (egyéni, fiatal kutatói, csoportos sémák); IITP IKT K+F felhívások; KEIT ipari technológiai programok.',
+    },
+    tamogatasiProgramok: {
+      cimke: 'Támogatási programok',
+      magyarazat: 'Állami támogatási és ösztönző programok (startup-, inkubációs, mobilitási, tehetséggondozási): név, kezelő szerv, célcsoport.',
+      pelda: 'TIPS startup-program (MSS); Brain Pool – külföldi kutatók meghívása koreai egyetemekre.',
+    },
+    finanszirozasiEszkozok: {
+      cimke: 'Finanszírozási eszközök',
+      magyarazat: 'A pályázaton kívüli finanszírozási eszközök: kockázati tőke, alapok alapja, hitelgarancia, kedvezményes hitel, adókedvezmény.',
+      pelda: 'KVIC alapok alapja; KOTEC technológiaalapú hitelgaranciák; K+F adójóváírás.',
+    },
+    nemzetkoziReszvetel: {
+      cimke: 'Nemzetközi részvételi lehetőségek',
+      magyarazat: 'Milyen nemzetközi programokban vehet részt az ország, és így magyar partnerrel együtt: EU-s keretprogram, EUREKA, kétoldalú vagy regionális felhívások.',
+      pelda: 'A Horizont Európa II. pillérének társult országa és az EUREKA teljes jogú tagja; kétoldalú NKFIH–NRF felhívások.',
+    },
   },
   rendezvenyek: {
-    lista: { cimke: 'Rendezvények', sugo: 'Szakkiállítások, konferenciák, egyéb fórumok.' },
+    lista: {
+      cimke: 'Rendezvények',
+      magyarazat: 'Az országban rendszeresen megrendezett jelentősebb KFI-rendezvények. Legfeljebb 10 sor, a rendezvény neve kötelező; a teljesen üres sor kimarad.',
+    },
   },
   kapcsolatok: {
-    euMultilateralis: { cimke: 'EU és multilaterális kapcsolatok' },
-    partnerorszagok: { cimke: 'Partnerországok' },
-    egyezmeny: { cimke: 'Érvényes TéT-egyezmény', sugo: 'Megnevezés, aláírás éve.' },
-    ketoldalu: { cimke: 'Kétoldalú együttműködések' },
-    mobilitas: { cimke: 'Mobilitás', sugo: 'Ösztöndíjak, kutatócsere.' },
+    euMultilateralis: {
+      cimke: 'EU és multilaterális kapcsolatok',
+      magyarazat: 'Az ország kapcsolata az EU-val és többoldalú szervezetekkel, programokkal a KFI területén: társulás, partnerségek, tagság, vegyesbizottság.',
+      pelda: 'Horizont Európa-társult ország (II. pillér) 2025-től; EU–Korea Digitális Partnerség (2022) és Zöld Partnerség (2023); az EUREKA teljes jogú tagja.',
+    },
+    partnerorszagok: {
+      cimke: 'Partnerországok',
+      magyarazat: 'Azok az országok, amelyekkel a fogadó ország KFI-együttműködése a legintenzívebb, az együttműködés jellegével.',
+      pelda: 'USA (Technology Prosperity Deal, 2025), visegrádi országok (együttműködési szándéknyilatkozat, 2021).',
+    },
+    egyezmeny: {
+      cimke: 'Érvényes TéT-egyezmény',
+      magyarazat: 'A Magyarországgal kötött hatályos tudományos-technológiai egyezmény megnevezése és aláírásának éve, egy sorban. Ha nincs, hagyd üresen.',
+      pelda: 'Magyar–koreai kormányközi egyezmény a tudományos és műszaki együttműködésről (1989)',
+    },
+    ketoldalu: {
+      cimke: 'Kétoldalú együttműködések',
+      magyarazat: 'A magyar–fogadó országbeli KFI-együttműködések: vegyesbizottsági ülések, közös felhívások, egyetértési megállapodások, közös projektek – évszámmal.',
+      pelda: 'TéT-vegyesbizottság 10. ülése (2021); NKFIH–NRF közös felhívás (2022: 5 magyar nyertes); V4–Korea közös felhívás (2023).',
+    },
+    mobilitas: {
+      cimke: 'Mobilitás',
+      magyarazat: 'Ösztöndíjak, kutatócsere, hallgatói és kutatói mozgás a két ország között: program, létszám, év.',
+      pelda: 'Stipendium Hungaricum: évi 100 hely, 2025/26-ban 63 ösztöndíjas; Global Korea Scholarship: 4 nagykövetségi hely.',
+    },
   },
   magyarErtekeles: {
-    osszegzes: { cimke: 'Összegzés', sugo: 'Rövid, a térkép-panel kivonatába kerül.' },
-    egyuttmukodesiLehetosegek: { cimke: 'Együttműködési lehetőségek' },
-    joGyakorlatok: { cimke: 'Jó gyakorlatok, hazai adaptáció' },
-    diplomaciaiPrioritasok: { cimke: 'Diplomáciai prioritások' },
+    osszegzes: {
+      cimke: 'Összegzés',
+      magyarazat: 'Az ország KFI-profiljának és a magyar együttműködési lehetőségeknek a rövid összefoglalója, 2–4 mondatban, legfeljebb 500 karakter. Ez kerül a térkép-panel kivonatába.',
+      pelda: 'Dél-Korea a világ egyik legintenzívebb K+F-befektetője (2024: a GDP 5,13%-a), a GII 2025 4. helyezettje. A magyar–koreai TéT-kapcsolat az 1989-es egyezményre és a közös NKFIH–NRF felhívásokra épül; a legnagyobb potenciál az akkumulátor- és gyógyszerkutatásban van.',
+    },
+    egyuttmukodesiLehetosegek: {
+      cimke: 'Együttműködési lehetőségek',
+      magyarazat: 'Konkrét területek, ahol magyar kutatóhelyeknek és vállalatoknak együttműködési lehetőségük van, rövid indoklással.',
+      pelda: 'Akkumulátor-technológia és -újrahasznosítás a magyarországi koreai gyártóbázisra építve; gyógyszer- és orvosbiológiai kutatás (a 2025-ös NKFIH–NRF projektek témái).',
+    },
+    joGyakorlatok: {
+      cimke: 'Jó gyakorlatok, hazai adaptáció',
+      magyarazat: 'Az országban bevált KFI-megoldások, amelyeket Magyarországon is érdemes lehet alkalmazni, a hazai adaptálás lehetőségével.',
+      pelda: 'A TIPS modellje: a magánbefektetői szűrés megelőzi a közpénzt; a kiemelt technológiák elkülönített, ötéves K+F-kerete.',
+    },
+    diplomaciaiPrioritasok: {
+      cimke: 'Diplomáciai prioritások',
+      magyarazat: 'A magyar–fogadó országbeli KFI-kapcsolatok erősítéséhez javasolt következő lépések: tárgyalandó témák, kezdeményezések, intézményi teendők.',
+      pelda: 'A TéT-vegyesbizottság kétévenkénti ülésezésének biztosítása; az NKFIH–NRF közös felhívások folytatása; közös Horizont Európa-konzorciumok szervezése.',
+    },
+  },
+};
+
+/** A rendezvénysorok mezői: nem a `MEZO_CIMKEK` kulcsai, mert a sor a `Rendezvenyek.lista` eleme. */
+export const REND_MEZO_CIMKEK: Record<keyof Rendezveny, MezoCimke> = {
+  nev: { cimke: 'Név', magyarazat: 'A rendezvény hivatalos neve.', pelda: 'BIO KOREA' },
+  tipus: {
+    cimke: 'Típus',
+    magyarazat: 'Szakkiállítás, konferencia vagy egyéb fórum (pl. startup-fesztivál, hivatalos tudománydiplomáciai fórum).',
+  },
+  idopont: {
+    cimke: 'Időpont',
+    magyarazat: 'Mikor és hol tartják, szabadszövegben; visszatérő rendezvénynél a szokásos hónap.',
+    pelda: 'április–május, Szöul (COEX)',
+  },
+  megjegyzes: {
+    cimke: 'Megjegyzés',
+    magyarazat: 'Rövid leírás: témája, szervezője, a legközelebbi alkalom pontos dátuma.',
+    pelda: 'Biotechnológia és gyógyszeripar, partnering; 2026: április 28–30.',
   },
 };
