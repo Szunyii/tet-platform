@@ -10,6 +10,12 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-12-egyseges-agazatlista-design.md`.
 
+**Végrehajtási megjegyzések** (a terv a végleges, működő parancsokat és kódblokkokat mutatja):
+
+- **Task 1.** A minőségi review nyomán külön commitban (`5ec7d62`) bekerült a régi nevek foglaltságának fordítási idejű őre, a Turizmus és az Építőipar új színe (kontraszt a jelvény saját hátterén) és két komment; a kódblokkok és a várt értékek már ezt mutatják. Részletek a spec „Megvalósítási eltérések” szakaszában.
+- **Task 3, `mentes-qa.js`.** Az eredeti script egyik kommentjében páratlan ASCII idézőjel állt; a gstack `eval` burkolója ettől nem ismerte fel egyetlen kifejezésnek az aszinkron IIFE-t, és üres kimenettel tért vissza, miközben a script a lapon lefutott (a mentés megtörtént). A toastot a végrehajtáskor külön script igazolta. Az alábbi változatban a komment javítva van: **aszinkron QA-script kommentjébe ne kerüljön ASCII idézőjel.**
+- **Task 3, a DB-másolat olvasása.** A `git show`-val kimentett, WAL módú másolat mellett nincs `-shm` fájl, ezért a `sqlite3 -readonly "$T/regi.db"` „unable to open database file” hibát ad; a parancsok `file:…?immutable=1` alakot használnak.
+
 **Ellenőrzés:** Nincs tesztkeretrendszer. A „teszt” három dolog: (1) eldobható assert-script a tiszta logikára (`scripts/_agazat-proba.ts`), (2) a demó-profil futtató szigorú ellenőrzése és a DB-dumpok összevetése, (3) gstack böngészős QA-scriptek. Mindegyik előbb a régi állapoton bukik, utána zöld. Minden task végén `npx tsc --noEmit`.
 
 **Környezet:**
@@ -210,7 +216,7 @@ A QA-scriptek és az átnevező script a `$S` mappában vannak (a terv írásako
     await varj(300);
     const form = input.closest('form');
     form.querySelector('button[type="submit"]').click();
-    // A mentés visszajelzése a „Blokk mentve" toast; legfeljebb 5 másodpercig várunk rá.
+    // A mentés visszajelzése a Blokk mentve toast; legfeljebb 5 másodpercig várunk rá.
     let toast = '';
     for (let i = 0; i < 25 && !toast; i++) {
       await varj(200);
@@ -1044,7 +1050,7 @@ REGI_NEVEK_SQL="with regi(nev) as (values ('Autóipar'),('Gyógyszeripar'),('Ene
 select (select count(*) from orszagprofil p, json_each(p.alapadatok, '\$.agazatok') j where j.value in (select nev from regi))
      + (select count(*) from orszagprofil p, json_each(p.kfi_rendszer, '\$.kiemeltIparagak') j where j.value in (select nev from regi))
      + (select count(*) from orszagprofil p, json_each(p.vallalati, '\$.kiemeltAgazatok') j where j.value in (select nev from regi));"
-sqlite3 -readonly "$T/regi.db" "$REGI_NEVEK_SQL"
+sqlite3 -readonly "file:$T/regi.db?immutable=1" "$REGI_NEVEK_SQL"
 ```
 
 Várt: `122`.
@@ -1077,7 +1083,7 @@ select (select count(*) from orszagprofil p, json_each(p.alapadatok, '\$.agazato
      + (select count(*) from orszagprofil p, json_each(p.kfi_rendszer, '\$.kiemeltIparagak') j where j.value in (select nev from regi))
      + (select count(*) from orszagprofil p, json_each(p.vallalati, '\$.kiemeltAgazatok') j where j.value in (select nev from regi));"
 sqlite3 -readonly data/tet.db "$REGI_NEVEK_SQL"
-for d in "$T/regi.db" data/tet.db; do sqlite3 -readonly "$d" "select (select count(*) from user), (select count(*) from attase_orszag), (select count(*) from orszagprofil), (select count(*) from riport), (select count(*) from ticket);"; done
+for d in "file:$T/regi.db?immutable=1" data/tet.db; do sqlite3 -readonly "$d" "select (select count(*) from user), (select count(*) from attase_orszag), (select count(*) from orszagprofil), (select count(*) from riport), (select count(*) from ticket);"; done
 ```
 
 Várt: 27 `… blokk mentve 2026-ra` sor `FIGYELEM` nélkül; `AZONOS` (ez azt is igazolja, hogy az 1. lépés „Turizmus” mentése eltűnt); a régi nevek száma `0`; a két számsor azonos (a felhasználók, hozzárendelések, profilok, riportok és ticketek száma nem változott; a profiloké 28).
