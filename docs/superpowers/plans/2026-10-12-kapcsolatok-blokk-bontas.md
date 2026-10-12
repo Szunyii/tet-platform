@@ -585,7 +585,7 @@ Elvárt kimenet, pontosan ez a négy sor (a sorrend eltérhet):
 
 Vagyis fájlonként a régi blokk-fejléc helyett két új fejléc és egy új záró sor van, minden más sor (a szövegek) bájtra azonos.
 
-- [ ] **Step 15: Fejléc-kommentek kézi javítása (9 fájl)**
+- [ ] **Step 15: Fejléc-kommentek kézi javítása (9 fájl, 13 csere)**
 
 A fájlok elején álló kommentek a régi blokknévvel hivatkoznak mezőkre. Pontos cserék (fájlonként a megadott szövegrész egyszer fordul elő):
 
@@ -603,6 +603,7 @@ A fájlok elején álló kommentek a régi blokknévvel hivatkoznak mezőkre. Po
 | `pr.ts` | `, kapcsolatok (nincs ellenőrzött magyar` | `, nemzetkoziKapcsolatok és magyarKapcsolatok (nincs ellenőrzött magyar` |
 | `vi.ts` | `vallalati, rendezvenyek, kapcsolatok (nincs` | `vallalati, rendezvenyek, nemzetkoziKapcsolatok, magyarKapcsolatok (nincs` |
 | `us.ts` | `mind a 8 blokk kitöltve` | `mind a 9 blokk kitöltve` |
+| `kp.ts` | `Csak az Alapadatok, a Kapcsolatok és a Magyar értékelés blokk szerepel;` | `Csak az Alapadatok, a két kapcsolati blokk (6.1., 6.2.) és a Magyar értékelés blokk szerepel;` |
 
 (Mind a `scripts/demo-orszagprofil/orszagok/` alatt.) Ellenőrzés:
 
@@ -859,7 +860,7 @@ Elvárt `git status --short`: üres, vagy egyetlen sor: ` M data/tet.db`. (A DB 
 - Modify: `CLAUDE.md`
 - Modify: `README.md`
 
-- [ ] **Step 1: CLAUDE.md – öt csere**
+- [ ] **Step 1: CLAUDE.md – öt csere és két új listaelem**
 
 Mindegyik régi szövegrész pontosan egyszer fordul elő a fájlban.
 
@@ -872,7 +873,7 @@ Mindegyik régi szövegrész pontosan egyszer fordul elő a fájlban.
    Új:
 
    ```
-   9 típusos JSON oszlop: `alapadatok` + a 8 KFI-blokk, `null` = még nem mentett blokk; a 6. rész két önálló blokk: `nemzetkoziKapcsolatok` „6.1. Két- és többoldalú kapcsolatok” és `magyarKapcsolatok` „6.2. Magyar–fogadó országbeli kapcsolatok” – a korábbi közös `kapcsolatok` oszlop tartalmát a 0008 migráció osztotta szét, az oszlopot a 0009 törölte)
+   9 típusos JSON oszlop: `alapadatok` + a 8 KFI-blokk, `null` = még nem mentett blokk; a 6. rész két önálló blokk: `nemzetkoziKapcsolatok` „6.1. Két- és többoldalú kapcsolatok" és `magyarKapcsolatok` „6.2. Magyar–fogadó országbeli kapcsolatok" – a korábbi közös `kapcsolatok` oszlop tartalmát a 0008 migráció osztotta szét, az oszlopot a 0009 törölte)
    ```
 
 2. Régi: `(8 önálló blokk-form:` → Új: `(9 önálló blokk-form:`
@@ -887,7 +888,14 @@ Mindegyik régi szövegrész pontosan egyszer fordul elő a fájlban.
    Új:
 
    ```
-   Oszlop törlésére az `ALTER TABLE … DROP COLUMN` jó (pl. 0007, 0009). Ha egy sémaváltozás ugyanabban a táblában egyszerre ad hozzá és töröl oszlopot, a `drizzle-kit generate` interaktívan rákérdez az átnevezésre: ilyenkor két lépésben generálj – előbb a hozzáadás (az adatmásolás kézzel a migráció végére), aztán a törlés –, ahogy a 0008/0009 készült.
+   Oszlop törlésére az `ALTER TABLE … DROP COLUMN` jó (pl. 0007, 0009). Ha egy sémaváltozás ugyanabban a táblában egyszerre ad hozzá és töröl oszlopot, a `drizzle-kit generate` interaktívan rákérdez az átnevezésre: ilyenkor két lépésben generálj – előbb a hozzáadás (az adatmásolás kézzel a migráció végére, `--> statement-breakpoint` jellel elválasztva: a migrátor ennél darabol, és egy csak kommentből álló darabon elbukik, ezért a komment az utasításával egy darabban legyen), aztán a törlés –, ahogy a 0008/0009 készült.
+   ```
+
+6. Két új listaelem az Országprofil „Amire figyelni kell” listájába, közvetlenül az „A szerkesztő 9 blokk-formja…” elem után (a review nyomán):
+
+   ```
+   - Új blokk felvételekor a `BLOKKOK` bővítése után a fordító végigvezet a kimerítő táblákon (`ProfilBlokkok`, `NORMALIZALOK`, `MEZO_CIMKEK`, `VALIDALOK`, `NEZETEK`); a blokk-kulcs egyben a `db/schema/orszagprofil.ts` property-neve is (a `sorbol` `r[k]`-val olvas, az `upsertBlokk` `[blokk]: tartalom`-mal ír). A szerkesztő oldal blokk-listája (`[kod]/szerkesztes/page.tsx` + `mezok/<Blokk>Mezok.tsx`) viszont kézi: a kimaradt blokk fordítási hiba nélkül szerkeszthetetlen marad.
+   - Migráció nélkül csak új almező vezethető be (a normalizáló pótolja). Almező átnevezése, mező áthelyezése blokkok között, blokk bontása vagy átnevezése adatmigrációt igényel (minta: 0008/0009): a normalizáló a más kulcson vagy más oszlopban tárolt értéket nem látja, és a blokkon belül átnevezett almező régi értékét a következő mentés el is dobja.
    ```
 
 Ellenőrzés:
@@ -904,7 +912,7 @@ Elvárt: `0`, majd legalább `3` (a találatok több sorra esnek).
 A „### Hosting (Hostinger Node.js)” lista **végére**, közvetlenül a „### Adatbázis és auth” fejléc előtti üres sor elé (a „Visszaállításra akkor van szükség…” bekezdés után, üres sorral elválasztva) szúrd be ezt a listaelemet:
 
 ```markdown
-- A `0008`/`0009` migráció az országprofil `kapcsolatok` oszlopát két oszlopra osztja (`nemzetkozi_kapcsolatok`, `magyar_kapcsolatok`; a tartalom mezőnként átkerül), majd a régit törli – visszafordíthatatlan. A build ideje alatt a még futó régi verzió hibát ad mindenhol, ahol teljes profilsort olvas (térkép, országprofil; adminnak az oldalsáv állapotkártyája miatt minden oldalon), mert a törölt oszlopot is lekérdezi, és ha a `next build` elbukik, így is marad. A két migráció csak együtt mehet ki (egy build egy tranzakcióban futtatja őket): a `0008` egyszeri másolat, ezért ha csak az kerülne ki, a régi kóddal közben mentett 6. blokk a `0009`-cel elveszne. Ha a hosting-DB-ben valós adat van, deploy előtt ments (`sqlite3 <db> ".backup '<db>.pre-0008'"`); a visszaállítás a fenti `.restore` módon megy. Mindez a csere nélküli DB-re vonatkozik: az egyszeri `DEMO_CSERE` buildjénél a `db:init` a már migrált demó DB-t másolja a hosting-DB helyére, ott a két migráció le sem fut, a még futó régi verzió pedig az átnevezett `<db>.regi-<időbélyeg>` fájlon dolgozik tovább (hibát csak újraindulás után ad), és a visszaállítás forrása is ez a fájl.
+- A `0008`/`0009` migráció az országprofil `kapcsolatok` oszlopát két oszlopra osztja (`nemzetkozi_kapcsolatok`, `magyar_kapcsolatok`; a tartalom mezőnként átkerül), majd a régit törli – visszafordíthatatlan. A build ideje alatt a még futó régi verzió hibát ad mindenhol, ahol teljes profilsort olvas (térkép – ez a belépés utáni kezdőoldal is –, országprofil; adminnak az oldalsáv állapotkártyája miatt minden oldalon), mert a törölt oszlopot is lekérdezi; a már nyitva tartott szerkesztőben bármelyik blokk mentése is elbukik (az INSERT a tábla minden oszlopát felsorolja). Ha a `next build` elbukik, így is marad. A két migráció csak együtt mehet ki (egy build egy tranzakcióban futtatja őket): a `0008` egyszeri másolat, ezért ha csak az kerülne ki, a régi kóddal közben mentett 6. blokk a `0009`-cel elveszne. Ha a hosting-DB-ben valós adat van, deploy előtt ments (`sqlite3 <db> ".backup '<db>.pre-0008'"`); a visszaállítás a fenti módon megy, a `.pre-0008` fájlból (`sqlite3 <db> ".restore '<db>.pre-0008'"`). Mindez a csere nélküli DB-re vonatkozik: az egyszeri `DEMO_CSERE` buildjénél a `db:init` a már migrált demó DB-t másolja a hosting-DB helyére, ott a két migráció le sem fut, a még futó régi verzió pedig az átnevezett `<db>.regi-<időbélyeg>` fájlon dolgozik tovább (hibát csak újraindulás után ad), és a visszaállítás forrása is ez a fájl.
 ```
 
 Ellenőrzés:

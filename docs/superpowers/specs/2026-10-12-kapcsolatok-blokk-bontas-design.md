@@ -209,3 +209,30 @@ a DB-t a migráció állítja át, és az `--ir` minden profil `updated_at`-jét
    - térkép: a „Kitöltöttség” mutató `/9`-cel számol.
    A QA-mentések egy külön (ország, év) soron történnek, amely a végén törlődik, hogy a demó
    DB tartalma ne változzon.
+
+## Megvalósítási eltérések
+
+- **Fejléc-kommentek az országfájlokban.** A spec csak a blokkok szétosztását írta le. A fájlok
+  elején álló kommentek a régi blokknévvel hivatkoztak mezőkre és blokkokra, ezért 10 fájlban 13
+  szövegrész is változott (`ca` ×2, `ie`, `kp` ×2, `mr`, `gy` ×2, `sr` ×2, `pr`, `vi`, `us`). A
+  profilok megjelenő szövegei bájtra változatlanok.
+- **Változatlanul hagyott kereszthivatkozások a tartalomban.** Négy megjelenő szöveg
+  „(lásd Kapcsolatok)” alakban utal a korábbi közös blokkra: `cn.ts` (Programok → nemzetközi
+  részvétel; Magyar értékelés → együttműködési lehetőségek), `jp.ts` és `kr.ts` (Programok →
+  nemzetközi részvétel). A tartalom átírása hatókörön kívül volt, ezért maradtak; a hivatkozás
+  pontatlan, de nem téves (mindkét új blokk címében szerepel a „kapcsolatok”). A javításhoz a
+  DB-nek is követnie kell a fájlokat.
+- **Bővebb DB-ellenőrzés** (a review-k nyomán). A régi oszlop törlése előtt külön ellenőrzés
+  futott arra, hogy a mentés óta senki nem írt a régi blokkba (a `0008` egyszeri másolat). A DB
+  commitja előtt a fő fájl önmagában (`immutable=1`, a WAL nélkül) és a commitra kijelölt változat
+  is ellenőrizve lett, mert a hosting `db:init`-je csak a fő fájlt másolja.
+- **WAL.** A futó dev szerver nyitva tartotta a DB-t, ezért a két migráció a `data/tet.db-wal`-ban
+  élt, és a `data/tet.db` a záró checkpointig a git szerint változatlan maradt. Az ág köztes
+  commitjaiban ezért a követett DB-fájl még a `0007`-es állapot.
+- **Dokumentáció.** A README hosting-pontja a spec vázlatánál bővebb: a két migráció csak együtt
+  mehet ki; a build alatt a régi verzióban a mentés is elbukik; a visszaállítás fájlneve; az
+  egyszeri `DEMO_CSERE` buildjének esete. A CLAUDE.md két új „Amire figyelni kell” pontot kapott
+  (új blokk regisztrálása – a szerkesztő oldal blokk-listája kézi; mikor kell adatmigráció), és
+  egy megjegyzést a kézi utasítás helyéről a generált migrációban.
+- **QA.** A mentések az `AT` 2020 soron történtek, a sor a végén törölve. A commit előtti
+  `delete from session` a helyi dev szerver élő böngészős munkameneteit is törölte.
