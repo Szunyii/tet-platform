@@ -95,7 +95,7 @@ const orszag: DemoOrszag = {
       forras: 'IMF World Economic Outlook (2025. október), Világbank',
       tagsagok: ['OECD', 'G20'],
       tagsagEgyeb: 'APEC, RCEP, IPEF',
-      agazatok: ['Elektronika és félvezetők', 'Autóipar', 'Gépipar', 'Vegyipar', 'IKT és szoftver'],
+      agazatok: ['Elektronika és félvezetők', 'Mobilitás és autóipar', 'Gépipar', 'Vegyipar', 'IKT és digitalizáció'],
       agazatEgyeb: 'Hajógyártás, acélipar, akkumulátorgyártás',
     },
     kfiRendszer: {
@@ -112,7 +112,7 @@ const orszag: DemoOrszag = {
       ],
       prioritasEgyeb: 'Nemzeti MI-átalakulás (saját MI-alapmodellek, MI-kutatótársak és autonóm laboratóriumok), 6G-fejlesztés, bioökonómia',
       kiemeltIparagak: [
-        'Félvezetők és mikroelektronika', 'Mesterséges intelligencia és adatgazdaság', 'Hidrogén és akkumulátor',
+        'Elektronika és félvezetők', 'Mesterséges intelligencia és adatgazdaság', 'Hidrogén és akkumulátor',
         'Biotechnológia és gyógyszeripar', 'Kvantumtechnológia', 'Űripar', 'Energetika és fenntarthatóság',
       ],
       iparagEgyeb: 'Fejlett robotika és mobilitás, új generációs biztonság és hálózatok, jövőbeli anyagok, atomenergia',
@@ -146,7 +146,7 @@ const orszag: DemoOrszag = {
     },
     vallalati: {
       kiemeltAgazatok: [
-        'Félvezetők és mikroelektronika', 'Mobilitás és autóipar', 'Hidrogén és akkumulátor', 'Biotechnológia és gyógyszeripar',
+        'Elektronika és félvezetők', 'Mobilitás és autóipar', 'Hidrogén és akkumulátor', 'Biotechnológia és gyógyszeripar',
         'Mesterséges intelligencia és adatgazdaság',
       ],
       agazatEgyeb: 'Hajógyártás, kijelzőgyártás',

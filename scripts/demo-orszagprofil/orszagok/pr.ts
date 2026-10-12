@@ -45,7 +45,7 @@ const orszag: DemoOrszag = {
       forras: 'IMF World Economic Outlook (2025. október; a GDP-adatoknál 2025 = a 2024/25-ös pénzügyi év, becslés), Világbank (terület)',
       tagsagok: [],
       tagsagEgyeb: 'Az ENSZ Latin-amerikai és Karibi Gazdasági Bizottságának (ECLAC) társult tagja',
-      agazatok: ['Gyógyszeripar', 'Turizmus', 'Pénzügyi szolgáltatások', 'IKT és szoftver'],
+      agazatok: ['Biotechnológia és gyógyszeripar', 'Turizmus', 'Pénzügyi szolgáltatások', 'IKT és digitalizáció'],
       agazatEgyeb: 'Orvostechnikai eszközök gyártása, repülőgépipar (karbantartás, alkatrészgyártás), elektronika',
     },
     kfiRendszer: {

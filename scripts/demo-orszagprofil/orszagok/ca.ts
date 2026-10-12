@@ -66,7 +66,8 @@ const orszag: DemoOrszag = {
       tagsagok: ['OECD', 'NATO', 'G7', 'G20', 'Nemzetközösség'],
       tagsagEgyeb: 'APEC, USMCA/CUSMA, CPTPP, Frankofónia (OIF)',
       agazatok: [
-        'Energetika', 'Bányászat és nyersanyagok', 'Pénzügyi szolgáltatások', 'Mezőgazdaság és élelmiszeripar', 'Autóipar', 'IKT és szoftver',
+        'Energetika és fenntarthatóság', 'Bányászat és nyersanyagok', 'Pénzügyi szolgáltatások', 'Agrár- és élelmiszeripar',
+        'Mobilitás és autóipar', 'IKT és digitalizáció',
       ],
       agazatEgyeb: 'Repülőgépipar, erdő- és faipar',
     },
@@ -83,8 +84,8 @@ const orszag: DemoOrszag = {
       ],
       prioritasEgyeb: 'Kvantumtechnológia (Nemzeti Kvantumstratégia), szuverén MI-számítási kapacitás, a hazai szellemi tulajdon létrehozása és megtartása',
       kiemeltIparagak: [
-        'Mesterséges intelligencia és adatgazdaság', 'Kvantumtechnológia', 'Biotechnológia és gyógyszeripar', 'Energetika és fenntarthatóság',
-        'Agrár- és élelmiszertechnológia', 'Űripar',
+        'Mesterséges intelligencia és adatgazdaság', 'Kvantumtechnológia', 'Biotechnológia és gyógyszeripar',
+        'Energetika és fenntarthatóság', 'Agrár- és élelmiszeripar', 'Űripar',
       ],
       iparagEgyeb: 'Óceántechnológia, fejlett gyártás, repülőgépipar és szimuláció',
       erossegek:

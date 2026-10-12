@@ -58,7 +58,7 @@ const orszag: DemoOrszag = {
       strategia: '',
       prioritasok: ['Zöld átállás és klímasemlegesség', 'Tehetség és mobilitás', 'Digitalizáció és MI'],
       prioritasEgyeb: 'A tengeri és part menti ökoszisztémák (korallzátonyok, mangrovék) védelme, katasztrófakockázat-csökkentés, víz- és élelmiszerbiztonság',
-      kiemeltIparagak: ['Energetika és fenntarthatóság', 'Agrár- és élelmiszertechnológia', 'Mesterséges intelligencia és adatgazdaság'],
+      kiemeltIparagak: ['Energetika és fenntarthatóság', 'Agrár- és élelmiszeripar', 'Mesterséges intelligencia és adatgazdaság'],
       iparagEgyeb: 'Tengerkutatás és autonóm környezeti megfigyelés (robotika)',
       erossegek:
         'Több mint két évtizedes, folyamatos NSF EPSCoR-támogatás: 2003 óta öt egymást követő projekt (BCCR, ICCE, Mare Nostrum Caribbean, Ridge to Reef, VICAR); '

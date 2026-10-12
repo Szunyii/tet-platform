@@ -85,8 +85,8 @@ const orszag: DemoOrszag = {
       tagsagok: ['G20', 'BRICS', 'Nemzetközösség'],
       tagsagEgyeb: 'Sanghaji Együttműködési Szervezet (SCO), SAARC, BIMSTEC, Quad, Indiai-óceáni Peremországok Szövetsége (IORA)',
       agazatok: [
-        'IKT és szoftver', 'Mezőgazdaság és élelmiszeripar', 'Gyógyszeripar', 'Autóipar', 'Vegyipar',
-        'Pénzügyi szolgáltatások', 'Energetika',
+        'IKT és digitalizáció', 'Agrár- és élelmiszeripar', 'Biotechnológia és gyógyszeripar', 'Mobilitás és autóipar', 'Vegyipar',
+        'Pénzügyi szolgáltatások', 'Energetika és fenntarthatóság',
       ],
       agazatEgyeb: 'Textil- és ruhaipar, acélipar',
     },
@@ -105,7 +105,7 @@ const orszag: DemoOrszag = {
       prioritasEgyeb: 'Önellátás (Atmanirbhar Bharat) és a „Viksit Bharat 2047” fejlesztési cél; mélytengeri kutatás (Deep Ocean Mission)',
       kiemeltIparagak: [
         'IKT és digitalizáció', 'Biotechnológia és gyógyszeripar', 'Űripar', 'Mesterséges intelligencia és adatgazdaság',
-        'Félvezetők és mikroelektronika', 'Hidrogén és akkumulátor', 'Kvantumtechnológia',
+        'Elektronika és félvezetők', 'Hidrogén és akkumulátor', 'Kvantumtechnológia',
       ],
       iparagEgyeb: 'Digitális közinfrastruktúra (Aadhaar, UPI), atomenergia',
       erossegek:
@@ -142,8 +142,8 @@ const orszag: DemoOrszag = {
     },
     vallalati: {
       kiemeltAgazatok: [
-        'IKT és digitalizáció', 'Biotechnológia és gyógyszeripar', 'Mobilitás és autóipar', 'Félvezetők és mikroelektronika',
-        'Űripar', 'Energetika és fenntarthatóság',
+        'IKT és digitalizáció', 'Biotechnológia és gyógyszeripar', 'Mobilitás és autóipar', 'Elektronika és félvezetők', 'Űripar',
+        'Energetika és fenntarthatóság',
       ],
       agazatEgyeb: 'Globális képességközpontok (GCC), fintech és digitális fizetés',
       topVallalatok: [

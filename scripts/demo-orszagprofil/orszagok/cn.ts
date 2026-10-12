@@ -99,7 +99,7 @@ const orszag: DemoOrszag = {
       forras: 'IMF World Economic Outlook (2025. október); terület: ENSZ Demográfiai Évkönyv 2024 (a kínai statisztikai hivatal adata)',
       tagsagok: ['G20', 'BRICS'],
       tagsagEgyeb: 'ENSZ BT állandó tagja, APEC, Sanghaji Együttműködési Szervezet (SCO), RCEP, WTO (2001 óta)',
-      agazatok: ['Elektronika és félvezetők', 'Gépipar', 'Autóipar', 'Vegyipar', 'IKT és szoftver', 'Építőipar'],
+      agazatok: ['Elektronika és félvezetők', 'Gépipar', 'Mobilitás és autóipar', 'Vegyipar', 'IKT és digitalizáció', 'Építőipar'],
       agazatEgyeb: 'Acélipar, textilipar, akkumulátor- és napelemgyártás, hajógyártás',
     },
     kfiRendszer: {
@@ -115,7 +115,7 @@ const orszag: DemoOrszag = {
       ],
       prioritasEgyeb: '„Új minőségi termelőerők”, „AI+” (mesterséges intelligencia+) akció, a szén-dioxid-kibocsátási csúcs és a karbonsemlegesség („kettős szén-cél”)',
       kiemeltIparagak: [
-        'Hidrogén és akkumulátor', 'Mesterséges intelligencia és adatgazdaság', 'Félvezetők és mikroelektronika', 'Mobilitás és autóipar',
+        'Hidrogén és akkumulátor', 'Mesterséges intelligencia és adatgazdaság', 'Elektronika és félvezetők', 'Mobilitás és autóipar',
         'Kvantumtechnológia', 'Biotechnológia és gyógyszeripar', 'Űripar',
       ],
       iparagEgyeb: 'Robotika (humanoid robotok), agy–számítógép interfész, biogyártás, 6G, napelemgyártás',
@@ -148,7 +148,7 @@ const orszag: DemoOrszag = {
     },
     vallalati: {
       kiemeltAgazatok: [
-        'Hidrogén és akkumulátor', 'Mobilitás és autóipar', 'Mesterséges intelligencia és adatgazdaság', 'Félvezetők és mikroelektronika',
+        'Hidrogén és akkumulátor', 'Mobilitás és autóipar', 'Mesterséges intelligencia és adatgazdaság', 'Elektronika és félvezetők',
         'IKT és digitalizáció', 'Energetika és fenntarthatóság',
       ],
       agazatEgyeb: 'Napelem- és szélenergia-ipar, robotika, drónok, telekommunikáció (5G)',

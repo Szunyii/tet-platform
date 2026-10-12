@@ -74,7 +74,10 @@ const orszag: DemoOrszag = {
       forras: 'IMF World Economic Outlook (2025. október); terület: CIA World Factbook (archív)',
       tagsagok: ['Afrikai Unió', 'Arab Liga'],
       tagsagEgyeb: 'OPEC, Gázexportáló Országok Fóruma, Iszlám Együttműködési Szervezet, Arab Maghreb Unió; EU-társulási megállapodás (2005)',
-      agazatok: ['Energetika', 'Bányászat és nyersanyagok', 'Mezőgazdaság és élelmiszeripar', 'Gyógyszeripar', 'Építőipar'],
+      agazatok: [
+        'Energetika és fenntarthatóság', 'Bányászat és nyersanyagok', 'Agrár- és élelmiszeripar', 'Biotechnológia és gyógyszeripar',
+        'Építőipar',
+      ],
       agazatEgyeb: 'Kőolaj- és földgázipar, petrolkémia, háztartási elektronika',
     },
     kfiRendszer: {
@@ -90,7 +93,7 @@ const orszag: DemoOrszag = {
       ],
       prioritasEgyeb: 'Élelmiszer-biztonság, „a polgár egészsége” (a nemzeti kutatási programok kiemelt területei)',
       kiemeltIparagak: [
-        'Energetika és fenntarthatóság', 'Mesterséges intelligencia és adatgazdaság', 'Agrár- és élelmiszertechnológia',
+        'Energetika és fenntarthatóság', 'Mesterséges intelligencia és adatgazdaság', 'Agrár- és élelmiszeripar',
         'Biotechnológia és gyógyszeripar', 'Űripar',
       ],
       iparagEgyeb: 'Szénhidrogén-ipari K+F (Sonatrach), megújuló energia és zöld hidrogén (CDER), száraz területek kutatása (CRSTRA)',
@@ -121,7 +124,7 @@ const orszag: DemoOrszag = {
     },
     vallalati: {
       kiemeltAgazatok: [
-        'Energetika és fenntarthatóság', 'Biotechnológia és gyógyszeripar', 'Agrár- és élelmiszertechnológia', 'IKT és digitalizáció', 'Űripar',
+        'Energetika és fenntarthatóság', 'Biotechnológia és gyógyszeripar', 'Agrár- és élelmiszeripar', 'IKT és digitalizáció', 'Űripar',
       ],
       agazatEgyeb: 'Szénhidrogén-ipar és petrolkémia, háztartási elektronika',
       topVallalatok: ['Sonatrach', 'Sonelgaz', 'Saidal', 'Cevital', 'Condor Electronics', 'Algérie Télécom', 'Yassir'].join('\n'),

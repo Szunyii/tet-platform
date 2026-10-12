@@ -55,7 +55,7 @@ const orszag: DemoOrszag = {
       forras: 'IMF World Economic Outlook (2025. október; a 2025-ös év a 2024/25-ös pénzügyi év), Világbank',
       tagsagok: ['Nemzetközösség'],
       tagsagEgyeb: 'SAARC, BIMSTEC (titkárság: Dakka), D-8, Iszlám Együttműködési Szervezet (OIC), Indiai-óceáni Peremországok Szövetsége (IORA)',
-      agazatok: ['Mezőgazdaság és élelmiszeripar', 'Gyógyszeripar', 'IKT és szoftver', 'Építőipar', 'Energetika'],
+      agazatok: ['Agrár- és élelmiszeripar', 'Biotechnológia és gyógyszeripar', 'IKT és digitalizáció', 'Építőipar', 'Energetika és fenntarthatóság'],
       agazatEgyeb: 'Készruha- és textilipar (a legnagyobb exportágazat), bőr- és jutaipar',
     },
     kfiRendszer: {
@@ -68,9 +68,7 @@ const orszag: DemoOrszag = {
       strategia: 'Nemzeti tudomány- és technológiapolitika (National Science and Technology Policy, 2011) és cselekvési terve; nemzeti biotechnológiai politika (National Biotechnology Policy, 2012)',
       prioritasok: ['Digitalizáció és MI', 'Egészség és élettudomány', 'Energiabiztonság'],
       prioritasEgyeb: 'Környezetvédelem és természeti erőforrások (a 2011-es tudománypolitika kiemelt területei közül)',
-      kiemeltIparagak: [
-        'Agrár- és élelmiszertechnológia', 'Biotechnológia és gyógyszeripar', 'IKT és digitalizáció', 'Energetika és fenntarthatóság',
-      ],
+      kiemeltIparagak: ['Agrár- és élelmiszeripar', 'Biotechnológia és gyógyszeripar', 'IKT és digitalizáció', 'Energetika és fenntarthatóság'],
       iparagEgyeb: 'Atomenergia (Rooppuri atomerőmű)',
       erossegek:
         'Nagy és fiatal népesség (a GII ifjúsági demográfiai mutatójában 40.) és nagy hazai piac (23.); jelentős gyógyszeripar és kiterjedt '

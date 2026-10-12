@@ -70,7 +70,10 @@ const orszag: DemoOrszag = {
       forras: 'IMF World Economic Outlook (2025. október), CSO (Ír Központi Statisztikai Hivatal)',
       tagsagok: ['EU', 'OECD'],
       tagsagEgyeb: 'euróövezet; közös utazási övezet az Egyesült Királysággal (nem schengeni); ESA, ESO, EMBL; a CERN társult tagja (2025-től)',
-      agazatok: ['Gyógyszeripar', 'IKT és szoftver', 'Pénzügyi szolgáltatások', 'Elektronika és félvezetők', 'Mezőgazdaság és élelmiszeripar', 'Turizmus'],
+      agazatok: [
+        'Biotechnológia és gyógyszeripar', 'IKT és digitalizáció', 'Pénzügyi szolgáltatások', 'Elektronika és félvezetők',
+        'Agrár- és élelmiszeripar', 'Turizmus',
+      ],
       agazatEgyeb: 'Orvostechnikai eszközök, repülőgép-lízing',
     },
     kfiRendszer: {
@@ -86,8 +89,8 @@ const orszag: DemoOrszag = {
       ],
       prioritasEgyeb: 'Az ír sziget egészére kiterjedő (észak–déli), uniós és globális kutatási kapcsolatok; a hazai tulajdonú vállalatok innovációs képességének erősítése',
       kiemeltIparagak: [
-        'Biotechnológia és gyógyszeripar', 'IKT és digitalizáció', 'Félvezetők és mikroelektronika', 'Mesterséges intelligencia és adatgazdaság',
-        'Agrár- és élelmiszertechnológia', 'Energetika és fenntarthatóság',
+        'Biotechnológia és gyógyszeripar', 'IKT és digitalizáció', 'Elektronika és félvezetők', 'Mesterséges intelligencia és adatgazdaság',
+        'Agrár- és élelmiszeripar', 'Energetika és fenntarthatóság',
       ],
       iparagEgyeb: 'Orvostechnikai eszközök (medtech), fotonika, fintech',
       erossegek:
@@ -117,7 +120,7 @@ const orszag: DemoOrszag = {
     },
     vallalati: {
       kiemeltAgazatok: [
-        'Biotechnológia és gyógyszeripar', 'IKT és digitalizáció', 'Félvezetők és mikroelektronika', 'Agrár- és élelmiszertechnológia',
+        'Biotechnológia és gyógyszeripar', 'IKT és digitalizáció', 'Elektronika és félvezetők', 'Agrár- és élelmiszeripar',
         'Mesterséges intelligencia és adatgazdaság',
       ],
       agazatEgyeb: 'Orvostechnika (medtech), fintech, repülőgép-lízing',

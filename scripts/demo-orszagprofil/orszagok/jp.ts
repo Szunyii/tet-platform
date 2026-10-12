@@ -75,7 +75,10 @@ const orszag: DemoOrszag = {
       forras: 'IMF World Economic Outlook (2025. október), Világbank',
       tagsagok: ['OECD', 'G7', 'G20'],
       tagsagEgyeb: 'APEC, CPTPP, RCEP, Quad',
-      agazatok: ['Autóipar', 'Gépipar', 'Elektronika és félvezetők', 'Vegyipar', 'Gyógyszeripar', 'Pénzügyi szolgáltatások'],
+      agazatok: [
+        'Mobilitás és autóipar', 'Gépipar', 'Elektronika és félvezetők', 'Vegyipar', 'Biotechnológia és gyógyszeripar',
+        'Pénzügyi szolgáltatások',
+      ],
       agazatEgyeb: 'Robotika és precíziós műszerek',
     },
     kfiRendszer: {
@@ -92,7 +95,7 @@ const orszag: DemoOrszag = {
       ],
       prioritasEgyeb: 'A tudomány újjáélesztése mint a 7. alapterv vezérelve, gazdaságbiztonság, stratégiai tudománydiplomácia, MI a tudományban (AI for Science); a Society 5.0 jövőkép továbbvitele',
       kiemeltIparagak: [
-        'Félvezetők és mikroelektronika', 'Mobilitás és autóipar', 'Mesterséges intelligencia és adatgazdaság', 'Kvantumtechnológia',
+        'Elektronika és félvezetők', 'Mobilitás és autóipar', 'Mesterséges intelligencia és adatgazdaság', 'Kvantumtechnológia',
         'Biotechnológia és gyógyszeripar', 'Űripar', 'Energetika és fenntarthatóság', 'Anyagtudomány',
       ],
       iparagEgyeb: 'Fúziós energia, fejlett robotika, kommunikációs technológiák',
@@ -124,7 +127,7 @@ const orszag: DemoOrszag = {
     },
     vallalati: {
       kiemeltAgazatok: [
-        'Mobilitás és autóipar', 'Félvezetők és mikroelektronika', 'Biotechnológia és gyógyszeripar', 'Anyagtudomány',
+        'Mobilitás és autóipar', 'Elektronika és félvezetők', 'Biotechnológia és gyógyszeripar', 'Anyagtudomány',
         'Mesterséges intelligencia és adatgazdaság',
       ],
       agazatEgyeb: 'Robotika, optika és képalkotás',

@@ -48,7 +48,7 @@ const orszag: DemoOrszag = {
       forras: 'IMF World Economic Outlook (2025. október), Világbank (terület: FAO)',
       tagsagok: ['Nemzetközösség'],
       tagsagEgyeb: 'CARICOM (titkárság: Georgetown), OAS, Iszlám Együttműködési Szervezet (OIC), Amazóniai Együttműködési Szerződés Szervezete (ACTO), ENSZ; Mercosur társult állam (2013 óta)',
-      agazatok: ['Energetika', 'Bányászat és nyersanyagok', 'Mezőgazdaság és élelmiszeripar'],
+      agazatok: ['Energetika és fenntarthatóság', 'Bányászat és nyersanyagok', 'Agrár- és élelmiszeripar'],
       agazatEgyeb: 'Offshore kőolaj-kitermelés (Stabroek-blokk, 2019 óta), aranybányászat, cukor- és rizstermelés, erdőgazdálkodás',
     },
     kfiRendszer: {
@@ -60,7 +60,7 @@ const orszag: DemoOrszag = {
       strategia: 'Nemzeti tudomány- és technológiapolitika (National Science and Technology Policy, 2013); hatályos változata nem ismert; fejlesztési keret: LCDS 2030',
       prioritasok: ['Zöld átállás és klímasemlegesség'],
       prioritasEgyeb: 'Erdei klímaszolgáltatások (szén-dioxid-kreditek), biodiverzitás, alkalmazkodás és árvízvédelem, tiszta energia, kék gazdaság, digitális infrastruktúra (LCDS 2030)',
-      kiemeltIparagak: ['Energetika és fenntarthatóság', 'Agrár- és élelmiszertechnológia'],
+      kiemeltIparagak: ['Energetika és fenntarthatóság', 'Agrár- és élelmiszeripar'],
       iparagEgyeb: 'Erdei szén-dioxid-kreditek, bioprospektálás és bioenergia, tengeri és folyami ökológia',
       erossegek:
         'Az olajbevételek gyorsan bővülő fejlesztési forrást adnak. Mintegy 18 millió hektár erdő, az erdőirtás üteme a globális átlagnál 90%-kal alacsonyabb; '

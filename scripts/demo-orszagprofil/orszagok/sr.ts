@@ -41,7 +41,7 @@ const orszag: DemoOrszag = {
       forras: 'IMF World Economic Outlook (2025. október), Világbank (terület: FAO)',
       tagsagok: [],
       tagsagEgyeb: 'CARICOM, Iszlám Együttműködési Szervezet (OIC), OAS, Amazóniai Együttműködési Szerződés Szervezete (ACTO), ENSZ; Mercosur társult állam (2013 óta)',
-      agazatok: ['Bányászat és nyersanyagok', 'Energetika', 'Mezőgazdaság és élelmiszeripar'],
+      agazatok: ['Bányászat és nyersanyagok', 'Energetika és fenntarthatóság', 'Agrár- és élelmiszeripar'],
       agazatEgyeb: 'Aranybányászat, kőolaj-kitermelés és -feldolgozás (Staatsolie), offshore olajmező-fejlesztés (GranMorgu), erdőgazdálkodás',
     },
     kfiRendszer: {
@@ -53,7 +53,7 @@ const orszag: DemoOrszag = {
       strategia: '',
       prioritasok: [],
       prioritasEgyeb: '',
-      kiemeltIparagak: ['Energetika és fenntarthatóság', 'Agrár- és élelmiszertechnológia'],
+      kiemeltIparagak: ['Energetika és fenntarthatóság', 'Agrár- és élelmiszeripar'],
       iparagEgyeb: 'Biodiverzitás-kutatás, kék szén (mangrove-helyreállítás)',
       erossegek:
         'Gazdag trópusi biodiverzitás, amelyre egyetemi gyűjtemények és programok épülnek (nemzeti herbárium, NZCS, BioREPS); '

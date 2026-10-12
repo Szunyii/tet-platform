@@ -86,7 +86,10 @@ const orszag: DemoOrszag = {
       forras: 'IMF World Economic Outlook (2025. október), Statistik Austria',
       tagsagok: ['EU', 'OECD'],
       tagsagEgyeb: 'euróövezet, schengeni övezet; ESA, CERN, ESO, EMBL; Bécs ENSZ-székhely (pl. NAÜ, UNIDO)',
-      agazatok: ['Gépipar', 'Autóipar', 'Elektronika és félvezetők', 'Gyógyszeripar', 'Energetika', 'Turizmus'],
+      agazatok: [
+        'Gépipar', 'Mobilitás és autóipar', 'Elektronika és félvezetők', 'Biotechnológia és gyógyszeripar', 'Energetika és fenntarthatóság',
+        'Turizmus',
+      ],
       agazatEgyeb: 'Fém- és acélipar, fa- és papíripar',
     },
     kfiRendszer: {
@@ -102,7 +105,7 @@ const orszag: DemoOrszag = {
       ],
       prioritasEgyeb: 'Kulcstechnológiák és a vállalati kutatás erősítése (FTI-paktum 2027–2029); az FTI-Strategie 2030 célja a nemzetközi élvonal elérése',
       kiemeltIparagak: [
-        'Félvezetők és mikroelektronika', 'Mobilitás és autóipar', 'Kvantumtechnológia', 'Biotechnológia és gyógyszeripar',
+        'Elektronika és félvezetők', 'Mobilitás és autóipar', 'Kvantumtechnológia', 'Biotechnológia és gyógyszeripar',
         'Energetika és fenntarthatóság', 'Anyagtudomány',
       ],
       iparagEgyeb: 'Orvostechnika, gépgyártás és automatizálás',
@@ -136,7 +139,7 @@ const orszag: DemoOrszag = {
     },
     vallalati: {
       kiemeltAgazatok: [
-        'Félvezetők és mikroelektronika', 'Mobilitás és autóipar', 'Biotechnológia és gyógyszeripar', 'Energetika és fenntarthatóság',
+        'Elektronika és félvezetők', 'Mobilitás és autóipar', 'Biotechnológia és gyógyszeripar', 'Energetika és fenntarthatóság',
         'Anyagtudomány', 'Kvantumtechnológia',
       ],
       agazatEgyeb: 'Gépgyártás és automatizálás, acél- és fémtechnológia',

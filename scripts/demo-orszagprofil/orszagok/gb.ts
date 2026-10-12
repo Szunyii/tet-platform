@@ -87,7 +87,10 @@ const orszag: DemoOrszag = {
       forras: 'IMF World Economic Outlook (2025. október), Office for National Statistics (ONS)',
       tagsagok: ['OECD', 'NATO', 'G7', 'G20', 'Nemzetközösség'],
       tagsagEgyeb: 'ENSZ BT állandó tagja; CPTPP, AUKUS; ESA, CERN, ESO, EMBL',
-      agazatok: ['Pénzügyi szolgáltatások', 'IKT és szoftver', 'Gyógyszeripar', 'Kreatív ipar', 'Védelmi ipar', 'Autóipar'],
+      agazatok: [
+        'Pénzügyi szolgáltatások', 'IKT és digitalizáció', 'Biotechnológia és gyógyszeripar', 'Kreatív ipar és média', 'Védelmi ipar',
+        'Mobilitás és autóipar',
+      ],
       agazatEgyeb: 'Repülőgép- és űripar, szakmai és üzleti szolgáltatások, tiszta energia',
     },
     kfiRendszer: {
@@ -104,7 +107,7 @@ const orszag: DemoOrszag = {
       prioritasEgyeb: 'IS-8 (az ipari stratégia 8 ágazata): fejlett gyártás, tiszta energia, kreatív ipar, védelem, digitális technológiák, pénzügy, élettudomány, szakmai és üzleti szolgáltatások',
       kiemeltIparagak: [
         'Biotechnológia és gyógyszeripar', 'Mesterséges intelligencia és adatgazdaság', 'IKT és digitalizáció', 'Kvantumtechnológia',
-        'Űripar', 'Védelmi technológia', 'Félvezetők és mikroelektronika',
+        'Űripar', 'Védelmi ipar', 'Elektronika és félvezetők',
       ],
       iparagEgyeb: 'Mérnöki biológia, kiberbiztonság, fejlett hálózati technológiák, fintech',
       erossegek:
@@ -133,8 +136,8 @@ const orszag: DemoOrszag = {
     },
     vallalati: {
       kiemeltAgazatok: [
-        'Biotechnológia és gyógyszeripar', 'Mesterséges intelligencia és adatgazdaság', 'IKT és digitalizáció', 'Űripar',
-        'Védelmi technológia', 'Kreatív ipar és média',
+        'Biotechnológia és gyógyszeripar', 'Mesterséges intelligencia és adatgazdaság', 'IKT és digitalizáció', 'Űripar', 'Védelmi ipar',
+        'Kreatív ipar és média',
       ],
       agazatEgyeb: 'Fintech, repülőgépipar, mérnöki biológia',
       topVallalatok: [

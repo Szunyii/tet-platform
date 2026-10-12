@@ -58,7 +58,7 @@ const orszag: DemoOrszag = {
       forras: 'IMF World Economic Outlook (2025. október); terület: CIA World Factbook (archív)',
       tagsagok: ['Afrikai Unió', 'Arab Liga'],
       tagsagEgyeb: 'Iszlám Együttműködési Szervezet, Arab Maghreb Unió',
-      agazatok: ['Bányászat és nyersanyagok', 'Energetika', 'Mezőgazdaság és élelmiszeripar'],
+      agazatok: ['Bányászat és nyersanyagok', 'Energetika és fenntarthatóság', 'Agrár- és élelmiszeripar'],
       agazatEgyeb: 'Halászat, vasércbányászat (SNIM), tengeri földgáz (Greater Tortue Ahmeyim LNG, 2025-től)',
     },
     kfiRendszer: {
@@ -67,7 +67,7 @@ const orszag: DemoOrszag = {
         + 'az alsó-közepes jövedelmű országok átlaga alatt van minden pillérben, a szubszaharai átlagot a humántőke és kutatás, valamint az '
         + 'infrastruktúra pillérben meghaladja. A legutóbbi K+F-adat a GDP 0,01%-a (2018, UNESCO UIS).',
       gerd: '0,01',
-      kiemeltIparagak: ['Energetika és fenntarthatóság', 'Agrár- és élelmiszertechnológia'],
+      kiemeltIparagak: ['Energetika és fenntarthatóság', 'Agrár- és élelmiszeripar'],
       erossegek:
         'A GII 2025 szerint kiemelkedő a beruházási ráta (5. hely), az ifjúsági demográfiai osztalék (8.), a működőtőke-beáramlás (9.) és a természettudományi '
         + 'és mérnöki diplomások aránya (9.). A Szenegállal közös Greater Tortue Ahmeyim LNG-projekt 2025-ben kezdte meg az exportot; '
@@ -89,7 +89,7 @@ const orszag: DemoOrszag = {
         + 'Nouadhibou; 2024 decembere óta új székháza van Nouakchottban); INRSP (Nouakchott) – népegészségügyi kutatóintézet.',
     },
     vallalati: {
-      kiemeltAgazatok: ['Energetika és fenntarthatóság', 'Agrár- és élelmiszertechnológia'],
+      kiemeltAgazatok: ['Energetika és fenntarthatóság', 'Agrár- és élelmiszeripar'],
       agazatEgyeb: 'Vasércbányászat, tengeri földgáz (LNG), halászat',
       topVallalatok: 'SNIM (Société Nationale Industrielle et Minière)',
       startupok:

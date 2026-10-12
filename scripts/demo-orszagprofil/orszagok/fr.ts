@@ -65,8 +65,8 @@ const orszag: DemoOrszag = {
       tagsagok: ['EU', 'OECD', 'NATO', 'G7', 'G20'],
       tagsagEgyeb: 'ENSZ BT állandó tag, euróövezet, schengeni térség, ESA, CERN, Frankofónia Nemzetközi Szervezete',
       agazatok: [
-        'Autóipar', 'Gyógyszeripar', 'Vegyipar', 'Energetika', 'Mezőgazdaság és élelmiszeripar', 'Védelmi ipar',
-        'Turizmus', 'Pénzügyi szolgáltatások',
+        'Mobilitás és autóipar', 'Biotechnológia és gyógyszeripar', 'Vegyipar', 'Energetika és fenntarthatóság', 'Agrár- és élelmiszeripar',
+        'Védelmi ipar', 'Turizmus', 'Pénzügyi szolgáltatások',
       ],
       agazatEgyeb: 'Repülőgép- és űripar, luxus- és kozmetikai ipar',
     },
@@ -116,7 +116,7 @@ const orszag: DemoOrszag = {
     vallalati: {
       kiemeltAgazatok: [
         'Űripar', 'Biotechnológia és gyógyszeripar', 'Mobilitás és autóipar', 'Energetika és fenntarthatóság',
-        'Mesterséges intelligencia és adatgazdaság', 'Védelmi technológia',
+        'Mesterséges intelligencia és adatgazdaság', 'Védelmi ipar',
       ],
       agazatEgyeb: 'Repülőgépipar, luxus- és kozmetikai ipar',
       topVallalatok: [

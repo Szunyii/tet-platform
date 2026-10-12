@@ -53,7 +53,7 @@ const orszag: DemoOrszag = {
       forras: 'IMF World Economic Outlook (2025. október; a 2025-ös év a 2024/25-ös pénzügyi év), Világbank',
       tagsagok: [],
       tagsagEgyeb: 'SAARC (titkárság: Katmandu), BIMSTEC',
-      agazatok: ['Mezőgazdaság és élelmiszeripar', 'Turizmus', 'Energetika', 'Építőipar'],
+      agazatok: ['Agrár- és élelmiszeripar', 'Turizmus', 'Energetika és fenntarthatóság', 'Építőipar'],
       agazatEgyeb: 'Vízenergia; szőnyeg- és textilipar',
     },
     kfiRendszer: {
@@ -66,7 +66,7 @@ const orszag: DemoOrszag = {
       strategia: 'Nemzeti tudományos, technológiai és innovációs politika (National Science, Technology and Innovation Policy, 2076/2019)',
       prioritasok: ['Energiabiztonság', 'Zöld átállás és klímasemlegesség', 'Egészség és élettudomány'],
       prioritasEgyeb: 'Vízgazdálkodás, biodiverzitás és hegyvidéki környezet',
-      kiemeltIparagak: ['Energetika és fenntarthatóság', 'Agrár- és élelmiszertechnológia', 'Biotechnológia és gyógyszeripar'],
+      kiemeltIparagak: ['Energetika és fenntarthatóság', 'Agrár- és élelmiszeripar', 'Biotechnológia és gyógyszeripar'],
       iparagEgyeb: 'Vízenergia, gyógynövények és természetes vegyületek kutatása',
       erossegek:
         'Jelentős vízenergia-potenciál és alacsony szén-dioxid-intenzitású energiafelhasználás (a GII-ben 26.); gazdag biológiai sokféleség és '

@@ -61,7 +61,7 @@ const orszag: DemoOrszag = {
       forras: 'IMF World Economic Outlook (2025. október), Izraeli Központi Statisztikai Hivatal (CBS; a terület Kelet-Jeruzsálemmel és a Golán-fennsíkkal együtt)',
       tagsagok: ['OECD'],
       tagsagEgyeb: 'ENSZ, WTO, CERN (teljes jogú tag 2014 óta), EMBL (alapító tag, 1974), Horizont Európa társult ország',
-      agazatok: ['IKT és szoftver', 'Elektronika és félvezetők', 'Védelmi ipar', 'Gyógyszeripar', 'Vegyipar'],
+      agazatok: ['IKT és digitalizáció', 'Elektronika és félvezetők', 'Védelmi ipar', 'Biotechnológia és gyógyszeripar', 'Vegyipar'],
       agazatEgyeb: 'Kiberbiztonság, orvostechnika, gyémántfeldolgozás és -kereskedelem',
     },
     kfiRendszer: {
@@ -80,7 +80,7 @@ const orszag: DemoOrszag = {
       prioritasEgyeb: 'Biokonvergencia, élelmiszer-technológia (foodtech), megújuló energia és energiatárolás, kék gazdaság (bluetech), kvantumtechnológia, kiberbiztonság',
       kiemeltIparagak: [
         'IKT és digitalizáció', 'Mesterséges intelligencia és adatgazdaság', 'Biotechnológia és gyógyszeripar', 'Digitális egészségügy',
-        'Félvezetők és mikroelektronika', 'Védelmi technológia', 'Kvantumtechnológia', 'Agrár- és élelmiszertechnológia',
+        'Elektronika és félvezetők', 'Védelmi ipar', 'Kvantumtechnológia', 'Agrár- és élelmiszeripar',
       ],
       iparagEgyeb: 'Kiberbiztonság, víztechnológia, klímatechnológia, civil űripar',
       erossegek:
@@ -114,7 +114,7 @@ const orszag: DemoOrszag = {
     vallalati: {
       kiemeltAgazatok: [
         'IKT és digitalizáció', 'Mesterséges intelligencia és adatgazdaság', 'Digitális egészségügy', 'Biotechnológia és gyógyszeripar',
-        'Félvezetők és mikroelektronika', 'Védelmi technológia',
+        'Elektronika és félvezetők', 'Védelmi ipar',
       ],
       agazatEgyeb: 'Kiberbiztonság, mobilitás (Mobileye), klíma- és víztechnológia',
       topVallalatok: [

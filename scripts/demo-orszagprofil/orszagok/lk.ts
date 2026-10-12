@@ -63,7 +63,7 @@ const orszag: DemoOrszag = {
       forras: 'Srí Lanka-i Központi Bank (CBSL, Annual Economic Review 2025), előzetes adat (az IMF WEO 2025. októberi kiadása 2025-re nem közöl adatot); Világbank',
       tagsagok: ['Nemzetközösség'],
       tagsagEgyeb: 'SAARC, BIMSTEC, Indiai-óceáni Peremországok Szövetsége (IORA)',
-      agazatok: ['Turizmus', 'Mezőgazdaság és élelmiszeripar', 'Logisztika', 'IKT és szoftver', 'Pénzügyi szolgáltatások', 'Építőipar'],
+      agazatok: ['Turizmus', 'Agrár- és élelmiszeripar', 'Logisztika', 'IKT és digitalizáció', 'Pénzügyi szolgáltatások', 'Építőipar'],
       agazatEgyeb: 'Ruhaipar; tea-, gumi- és kókusztermelés',
     },
     kfiRendszer: {
@@ -76,7 +76,8 @@ const orszag: DemoOrszag = {
       prioritasok: ['Egészség és élettudomány', 'Digitalizáció és MI', 'Energiabiztonság', 'Alapkutatási kiválóság'],
       prioritasEgyeb: 'Az NRDF további fókuszterületei: víz, élelmezés és mezőgazdaság, lakhatás, környezet, ásványkincsek, textilipar, őshonos tudás',
       kiemeltIparagak: [
-        'Agrár- és élelmiszertechnológia', 'IKT és digitalizáció', 'Anyagtudomány', 'Biotechnológia és gyógyszeripar', 'Energetika és fenntarthatóság',
+        'Agrár- és élelmiszeripar', 'IKT és digitalizáció', 'Anyagtudomány', 'Biotechnológia és gyógyszeripar',
+        'Energetika és fenntarthatóság',
       ],
       iparagEgyeb: 'Nanotechnológia (SLINTEC, nemzeti nanotechnológiai kezdeményezés)',
       erossegek:

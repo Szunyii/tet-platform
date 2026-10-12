@@ -87,7 +87,7 @@ const orszag: DemoOrszag = {
       tagsagok: ['G20', 'BRICS'],
       tagsagEgyeb:
         'ENSZ BT állandó tagja, Eurázsiai Gazdasági Unió (EAEU), Sanghaji Együttműködési Szervezet (SCO), Független Államok Közössége (FÁK), APEC',
-      agazatok: ['Energetika', 'Bányászat és nyersanyagok', 'Mezőgazdaság és élelmiszeripar', 'Vegyipar', 'Védelmi ipar'],
+      agazatok: ['Energetika és fenntarthatóság', 'Bányászat és nyersanyagok', 'Agrár- és élelmiszeripar', 'Vegyipar', 'Védelmi ipar'],
       agazatEgyeb: 'Kohászat és fémipar (acél, alumínium, nikkel), atomipar, műtrágyagyártás',
     },
     kfiRendszer: {
@@ -105,7 +105,7 @@ const orszag: DemoOrszag = {
       prioritasEgyeb: 'Importhelyettesítés, élelmezésbiztonság, a közlekedési összeköttetés és az Északi-sarkvidék fejlesztése, klímaalkalmazkodás',
       kiemeltIparagak: [
         'Energetika és fenntarthatóság', 'Űripar', 'Mesterséges intelligencia és adatgazdaság', 'Anyagtudomány',
-        'Biotechnológia és gyógyszeripar', 'Agrár- és élelmiszertechnológia', 'Védelmi technológia',
+        'Biotechnológia és gyógyszeripar', 'Agrár- és élelmiszeripar', 'Védelmi ipar',
       ],
       iparagEgyeb: 'Atomenergetika és nukleáris technológiák, pilóta nélküli légijármű-rendszerek, szerszámgépgyártás és robotika',
       erossegek:
@@ -137,7 +137,7 @@ const orszag: DemoOrszag = {
     vallalati: {
       kiemeltAgazatok: [
         'Energetika és fenntarthatóság', 'IKT és digitalizáció', 'Űripar', 'Mesterséges intelligencia és adatgazdaság',
-        'Agrár- és élelmiszertechnológia', 'Védelmi technológia',
+        'Agrár- és élelmiszeripar', 'Védelmi ipar',
       ],
       agazatEgyeb: 'Atomipar (Rosatom), olaj- és gázipari technológiák, kiberbiztonság, szoftverfejlesztés',
       topVallalatok: [

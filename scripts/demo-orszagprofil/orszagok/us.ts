@@ -97,8 +97,8 @@ const orszag: DemoOrszag = {
       tagsagok: ['OECD', 'NATO', 'G7', 'G20'],
       tagsagEgyeb: 'APEC, USMCA (amerikai–mexikói–kanadai szabadkereskedelmi megállapodás), az ENSZ Biztonsági Tanácsának állandó tagja',
       agazatok: [
-        'IKT és szoftver', 'Pénzügyi szolgáltatások', 'Gyógyszeripar', 'Elektronika és félvezetők', 'Energetika', 'Védelmi ipar',
-        'Mezőgazdaság és élelmiszeripar', 'Kreatív ipar',
+        'IKT és digitalizáció', 'Pénzügyi szolgáltatások', 'Biotechnológia és gyógyszeripar', 'Elektronika és félvezetők',
+        'Energetika és fenntarthatóság', 'Védelmi ipar', 'Agrár- és élelmiszeripar', 'Kreatív ipar és média',
       ],
       agazatEgyeb: 'Repülőgép- és űripar, egészségügyi szolgáltatások, ingatlanszektor',
     },
@@ -115,8 +115,8 @@ const orszag: DemoOrszag = {
       ],
       prioritasEgyeb: 'Kvantuminformatika, fejlett kommunikációs hálózatok, nukleáris energia (fisszió és fúzió), a kutatás MI-alapú gyorsítása (Genesis Mission)',
       kiemeltIparagak: [
-        'Mesterséges intelligencia és adatgazdaság', 'Félvezetők és mikroelektronika', 'Biotechnológia és gyógyszeripar',
-        'Kvantumtechnológia', 'Űripar', 'Védelmi technológia',
+        'Mesterséges intelligencia és adatgazdaság', 'Elektronika és félvezetők', 'Biotechnológia és gyógyszeripar', 'Kvantumtechnológia',
+        'Űripar', 'Védelmi ipar',
       ],
       iparagEgyeb: 'Nukleáris és fúziós energia, fejlett gyártás, 6G és fejlett kommunikációs hálózatok',
       erossegek:
@@ -145,8 +145,8 @@ const orszag: DemoOrszag = {
     },
     vallalati: {
       kiemeltAgazatok: [
-        'Mesterséges intelligencia és adatgazdaság', 'Félvezetők és mikroelektronika', 'Biotechnológia és gyógyszeripar',
-        'IKT és digitalizáció', 'Űripar', 'Védelmi technológia',
+        'Mesterséges intelligencia és adatgazdaság', 'Elektronika és félvezetők', 'Biotechnológia és gyógyszeripar', 'IKT és digitalizáció',
+        'Űripar', 'Védelmi ipar',
       ],
       agazatEgyeb: 'Felhőszolgáltatások, kiberbiztonság, orvostechnika, repülőgépipar',
       topVallalatok: [

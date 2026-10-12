@@ -74,8 +74,8 @@ const orszag: DemoOrszag = {
       tagsagok: ['Afrikai Unió', 'Arab Liga'],
       tagsagEgyeb: 'Iszlám Együttműködési Szervezet, Arab Maghreb Unió; EU-társulási (euromediterrán) megállapodás; a Horizont Európa társult országa',
       agazatok: [
-        'Mezőgazdaság és élelmiszeripar', 'Turizmus', 'Autóipar', 'Elektronika és félvezetők', 'Vegyipar', 'Bányászat és nyersanyagok',
-        'IKT és szoftver',
+        'Agrár- és élelmiszeripar', 'Turizmus', 'Mobilitás és autóipar', 'Elektronika és félvezetők', 'Vegyipar',
+        'Bányászat és nyersanyagok', 'IKT és digitalizáció',
       ],
       agazatEgyeb: 'Textil- és ruhaipar, repülőgépipari alkatrészgyártás, olívaolaj',
     },
@@ -92,7 +92,7 @@ const orszag: DemoOrszag = {
       ],
       prioritasEgyeb: 'Víz- és élelmiszerbiztonság, fenntartható vízgazdálkodás, mezőgazdaság és alkalmazkodás az éghajlatváltozáshoz',
       kiemeltIparagak: [
-        'IKT és digitalizáció', 'Biotechnológia és gyógyszeripar', 'Energetika és fenntarthatóság', 'Agrár- és élelmiszertechnológia',
+        'IKT és digitalizáció', 'Biotechnológia és gyógyszeripar', 'Energetika és fenntarthatóság', 'Agrár- és élelmiszeripar',
         'Mesterséges intelligencia és adatgazdaság', 'Mobilitás és autóipar',
       ],
       iparagEgyeb: 'Víztechnológia, olívaolaj-kutatás, mechatronika',
@@ -123,7 +123,7 @@ const orszag: DemoOrszag = {
     },
     vallalati: {
       kiemeltAgazatok: [
-        'IKT és digitalizáció', 'Mobilitás és autóipar', 'Biotechnológia és gyógyszeripar', 'Agrár- és élelmiszertechnológia',
+        'IKT és digitalizáció', 'Mobilitás és autóipar', 'Biotechnológia és gyógyszeripar', 'Agrár- és élelmiszeripar',
         'Mesterséges intelligencia és adatgazdaság',
       ],
       agazatEgyeb: 'Repülőgépipari alkatrészgyártás (80+ cég, 17 ezer munkahely), elektromos kábelek és kábelkötegek, textilipar',

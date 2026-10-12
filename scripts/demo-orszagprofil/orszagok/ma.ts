@@ -86,7 +86,8 @@ const orszag: DemoOrszag = {
       tagsagok: ['Afrikai Unió', 'Arab Liga'],
       tagsagEgyeb: 'Iszlám Együttműködési Szervezet, Arab Maghreb Unió; EU-társulási megállapodás (2000)',
       agazatok: [
-        'Autóipar', 'Bányászat és nyersanyagok', 'Vegyipar', 'Mezőgazdaság és élelmiszeripar', 'Energetika', 'Turizmus',
+        'Mobilitás és autóipar', 'Bányászat és nyersanyagok', 'Vegyipar', 'Agrár- és élelmiszeripar', 'Energetika és fenntarthatóság',
+        'Turizmus',
       ],
       agazatEgyeb: 'Repülőgépipari beszállítás, foszfátalapú műtrágyagyártás, elektronikai alkatrészgyártás',
     },
@@ -103,8 +104,8 @@ const orszag: DemoOrszag = {
       ],
       prioritasEgyeb: 'Víz és éghajlatváltozás, orvosbiológiai technológiák (a PACTE ESRI 2030 nemzeti kutatóintézetei); zöld hidrogén (Power-to-X)',
       kiemeltIparagak: [
-        'Energetika és fenntarthatóság', 'Hidrogén és akkumulátor', 'Agrár- és élelmiszertechnológia',
-        'Mesterséges intelligencia és adatgazdaság', 'Mobilitás és autóipar',
+        'Energetika és fenntarthatóság', 'Hidrogén és akkumulátor', 'Agrár- és élelmiszeripar', 'Mesterséges intelligencia és adatgazdaság',
+        'Mobilitás és autóipar',
       ],
       iparagEgyeb: 'Foszfátkémia és műtrágya, víztechnológia, repülőgépipar',
       erossegek:
@@ -134,7 +135,8 @@ const orszag: DemoOrszag = {
     },
     vallalati: {
       kiemeltAgazatok: [
-        'Mobilitás és autóipar', 'Energetika és fenntarthatóság', 'Agrár- és élelmiszertechnológia', 'IKT és digitalizáció', 'Hidrogén és akkumulátor',
+        'Mobilitás és autóipar', 'Energetika és fenntarthatóság', 'Agrár- és élelmiszeripar', 'IKT és digitalizáció',
+        'Hidrogén és akkumulátor',
       ],
       agazatEgyeb: 'Repülőgépipar, foszfátalapú vegyipar, bányászat',
       topVallalatok: [

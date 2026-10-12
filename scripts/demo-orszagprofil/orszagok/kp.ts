@@ -52,7 +52,7 @@ const orszag: DemoOrszag = {
       forras: 'Bank of Korea becslése (2026. július; GDP-növekedés), ENSZ World Population Prospects 2024, ENSZ Demográfiai Évkönyv 2024',
       tagsagok: [],
       tagsagEgyeb: 'ENSZ (1991 óta), El Nem Kötelezett Országok Mozgalma (1975 óta)',
-      agazatok: ['Mezőgazdaság és élelmiszeripar', 'Bányászat és nyersanyagok'],
+      agazatok: ['Agrár- és élelmiszeripar', 'Bányászat és nyersanyagok'],
       agazatEgyeb: 'Feldolgozóipar (a GDP 20,9%-a), szolgáltatások (29,6%) – Bank of Korea, 2025',
     },
     kapcsolatok: {

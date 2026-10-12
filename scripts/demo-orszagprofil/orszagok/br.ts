@@ -67,7 +67,10 @@ const orszag: DemoOrszag = {
       forras: 'IMF World Economic Outlook (2025. október), IBGE (Brazil Földrajzi és Statisztikai Intézet)',
       tagsagok: ['G20', 'BRICS', 'Mercosur'],
       tagsagEgyeb: 'ENSZ, WTO, Portugál Nyelvű Országok Közössége (CPLP), Amazóniai Együttműködési Szerződés Szervezete (ACTO); OECD-csatlakozási folyamat 2022 óta',
-      agazatok: ['Mezőgazdaság és élelmiszeripar', 'Bányászat és nyersanyagok', 'Energetika', 'Autóipar', 'Pénzügyi szolgáltatások'],
+      agazatok: [
+        'Agrár- és élelmiszeripar', 'Bányászat és nyersanyagok', 'Energetika és fenntarthatóság', 'Mobilitás és autóipar',
+        'Pénzügyi szolgáltatások',
+      ],
       agazatEgyeb: 'Repülőgépgyártás (Embraer), cellulóz- és papíripar, bioüzemanyagok',
     },
     kfiRendszer: {
@@ -85,8 +88,8 @@ const orszag: DemoOrszag = {
       ],
       prioritasEgyeb: 'Agrártudományok és bioökonómia, félvezetők, energiaátmenet (az ENCTI kiemelt területei)',
       kiemeltIparagak: [
-        'Agrár- és élelmiszertechnológia', 'Energetika és fenntarthatóság', 'Biotechnológia és gyógyszeripar',
-        'Mesterséges intelligencia és adatgazdaság', 'Űripar', 'Félvezetők és mikroelektronika',
+        'Agrár- és élelmiszeripar', 'Energetika és fenntarthatóság', 'Biotechnológia és gyógyszeripar',
+        'Mesterséges intelligencia és adatgazdaság', 'Űripar', 'Elektronika és félvezetők',
       ],
       iparagEgyeb: 'Bioüzemanyagok, kritikus ásványok értéklánca, repülőgépgyártás, védelmi ipar',
       erossegek:
@@ -122,8 +125,8 @@ const orszag: DemoOrszag = {
     },
     vallalati: {
       kiemeltAgazatok: [
-        'Agrár- és élelmiszertechnológia', 'Energetika és fenntarthatóság', 'IKT és digitalizáció', 'Biotechnológia és gyógyszeripar',
-        'Űripar', 'Védelmi technológia',
+        'Agrár- és élelmiszeripar', 'Energetika és fenntarthatóság', 'IKT és digitalizáció', 'Biotechnológia és gyógyszeripar', 'Űripar',
+        'Védelmi ipar',
       ],
       agazatEgyeb: 'Fintech, repülőgépgyártás, bioüzemanyagok',
       topVallalatok: [

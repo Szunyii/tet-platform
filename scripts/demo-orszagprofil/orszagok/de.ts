@@ -94,7 +94,10 @@ const orszag: DemoOrszag = {
       forras: 'IMF World Economic Outlook (2025. október), Destatis',
       tagsagok: ['EU', 'OECD', 'NATO', 'G7', 'G20'],
       tagsagEgyeb: 'euróövezet, schengeni övezet; ESA, CERN, ESO, EMBL',
-      agazatok: ['Autóipar', 'Gépipar', 'Vegyipar', 'Elektronika és félvezetők', 'Gyógyszeripar', 'IKT és szoftver'],
+      agazatok: [
+        'Mobilitás és autóipar', 'Gépipar', 'Vegyipar', 'Elektronika és félvezetők', 'Biotechnológia és gyógyszeripar',
+        'IKT és digitalizáció',
+      ],
       agazatEgyeb: 'Orvostechnika, optika és fotonika',
     },
     kfiRendszer: {
@@ -110,7 +113,7 @@ const orszag: DemoOrszag = {
       ],
       prioritasEgyeb: 'A Hightech Agenda további stratégiai területei: tenger-, klíma- és fenntarthatósági kutatás, társadalom- és bölcsészettudományok',
       kiemeltIparagak: [
-        'Mobilitás és autóipar', 'Mesterséges intelligencia és adatgazdaság', 'Félvezetők és mikroelektronika', 'Kvantumtechnológia',
+        'Mobilitás és autóipar', 'Mesterséges intelligencia és adatgazdaság', 'Elektronika és félvezetők', 'Kvantumtechnológia',
         'Biotechnológia és gyógyszeripar', 'Energetika és fenntarthatóság', 'Űripar',
       ],
       iparagEgyeb: 'Fúziós energia, gépgyártás és ipari automatizálás',
@@ -145,7 +148,7 @@ const orszag: DemoOrszag = {
     },
     vallalati: {
       kiemeltAgazatok: [
-        'Mobilitás és autóipar', 'IKT és digitalizáció', 'Biotechnológia és gyógyszeripar', 'Félvezetők és mikroelektronika',
+        'Mobilitás és autóipar', 'IKT és digitalizáció', 'Biotechnológia és gyógyszeripar', 'Elektronika és félvezetők',
         'Mesterséges intelligencia és adatgazdaság', 'Anyagtudomány',
       ],
       agazatEgyeb: 'Gépgyártás és ipari automatizálás, vegyipar, orvostechnika',
