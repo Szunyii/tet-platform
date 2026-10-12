@@ -2,7 +2,7 @@ import { sql } from 'drizzle-orm';
 import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { user } from './auth';
 import type {
-  Alapadatok, Intezmenyek, Kapcsolatok, KfiRendszer, MagyarErtekeles, MagyarKapcsolatok, NemzetkoziKapcsolatok,
+  Alapadatok, Intezmenyek, KfiRendszer, MagyarErtekeles, MagyarKapcsolatok, NemzetkoziKapcsolatok,
   Programok, Rendezvenyek, Vallalati,
 } from '../../lib/orszagprofil-szotar';
 
@@ -22,7 +22,6 @@ export const orszagprofil = sqliteTable(
     vallalati: text('vallalati', { mode: 'json' }).$type<Vallalati>(),
     programok: text('programok', { mode: 'json' }).$type<Programok>(),
     rendezvenyek: text('rendezvenyek', { mode: 'json' }).$type<Rendezvenyek>(),
-    kapcsolatok: text('kapcsolatok', { mode: 'json' }).$type<Kapcsolatok>(),
     nemzetkoziKapcsolatok: text('nemzetkozi_kapcsolatok', { mode: 'json' }).$type<NemzetkoziKapcsolatok>(),
     magyarKapcsolatok: text('magyar_kapcsolatok', { mode: 'json' }).$type<MagyarKapcsolatok>(),
     magyarErtekeles: text('magyar_ertekeles', { mode: 'json' }).$type<MagyarErtekeles>(),

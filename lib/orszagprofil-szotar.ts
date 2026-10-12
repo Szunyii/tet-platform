@@ -200,13 +200,6 @@ export interface Rendezveny {
 export interface Rendezvenyek {
   lista: Rendezveny[];
 }
-export interface Kapcsolatok {
-  euMultilateralis: string;
-  partnerorszagok: string;
-  egyezmeny: string;
-  ketoldalu: string;
-  mobilitas: string;
-}
 export interface NemzetkoziKapcsolatok {
   partnerorszagok: string;
   euMultilateralis: string;

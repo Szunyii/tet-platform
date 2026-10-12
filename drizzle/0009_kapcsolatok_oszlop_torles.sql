@@ -1,0 +1,1 @@
+ALTER TABLE `orszagprofil` DROP COLUMN `kapcsolatok`;
