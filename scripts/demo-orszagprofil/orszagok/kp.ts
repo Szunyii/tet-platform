@@ -28,7 +28,7 @@
  *   Interfax, 2024. 12. 05.: https://interfax.com/newsroom/top-stories/108291/ [*]
  * - Stipendium Hungaricum partnerlista (a KNDK nem szerepel) – https://stipendiumhungaricum.hu/partners/
  * Kimaradt blokkok és mezők:
- * - Csak az Alapadatok, a Kapcsolatok és a Magyar értékelés blokk szerepel; a KFI-rendszer, az intézmények,
+ * - Csak az Alapadatok, a két kapcsolati blokk (6.1., 6.2.) és a Magyar értékelés blokk szerepel; a KFI-rendszer, az intézmények,
  *   a vállalati ökoszisztéma, a programok és a rendezvények mentetlenek (megbízható nyílt adat nincs, és az ENSZ BT
  *   2321 (2016) határozata a tudományos-műszaki együttműködést felfüggeszti).
  * - alapadatok.gdp és gdpEgyFore: üres, mert a Bank of Korea a GNI-t wonban becsli, USD-ben nem közöl hivatalos becslést.
