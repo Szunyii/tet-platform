@@ -144,7 +144,7 @@ export function RiportForm({ mode, initial, action, orszagok }: RiportFormProps)
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="joGyakorlat">
-          Fő üzenet/jó gyakorlat/javaslat
+          Fő üzenet/jó gyakorlat/javaslat{' '}
           <span className="font-normal text-muted-foreground">(opcionális)</span>
         </Label>
         <Textarea
