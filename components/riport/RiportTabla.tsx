@@ -4,19 +4,28 @@ import type { RiportListItem } from '../../db/queries/riport';
 import { formatDatum, formatNaptariDatum } from '../../lib/datum';
 import { orszagNev } from '../../lib/orszagok';
 import { cn } from '../../lib/utils';
+import type { FormAction } from '../form/useMuveletForm';
 import { Badge } from '../ui/badge';
 import { buttonVariants } from '../ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { IntezkedesSzerkeszto } from './IntezkedesSzerkeszto';
 import { KategoriaBadge } from './KategoriaBadge';
 
 export function RiportTabla({
   sorok,
   admin,
   vanSzuro,
+  intezkedesAction,
 }: {
   sorok: RiportListItem[];
   admin: boolean;
   vanSzuro: boolean;
+  /**
+   * A „Megtett intézkedés” mentése soronként. A page csak a központnak (admin) adja; nélküle
+   * a cella csak olvasható. Server Componentek közti függvény-prop, a kliensnek már a
+   * bind-olt action megy.
+   */
+  intezkedesAction?: (id: string) => FormAction;
 }) {
   if (sorok.length === 0) {
     return (
@@ -42,6 +51,7 @@ export function RiportTabla({
             <TableHead>Tárgy</TableHead>
             <TableHead className="w-44">{admin ? 'Állomáshely · szerző' : 'Állomáshely'}</TableHead>
             <TableHead>Kulcsszavak</TableHead>
+            <TableHead>Intézkedés</TableHead>
             <TableHead className="w-12 text-right">
               <span className="sr-only">Csatolmány</span>
             </TableHead>
@@ -82,6 +92,25 @@ export function RiportTabla({
                   ))}
                   {r.kulcsszavak.length > 3 && (
                     <Badge variant="outline">+{r.kulcsszavak.length - 3}</Badge>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell className="whitespace-normal">
+                {/* Fix szélességű blokk: a hosszú szöveg ne nyújtsa szét az oszlopot. */}
+                <div className="w-48">
+                  {intezkedesAction ? (
+                    <IntezkedesSzerkeszto
+                      targy={r.targy}
+                      ertek={r.intezkedes}
+                      action={intezkedesAction(r.id)}
+                      valtozat="cella"
+                    />
+                  ) : r.intezkedes ? (
+                    <p className="line-clamp-2 break-words whitespace-pre-wrap" title={r.intezkedes}>
+                      {r.intezkedes}
+                    </p>
+                  ) : (
+                    <span className="text-muted-foreground">–</span>
                   )}
                 </div>
               </TableCell>

@@ -4,9 +4,11 @@ import { RiportSzurok } from '../../../components/riport/RiportSzurok';
 import { RiportTabla } from '../../../components/riport/RiportTabla';
 import { buttonVariants } from '../../../components/ui/button';
 import { listOrszagok, listRiportok } from '../../../db/queries/riport';
+import { canIntezkedni } from '../../../lib/riport-jog';
 import { szuroErtekek, szuroFromSearchParams, type SearchParams } from '../../../lib/riport-szuro';
 import { requireSession } from '../../../lib/session';
 import { cn } from '../../../lib/utils';
+import { mentIntezkedesAction } from './actions';
 
 export const metadata: Metadata = { title: 'Jelentések' };
 
@@ -31,7 +33,12 @@ export default async function RiportokPage({ searchParams }: { searchParams: Pro
         </Link>
       </div>
       <RiportSzurok ertekek={ertekek} orszagok={admin ? listOrszagok() : []} admin={admin} />
-      <RiportTabla sorok={sorok} admin={admin} vanSzuro={vanSzuro} />
+      <RiportTabla
+        sorok={sorok}
+        admin={admin}
+        vanSzuro={vanSzuro}
+        intezkedesAction={canIntezkedni(session) ? (id) => mentIntezkedesAction.bind(null, id) : undefined}
+      />
     </div>
   );
 }

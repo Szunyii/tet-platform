@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { RiportReszlet } from '../../../../components/riport/RiportReszlet';
 import { getRiport } from '../../../../db/queries/riport';
-import { canEditRiport, canViewRiport } from '../../../../lib/riport-jog';
+import { canEditRiport, canIntezkedni, canViewRiport } from '../../../../lib/riport-jog';
 import { requireSession } from '../../../../lib/session';
-import { deleteRiportAction } from '../actions';
+import { deleteRiportAction, mentIntezkedesAction } from '../actions';
 
 export const metadata: Metadata = { title: 'Bejegyzés' };
 
@@ -19,6 +19,7 @@ export default async function RiportOldal({ params }: { params: Promise<{ id: st
       riport={riport}
       szerkeszthet={canEditRiport(session, riport)}
       torlesAction={deleteRiportAction.bind(null, id)}
+      intezkedesAction={canIntezkedni(session) ? mentIntezkedesAction.bind(null, id) : undefined}
     />
   );
 }

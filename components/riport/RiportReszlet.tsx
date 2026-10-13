@@ -5,10 +5,11 @@ import { formatDatum, formatNaptariDatum } from '../../lib/datum';
 import { orszagNev } from '../../lib/orszagok';
 import { formatMeret, kategoriaByKulcs } from '../../lib/riport-szotar';
 import { cn } from '../../lib/utils';
-import type { MuveletState } from '../form/useMuveletForm';
+import type { FormAction, MuveletState } from '../form/useMuveletForm';
 import { Badge } from '../ui/badge';
 import { buttonVariants } from '../ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { IntezkedesSzerkeszto } from './IntezkedesSzerkeszto';
 import { KategoriaBadge } from './KategoriaBadge';
 import { RiportTorles } from './RiportTorles';
 
@@ -16,10 +17,13 @@ export function RiportReszlet({
   riport,
   szerkeszthet,
   torlesAction,
+  intezkedesAction,
 }: {
   riport: RiportDetail;
   szerkeszthet: boolean;
   torlesAction: () => Promise<MuveletState>;
+  /** A „Megtett intézkedés” mentése; a page csak a központnak (admin) adja. */
+  intezkedesAction?: FormAction;
 }) {
   const kat = kategoriaByKulcs(riport.kategoria);
   // A formázott dátum a mérvadó, mert azt írjuk ki: napon belüli mentés nem „módosítva”.
@@ -101,6 +105,41 @@ export function RiportReszlet({
             </CardTitle>
           </CardHeader>
           <CardContent className="text-sm whitespace-pre-wrap">{riport.kapcsolodoFeladat}</CardContent>
+        </Card>
+      )}
+
+      {/* A központ mindig látja (üresen is, a gombbal); az attasé csak akkor, ha van szöveg. */}
+      {(riport.intezkedes || intezkedesAction) && (
+        <Card size="sm" className="border-l-4 border-l-sky-500">
+          <CardHeader>
+            <CardTitle role="heading" aria-level={3}>
+              Megtett intézkedés
+            </CardTitle>
+            {intezkedesAction && (
+              <CardAction>
+                <IntezkedesSzerkeszto
+                  targy={riport.targy}
+                  ertek={riport.intezkedes}
+                  action={intezkedesAction}
+                  valtozat="gomb"
+                />
+              </CardAction>
+            )}
+          </CardHeader>
+          <CardContent className="flex flex-col gap-1.5 text-sm">
+            {riport.intezkedes ? (
+              <>
+                <p className="whitespace-pre-wrap">{riport.intezkedes}</p>
+                {riport.intezkedesSzerzoNev && riport.intezkedesIdopont && (
+                  <p className="text-xs text-muted-foreground">
+                    {riport.intezkedesSzerzoNev} · {formatDatum(riport.intezkedesIdopont)}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-muted-foreground">Még nincs rögzített intézkedés.</p>
+            )}
+          </CardContent>
         </Card>
       )}
 
