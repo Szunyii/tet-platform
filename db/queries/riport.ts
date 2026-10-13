@@ -217,7 +217,8 @@ export function updateRiport(
  * A központ „Megtett intézkedésének” beállítása, vagy (`szoveg === null`) törlése; a három
  * oszlop együtt változik. A bejegyzés `updatedAt`-ját NEM lépteti (a `$onUpdate` miatt
  * kifejezetten önmagára állítjuk): a „módosítva” dátum az attasé szövegére vonatkozik, az
- * intézkedésnek saját időpontja van. `false`, ha nincs ilyen bejegyzés.
+ * intézkedésnek saját időpontja van. `false`, ha nincs ilyen bejegyzés. A szöveget nem
+ * tisztítja: az üres szöveget a hívó `null`-ként adja át (a `parseIntezkedes` így tesz).
  */
 export function setIntezkedes(id: string, szoveg: string | null, szerzoNev: string): boolean {
   const eredmeny = db
