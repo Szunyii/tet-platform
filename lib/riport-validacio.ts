@@ -217,9 +217,12 @@ export type ParseIntezkedesResult = { ok: true; szoveg: string | null } | { ok: 
 
 /**
  * A „Megtett intézkedés” dialógus validátora. Az üres (vagy csak térközből álló) szöveg a
- * törlést jelenti: `szoveg: null`. A hibakulcs a mező DOM-id-ja (`intezkedes`).
+ * törlést jelenti: `szoveg: null`. A hibakulcs a mező DOM-id-ja (`intezkedes`). A hiányzó
+ * (vagy fájl típusú) mező viszont nem „üres szöveg”, hanem hibás kérés: a törlés
+ * visszavonhatatlan, ezért az ilyen kérés ne töröljön.
  */
 export function parseIntezkedes(fd: FormData): ParseIntezkedesResult {
+  if (typeof fd.get('intezkedes') !== 'string') return { ok: false, errors: { form: 'Érvénytelen kérés.' } };
   const szoveg = mezo(fd, 'intezkedes');
   if (szoveg.length > INTEZKEDES_MAX) {
     return { ok: false, errors: { intezkedes: `A megtett intézkedés legfeljebb ${INTEZKEDES_MAX} karakter.` } };
