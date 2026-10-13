@@ -139,7 +139,10 @@ export function ProfilKivonat({
       </CardContent>
       <CardFooter className="flex flex-wrap gap-2">
         <Link href={`/orszagprofil/${o.kod}`} className={cn(buttonVariants({ variant: 'outline' }))}>Teljes profil</Link>
-        <Link href="/kommunikacio" className={cn(buttonVariants({ variant: 'outline' }))}>Üzenet a poszttal</Link>
+        {/* Attasé nélkül (pl. a hazai profilnál) nincs poszt, akinek írni lehetne. */}
+        {o.attasek.length > 0 && (
+          <Link href="/kommunikacio" className={cn(buttonVariants({ variant: 'outline' }))}>Üzenet a poszttal</Link>
+        )}
         {/* Letiltott gombon a title nem jelenik meg (natív disabled + pointer-events-none); a korlátot az OsszehasonlitasCsik írja ki. */}
         <Button
           type="button"
