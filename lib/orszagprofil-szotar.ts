@@ -187,6 +187,7 @@ export interface Vallalati {
   inkubatorok: string;
   technologiatranszfer: string;
 }
+/** A megjelenítés sorrendje eltér ettől (lásd a `MEZO_CIMKEK.programok` kommentjét); a kulcssorrend a tárolt JSON-é. */
 export interface Programok {
   palyazatok: string;
   tamogatasiProgramok: string;
@@ -470,7 +471,7 @@ export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], Me
     },
     infrastrukturak: {
       cimke: 'Kutatási infrastruktúrák',
-      magyarazat: 'A nagy kutatási infrastruktúrák: kutatóreaktor, részecskegyorsító, röntgenlézer, fúziós berendezés, szuperszámítógép – név és hely. A tudományos és technológiai parkok a 3. blokk „Klaszterek, inkubátorok” mezőjébe kerülnek.',
+      magyarazat: 'A nagy kutatási infrastruktúrák: kutatóreaktor, részecskegyorsító, röntgenlézer, fúziós berendezés, szuperszámítógép – név és hely. A tudományos és technológiai parkok a 3. blokk „Klaszterek” mezőjébe kerülnek.',
       pelda: 'PAL-XFEL röntgenlézer (Pohang); KSTAR szupravezető tokamak (Tedzson); a KISTI nemzeti szuperszámítógépe (Tedzson)',
     },
   },
@@ -491,7 +492,7 @@ export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], Me
     },
     startupok: {
       cimke: 'Kiemelt innovatív startupok, kkv-k',
-      magyarazat: 'Az ország kiemelt innovatív startupjai és kkv-i, valamint az ökoszisztéma jellemzői: ismert startupok, unikornisok, támogató programok, számok.',
+      magyarazat: 'Az ország kiemelt innovatív startupjai és kkv-i, valamint az ökoszisztéma jellemzői: unikornisok, támogató programok, számok.',
       pelda: 'Ismert unikornisok: Toss, Kurly. A TIPS program 2026-ban 800 startupot támogat.',
     },
     klaszterek: {
@@ -502,7 +503,7 @@ export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], Me
     inkubatorok: {
       cimke: 'Inkubátorok, akcelerátorok',
       magyarazat: 'A meghatározó inkubátorok és gyorsítóprogramok (akcelerátorok) – név, fenntartó, hely, szakterület.',
-      pelda: '19 Kreatív Gazdasági Innovációs Központ (CCEI) régiós inkubátorként.',
+      pelda: 'Kreatív Gazdasági Innovációs Központok (CCEI) – 19 régiós inkubátor.',
     },
     technologiatranszfer: {
       cimke: 'Technológiatranszfer',
