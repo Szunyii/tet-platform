@@ -1,7 +1,7 @@
 # Jelentések: „Vezetői Összefoglaló”, „Fő üzenet/jó gyakorlat/javaslat” és a központ „Megtett intézkedés” mezője – tervezési spec
 
 Dátum: 2026-10-13
-Állapot: jóváhagyott terv, megvalósítás előtt
+Állapot: megvalósítva és átnézve (taskonként két review + záró review); a böngészős próba és a demó DB commitja a dev szerverre vár
 Ág: `jelentes-intezkedes`
 
 ## Cél
@@ -212,3 +212,35 @@ Tesztkeretrendszer nincs; az ellenőrzés a projekt szokott módján megy.
   invariáns, a `setIntezkedes` `updatedAt`-szabálya, `canIntezkedni`, a két új komponens, és hogy a
   `RiportTabla` az actiont függvény-propként kapja.
 - `README.md`: az útvonal-táblázat szövege és a jelentések rövid leírása.
+
+## Megvalósítási eltérések
+
+A review-k nyomán a megvalósítás az alábbiakban tér el a fenti szövegtől; a kód és a `CLAUDE.md` a
+végleges állapotot írja le.
+
+- **Hiányzó mező nem töröl.** A `parseIntezkedes` hiányzó vagy fájl típusú `intezkedes` mezőnél
+  `{ form: 'Érvénytelen kérés.' }` hibát ad; csak a ténylegesen beküldött üres szöveg jelent törlést
+  (a törlés visszavonhatatlan, előzmény nincs).
+- **Törléskor más visszajelzés.** Meglévő szöveg üresre mentésekor a toast „Intézkedés törölve.”,
+  egyébként „Intézkedés mentve.”.
+- **Egyetlen kiváltó gomb.** Az `IntezkedesSzerkeszto` minden állapotban ugyanazt az egy natív
+  `<button>`-t rendereli (szöveg-gombként vagy `buttonVariants`-szal): elemtípus-váltásnál a mentés
+  után a fókusz nem tért volna vissza a kiváltó elemre. A lista üres celláinak gombja a tárggyal
+  együtt kap nevet (`aria-label`), a gomb `aria-haspopup="dialog"`-ot visel, a dialógus csak az első
+  nyitástól van mountolva.
+- **Szélesebb ablak.** A dialógus a `MuveletDialog` `szeles` módjában nyílik, a szövegmező legfeljebb
+  a képernyő 45%-áig nő, utána görget.
+- **Előnézet sortörések nélkül.** A lista kétsoros előnézetében (cella és csak olvasható szöveg) a
+  sortörések összeesnek, hogy több tartalom férjen ki; a részletoldal kártyája megtartja őket, és a
+  hosszú, törhetetlen szöveget is tördeli.
+- **Címke.** A „Fő üzenet/jó gyakorlat/javaslat” felirat és az „(opcionális)” jelzés között valódi
+  szóköz van, hogy a felolvasott név ne folyjon egybe.
+
+### Ismert, elfogadott korlátok (a review-kból)
+
+- **Utolsó írás nyer.** Ha két admin egyszerre szerkeszti ugyanazt az intézkedést, az később mentő
+  felülírja a másikét; ütközésjelzés nincs.
+- **Az attasé az intézkedés után is szerkesztheti és törölheti a saját jelentését**; a törlés az
+  intézkedést is viszi.
+- **A jelentés törlése közbeni mentés** hibát ír a nyitott ablakba („A bejegyzés már nem létezik.”),
+  de a listát nem frissíti: a sor a következő betöltésig látszik.

@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-13-jelentes-osszefoglalo-intezkedes-design.md`.
 
+**Megjegyzés (2026-10-13, a megvalósítás után):** a kódblokkok a review-k utáni végleges fájlokkal egyeznek; az eltérések a spec „Megvalósítási eltérések” szakaszában vannak felsorolva.
+
 ---
 
 ## Közös tudnivalók (minden taskhoz)
@@ -185,7 +187,7 @@ A `leiras` blokk záró `</div>`-je (a `<MezoHiba mezo="leiras" errors={errors} 
 ```tsx
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="joGyakorlat">
-          Fő üzenet/jó gyakorlat/javaslat
+          Fő üzenet/jó gyakorlat/javaslat{' '}
           <span className="font-normal text-muted-foreground">(opcionális)</span>
         </Label>
         <Textarea
@@ -201,7 +203,7 @@ A `leiras` blokk záró `</div>`-je (a `<MezoHiba mezo="leiras" errors={errors} 
       </div>
 ```
 
-(A `Label` flex-sor `gap-2`-vel, ezért a `<span>` szóköz nélkül is elválik a felirattól.)
+(A `Label` flex-sor `gap-2`-vel, ezért a `<span>` látványra szóköz nélkül is elválik; a `{' '}` a felolvasott név miatt kell, hogy az ne folyjon egybe.)
 
 - [ ] **Step 6: `RiportForm.tsx` – a „További adatok” rész szövegei és a hiba-figyelés**
 
@@ -555,7 +557,8 @@ A `getRiport` `select`-jében régi:
  * A központ „Megtett intézkedésének” beállítása, vagy (`szoveg === null`) törlése; a három
  * oszlop együtt változik. A bejegyzés `updatedAt`-ját NEM lépteti (a `$onUpdate` miatt
  * kifejezetten önmagára állítjuk): a „módosítva” dátum az attasé szövegére vonatkozik, az
- * intézkedésnek saját időpontja van. `false`, ha nincs ilyen bejegyzés.
+ * intézkedésnek saját időpontja van. `false`, ha nincs ilyen bejegyzés. A szöveget nem
+ * tisztítja: az üres szöveget a hívó `null`-ként adja át (a `parseIntezkedes` így tesz).
  */
 export function setIntezkedes(id: string, szoveg: string | null, szerzoNev: string): boolean {
   const eredmeny = db
@@ -627,7 +630,14 @@ function fd(ertek?: string): FormData {
 }
 
 assert.equal(INTEZKEDES_MAX, 5000);
-assert.deepEqual(parseIntezkedes(fd()), { ok: true, szoveg: null }, 'hiányzó mező = törlés');
+assert.deepEqual(
+  parseIntezkedes(fd()),
+  { ok: false, errors: { form: 'Érvénytelen kérés.' } },
+  'hiányzó mező = hibás kérés, nem törlés',
+);
+const fajllal = new FormData();
+fajllal.set('intezkedes', new File(['x'], 'x.txt'));
+assert.deepEqual(parseIntezkedes(fajllal), { ok: false, errors: { form: 'Érvénytelen kérés.' } }, 'fájl érték = hibás kérés');
 assert.deepEqual(parseIntezkedes(fd('')), { ok: true, szoveg: null });
 assert.deepEqual(parseIntezkedes(fd('  \r\n ​ ')), { ok: true, szoveg: null }, 'csak térköz = törlés');
 assert.deepEqual(parseIntezkedes(fd('  Első sor\r\nmásodik sor  ')), { ok: true, szoveg: 'Első sor\nmásodik sor' });
@@ -708,9 +718,12 @@ export type ParseIntezkedesResult = { ok: true; szoveg: string | null } | { ok: 
 
 /**
  * A „Megtett intézkedés” dialógus validátora. Az üres (vagy csak térközből álló) szöveg a
- * törlést jelenti: `szoveg: null`. A hibakulcs a mező DOM-id-ja (`intezkedes`).
+ * törlést jelenti: `szoveg: null`. A hibakulcs a mező DOM-id-ja (`intezkedes`). A hiányzó
+ * (vagy fájl típusú) mező viszont nem „üres szöveg”, hanem hibás kérés: a törlés
+ * visszavonhatatlan, ezért az ilyen kérés ne töröljön.
  */
 export function parseIntezkedes(fd: FormData): ParseIntezkedesResult {
+  if (typeof fd.get('intezkedes') !== 'string') return { ok: false, errors: { form: 'Érvénytelen kérés.' } };
   const szoveg = mezo(fd, 'intezkedes');
   if (szoveg.length > INTEZKEDES_MAX) {
     return { ok: false, errors: { intezkedes: `A megtett intézkedés legfeljebb ${INTEZKEDES_MAX} karakter.` } };
@@ -840,9 +853,11 @@ export function IntezkedesDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [state, formAction, pending] = useMuveletForm(action, 'Intézkedés mentve.', () => onOpenChange(false));
   // Vezérelt mező, hogy hibánál ne ürüljön (React 19 a <form action> után resetel).
   const [szoveg, setSzoveg] = useState(ertek ?? '');
+  // Üresen mentve a meglévő intézkedés törlődik: a visszajelzés is ezt mondja.
+  const siker = szoveg.trim() || !ertek ? 'Intézkedés mentve.' : 'Intézkedés törölve.';
+  const [state, formAction, pending] = useMuveletForm(action, siker, () => onOpenChange(false));
   const errors = state.errors ?? {};
 
   return (
@@ -855,6 +870,7 @@ export function IntezkedesDialog({
       gomb="Mentés"
       formAction={formAction}
       errors={errors}
+      szeles
     >
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="intezkedes">Intézkedés szövege</Label>
@@ -863,7 +879,7 @@ export function IntezkedesDialog({
           name="intezkedes"
           maxLength={INTEZKEDES_MAX}
           rows={6}
-          className="min-h-28"
+          className="max-h-[45dvh] min-h-28 overflow-y-auto"
           value={szoveg}
           onChange={(e) => setSzoveg(e.target.value)}
           {...hibaAttr(errors, 'intezkedes')}
@@ -886,8 +902,9 @@ Create `components/riport/IntezkedesSzerkeszto.tsx`:
 'use client';
 
 import { useState } from 'react';
+import { cn } from '../../lib/utils';
 import type { FormAction } from '../form/useMuveletForm';
-import { Button } from '../ui/button';
+import { buttonVariants } from '../ui/button';
 import { IntezkedesDialog } from './IntezkedesDialog';
 
 /**
@@ -913,31 +930,46 @@ export function IntezkedesSzerkeszto({
     setNyitas((n) => n + 1);
     setOpen(true);
   };
+  const szovegGomb = valtozat === 'cella' && Boolean(ertek);
 
   return (
     <>
-      {valtozat === 'cella' && ertek ? (
-        <button
-          type="button"
-          onClick={nyit}
-          title="Megtett intézkedés módosítása"
-          className="block w-full rounded-sm text-left underline-offset-2 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
-        >
-          <span className="line-clamp-2 break-words whitespace-pre-wrap">{ertek}</span>
-        </button>
-      ) : (
-        <Button type="button" variant="outline" size="sm" onClick={nyit}>
-          {ertek ? 'Módosítás' : 'Intézkedés rögzítése'}
-        </Button>
+      {/* Egyetlen natív <button> minden állapotra: ha a szöveg megjelenésekor vagy törlésekor
+          másik elemtípusra váltana, a React új DOM-elemet tenne a helyére, és a dialógus
+          bezárásakor a fókusz nem tudna visszatérni a kiváltó elemre. */}
+      <button
+        type="button"
+        aria-haspopup="dialog"
+        onClick={nyit}
+        title={szovegGomb ? 'Megtett intézkedés módosítása' : undefined}
+        // A listában soronként van ilyen gomb: a név a tárggyal együtt egyedi.
+        aria-label={valtozat === 'cella' && !ertek ? `Intézkedés rögzítése: ${targy}` : undefined}
+        className={cn(
+          szovegGomb
+            ? 'block w-full cursor-pointer rounded-sm text-left underline-offset-2 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50'
+            : buttonVariants({ variant: 'outline', size: 'sm' }),
+        )}
+      >
+        {szovegGomb ? (
+          // Előnézet: a sortörések itt összeesnek, hogy a két sorba több tartalom férjen.
+          <span className="line-clamp-2 break-words">{ertek}</span>
+        ) : ertek ? (
+          'Módosítás'
+        ) : (
+          'Intézkedés rögzítése'
+        )}
+      </button>
+      {/* Az első nyitásig nincs mit mountolni (soronként egy dialógus-állapot és useActionState). */}
+      {nyitas > 0 && (
+        <IntezkedesDialog
+          key={nyitas}
+          targy={targy}
+          ertek={ertek}
+          action={action}
+          open={open}
+          onOpenChange={setOpen}
+        />
       )}
-      <IntezkedesDialog
-        key={nyitas}
-        targy={targy}
-        ertek={ertek}
-        action={action}
-        open={open}
-        onOpenChange={setOpen}
-      />
     </>
   );
 }
@@ -1023,7 +1055,7 @@ A kulcsszavak cellája után (a `{r.kulcsszavak.length > 3 && …}`-t tartalmaz�
                       valtozat="cella"
                     />
                   ) : r.intezkedes ? (
-                    <p className="line-clamp-2 break-words whitespace-pre-wrap" title={r.intezkedes}>
+                    <p className="line-clamp-2 break-words" title={r.intezkedes}>
                       {r.intezkedes}
                     </p>
                   ) : (
@@ -1107,7 +1139,7 @@ A „Kapcsolódó feladat, kérés” kártya blokkja (`{riport.kapcsolodoFelada
           <CardContent className="flex flex-col gap-1.5 text-sm">
             {riport.intezkedes ? (
               <>
-                <p className="whitespace-pre-wrap">{riport.intezkedes}</p>
+                <p className="break-words whitespace-pre-wrap">{riport.intezkedes}</p>
                 {riport.intezkedesSzerzoNev && riport.intezkedesIdopont && (
                   <p className="text-xs text-muted-foreground">
                     {riport.intezkedesSzerzoNev} · {formatDatum(riport.intezkedesIdopont)}
@@ -1360,7 +1392,7 @@ Expected: `QA intézkedés a listából|Sipos Katalin|1|<ugyanaz az updated_at, 
 
 - [ ] **Step 5: Admin – módosítás és törlés a részletoldalról**
 
-Nyisd meg a QA jelentést. A „Megtett intézkedés” kártyán a szöveg, alatta „Sipos Katalin · <mai dátum>”, a fejlécben „Módosítás” gomb; a „módosítva …” felirat a fejlécben **nem** jelent meg. „Módosítás” → a mező a mentett szöveggel nyílik; írd át `QA intézkedés módosítva`-ra, Mentés → a kártya az új szöveget mutatja. Újra „Módosítás” → töröld ki a mezőt, Mentés → a kártyán „Még nincs rögzített intézkedés.” és „Intézkedés rögzítése” gomb. Ellenőrzés:
+Nyisd meg a QA jelentést. A „Megtett intézkedés” kártyán a szöveg, alatta „Sipos Katalin · <mai dátum>”, a fejlécben „Módosítás” gomb; a „módosítva …” felirat a fejlécben **nem** jelent meg. „Módosítás” → a mező a mentett szöveggel nyílik; írd át `QA intézkedés módosítva`-ra, Mentés → a kártya az új szöveget mutatja. Újra „Módosítás” → töröld ki a mezőt, Mentés → „Intézkedés törölve.” toast, a kártyán „Még nincs rögzített intézkedés.” és „Intézkedés rögzítése” gomb. Ellenőrzés:
 
 ```bash
 sqlite3 -readonly data/tet.db "select intezkedes is null, intezkedes_szerzo_nev is null, intezkedes_idopont is null from riport where targy='QA intézkedés teszt';"
