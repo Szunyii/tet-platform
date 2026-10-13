@@ -7,7 +7,8 @@ import { Badge } from '../ui/badge';
  * név · hely, alatta halványan a részterület. A „Relációs vezető” jelzés csak több attasénál
  * látszik – egyszemélyes országban a vezetőség automatikus. A lista csak aktív attasékat
  * tartalmaz: ha egyikük sem vezető (nincs kijelölve, vagy a vezető tiltott), a profilt csak admin
- * szerkesztheti – erre figyelmeztet a lista utáni sor.
+ * szerkesztheti – erre figyelmeztet a lista utáni sor. Attasé nélkül egyetlen sor áll itt: a hazai
+ * országnál (`hazaiE`) „Hazai profil – a központ tartja karban.”, másutt „Nincs aktív attasé.”.
  */
 export function AttaseLista({ kod, attasek }: { kod: string; attasek: readonly OrszagAttase[] }) {
   if (attasek.length === 0) {

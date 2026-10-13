@@ -8,7 +8,7 @@
  * - Terület: KSH, STADAT 8.1.1.1. „Földrajzi alapadatok” (93 025 km²; utolsó frissítés: 2026. szeptember 15.) –
  *   https://www.ksh.hu/stadat_files/fol/hu/fol0001.html (az EU portálja 93 012 km²-t közöl, lásd a tagságoknál)
  * - Legfontosabb gazdasági ágazatok (a feldolgozóipari termelés legalább 5%-át adó alágak és a bruttó hozzáadott érték legalább 5%-át adó,
- *   a listán szereplő nemzetgazdasági ágak): KSH, STADAT 13.1.1.4. „Az ipari termelés értéke alágak szerint” (2025, a feldolgozóipar
+ *   a szótárban megfelelő elemmel bíró nemzetgazdasági ágak; az agrár- és élelmiszeripar az élelmiszeripar miatt szerepel): KSH, STADAT 13.1.1.4. „Az ipari termelés értéke alágak szerint” (2025, a feldolgozóipar
  *   arányában: járműgyártás 25,5%, élelmiszer, ital, dohánytermék 14,1%, számítógép, elektronikai, optikai termék 11,9%, villamos berendezés
  *   9,0%, gumi-, műanyag és nemfém ásványi termék 8,1%, fémalapanyag és fémfeldolgozási termék 7,2%, gép, gépi berendezés 5,5%; utolsó
  *   frissítés: 2026. augusztus 13.) – https://www.ksh.hu/stadat_files/ipa/hu/ipa0004.html ; KSH, STADAT 21.1.1.6. „A bruttó hozzáadott érték
@@ -102,8 +102,8 @@
  *   https://knowledge-for-policy.ec.europa.eu/sites/default/files/World2000%282004-2025%29.zip ,
  *   https://knowledge-for-policy.ec.europa.eu/sites/default/files/EU800%282004-2025%29.zip ; a további öt név a Scoreboardban nem szereplő
  *   (külföldi tulajdonú) hazai K+F-szereplő, sorrendjük szerkesztői döntés, az adatok a vállalatok saját közlései: Robert Bosch (a vállalat
- *   közlése szerint a Budapesti Fejlesztési Központ több mint 3100 munkavállalója révén, az autóipari mérnökök számát tekintve Magyarország Németország után a Bosch második legnagyobb
- *   európai fejlesztési helyszíne) – https://www.bosch.hu/vallalatunk/a-bosch-magyarorszagon/budapest-robert-bosch-kft/ ; Egis (a Servier Csoport
+ *   közlése szerint a Budapesti Fejlesztési Központnak több mint 3100 munkavállalója van) –
+ *   https://www.bosch.hu/vallalatunk/a-bosch-magyarorszagon/budapest-robert-bosch-kft/ ; Egis (a Servier Csoport
  *   tagja; a 2024/2025-ös üzleti évben csaknem 23 Mrd Ft K+F) – https://hu.egis.health/cegismerteto ; Audi Hungaria (csaknem 25 éve műszaki
  *   fejlesztés Győrben) – https://audi.hu/hu/portfolio/muszaki-fejlesztes.html ; Ericsson Magyarország (saját közlése szerint az egyik legnagyobb
  *   távközlési és informatikai kutató- és szoftverfejlesztő cég) – https://www.ericsson.com/hu/about-us/company-facts/ericsson-worldwide/hungary ;
@@ -167,7 +167,7 @@ const orszag: DemoOrszag = {
         'Mobilitás és autóipar', 'Agrár- és élelmiszeripar', 'Elektronika és félvezetők', 'Gépipar',
         'Építőipar', 'Logisztika', 'IKT és digitalizáció',
       ],
-      agazatEgyeb: 'Villamosberendezés-gyártás (benne akkumulátorgyártás), gumi- és műanyagipar, nemfém ásványi termékek gyártása, fémfeldolgozás',
+      agazatEgyeb: 'Villamosberendezés-gyártás (benne akkumulátorgyártás), gumi-, műanyag- és nemfém ásványi termékek gyártása, fémalapanyag és fémfeldolgozási termékek gyártása',
     },
     kfiRendszer: {
       teljesitmeny:
@@ -188,31 +188,31 @@ const orszag: DemoOrszag = {
       ],
       iparagEgyeb: 'Kettős felhasználású (dual use) és kibervédelmi technológiák',
       erossegek:
-        'A K+F-ben a vállalati szektor súlya nagy: 2023-ban a ráfordítás 72,7%-át vállalkozások használták fel. A vállalati K+F legnagyobb ágazata a közúti '
+        'A K+F-ben a vállalati szektor súlya nagy: 2023-ban a ráfordítás 72,7%-át a vállalkozások használták fel. A vállalati K+F legnagyobb ágazata a közúti '
         + 'járműgyártás (2024: 379 millió euró, 18,5%), utána a tudományos kutatás-fejlesztés, a számítógépes programozás és a gyógyszergyártás következik. '
         + 'A GII 2025 szerint a csúcstechnológiai gyártásban a 7., a csúcstechnológiai exportban a 9.; az EIS 2026 szerint a közepes és csúcstechnológiai '
-        + 'termékek exportjában az EU-ban az 5., a vállalati K+F állami ösztönzésében a 8.',
+        + 'termékek exportjában a tagállamok között az 5., a vállalati K+F állami ösztönzésében a 8.',
       kihivasok:
         'A K+F-intenzitás 2021 óta csökkent (1,63%-ról 1,31%-ra), elmarad az uniós átlagtól és a 2030-ra kitűzött 3%-os céltól; az állami szektor '
         + 'K+F-ráfordítása az uniós átlag 31,7%-a (EIS 2026, a tagállamok között a 22.). A GII 2025-ben a szakpolitikai kiszámíthatóság mutatójában '
         + 'az ország a 107. Az intézményrendszer átalakulóban van (kutatóhálózat, egyetemi fenntartók). 2022 decembere óta 21 alapítványi '
-        + 'fenntartású egyetemmel nem vállalható új uniós jogi kötelezettség a Horizont Európa és az Erasmus+ programban; az intézkedések megszüntetése '
-        + '2026 októberében folyamatban van.',
+        + 'fenntartású egyetemmel nem vállalható új uniós jogi kötelezettség a Horizont Európa és az Erasmus+ programban; a korlátozás megszüntetését a Bizottság '
+        + '2026. szeptember 23-án javasolta.',
     },
     intezmenyek: {
       iranyitoSzervek:
-        'Tudományos és Technológiai Minisztérium (TTM) – tudománypolitika, KFI-finanszírozás, digitalizáció, űripar.\n'
+        'Tudományos és Technológiai Minisztérium (TTM) – tudománypolitika, KFI-finanszírozás, informatika, e-közigazgatás, űripar.\n'
         + 'Nemzeti Kutatási, Fejlesztési és Innovációs Hivatal (NKFIH) – a TTM irányításával az NKFI Alap kezelője.\n'
         + 'Nemzeti Tudománypolitikai Tanács (NTT) – a Kormány véleményező testülete.\n'
         + 'Kutatási Kiválósági Tanács (KKT) – a kiválósági kutatási támogatások döntés-előkészítője.\n'
         + 'Magyar Tudományos Akadémia (MTA) – a tudomány művelését és képviseletét ellátó köztestület.\n'
-        + 'HUN-REN Magyar Kutatási Hálózat – önálló kutatóhálózat; a 2026. októberi törvénytervezet szerint az MTA-hoz kerül.\n'
+        + 'HUN-REN Magyar Kutatási Hálózat – önálló kutatóhálózat; a 2026. októberi törvénytervezet szerint az MTA alá kerül.\n'
         + 'Nemzeti Innovációs Ügynökség (NIÜ) – a TTM szakmai felügyelete alatt innovációs szolgáltatásokat nyújt.\n'
         + 'Szellemi Tulajdon Nemzeti Hivatala (SZTNH) – szellemitulajdon-védelem.',
       egyetemek:
         'Eötvös Loránd Tudományegyetem (ELTE; Budapest), Budapesti Műszaki és Gazdaságtudományi Egyetem (Budapest), Semmelweis Egyetem (Budapest), '
         + 'Szegedi Tudományegyetem (Szeged), Debreceni Egyetem (Debrecen), Pécsi Tudományegyetem (Pécs). 2024-ben 64 felsőoktatási intézmény működött. '
-        + 'Az alapítványi fenntartású egyetemek fenntartói legkésőbb 2027. augusztus 1-jéig megszűnnek; alapítói jogukat az oktatási és '
+        + 'Az alapítványi fenntartású egyetemek fenntartói legkésőbb 2027. augusztus 1-jéig megszűnnek; az alapítói jogokat az oktatási és '
         + 'gyermekügyi miniszter gyakorolja.',
       kutatokozpontok:
         'A HUN-REN kutatóhelyei, többek között: Wigner Fizikai Kutatóközpont, Számítástechnikai és Automatizálási Kutatóintézet (SZTAKI), '
@@ -229,7 +229,7 @@ const orszag: DemoOrszag = {
       kiemeltAgazatok: [
         'Mobilitás és autóipar', 'Biotechnológia és gyógyszeripar', 'IKT és digitalizáció', 'Elektronika és félvezetők', 'Gépipar',
       ],
-      agazatEgyeb: 'Tudományos kutatás-fejlesztés mint önálló szolgáltató ágazat (a vállalati K+F-ráfordítás 18%-a, 2024)',
+      agazatEgyeb: 'Tudományos kutatás-fejlesztés mint önálló szolgáltató ágazat (a vállalati K+F-ráfordítás 17,9%-a, 2024)',
       topVallalatok: [
         'Richter Gedeon', 'Robert Bosch', 'Egis', 'Audi Hungaria', 'Ericsson Magyarország',
         'Knorr-Bremse',
@@ -241,7 +241,7 @@ const orszag: DemoOrszag = {
         + 'Program (HSUP; 2026/2027-ben 34 intézményben).',
       klaszterek:
         'A GII 2025 vezető innovációs klaszterei között nincs magyar, a klaszterfejlettségi mutatóban az ország a 122.; a K+F erősen Budapestre koncentrálódik '
-        + '(2023-ban a vállalati ráfordítás 66%-a). Tudományos és technológiai park a zalaegerszegi ZalaZONE Park (elektromos és automatizált járművek). '
+        + '(2023-ban a vállalati K+F-ráfordítás 66%-a). Tudományos és technológiai park a zalaegerszegi ZalaZONE Park (elektromos és automatizált járművek). '
         + 'A tudományos és innovációs parkok tervezése és koordinálása a TTM, az egyetemi együttműködésben megvalósuló parkok kormányzati '
         + 'koordinációja az oktatási és gyermekügyi miniszter feladata.',
       technologiatranszfer:
@@ -256,7 +256,7 @@ const orszag: DemoOrszag = {
         + '(gyógyszerfejlesztés). Uniós forrásból a GINOP Plusz KFI-felhívásai (2025 negyedik negyedévében és 2026-ban '
         + 'összesen 261 milliárd forint).',
       tamogatasiProgramok:
-        'Egyetemi Kutatói Ösztöndíj Program (EKÖP; NKFI Alap, kiemelkedő képességű hallgatók és fiatalok) és Kooperatív Doktori Program (vállalati együttműködésben kutató '
+        'Egyetemi Kutatói Ösztöndíj Program (EKÖP; NKFI Alap, kiemelkedő képességű hallgatók kutatói pályakezdése) és Kooperatív Doktori Program (vállalati együttműködésben kutató '
         + 'doktoranduszok); HSUP és HSUP Doctorate (NIÜ; egyetemi hallgatók, doktoranduszok); Startup Factory (NKFIH; technológiai inkubátorok); '
         + 'Innovációs Voucher Program (NIÜ; startupok és kkv-k); Pannónia Ösztöndíjprogram (hallgatói és oktatói mobilitás).',
       finanszirozasiEszkozok:
@@ -265,7 +265,7 @@ const orszag: DemoOrszag = {
         + 'kockázatitőke-program (20 milliárd forint), üzletiangyal-garanciaprogram; a GINOP Plusz két tőkeprogramja (összesen több mint 73 milliárd forint).',
       nemzetkoziReszvetel:
         'Horizont Európa (a nemzeti kapcsolattartó pontok az NKFIH-nál) és az európai partnerségek (pl. EUROSTARS-3, Clean Energy Transition, Key Digital '
-        + 'Technologies, ERA for Health), az NKFI Alap támogatásával; HU-rizont Nemzetközi Kiválósági Kutatási Együttműködési Program (2026: '
+        + 'Technologies, ERA for Health) – a részvételt az NKFI Alap támogatja; HU-rizont Nemzetközi Kiválósági Kutatási Együttműködési Program (2026: '
         + '8 milliárd forint; magyar egyetemek vezette nemzetközi projektek); kétoldalú TéT-felhívás (2026: kínai és francia reláció); az NKKP osztrák és '
         + 'szlovén együttműködésű alprogramjai.',
     },
@@ -277,9 +277,9 @@ const orszag: DemoOrszag = {
     ]),
     nemzetkoziKapcsolatok: {
       partnerorszagok:
-        'Az NKFI Alap 2026-os közös felhívásainak partnerei: Kína és Franciaország (kétoldalú TéT-felhívás kutatói mobilitásra, '
-        + '2026. július), Ausztria és Szlovénia (az NKKP közös alprogramjai). Kormányközi TéT-megállapodás 36 országgal van. A Bosch közlése szerint '
-        + 'az autóipari mérnökök számát tekintve Magyarország – Németország után – a vállalat második legnagyobb európai fejlesztési helyszíne.',
+        'A Nemzeti Kutatási, Fejlesztési és Innovációs Alap (NKFI Alap) 2026-os közös felhívásainak partnerei: Kína és Franciaország (kétoldalú '
+        + 'TéT-felhívás kutatói mobilitásra, 2026. július), Ausztria és Szlovénia (a Nemzeti Kutatási Kiválósági Program közös alprogramjai). '
+        + '36 országgal van kormányközi TéT-megállapodás.',
       euMultilateralis:
         'EU-tag 2004 óta. A Tanács 2022. decemberi végrehajtási határozata megtiltotta az új uniós jogi kötelezettségvállalást az alapítványi fenntartású '
         + 'egyetemekkel (Horizont Európa, Erasmus+; 21 egyetem); a Bizottság 2026. szeptember 23-án javasolta az intézkedések megszüntetését, az elfogadás '
@@ -289,8 +289,8 @@ const orszag: DemoOrszag = {
       osszegzes:
         'Magyarország az EU mérsékelt innovátorai közé tartozik (EIS 2026: az uniós átlag 72,1%-a), a GII 2025-ben a 36. A K+F-ráfordítás a GDP 1,31%-a '
         + '(2024), az uniós átlag alatt; a vállalati K+F legnagyobb ágazata a járműgyártás. 2026-ban átalakul az intézményrendszer: a tudománypolitika '
-        + 'májustól a Tudományos és Technológiai Minisztériumhoz tartozik, a kutatóhálózat a tervek szerint az MTA-hoz kerül; az alapítványi egyetemeket érintő '
-        + 'uniós korlátozás megszüntetése folyamatban van.',
+        + 'májustól a Tudományos és Technológiai Minisztériumhoz tartozik, a kutatóhálózat a tervek szerint az MTA alá kerül; az alapítványi egyetemeket érintő '
+        + 'uniós korlátozás megszüntetését a Bizottság javasolta.',
       egyuttmukodesiLehetosegek: '',
       joGyakorlatok: '',
       diplomaciaiPrioritasok: '',
