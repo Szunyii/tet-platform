@@ -5,16 +5,26 @@
 
 export const KATEGORIAK = [
   {
+    // A korábbi közös „KFI szabályozási és intézményi környezet” kulcsa: a kettébontás előtt
+    // beadott bejegyzések ezen maradtak.
     kulcs: 'szabalyozas',
-    cimke: 'KFI szabályozási és intézményi környezet',
+    cimke: 'KFI szabályozás',
     rovid: 'Szabályozás',
-    leiras: 'Jogszabályi, intézményi és kormányzati KFI-politikai változások.',
+    leiras: 'Jogszabályi és kormányzati KFI-politikai változások.',
     datumKotelezo: false,
     szin: 'bg-sky-100 text-sky-900',
   },
   {
+    kulcs: 'intezmeny',
+    cimke: 'Intézményi környezet',
+    rovid: 'Intézmények',
+    leiras: 'A KFI-intézményrendszer változásai: szervezetek, hatáskörök, irányítás.',
+    datumKotelezo: false,
+    szin: 'bg-lime-100 text-lime-900',
+  },
+  {
     kulcs: 'finanszirozas',
-    cimke: 'KFI finanszírozás, beruházások, támogatások',
+    cimke: 'KFI finanszírozás, támogatások',
     rovid: 'Finanszírozás',
     leiras: 'Költségvetés, alapok, befektetések, támogatási programok.',
     datumKotelezo: false,
@@ -23,7 +33,7 @@ export const KATEGORIAK = [
   {
     kulcs: 'okoszisztema',
     cimke: 'KFI ökoszisztéma – aktualitások, hírek',
-    rovid: 'Ökoszisztéma',
+    rovid: 'Hírek',
     leiras: 'Szereplők, trendek, hírek az innovációs ökoszisztémából.',
     datumKotelezo: false,
     szin: 'bg-violet-100 text-violet-900',
@@ -31,7 +41,7 @@ export const KATEGORIAK = [
   {
     kulcs: 'rendezveny',
     cimke: 'Rendezvény, találkozó, delegáció (részvétel külső eseményen / saját szervezés)',
-    rovid: 'Rendezvény',
+    rovid: 'Beszámolók',
     leiras: 'Esemény, találkozó vagy delegáció; a dátum és a helyszín kötelező.',
     datumKotelezo: true,
     szin: 'bg-amber-100 text-amber-900',
@@ -39,7 +49,7 @@ export const KATEGORIAK = [
   {
     kulcs: 'palyazat',
     cimke: 'Pályázati felhívás, rendezvény részvételi lehetőség',
-    rovid: 'Pályázat',
+    rovid: 'Felhívások',
     leiras: 'Nyitott vagy várható kiírások, részvételi lehetőségek magyar szereplőknek.',
     datumKotelezo: false,
     szin: 'bg-rose-100 text-rose-900',
@@ -47,7 +57,7 @@ export const KATEGORIAK = [
   {
     kulcs: 'egyuttmukodes',
     cimke: 'Együttműködési lehetőségek (kutatási / technológiai / oktatási / pályázati / üzleti), partnerkeresés',
-    rovid: 'Együttműködés',
+    rovid: 'Partnerkeresés',
     leiras: 'Partnerségi és partnerkeresési lehetőségek bármely területen.',
     datumKotelezo: false,
     szin: 'bg-teal-100 text-teal-900',

@@ -1,7 +1,7 @@
 # NIÜ · TéT Platform – Next.js dummy demó
 
 Egyszerű Next.js (App Router, TypeScript) demóprojekt a „TéT Platform" design-doksi alapján.
-A tudástár és a monitoring képernyő még statikus dummy adatokból dolgozik (`lib/data.ts`, `lib/knowledge.ts`); az auth, a felhasználó-kezelés, az országprofil (és a térkép), a riportok (információs bejegyzések) és a kommunikáció (ticketek) már valódi adatbázisból (lásd lent).
+A tudástár és a monitoring képernyő még statikus dummy adatokból dolgozik (`lib/data.ts`, `lib/knowledge.ts`); az auth, a felhasználó-kezelés, az országprofil (és a térkép), a jelentések (információs bejegyzések) és a kommunikáció (ticketek) már valódi adatbázisból (lásd lent).
 
 ## Indítás
 
@@ -55,7 +55,7 @@ A `data/tet.db` demó-adatbázis a repóban van (felhasználókkal és az attas�
 
 - Minden oldal bejelentkezést kér (`proxy.ts` + `lib/session.ts`). Belépés: `/login`, a seed admin adataival.
 - Admin a `/felhasznalok` oldalon hoz létre TéT attasé fiókokat (név, e-mail, kezdő jelszó; székhely: ország, a poszt városa, részterület – pl. a lefedett tartományok –, relációs vezető jelölés; régiós lefedettség: további országok; opcionálisan telefon, kapcsolattartási e-mail), szerkeszt, jelszót állít vissza, tilt és töröl. Nyilvános regisztráció nincs.
-- Szerepkörök: `admin` (NIÜ) és `attase`. Egy országban több attasé is lehet; közülük egy a relációs vezető, ő az országprofil felelőse és – az adminon kívül – egyedüli szerkesztője (egyszemélyes országban automatikus; ha több attasé marad vezető nélkül, a felhasználó-oldal figyelmeztet). Egy attasé regionálisan több országot is lefedhet; minden lefedett országára riportot adhat be. A főváros, terület, pénznem az országprofil Alapadatok blokkjában van.
+- Szerepkörök: `admin` (NIÜ) és `attase`. Egy országban több attasé is lehet; közülük egy a relációs vezető, ő az országprofil felelőse és – az adminon kívül – egyedüli szerkesztője (egyszemélyes országban automatikus; ha több attasé marad vezető nélkül, a felhasználó-oldal figyelmeztet). Egy attasé regionálisan több országot is lefedhet; minden lefedett országára jelentést adhat be. A főváros, terület, pénznem az országprofil Alapadatok blokkjában van.
 
 ## Képernyők
 
@@ -65,10 +65,10 @@ A `data/tet.db` demó-adatbázis a repóban van (felhasználókkal és az attas�
 | `/terkep` | Térkép és országprofil-kivonat a fejlécben választott ciklus évének nézetében (DB-s profilok, React + d3-geo világtérkép npm-ből, nagyítás és régió-gombok; Mutató-választó: kiemelt iparág, profil-állapot vagy számszerű mutató folytonos színskálával; iparág-szűrő; rangsor-panel; 2–4 ország összehasonlító táblája a térkép alatt; `?o=<kod>` előre kiválaszt) |
 | `/orszagprofil/[kod]` | Teljes országprofil a fejlécben választott ciklus évére (`tet-ev` cookie); bárki olvashatja |
 | `/orszagprofil/[kod]/szerkesztes` | Profil szerkesztése blokkonként (attasé: az az ország, amelynek relációs vezetője, idei év; admin: bármely ország, 2020-tól az idei évig) |
-| `/riportok` | Információs bejegyzések listája szűrőkkel (attasé: saját, admin: mind) |
-| `/riportok/[id]` | Bejegyzés részletei, csatolmány-letöltés |
-| `/riportok/[id]/szerkesztes` | Bejegyzés szerkesztése |
-| `/uj-riport` | Új bejegyzés (több országos attasénál ország-választó; kategória, tárgy, leírás, kulcsszavak, rendezvény adatai, csatolmány) |
+| `/jelentesek` | Információs bejegyzések listája szűrőkkel (attasé: saját, admin: mind) |
+| `/jelentesek/[id]` | Bejegyzés részletei, csatolmány-letöltés |
+| `/jelentesek/[id]/szerkesztes` | Bejegyzés szerkesztése |
+| `/uj-jelentes` | Új bejegyzés (több országos attasénál ország-választó; kategória, tárgy, leírás, kulcsszavak, rendezvény adatai, csatolmány) |
 | `/kommunikacio` | Ticketek és üzenetszálak: az admin nyit ticketet egy attasénak, mindkét fél válaszol; `?t=<id>` a kiválasztott ticket, `?sz=` szűrő (`aktiv`/`magas`/`mind`) |
 | `/tudastar` | Tudástár – Magyarországról ajánlható programok, partnerek, együttműködési formák |
 | `/monitoring` | Hálózati rangsor + 14 szempontos részletes értékelés |

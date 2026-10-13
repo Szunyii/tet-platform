@@ -1,7 +1,7 @@
 import 'server-only';
 import { and, desc, eq, gte, inArray, lt, or, sql, type SQL } from 'drizzle-orm';
 import { db } from '../index';
-import { riport, riportCsatolmany, user } from '../schema';
+import { attaseOrszag, riport, riportCsatolmany, user } from '../schema';
 import { kovetkezoNapKezdete, napKezdete } from '../../lib/datum';
 import { orszagNev } from '../../lib/orszagok';
 import type { KategoriaKulcs } from '../../lib/riport-szotar';
@@ -26,6 +26,11 @@ export interface RiportListItem {
   szerzoId: string;
   szerzoNev: string;
   orszag: string;
+  /**
+   * A szerző állomáshelye: a székhely-sorának városa a JELENLEGI hozzárendelésből (nem
+   * pillanatkép, mint az `orszag`). `null`, ha a szerzőnek nincs székhely-sora vagy városa.
+   */
+  varos: string | null;
   kategoria: KategoriaKulcs;
   targy: string;
   kulcsszavak: string[];
@@ -65,6 +70,7 @@ const listOszlopok = {
   szerzoId: riport.szerzoId,
   szerzoNev: user.name,
   orszag: riport.orszag,
+  varos: attaseOrszag.varos,
   kategoria: riport.kategoria,
   targy: riport.targy,
   kulcsszavak: riport.kulcsszavak,
@@ -103,6 +109,8 @@ export function listRiportok(filter: RiportFilter = {}): RiportListItem[] {
     .select(listOszlopok)
     .from(riport)
     .innerJoin(user, eq(riport.szerzoId, user.id))
+    // Felhasználónként legfeljebb egy székhely-sor van (részleges egyedi index), a join nem sokszoroz.
+    .leftJoin(attaseOrszag, and(eq(attaseOrszag.userId, riport.szerzoId), eq(attaseOrszag.szekhely, true)))
     .where(felt.length ? and(...felt) : undefined)
     .orderBy(desc(riport.createdAt))
     .all()

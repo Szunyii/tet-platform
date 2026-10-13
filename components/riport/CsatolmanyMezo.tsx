@@ -95,7 +95,7 @@ export function CsatolmanyMezo({
                 <li key={m.id} className="flex items-center gap-2">
                   {jelolt && <input type="hidden" name="torlendoCsatolmany" value={m.id} />}
                   <a
-                    href={`/api/riport/csatolmany/${m.id}`}
+                    href={`/api/jelentes/csatolmany/${m.id}`}
                     className={jelolt ? 'line-through text-muted-foreground' : 'underline underline-offset-2'}
                   >
                     {m.fajlnev}

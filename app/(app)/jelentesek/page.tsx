@@ -8,7 +8,7 @@ import { szuroErtekek, szuroFromSearchParams, type SearchParams } from '../../..
 import { requireSession } from '../../../lib/session';
 import { cn } from '../../../lib/utils';
 
-export const metadata: Metadata = { title: 'Riportok' };
+export const metadata: Metadata = { title: 'Jelentések' };
 
 export default async function RiportokPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const session = await requireSession();
@@ -26,7 +26,7 @@ export default async function RiportokPage({ searchParams }: { searchParams: Pro
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3">
         <p className="text-sm text-muted-foreground">{sorok.length} bejegyzés</p>
-        <Link href="/uj-riport" className={cn('ml-auto', buttonVariants())}>
+        <Link href="/uj-jelentes" className={cn('ml-auto', buttonVariants())}>
           Új bejegyzés
         </Link>
       </div>

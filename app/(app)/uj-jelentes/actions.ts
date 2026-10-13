@@ -36,6 +36,6 @@ export async function createRiportAction(_prev: RiportFormState, formData: FormD
     console.error('[riport] createRiport sikertelen:', err);
     return { errors: { form: 'Mentés sikertelen, próbáld újra.' } };
   }
-  revalidatePath('/riportok');
-  redirect(`/riportok/${id}`);
+  revalidatePath('/jelentesek');
+  redirect(`/jelentesek/${id}`);
 }

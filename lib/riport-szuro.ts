@@ -1,5 +1,5 @@
 /**
- * A `/riportok` lista URL-szűrőinek tiszta fordítója: `searchParams` → `RiportFilter`,
+ * A `/jelentesek` lista URL-szűrőinek tiszta fordítója: `searchParams` → `RiportFilter`,
  * és vissza a kliens szűrő-sávnak való nyers értékekre. Nincs React és nincs DB hívás.
  */
 import type { RiportFilter } from '../db/queries/riport';

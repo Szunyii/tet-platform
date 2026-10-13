@@ -7,6 +7,7 @@ import {
   HandshakeIcon,
   LandmarkIcon,
   NetworkIcon,
+  ScaleIcon,
   type LucideIcon,
 } from 'lucide-react';
 import { useRef, type KeyboardEvent } from 'react';
@@ -14,7 +15,8 @@ import { cn } from '../../lib/utils';
 import { KATEGORIAK, type KategoriaKulcs } from '../../lib/riport-szotar';
 
 const IKONOK: Record<KategoriaKulcs, LucideIcon> = {
-  szabalyozas: LandmarkIcon,
+  szabalyozas: ScaleIcon,
+  intezmeny: LandmarkIcon,
   finanszirozas: CoinsIcon,
   okoszisztema: NetworkIcon,
   rendezveny: CalendarDaysIcon,

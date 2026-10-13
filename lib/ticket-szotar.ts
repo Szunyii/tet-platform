@@ -6,7 +6,7 @@
 export const TIPUSOK = {
   adatkeres: 'Adatkérés',
   feladat: 'Feladatkiosztás',
-  riport_visszajelzes: 'Riport-visszajelzés',
+  riport_visszajelzes: 'Jelentés-visszajelzés',
   egyeztetes: 'Egyeztetés',
 } as const;
 export type TipusKulcs = keyof typeof TIPUSOK;

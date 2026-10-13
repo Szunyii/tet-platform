@@ -36,10 +36,10 @@ export async function updateRiportAction(
     console.error('[riport] updateRiport sikertelen:', err);
     return { errors: { form: 'Mentés sikertelen, próbáld újra.' } };
   }
-  revalidatePath('/riportok');
-  revalidatePath(`/riportok/${id}`);
-  revalidatePath(`/riportok/${id}/szerkesztes`);
-  redirect(`/riportok/${id}`);
+  revalidatePath('/jelentesek');
+  revalidatePath(`/jelentesek/${id}`);
+  revalidatePath(`/jelentesek/${id}/szerkesztes`);
+  redirect(`/jelentesek/${id}`);
 }
 
 export async function deleteRiportAction(id: string): Promise<RiportFormState> {
@@ -53,7 +53,7 @@ export async function deleteRiportAction(id: string): Promise<RiportFormState> {
     console.error('[riport] deleteRiport sikertelen:', err);
     return { errors: { form: 'Törlés sikertelen, próbáld újra.' } };
   }
-  revalidatePath('/riportok');
-  revalidatePath(`/riportok/${id}`);
-  redirect('/riportok');
+  revalidatePath('/jelentesek');
+  revalidatePath(`/jelentesek/${id}`);
+  redirect('/jelentesek');
 }

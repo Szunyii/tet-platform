@@ -39,7 +39,7 @@ export function RiportReszlet({
         {szerkeszthet && (
           <div className="flex gap-2">
             <Link
-              href={`/riportok/${riport.id}/szerkesztes`}
+              href={`/jelentesek/${riport.id}/szerkesztes`}
               className={cn(buttonVariants({ variant: 'outline' }))}
             >
               Szerkesztés
@@ -108,7 +108,7 @@ export function RiportReszlet({
             {riport.csatolmanyok.map((c) => (
               <li key={c.id} className="flex items-center gap-2">
                 <PaperclipIcon className="size-4 text-muted-foreground" aria-hidden />
-                <a href={`/api/riport/csatolmany/${c.id}`} className="underline underline-offset-2">
+                <a href={`/api/jelentes/csatolmany/${c.id}`} className="underline underline-offset-2">
                   {c.fajlnev}
                 </a>
                 <span className="text-xs text-muted-foreground">{formatMeret(c.meret)}</span>

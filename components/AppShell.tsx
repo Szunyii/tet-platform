@@ -54,8 +54,8 @@ const NAV: {
     label: "Országprofil",
     alHrefek: ["/orszagprofil"],
   },
-  { href: "/riportok", icon: "▦", label: "Riportok" },
-  { href: "/uj-riport", icon: "✎", label: "Új bejegyzés" },
+  { href: "/jelentesek", icon: "▦", label: "Jelentések" },
+  { href: "/uj-jelentes", icon: "✎", label: "Új bejegyzés" },
   { href: "/kommunikacio", icon: "✉", label: "Kommunikáció" },
   { href: "/tudastar", icon: "◫", label: "Tudástár ??" },
   { href: "/monitoring", icon: "◈", label: "Monitoring és értékelés ??" },
@@ -73,11 +73,11 @@ const TITLES: Record<string, [string, string]> = {
     "Országprofil",
     "Az ország KFI körképe és alapadatai, évenkénti attasé-beadással",
   ],
-  "/riportok": [
-    "Riportok",
+  "/jelentesek": [
+    "Jelentések",
     "A TéT hálózat információs bejegyzései kategóriák és kulcsszavak szerint",
   ],
-  "/uj-riport": [
+  "/uj-jelentes": [
     "Új bejegyzés",
     "Kategória, tárgy, leírás, kulcsszavak – rendezvénynél dátum és helyszín",
   ],
@@ -96,7 +96,7 @@ const TITLES: Record<string, [string, string]> = {
   "/felhasznalok": ["Felhasználók", "Admin és TéT attasé fiókok kezelése"],
 };
 
-// Pontos egyezés vagy alútvonal (pl. /riportok/abc → /riportok).
+// Pontos egyezés vagy alútvonal (pl. /jelentesek/abc → /jelentesek).
 function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(href + "/");
 }

@@ -213,7 +213,7 @@ export function RiportForm({ mode, initial, action, orszagok }: RiportFormProps)
       <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
         {/* Link + buttonVariants (nem Button render={<Link/>}): a Base UI Button natív <button>-t vár. */}
         <Link
-          href={mode === 'create' ? '/riportok' : `/riportok/${initial.id}`}
+          href={mode === 'create' ? '/jelentesek' : `/jelentesek/${initial.id}`}
           className={cn(buttonVariants({ variant: 'outline' }), pending && 'pointer-events-none opacity-50')}
           aria-disabled={pending || undefined}
           tabIndex={pending ? -1 : undefined}

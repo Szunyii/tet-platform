@@ -25,7 +25,7 @@ export function RiportTabla({
           {vanSzuro ? 'Nincs a szűrőknek megfelelő bejegyzés.' : 'Még nincs bejegyzés.'}
         </p>
         {!vanSzuro && (
-          <Link href="/uj-riport" className={cn(buttonVariants())}>
+          <Link href="/uj-jelentes" className={cn(buttonVariants())}>
             Első bejegyzés
           </Link>
         )}
@@ -40,7 +40,7 @@ export function RiportTabla({
             <TableHead className="w-28">Beadva</TableHead>
             <TableHead className="w-32">Kategória</TableHead>
             <TableHead>Tárgy</TableHead>
-            <TableHead className="w-44">{admin ? 'Ország · szerző' : 'Ország'}</TableHead>
+            <TableHead className="w-44">{admin ? 'Állomáshely · szerző' : 'Állomáshely'}</TableHead>
             <TableHead>Kulcsszavak</TableHead>
             <TableHead className="w-12 text-right">
               <span className="sr-only">Csatolmány</span>
@@ -56,7 +56,7 @@ export function RiportTabla({
               </TableCell>
               <TableCell className="max-w-md">
                 <Link
-                  href={`/riportok/${r.id}`}
+                  href={`/jelentesek/${r.id}`}
                   title={r.targy}
                   className="block truncate font-medium underline-offset-2 hover:underline"
                 >
@@ -69,7 +69,8 @@ export function RiportTabla({
                 )}
               </TableCell>
               <TableCell>
-                <div>{orszagNev(r.orszag)}</div>
+                {/* Város nélkül (pl. a szerző időközben admin lett) a bejegyzés országa. */}
+                <div>{r.varos || orszagNev(r.orszag)}</div>
                 {admin && <div className="text-xs text-muted-foreground">{r.szerzoNev}</div>}
               </TableCell>
               <TableCell>
