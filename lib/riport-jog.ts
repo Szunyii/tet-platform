@@ -14,3 +14,11 @@ export function canViewRiport(session: AppSession, riport: RiportJogAlany): bool
 export function canEditRiport(session: AppSession, riport: RiportJogAlany): boolean {
   return canViewRiport(session, riport);
 }
+
+/**
+ * A „Megtett intézkedés” írása: csak a központ (admin). Olvasni az láthatja, aki magát a
+ * bejegyzést (canViewRiport) – az attasé a sajátjánál, csak olvasásra.
+ */
+export function canIntezkedni(session: AppSession): boolean {
+  return session.role === 'admin';
+}

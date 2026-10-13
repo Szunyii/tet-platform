@@ -143,6 +143,8 @@ export const TARGY_MAX = 200;
 export const LEIRAS_MAX = 5000;
 export const HELYSZIN_MAX = 200;
 export const SZOVEG_MAX = 5000;
+/** A központ „Megtett intézkedés” szövegének korlátja. */
+export const INTEZKEDES_MAX = 5000;
 /** A kulcsszavak mező nyers (JSON.stringify-olt) hossza; JSON.parse előtt szűrünk vele. */
 export const KULCSSZO_RAW_MAX = 2000;
 

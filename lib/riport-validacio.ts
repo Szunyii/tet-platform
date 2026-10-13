@@ -9,6 +9,7 @@ import {
   CSATOLMANY_LIMIT,
   formatMeret,
   HELYSZIN_MAX,
+  INTEZKEDES_MAX,
   isKategoriaKulcs,
   isKulcsszo,
   kategoriaByKulcs,
@@ -210,4 +211,18 @@ export function parseRiportForm(
     fajlok,
     torlendoCsatolmanyIdk,
   };
+}
+
+export type ParseIntezkedesResult = { ok: true; szoveg: string | null } | { ok: false; errors: RiportErrors };
+
+/**
+ * A „Megtett intézkedés” dialógus validátora. Az üres (vagy csak térközből álló) szöveg a
+ * törlést jelenti: `szoveg: null`. A hibakulcs a mező DOM-id-ja (`intezkedes`).
+ */
+export function parseIntezkedes(fd: FormData): ParseIntezkedesResult {
+  const szoveg = mezo(fd, 'intezkedes');
+  if (szoveg.length > INTEZKEDES_MAX) {
+    return { ok: false, errors: { intezkedes: `A megtett intézkedés legfeljebb ${INTEZKEDES_MAX} karakter.` } };
+  }
+  return { ok: true, szoveg: szoveg || null };
 }
