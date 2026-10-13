@@ -79,8 +79,8 @@ export function RiportTabla({
                 )}
               </TableCell>
               <TableCell>
-                {/* Város nélkül (pl. a szerző időközben admin lett) a bejegyzés országa. */}
-                <div>{r.varos || orszagNev(r.orszag)}</div>
+                {/* Város nélkül a székhely országa; székhely-sor nélkül (pl. admin szerző) a bejegyzésé. */}
+                <div>{r.varos || orszagNev(r.szekhelyKod ?? r.orszag)}</div>
                 {admin && <div className="text-xs text-muted-foreground">{r.szerzoNev}</div>}
               </TableCell>
               <TableCell>

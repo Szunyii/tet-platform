@@ -31,6 +31,8 @@ export interface RiportListItem {
    * pillanatkép, mint az `orszag`). `null`, ha a szerzőnek nincs székhely-sora vagy városa.
    */
   varos: string | null;
+  /** A szerző székhely-országának kódja ugyanebből a sorból; `null`, ha nincs székhely-sora (pl. admin). */
+  szekhelyKod: string | null;
   /** A központ „Megtett intézkedése” (a teljes szöveg), vagy `null`. */
   intezkedes: string | null;
   kategoria: KategoriaKulcs;
@@ -77,6 +79,7 @@ const listOszlopok = {
   szerzoNev: user.name,
   orszag: riport.orszag,
   varos: attaseOrszag.varos,
+  szekhelyKod: attaseOrszag.orszagKod,
   intezkedes: riport.intezkedes,
   kategoria: riport.kategoria,
   targy: riport.targy,
