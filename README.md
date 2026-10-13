@@ -13,7 +13,7 @@ npm run dev
 
 Ezután nyisd meg: http://localhost:3000
 
-A `data/tet.db` demó-adatbázis a repóban van (felhasználókkal és az attasék 27 országának 2026-os profiljával – kutatott vázlat, `scripts/demo-orszagprofil.ts` –, valamint Japán 2025-ös Alapadatok blokkjával; a belépési adatok a `.env.example` kommentjeiben), ezért nincs seedelés: a hosting is egy az egyben ezt kapja. Nulláról induló DB-hez: töröld a `data/tet.db`-t, majd `npm run db:migrate` és `npm run db:seed` (a seed a `.env.local` `SEED_ADMIN_*` értékeit használja). A DB commitolása előtt `sqlite3 data/tet.db "PRAGMA wal_checkpoint(TRUNCATE);"`, hogy a fő fájl teljes legyen (a `-wal`/`-shm` segédfájlok gitignore-oltak).
+A `data/tet.db` demó-adatbázis a repóban van (felhasználókkal és az attasék 27 országának és Magyarországnak (hazai profil, viszonyítási alap az összehasonlításhoz) a 2026-os profiljával – kutatott vázlat, `scripts/demo-orszagprofil.ts` –, valamint Japán 2025-ös Alapadatok blokkjával; a belépési adatok a `.env.example` kommentjeiben), ezért nincs seedelés: a hosting is egy az egyben ezt kapja. Nulláról induló DB-hez: töröld a `data/tet.db`-t, majd `npm run db:migrate` és `npm run db:seed` (a seed a `.env.local` `SEED_ADMIN_*` értékeit használja). A DB commitolása előtt `sqlite3 data/tet.db "PRAGMA wal_checkpoint(TRUNCATE);"`, hogy a fő fájl teljes legyen (a `-wal`/`-shm` segédfájlok gitignore-oltak).
 
 ### Hosting (Hostinger Node.js)
 
