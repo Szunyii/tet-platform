@@ -129,7 +129,7 @@ export function RiportReszlet({
           <CardContent className="flex flex-col gap-1.5 text-sm">
             {riport.intezkedes ? (
               <>
-                <p className="whitespace-pre-wrap">{riport.intezkedes}</p>
+                <p className="break-words whitespace-pre-wrap">{riport.intezkedes}</p>
                 {riport.intezkedesSzerzoNev && riport.intezkedesIdopont && (
                   <p className="text-xs text-muted-foreground">
                     {riport.intezkedesSzerzoNev} · {formatDatum(riport.intezkedesIdopont)}

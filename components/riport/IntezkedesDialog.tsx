@@ -27,9 +27,11 @@ export function IntezkedesDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [state, formAction, pending] = useMuveletForm(action, 'Intézkedés mentve.', () => onOpenChange(false));
   // Vezérelt mező, hogy hibánál ne ürüljön (React 19 a <form action> után resetel).
   const [szoveg, setSzoveg] = useState(ertek ?? '');
+  // Üresen mentve a meglévő intézkedés törlődik: a visszajelzés is ezt mondja.
+  const siker = szoveg.trim() || !ertek ? 'Intézkedés mentve.' : 'Intézkedés törölve.';
+  const [state, formAction, pending] = useMuveletForm(action, siker, () => onOpenChange(false));
   const errors = state.errors ?? {};
 
   return (
@@ -42,6 +44,7 @@ export function IntezkedesDialog({
       gomb="Mentés"
       formAction={formAction}
       errors={errors}
+      szeles
     >
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="intezkedes">Intézkedés szövege</Label>
@@ -50,7 +53,7 @@ export function IntezkedesDialog({
           name="intezkedes"
           maxLength={INTEZKEDES_MAX}
           rows={6}
-          className="min-h-28"
+          className="max-h-[45dvh] min-h-28 overflow-y-auto"
           value={szoveg}
           onChange={(e) => setSzoveg(e.target.value)}
           {...hibaAttr(errors, 'intezkedes')}

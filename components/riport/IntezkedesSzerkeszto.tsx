@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { cn } from '../../lib/utils';
 import type { FormAction } from '../form/useMuveletForm';
-import { Button } from '../ui/button';
+import { buttonVariants } from '../ui/button';
 import { IntezkedesDialog } from './IntezkedesDialog';
 
 /**
@@ -28,31 +29,45 @@ export function IntezkedesSzerkeszto({
     setNyitas((n) => n + 1);
     setOpen(true);
   };
+  const szovegGomb = valtozat === 'cella' && Boolean(ertek);
 
   return (
     <>
-      {valtozat === 'cella' && ertek ? (
-        <button
-          type="button"
-          onClick={nyit}
-          title="Megtett intézkedés módosítása"
-          className="block w-full rounded-sm text-left underline-offset-2 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
-        >
-          <span className="line-clamp-2 break-words whitespace-pre-wrap">{ertek}</span>
-        </button>
-      ) : (
-        <Button type="button" variant="outline" size="sm" onClick={nyit}>
-          {ertek ? 'Módosítás' : 'Intézkedés rögzítése'}
-        </Button>
+      {/* Egyetlen natív <button> minden állapotra: ha a szöveg megjelenésekor vagy törlésekor
+          másik elemtípusra váltana, a React új DOM-elemet tenne a helyére, és a dialógus
+          bezárásakor a fókusz nem tudna visszatérni a kiváltó elemre. */}
+      <button
+        type="button"
+        onClick={nyit}
+        title={szovegGomb ? 'Megtett intézkedés módosítása' : undefined}
+        // A listában soronként van ilyen gomb: a név a tárggyal együtt egyedi.
+        aria-label={valtozat === 'cella' && !ertek ? `Intézkedés rögzítése: ${targy}` : undefined}
+        className={cn(
+          szovegGomb
+            ? 'block w-full cursor-pointer rounded-sm text-left underline-offset-2 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50'
+            : buttonVariants({ variant: 'outline', size: 'sm' }),
+        )}
+      >
+        {szovegGomb ? (
+          // Előnézet: a sortörések itt összeesnek, hogy a két sorba több tartalom férjen.
+          <span className="line-clamp-2 break-words">{ertek}</span>
+        ) : ertek ? (
+          'Módosítás'
+        ) : (
+          'Intézkedés rögzítése'
+        )}
+      </button>
+      {/* Az első nyitásig nincs mit mountolni (soronként egy dialógus-állapot és useActionState). */}
+      {nyitas > 0 && (
+        <IntezkedesDialog
+          key={nyitas}
+          targy={targy}
+          ertek={ertek}
+          action={action}
+          open={open}
+          onOpenChange={setOpen}
+        />
       )}
-      <IntezkedesDialog
-        key={nyitas}
-        targy={targy}
-        ertek={ertek}
-        action={action}
-        open={open}
-        onOpenChange={setOpen}
-      />
     </>
   );
 }

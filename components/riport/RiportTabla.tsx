@@ -106,7 +106,7 @@ export function RiportTabla({
                       valtozat="cella"
                     />
                   ) : r.intezkedes ? (
-                    <p className="line-clamp-2 break-words whitespace-pre-wrap" title={r.intezkedes}>
+                    <p className="line-clamp-2 break-words" title={r.intezkedes}>
                       {r.intezkedes}
                     </p>
                   ) : (
