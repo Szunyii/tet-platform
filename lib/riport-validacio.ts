@@ -173,8 +173,8 @@ export function parseRiportForm(
   else if (targy.length > TARGY_MAX) errors.targy = `A tárgy legfeljebb ${TARGY_MAX} karakter.`;
 
   const leiras = mezo(fd, 'leiras');
-  if (!leiras) errors.leiras = 'A leírás kötelező.';
-  else if (leiras.length > LEIRAS_MAX) errors.leiras = `A leírás legfeljebb ${LEIRAS_MAX} karakter.`;
+  if (!leiras) errors.leiras = 'A vezetői összefoglaló kötelező.';
+  else if (leiras.length > LEIRAS_MAX) errors.leiras = `A vezetői összefoglaló legfeljebb ${LEIRAS_MAX} karakter.`;
 
   const kulcsszavak = parseKulcsszavak(mezo(fd, 'kulcsszavak'), errors);
 
@@ -191,7 +191,7 @@ export function parseRiportForm(
     else esemenyHelyszin = h;
   }
 
-  const joGyakorlat = opcionalis(fd, 'joGyakorlat', SZOVEG_MAX, 'A jó gyakorlat', errors);
+  const joGyakorlat = opcionalis(fd, 'joGyakorlat', SZOVEG_MAX, 'A fő üzenet/jó gyakorlat/javaslat', errors);
   const kapcsolodoFeladat = opcionalis(fd, 'kapcsolodoFeladat', SZOVEG_MAX, 'A kapcsolódó feladat', errors);
 
   const meglevoSet = new Set(meglevoCsatolmanyIdk);

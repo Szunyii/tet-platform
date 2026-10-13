@@ -59,7 +59,7 @@ export function RiportForm({ mode, initial, action, orszagok }: RiportFormProps)
   const [torlendo, setTorlendo] = useState<string[]>([]);
 
   const meglevok = initial?.csatolmanyok ?? [];
-  const vanOpcionalisHiba = Boolean(errors.joGyakorlat || errors.kapcsolodoFeladat || errors.csatolmany);
+  const vanOpcionalisHiba = Boolean(errors.kapcsolodoFeladat || errors.csatolmany);
   // Az opcionális szekció alapból nyitva: a mezők eleve látszanak, a felhasználó becsukhatja.
   const [tovabbiNyitva, setTovabbiNyitva] = useState(true);
   const datumKotelezo = kategoria ? kategoriaByKulcs(kategoria).datumKotelezo : false;
@@ -124,7 +124,7 @@ export function RiportForm({ mode, initial, action, orszagok }: RiportFormProps)
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="leiras">Leírás</Label>
+        <Label htmlFor="leiras">Vezetői Összefoglaló</Label>
         <Textarea
           id="leiras"
           name="leiras"
@@ -140,6 +140,23 @@ export function RiportForm({ mode, initial, action, orszagok }: RiportFormProps)
           {leiras.length}/{LEIRAS_MAX}
         </p>
         <MezoHiba mezo="leiras" errors={errors} />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="joGyakorlat">
+          Fő üzenet/jó gyakorlat/javaslat
+          <span className="font-normal text-muted-foreground">(opcionális)</span>
+        </Label>
+        <Textarea
+          id="joGyakorlat"
+          name="joGyakorlat"
+          maxLength={SZOVEG_MAX}
+          rows={3}
+          value={joGyakorlat}
+          onChange={(e) => setJoGyakorlat(e.target.value)}
+          {...hibaAttr(errors, 'joGyakorlat')}
+        />
+        <MezoHiba mezo="joGyakorlat" errors={errors} />
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -163,26 +180,13 @@ export function RiportForm({ mode, initial, action, orszagok }: RiportFormProps)
       <Collapsible open={tovabbiNyitva} onOpenChange={setTovabbiNyitva}>
         <CollapsibleTrigger render={<Button type="button" variant="ghost" size="sm" className="-ml-2" />}>
           <ChevronDownIcon className={cn('transition-transform', tovabbiNyitva && 'rotate-180')} />
-          További adatok (opcionális): jó gyakorlat, kapcsolódó feladat, csatolmány
+          További adatok (opcionális): kapcsolódó feladat, csatolmány
         </CollapsibleTrigger>
         {/* keepMounted: becsukott állapotban a panel tartalma alapból unmountolódik, és a benne
-            lévő mezők (jó gyakorlat, kapcsolódó feladat, a csatolmányok rejtett file-inputja)
+            lévő mezők (kapcsolódó feladat, a csatolmányok rejtett file-inputja)
             kimaradnának a beküldött FormData-ból – a felhasználó által megadott adat némán
             elveszne. Így a mezők a DOM-ban maradnak (hidden), és beküldésre kerülnek. */}
         <CollapsibleContent keepMounted className="mt-3 flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="joGyakorlat">Magyarország számára átvehető jó gyakorlat</Label>
-            <Textarea
-              id="joGyakorlat"
-              name="joGyakorlat"
-              maxLength={SZOVEG_MAX}
-              rows={3}
-              value={joGyakorlat}
-              onChange={(e) => setJoGyakorlat(e.target.value)}
-              {...hibaAttr(errors, 'joGyakorlat')}
-            />
-            <MezoHiba mezo="joGyakorlat" errors={errors} />
-          </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="kapcsolodoFeladat">Kapcsolódó feladat, kérés</Label>
             <Textarea

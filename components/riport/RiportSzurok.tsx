@@ -145,7 +145,7 @@ export function RiportSzurok({
         <Label htmlFor="szuro-q">Keresés</Label>
         <Input
           id="szuro-q"
-          placeholder="Tárgy vagy leírás…"
+          placeholder="Tárgy vagy összefoglaló…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />

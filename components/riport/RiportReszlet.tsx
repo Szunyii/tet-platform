@@ -49,7 +49,21 @@ export function RiportReszlet({
         )}
       </header>
 
-      <p className="text-sm leading-relaxed whitespace-pre-wrap">{riport.leiras}</p>
+      <section className="flex flex-col gap-1.5">
+        <h3 className="text-sm font-medium">Vezetői Összefoglaló</h3>
+        <p className="text-sm leading-relaxed whitespace-pre-wrap">{riport.leiras}</p>
+      </section>
+
+      {riport.joGyakorlat && (
+        <Card size="sm" className="border-l-4 border-l-emerald-500">
+          <CardHeader>
+            <CardTitle role="heading" aria-level={3}>
+              Fő üzenet/jó gyakorlat/javaslat
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm whitespace-pre-wrap">{riport.joGyakorlat}</CardContent>
+        </Card>
+      )}
 
       {riport.kulcsszavak.length > 0 && (
         <div className="flex flex-wrap gap-1">
@@ -76,17 +90,6 @@ export function RiportReszlet({
               Helyszín: <span className="font-medium">{riport.esemenyHelyszin}</span>
             </div>
           </CardContent>
-        </Card>
-      )}
-
-      {riport.joGyakorlat && (
-        <Card size="sm" className="border-l-4 border-l-emerald-500">
-          <CardHeader>
-            <CardTitle role="heading" aria-level={3}>
-              Magyarország számára átvehető jó gyakorlat
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm whitespace-pre-wrap">{riport.joGyakorlat}</CardContent>
         </Card>
       )}
 

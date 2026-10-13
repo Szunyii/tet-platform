@@ -79,7 +79,7 @@ const TITLES: Record<string, [string, string]> = {
   ],
   "/uj-jelentes": [
     "Új bejegyzés",
-    "Kategória, tárgy, leírás, kulcsszavak – rendezvénynél dátum és helyszín",
+    "Kategória, tárgy, vezetői összefoglaló, kulcsszavak – rendezvénynél dátum és helyszín",
   ],
   "/kommunikacio": [
     "Kommunikáció",
