@@ -6,7 +6,7 @@
  * az adminon kívül – egyedüli szerkesztője. A DB-szabályokat a db/queries/attase-orszag.ts
  * tartja (setAttaseOrszagok, normalizalVezetok).
  */
-import { orszagNev } from './orszagok';
+import { hazaiE, orszagNev } from './orszagok';
 
 export const VAROS_MAX = 100;
 export const RESZTERULET_MAX = 1000;
@@ -87,6 +87,14 @@ export function attasekRovid(attasek: readonly OrszagAttase[], kod: string): str
   const [elso, ...tobbi] = attasek;
   if (!elso) return null;
   return attaseFelirat(elso, kod) + (tobbi.length > 0 ? ` +${tobbi.length} attasé` : '');
+}
+
+/**
+ * Az attasé nélküli ország felirata a térképen (buborék, oldalsó kivonat): a hazai országnál ez
+ * nem hiány, hanem a központ által karbantartott profil.
+ */
+export function attaseNelkulFelirat(kod: string): string {
+  return hazaiE(kod) ? 'hazai profil – a központ tartja karban' : 'nincs aktív attasé';
 }
 
 /** A felhasználó-kezelő országonkénti attasé-listájának egy eleme (vezető-súgó, figyelmeztetés, ★). */

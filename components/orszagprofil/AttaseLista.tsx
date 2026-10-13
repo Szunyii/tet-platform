@@ -1,4 +1,5 @@
 import { attaseHely, type OrszagAttase } from '../../lib/attase-orszag';
+import { hazaiE } from '../../lib/orszagok';
 import { Badge } from '../ui/badge';
 
 /**
@@ -9,7 +10,13 @@ import { Badge } from '../ui/badge';
  * szerkesztheti – erre figyelmeztet a lista utáni sor.
  */
 export function AttaseLista({ kod, attasek }: { kod: string; attasek: readonly OrszagAttase[] }) {
-  if (attasek.length === 0) return <p className="text-sm text-muted-foreground">Nincs aktív attasé.</p>;
+  if (attasek.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        {hazaiE(kod) ? 'Hazai profil – a központ tartja karban.' : 'Nincs aktív attasé.'}
+      </p>
+    );
+  }
   const tobb = attasek.length > 1;
   const cim = tobb ? 'Attasék' : 'Attasé';
   return (

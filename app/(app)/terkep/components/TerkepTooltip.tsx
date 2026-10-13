@@ -1,7 +1,7 @@
 'use client';
 
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
-import { attaseFelirat } from '../../../../lib/attase-orszag';
+import { attaseFelirat, attaseNelkulFelirat } from '../../../../lib/attase-orszag';
 import { ALLAPOT_CIMKE } from '../../../../lib/orszagprofil-szotar';
 import { ertekEsHely, type Mutato, type Rangsor } from '../../../../lib/terkep-mutatok';
 
@@ -34,7 +34,7 @@ function mutatoSor(o: TerkepOrszag, mutato: Mutato, rangsor: Rangsor | null): st
  * Egy attasénál nincs címke: ott a vezetőség automatikus (mint a profil oldalán).
  */
 function AttaseSorok({ o }: { o: TerkepOrszag }) {
-  if (o.attasek.length === 0) return <p className="text-background/70">nincs aktív attasé</p>;
+  if (o.attasek.length === 0) return <p className="text-background/70">{attaseNelkulFelirat(o.kod)}</p>;
   const tobb = o.attasek.length > 1;
   const rejtett = o.attasek.length - ATTASE_MAX;
   return (

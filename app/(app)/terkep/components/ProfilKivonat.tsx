@@ -9,7 +9,7 @@ import { SzerkesztesGomb } from '../../../../components/orszagprofil/Szerkesztes
 import { Badge } from '../../../../components/ui/badge';
 import { Button, buttonVariants } from '../../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../../../components/ui/card';
-import { attaseFelirat } from '../../../../lib/attase-orszag';
+import { attaseFelirat, attaseNelkulFelirat } from '../../../../lib/attase-orszag';
 import { BLOKK_KULCSOK, MEZO_CIMKEK } from '../../../../lib/orszagprofil-szotar';
 import { formatSzam as sz } from '../../../../lib/szam';
 import { ertekEsHely, SKALA_SZINEK, type Mutato, type Rangsor } from '../../../../lib/terkep-mutatok';
@@ -50,7 +50,7 @@ export function ProfilKivonat({
             <CardTitle>{o.nev}</CardTitle>
             <CardDescription className="flex flex-col gap-1">
               {o.attasek.length === 0 ? (
-                <span>nincs aktív attasé</span>
+                <span>{attaseNelkulFelirat(o.kod)}</span>
               ) : (
                 o.attasek.map((at) => (
                   <span key={at.userId}>

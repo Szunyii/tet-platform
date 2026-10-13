@@ -211,6 +211,17 @@ export function orszagNev(kod: string | null | undefined): string {
   return KOD_INDEX.get(kod)?.nev ?? kod;
 }
 
+/**
+ * A hazai ország: a profilja viszonyítási alap a térképen és az összehasonlításban. Nem attasé-
+ * állomáshely, a profilját a központ (admin) tartja karban – a felület ezért attasé hiányában
+ * nem „nincs aktív attasé”-t, hanem „hazai profil”-t ír.
+ */
+export const HAZAI_KOD = 'HU';
+
+export function hazaiE(kod: string | null | undefined): boolean {
+  return kod === HAZAI_KOD;
+}
+
 const NEV_GEO_SZERINT: ReadonlyMap<string, string> = new Map(ORSZAGOK.filter((o) => o.geo).map((o) => [o.geo, o.nev] as const));
 
 /**
