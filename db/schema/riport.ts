@@ -21,6 +21,11 @@ export const riport = sqliteTable(
     esemenyHelyszin: text('esemeny_helyszin'),
     joGyakorlat: text('jo_gyakorlat'),
     kapcsolodoFeladat: text('kapcsolodo_feladat'),
+    // A központ (admin) „Megtett intézkedése”: a három oszlop együtt null vagy együtt töltött,
+    // csak a setIntezkedes írja. A név pillanatkép (nincs FK), mint a ticket_uzenet.szerzo_nev.
+    intezkedes: text('intezkedes'),
+    intezkedesSzerzoNev: text('intezkedes_szerzo_nev'),
+    intezkedesIdopont: integer('intezkedes_idopont', { mode: 'timestamp_ms' }),
     createdAt: integer('created_at', { mode: 'timestamp_ms' })
       .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
       .notNull(),

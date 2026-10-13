@@ -31,6 +31,8 @@ export interface RiportListItem {
    * pillanatkép, mint az `orszag`). `null`, ha a szerzőnek nincs székhely-sora vagy városa.
    */
   varos: string | null;
+  /** A központ „Megtett intézkedése” (a teljes szöveg), vagy `null`. */
+  intezkedes: string | null;
   kategoria: KategoriaKulcs;
   targy: string;
   kulcsszavak: string[];
@@ -53,6 +55,10 @@ export interface RiportDetail extends RiportInput {
   orszag: string;
   createdAt: Date;
   updatedAt: Date;
+  /** A központ „Megtett intézkedése”: a három mező együtt `null` vagy együtt töltött. */
+  intezkedes: string | null;
+  intezkedesSzerzoNev: string | null;
+  intezkedesIdopont: Date | null;
   csatolmanyok: CsatolmanyMeta[];
 }
 
@@ -71,6 +77,7 @@ const listOszlopok = {
   szerzoNev: user.name,
   orszag: riport.orszag,
   varos: attaseOrszag.varos,
+  intezkedes: riport.intezkedes,
   kategoria: riport.kategoria,
   targy: riport.targy,
   kulcsszavak: riport.kulcsszavak,
@@ -134,6 +141,9 @@ export function getRiport(id: string): RiportDetail | null {
       kapcsolodoFeladat: riport.kapcsolodoFeladat,
       createdAt: riport.createdAt,
       updatedAt: riport.updatedAt,
+      intezkedes: riport.intezkedes,
+      intezkedesSzerzoNev: riport.intezkedesSzerzoNev,
+      intezkedesIdopont: riport.intezkedesIdopont,
     })
     .from(riport)
     .innerJoin(user, eq(riport.szerzoId, user.id))
@@ -201,6 +211,26 @@ export function updateRiport(
       tx.insert(riportCsatolmany).values({ id: crypto.randomUUID(), riportId: id, ...cs }).run();
     }
   });
+}
+
+/**
+ * A központ „Megtett intézkedésének” beállítása, vagy (`szoveg === null`) törlése; a három
+ * oszlop együtt változik. A bejegyzés `updatedAt`-ját NEM lépteti (a `$onUpdate` miatt
+ * kifejezetten önmagára állítjuk): a „módosítva” dátum az attasé szövegére vonatkozik, az
+ * intézkedésnek saját időpontja van. `false`, ha nincs ilyen bejegyzés.
+ */
+export function setIntezkedes(id: string, szoveg: string | null, szerzoNev: string): boolean {
+  const eredmeny = db
+    .update(riport)
+    .set({
+      intezkedes: szoveg,
+      intezkedesSzerzoNev: szoveg === null ? null : szerzoNev,
+      intezkedesIdopont: szoveg === null ? null : new Date(),
+      updatedAt: sql`${riport.updatedAt}`,
+    })
+    .where(eq(riport.id, id))
+    .run();
+  return eredmeny.changes > 0;
 }
 
 export function deleteRiport(id: string): void {

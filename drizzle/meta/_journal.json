@@ -71,6 +71,13 @@
       "when": 1791825127742,
       "tag": "0009_kapcsolatok_oszlop_torles",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1791881287274,
+      "tag": "0010_intezkedes",
+      "breakpoints": true
     }
   ]
 }
