@@ -38,6 +38,7 @@ export function IntezkedesSzerkeszto({
           bezárásakor a fókusz nem tudna visszatérni a kiváltó elemre. */}
       <button
         type="button"
+        aria-haspopup="dialog"
         onClick={nyit}
         title={szovegGomb ? 'Megtett intézkedés módosítása' : undefined}
         // A listában soronként van ilyen gomb: a név a tárggyal együtt egyedi.
