@@ -65,10 +65,10 @@ A `data/tet.db` demó-adatbázis a repóban van (felhasználókkal és az attas�
 | `/terkep` | Térkép és országprofil-kivonat a fejlécben választott ciklus évének nézetében (DB-s profilok, React + d3-geo világtérkép npm-ből, nagyítás és régió-gombok; Mutató-választó: kiemelt iparág, profil-állapot vagy számszerű mutató folytonos színskálával; iparág-szűrő; rangsor-panel; 2–4 ország összehasonlító táblája a térkép alatt; `?o=<kod>` előre kiválaszt) |
 | `/orszagprofil/[kod]` | Teljes országprofil a fejlécben választott ciklus évére (`tet-ev` cookie); bárki olvashatja |
 | `/orszagprofil/[kod]/szerkesztes` | Profil szerkesztése blokkonként (attasé: az az ország, amelynek relációs vezetője, idei év; admin: bármely ország, 2020-tól az idei évig) |
-| `/jelentesek` | Információs bejegyzések listája szűrőkkel (attasé: saját, admin: mind) |
-| `/jelentesek/[id]` | Bejegyzés részletei, csatolmány-letöltés |
+| `/jelentesek` | Információs bejegyzések listája szűrőkkel (attasé: saját, admin: mind); „Intézkedés” oszlop: a központ megtett intézkedése, amelyet az admin a listából is rögzíthet |
+| `/jelentesek/[id]` | Bejegyzés részletei, csatolmány-letöltés, a központ „Megtett intézkedés” kártyája |
 | `/jelentesek/[id]/szerkesztes` | Bejegyzés szerkesztése |
-| `/uj-jelentes` | Új bejegyzés (több országos attasénál ország-választó; kategória, tárgy, leírás, kulcsszavak, rendezvény adatai, csatolmány) |
+| `/uj-jelentes` | Új bejegyzés (több országos attasénál ország-választó; kategória, tárgy, vezetői összefoglaló, fő üzenet, kulcsszavak, rendezvény adatai, csatolmány) |
 | `/kommunikacio` | Ticketek és üzenetszálak: az admin nyit ticketet egy attasénak, mindkét fél válaszol; `?t=<id>` a kiválasztott ticket, `?sz=` szűrő (`aktiv`/`magas`/`mind`) |
 | `/tudastar` | Tudástár – Magyarországról ajánlható programok, partnerek, együttműködési formák |
 | `/monitoring` | Hálózati rangsor + 14 szempontos részletes értékelés |
@@ -98,6 +98,8 @@ A `data/tet.db` demó-adatbázis a repóban van (felhasználókkal és az attas�
 ## Ismert korlátok / következő lépések
 
 - A bejegyzés-lista lapozás nélküli: minden találat egy oldalon jelenik meg.
+- A „Megtett intézkedés” jelentésenként egyetlen szöveg: a korábbi változatai nem őrződnek meg,
+  és az attasé nem kap értesítést a rögzítéséről.
 - A szabadszavas keresés SQLite `LIKE`, ami ékezetes nagybetűre nem kis-nagybetű-független
   (az „Ő" nem találja meg az „ő"-t); ékezet nélküli betűkre igen.
 - A kategória-színek (`KATEGORIAK.szin`) világos módra készültek, nincs `dark:` párjuk.
