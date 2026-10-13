@@ -1,7 +1,7 @@
 # Magyarország országprofilja az összehasonlításhoz – tervezési spec
 
 Dátum: 2026-10-13
-Állapot: jóváhagyott terv, megvalósítás előtt
+Állapot: megvalósítva és átnézve (az adatfájl formai review-n, független webes tényellenőrzésen és újraellenőrzésen ment át); a böngészős próba és a demó DB commitja a dev szerverre vár
 Ág: `magyar-profil` (a `jelentes-intezkedes` ág tetején)
 
 ## Cél
@@ -108,7 +108,9 @@ mindhárom helyen az üres attasé-lista).
 - **Kitöltöttség:** Magyarország 8/9 (a 6.2 blokk mentetlen). A profil oldalán a 6.2 kártyája „Még
   nincs kitöltve”, a 7. blokkban csak az összegzés látszik.
 - **Rangsorok:** Magyarország a számszerű mutatók rangsorában és a színskála min–max tartományában is
-  részt vesz. A tartomány a szűretlen adathalmazé, így egy új ország módosíthatja a színezést.
+  részt vesz. A tartomány a szűretlen adathalmazé, így egy új ország módosíthatná a színezést;
+  Magyarország értékei azonban minden mutatónál a meglévő min–max-on belül vannak, ezért a többi
+  ország színe nem változott.
 - **Oldalsáv-kártya (admin):** a darabszámok eggyel nőnek.
 - **Attasé:** Magyarországhoz nem tartozik attasé, ezért a „Saját országprofil” gomb, az
   `OldalsavAllapot` attasé-nézete és a jelentések nem érintettek.
@@ -130,3 +132,39 @@ mindhárom helyen az üres attasé-lista).
 - `CLAUDE.md`: a parancslista demó-profil sora (27 ország + Magyarország), a `HAZAI_KOD` / `hazaiE`
   a „Térkép” bekezdésben és az országszótár leírásánál.
 - `README.md`: a térkép leírása, ha említi az országkört.
+
+## Megvalósítási eltérések
+
+- **Közös felirat-segéd.** A buborék és az oldalsó kivonat szövegét az `attaseNelkulFelirat(kod)`
+  adja (`lib/attase-orszag.ts`), nem három külön `hazaiE` elágazás; az `AttaseLista` a saját,
+  nagybetűs, ponttal záruló mondatát `hazaiE`-vel választja.
+- **„Üzenet a poszttal” link.** A `ProfilKivonat` linkje csak attaséval rendelkező országnál
+  jelenik meg (a hazai profilnál nincs poszt, akinek írni lehetne). Minden attasé nélküli országra
+  érvényes.
+- **Gazdasági ágazatok kritériuma.** Az `alapadatok.agazatok` a KSH 2025-ös megoszlásai szerint
+  készült: a feldolgozóipari termelés legalább 5%-át adó alágak és a bruttó hozzáadott érték legalább
+  5%-át adó, a szótárban megfelelő elemmel bíró nemzetgazdasági ágak. A gyógyszeripar (2,5%) és a
+  vegyipar (4,9%) ezért nem szerepel itt (a K+F-súlyuk miatt a kiemelt iparágak között igen); az
+  akkumulátorgyártás a villamosberendezés-gyártás részeként az „egyéb” mezőben áll.
+- **Uniós korlátozás (Horizont Európa, Erasmus+).** A spec nem tért ki rá; a profil a `kihivasok`,
+  az `euMultilateralis` és az `osszegzes` mezőben említi, kizárólag hivatalos iratokkal igazolható,
+  dátumhoz kötött megfogalmazásban: a 2022-es tanácsi határozat, a Bizottság 2026. szeptember 23-i
+  javaslata, és hogy az elfogadás a Tanács 2026. október 13-i ülésének napirendjén szerepelt. A
+  megszüntetés tényét a kutatás napján csak sajtóhír közölte, ezért nem szerepel.
+- **Stratégia.** A `strategia` a hatályos 2021–2030-as stratégiát és a Neumann János Programot
+  nevezi meg; egy 2026 októberében bejelentett új stratégiáról csak sajtóhír volt, ezért kimaradt.
+- **Top vállalatok.** A 2025-ös EU K+F Scoreboardban magyar székhellyel csak a Richter Gedeon
+  szerepel; a további öt név a vállalatok saját közlésein alapul, sorrendjük szerkesztői döntés.
+- **Beírás a DB-be.** A futtató `--ir` módja minden országfájlt újraír, ezért a meglévő 27 profil
+  (és a JP 2025 sor) `updated_at`-ja is a futás idejére állt; a tartalom változatlan volt. Az
+  `updated_at`-okat a beírás előtti mentésből visszaállítottuk, így a DB-ben csak a `HU` sor új.
+- **README.** A README-ben nincs térkép-leírás; a demó DB tartalmát leíró mondat és az egyszeri
+  hosting-csere leírása változott.
+
+### Időérzékeny tartalom (a központnak érdemes frissítenie)
+
+- az uniós korlátozás megszüntetése (hivatalos tanácsi közlemény vagy a Hivatalos Lap után);
+- a HUN-REN jogállása (a 2026. októberi törvénytervezet sorsa);
+- az új KFI-stratégia, ha elfogadják;
+- az alapítványi egyetemi fenntartók megszűnése (legkésőbb 2027. augusztus 1.);
+- a 2026-os NKFI-programstratégia összegei (a 2027-es stratégia 2026 végén várható).

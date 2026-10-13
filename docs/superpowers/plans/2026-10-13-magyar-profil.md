@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-13-magyar-profil-design.md`.
 
+**Megjegyzés (2026-10-13, a megvalósítás után):** az eltéréseket a spec „Megvalósítási eltérések” szakasza sorolja fel. A 3. taskhoz utólag egy lépés társult: az `--ir` minden országfájlt újraír, ezért a meglévő profilsorok `updated_at`-ját a beírás előtti mentésből (`$SCRATCH/hu-elotte.db`) vissza kellett állítani.
+
 ---
 
 ## Közös tudnivalók (minden taskhoz)
