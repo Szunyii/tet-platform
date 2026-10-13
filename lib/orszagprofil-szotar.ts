@@ -183,6 +183,8 @@ export interface Vallalati {
   topVallalatok: string[];
   startupok: string;
   klaszterek: string;
+  /** 2026-10-13 óta önálló mező; a korábban mentett profilokban az inkubátorok a `klaszterek` szövegében állnak. */
+  inkubatorok: string;
   technologiatranszfer: string;
 }
 export interface Programok {
@@ -281,7 +283,8 @@ const NORMALIZALOK: { [K in BlokkKulcs]: (r: Record<string, unknown>) => ProfilB
   vallalati: (r) => ({
     kiemeltAgazatok: agazatLista(r.kiemeltAgazatok), agazatEgyeb: szoveg(r.agazatEgyeb),
     topVallalatok: szovegLista(r.topVallalatok, TOP_VALLALAT_MAX), startupok: szoveg(r.startupok),
-    klaszterek: szoveg(r.klaszterek), technologiatranszfer: szoveg(r.technologiatranszfer),
+    klaszterek: szoveg(r.klaszterek), inkubatorok: szoveg(r.inkubatorok),
+    technologiatranszfer: szoveg(r.technologiatranszfer),
   }),
   programok: (r) => ({
     palyazatok: szoveg(r.palyazatok), tamogatasiProgramok: szoveg(r.tamogatasiProgramok),
@@ -487,14 +490,19 @@ export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], Me
       pelda: 'Samsung Electronics\nSK hynix\nHyundai Motor',
     },
     startupok: {
-      cimke: 'Startupok, KKV-k',
-      magyarazat: 'A startup- és KKV-ökoszisztéma jellemzői: ismert startupok, unikornisok, támogató programok, számok.',
+      cimke: 'Kiemelt innovatív startupok, kkv-k',
+      magyarazat: 'Az ország kiemelt innovatív startupjai és kkv-i, valamint az ökoszisztéma jellemzői: ismert startupok, unikornisok, támogató programok, számok.',
       pelda: 'Ismert unikornisok: Toss, Kurly. A TIPS program 2026-ban 800 startupot támogat.',
     },
     klaszterek: {
-      cimke: 'Klaszterek, inkubátorok',
-      magyarazat: 'A meghatározó innovációs klaszterek, tudományos és technológiai parkok, inkubátorok és gyorsítóprogramok (akcelerátorok) – név, hely, szakterület.',
-      pelda: 'Pangyo Techno Valley (IKT, játékipar, fintech); Songdo (biotechnológia); 19 Kreatív Gazdasági Innovációs Központ (CCEI) régiós inkubátorként.',
+      cimke: 'Klaszterek',
+      magyarazat: 'A meghatározó innovációs klaszterek, tudományos és technológiai parkok – név, hely, szakterület. Az inkubátorok és akcelerátorok a következő mezőbe kerülnek.',
+      pelda: 'Pangyo Techno Valley (IKT, játékipar, fintech); Songdo (biotechnológia).',
+    },
+    inkubatorok: {
+      cimke: 'Inkubátorok, akcelerátorok',
+      magyarazat: 'A meghatározó inkubátorok és gyorsítóprogramok (akcelerátorok) – név, fenntartó, hely, szakterület.',
+      pelda: '19 Kreatív Gazdasági Innovációs Központ (CCEI) régiós inkubátorként.',
     },
     technologiatranszfer: {
       cimke: 'Technológiatranszfer',
@@ -503,20 +511,22 @@ export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], Me
     },
   },
   programok: {
+    // A megjelenítés sorrendje (űrlap, olvasó nézet): finanszírozási eszközök, nemzeti pályázatok, támogatási programok,
+    // nemzetközi részvétel. A tárolt JSON kulcssorrendje (típus, normalizáló, validátor) szándékosan a régi maradt.
+    finanszirozasiEszkozok: {
+      cimke: 'Finanszírozási eszközök',
+      magyarazat: 'A pályázaton kívüli finanszírozási eszközök: kockázati tőke, alapok alapja, hitelgarancia, kedvezményes hitel, adókedvezmény.',
+      pelda: 'KVIC alapok alapja; KOTEC technológiaalapú hitelgaranciák; K+F-adójóváírás.',
+    },
     palyazatok: {
-      cimke: 'Pályázatok',
-      magyarazat: 'Az országban elérhető fő KFI-pályázati programok: kiíró, a program neve és témája, valamint – ha ismert – a jellemző beadási időszak.',
+      cimke: 'Nemzeti KFI pályázatok',
+      magyarazat: 'Az ország fő nemzeti KFI-pályázati programjai: kiíró, a program neve és témája, valamint – ha ismert – a jellemző beadási időszak.',
       pelda: 'NRF alapkutatási pályázatok (egyéni, fiatal kutatói, csoportos sémák); IITP IKT K+F felhívások; KEIT ipari technológiai programok.',
     },
     tamogatasiProgramok: {
       cimke: 'Támogatási programok',
       magyarazat: 'Állami támogatási és ösztönző programok (startup-, inkubációs, mobilitási, tehetséggondozási): név, kezelő szerv, célcsoport.',
       pelda: 'TIPS (MSS) – technológiai startupok, magánbefektetői előszűréssel; Brain Pool (MSIT, NRF) – külföldi kutatók meghívása koreai egyetemekre és kutatóintézetekbe.',
-    },
-    finanszirozasiEszkozok: {
-      cimke: 'Finanszírozási eszközök',
-      magyarazat: 'A pályázaton kívüli finanszírozási eszközök: kockázati tőke, alapok alapja, hitelgarancia, kedvezményes hitel, adókedvezmény.',
-      pelda: 'KVIC alapok alapja; KOTEC technológiaalapú hitelgaranciák; K+F-adójóváírás.',
     },
     nemzetkoziReszvetel: {
       cimke: 'Nemzetközi részvételi lehetőségek',
@@ -526,7 +536,7 @@ export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], Me
   },
   rendezvenyek: {
     lista: {
-      cimke: 'Rendezvények',
+      cimke: 'Szakkiállítások, konferenciák, egyéb fórumok',
       magyarazat: `Az országban rendszeresen megrendezett jelentősebb KFI-rendezvények. Legfeljebb ${RENDEZVENY_MAX} rendezvény, a rendezvény neve kötelező; a teljesen üres sor kimarad.`,
     },
   },

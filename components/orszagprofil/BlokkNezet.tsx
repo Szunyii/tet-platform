@@ -101,6 +101,7 @@ const NEZETEK: { [K in BlokkKulcs]: (b: ProfilBlokkok[K]) => ReactNode } = {
         </Sor>
         <Sor cimke={C.startupok.cimke}><Szoveg v={b.startupok} /></Sor>
         <Sor cimke={C.klaszterek.cimke}><Szoveg v={b.klaszterek} /></Sor>
+        <Sor cimke={C.inkubatorok.cimke}><Szoveg v={b.inkubatorok} /></Sor>
         <Sor cimke={C.technologiatranszfer.cimke}><Szoveg v={b.technologiatranszfer} /></Sor>
       </dl>
     );
@@ -109,7 +110,7 @@ const NEZETEK: { [K in BlokkKulcs]: (b: ProfilBlokkok[K]) => ReactNode } = {
     const C = MEZO_CIMKEK.programok;
     return (
       <dl className="flex flex-col gap-3">
-        {(['palyazatok', 'tamogatasiProgramok', 'finanszirozasiEszkozok', 'nemzetkoziReszvetel'] as const).map((k) => (
+        {(['finanszirozasiEszkozok', 'palyazatok', 'tamogatasiProgramok', 'nemzetkoziReszvetel'] as const).map((k) => (
           <Sor key={k} cimke={C[k].cimke}><Szoveg v={b[k]} /></Sor>
         ))}
       </dl>
@@ -120,6 +121,10 @@ const NEZETEK: { [K in BlokkKulcs]: (b: ProfilBlokkok[K]) => ReactNode } = {
     return (
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
+          {/* A blokk címét pontosító felirat, a többi blokk mezőcímkéinek stílusában. */}
+          <caption className="pb-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            {MEZO_CIMKEK.rendezvenyek.lista.cimke}
+          </caption>
           <thead className="text-left text-xs text-muted-foreground uppercase">
             <tr>
               <th scope="col" className="py-1 pr-3 font-medium">Név</th>

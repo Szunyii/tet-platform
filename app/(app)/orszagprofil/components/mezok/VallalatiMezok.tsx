@@ -25,6 +25,7 @@ export function VallalatiMezok({
             max={ROVID_MAX * TOP_VALLALAT_MAX + TOP_VALLALAT_MAX} sorok={10} errors={errors} />
           <SzovegMezo id={mezoId(B, 'startupok')} name="startupok" {...C.startupok} value={e.startupok} onChange={set('startupok')} max={SZOVEG_MAX} errors={errors} />
           <SzovegMezo id={mezoId(B, 'klaszterek')} name="klaszterek" {...C.klaszterek} value={e.klaszterek} onChange={set('klaszterek')} max={SZOVEG_MAX} errors={errors} />
+          <SzovegMezo id={mezoId(B, 'inkubatorok')} name="inkubatorok" {...C.inkubatorok} value={e.inkubatorok} onChange={set('inkubatorok')} max={SZOVEG_MAX} errors={errors} />
           <SzovegMezo id={mezoId(B, 'technologiatranszfer')} name="technologiatranszfer" {...C.technologiatranszfer} value={e.technologiatranszfer} onChange={set('technologiatranszfer')} max={SZOVEG_MAX} errors={errors} />
         </>
       )}

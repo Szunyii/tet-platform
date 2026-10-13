@@ -136,6 +136,7 @@ const VALIDALOK: { [K in BlokkKulcs]: (fd: FormData, errors: MezoHibak, aktualis
       topVallalatok: topVallalatokSorok(fd, errors),
       startupok: szoveg(fd, b, 'startupok', SZOVEG_MAX, errors),
       klaszterek: szoveg(fd, b, 'klaszterek', SZOVEG_MAX, errors),
+      inkubatorok: szoveg(fd, b, 'inkubatorok', SZOVEG_MAX, errors),
       technologiatranszfer: szoveg(fd, b, 'technologiatranszfer', SZOVEG_MAX, errors),
     };
   },
