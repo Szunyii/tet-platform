@@ -306,15 +306,18 @@ export function countOlvasatlan(nezo: Nezo): number {
 
 /**
  * Az admin új-ticket dialógusához: nem tiltott attasék, akiknek van székhelye, magyar
- * névsorrendben; az `orszag` a székhely kódja (a ticket pillanatképe).
+ * névsorrendben; az `orszag` a székhely kódja (a ticket pillanatképe), a `varos` a székhely
+ * városa, az `orszagok` az összes országa (a székhely elöl, utána a regionálisak kód szerint) –
+ * ebből számolódnak a régió-gombok (`lib/ticket-cimzettek.ts`).
  */
 export function listCimzettJeloltek(): CimzettJelolt[] {
   const most = Date.now();
-  return db
+  const szekhelyesek = db
     .select({
       id: user.id,
       nev: user.name,
       orszag: attaseOrszag.orszagKod,
+      varos: attaseOrszag.varos,
       role: user.role,
       banned: user.banned,
       banExpires: user.banExpires,
@@ -322,7 +325,27 @@ export function listCimzettJeloltek(): CimzettJelolt[] {
     .from(user)
     .innerJoin(attaseOrszag, and(eq(attaseOrszag.userId, user.id), eq(attaseOrszag.szekhely, true)))
     .all()
-    .filter((u) => u.role !== 'admin' && !tiltottE(u, most))
-    .map((u) => ({ id: u.id, nev: u.nev, orszag: u.orszag }))
+    .filter((u) => u.role !== 'admin' && !tiltottE(u, most));
+  // A regionális országok egy lekérdezéssel, felhasználónként csoportosítva.
+  const regionalis = new Map<string, string[]>();
+  const regionalisSorok = db
+    .select({ userId: attaseOrszag.userId, kod: attaseOrszag.orszagKod })
+    .from(attaseOrszag)
+    .where(eq(attaseOrszag.szekhely, false))
+    .orderBy(attaseOrszag.orszagKod)
+    .all();
+  for (const s of regionalisSorok) {
+    const lista = regionalis.get(s.userId);
+    if (lista) lista.push(s.kod);
+    else regionalis.set(s.userId, [s.kod]);
+  }
+  return szekhelyesek
+    .map((u) => ({
+      id: u.id,
+      nev: u.nev,
+      orszag: u.orszag,
+      varos: u.varos || null,
+      orszagok: [u.orszag, ...(regionalis.get(u.id) ?? [])],
+    }))
     .sort((a, b) => a.nev.localeCompare(b.nev, 'hu'));
 }

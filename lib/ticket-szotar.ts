@@ -38,11 +38,16 @@ export const SZURO_KULCSOK = Object.keys(SZUROK) as TicketSzuro[];
 export const TARGY_MAX = 200;
 export const UZENET_MAX = 4000;
 
-/** Az admin által választható címzett: nem tiltott attasé, akinek van országa. */
+/** Az admin által választható címzett: nem tiltott attasé, akinek van székhelye. */
 export interface CimzettJelolt {
   id: string;
   nev: string;
+  /** A székhely országkódja (a ticket `orszag` pillanatképe). */
   orszag: string;
+  /** A székhely városa; `null`, ha nincs megadva. */
+  varos: string | null;
+  /** Az attasé összes országkódja (székhely és regionális lefedettség), a székhely elöl – a régió-gombokhoz. */
+  orszagok: string[];
 }
 
 /**
