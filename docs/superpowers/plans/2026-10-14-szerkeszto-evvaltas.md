@@ -17,6 +17,7 @@ Spec: `docs/superpowers/specs/2026-10-14-szerkeszto-evvaltas-design.md`. Ág: `s
 - Create: `app/(app)/orszagprofil/components/NemSzerkeszthetoEv.tsx` – a tájékoztató kártya (szöveg + „Vissza a szerkesztéshez (<most>)” + „A(z) <ev>. évi profil megtekintése”).
 - Modify: `app/(app)/orszagprofil/[kod]/szerkesztes/page.tsx` – a három ág, doc-komment.
 - Modify: `CLAUDE.md` – az Országprofil route-leírása és az „Amire figyelni kell” lista.
+- Modify: `components/orszagprofil/SzerkesztesGomb.tsx` – a doc-komment felsorolja az új hívóhelyet (a `NemSzerkeszthetoEv` kártya; a review nyomán).
 
 ---
 
@@ -38,10 +39,9 @@ import { Card, CardContent, CardFooter } from '../../../../components/ui/card';
 
 /**
  * A szerkesztő ezt mutatja az űrlapok helyett, ha a fejlécben választott év nem szerkeszthető,
- * de az aktuális igen (relációs vezető attasé múltbeli évvel). Szándékosan nem 404: a Next a
- * notFound()-ot egy csak útvonal-váltáskor visszaálló határon jeleníti meg, az évváltás pedig
- * cookie, így a 404 a visszaváltás után is beragadna. A gomb a SzerkesztesGomb form-ága: a
- * valasztEvAction az aktuális évre állítja a ciklust és a szerkesztőre irányít.
+ * de az aktuális igen (relációs vezető attasé múltbeli évvel; a miértjét lásd a szerkesztő
+ * page-en). A gomb a SzerkesztesGomb form-ága: a valasztEvAction az aktuális évre állítja a
+ * ciklust és a szerkesztőre irányít.
  */
 export function NemSzerkeszthetoEv({
   kod, ev, most, action,
@@ -55,11 +55,11 @@ export function NemSzerkeszthetoEv({
   return (
     <Card>
       <CardContent>
-        <p className="text-sm">
+        <p>
           A(z) {ev}. évi profil csak megtekinthető; szerkeszteni a(z) {most}. évi profilt lehet.
         </p>
       </CardContent>
-      <CardFooter className="flex flex-wrap items-center gap-3">
+      <CardFooter className="flex-wrap gap-3">
         <SzerkesztesGomb
           kod={kod}
           most={most}
@@ -116,11 +116,11 @@ export const metadata: Metadata = { title: 'Országprofil szerkesztése' };
  * Blokkonkénti szerkesztő. Az év a fejléc ciklusválasztójáé (tet-ev cookie). Admin: bármely
  * ország EV_MIN és az aktuális év között; attasé: csak az az ország, amelynek relációs vezetője,
  * és csak az aktuális év. Ha a választott év nem szerkeszthető, de az aktuális igen (attasé
- * múltbeli évvel – a fejléc ezt is felkínálja, és január 1-jén a nyitva hagyott szerkesztő is
- * ide jut), az űrlapok helyett a NemSzerkeszthetoEv kártya jelenik meg, nem 404: a notFound()
- * a Next 404-határán az útvonal változásáig beragadna, az évváltás pedig csak cookie, így a
- * visszaváltás után is 404 maradna. Ha az aktuális év sem szerkeszthető (nincs jog az
- * országhoz), 404 – ez a választott évtől független, ezért nem ragadhat be évváltáskor.
+ * múltbeli évvel – a fejléc ezt is felkínálja; január 1-je után is ide jut, ha a cookie még az
+ * előző évet tartja), az űrlapok helyett a NemSzerkeszthetoEv kártya jelenik meg, nem 404:
+ * a notFound() a Next 404-határán az útvonal változásáig beragadna, az évváltás pedig csak
+ * cookie, így a visszaváltás után is 404 maradna. Ha az aktuális év sem szerkeszthető (nincs
+ * jog az országhoz), 404 – ez a választott évtől független, ezért nem ragadhat be évváltáskor.
  */
 export default async function SzerkesztesPage({ params }: { params: Promise<{ kod: string }> }) {
   const session = await requireSession();
@@ -236,13 +236,13 @@ A page-en viszont marad a 404.
 cseréld erre:
 
 ```
-A page-en a 404 csak az évtől független jog-hibára marad (lásd a következő pontot).
+A page-en a 404 csak a választott évtől független jog-hibára marad (lásd a következő pontot).
 ```
 
 és közvetlenül utána, új pontként szúrd be:
 
 ```
-- A választott évtől (cookie) függő `notFound()` beragad: a Next a 404-et kliens-oldali határon (`HTTPAccessFallbackErrorBoundary`) jeleníti meg, amely csak útvonal-változáskor áll vissza, az évváltás viszont cookie + revalidálás, az útvonal nem változik – a következő, már jogos render sem tünteti el, csak a teljes újratöltés. Ezért a szerkesztő évfüggő jog-hibája tájékoztató kártya (`NemSzerkeszthetoEv`), nem 404; a választott évtől függő új ellenőrzés se `notFound()`-dal válaszoljon.
+- A választott évtől (cookie) függő `notFound()` beragad: a Next a 404-et kliens-oldali határon (`HTTPAccessFallbackErrorBoundary`) jeleníti meg, amely csak útvonal-változáskor áll vissza, az évváltás viszont cookie + revalidálás, az útvonal nem változik – a következő, már jogos render sem tünteti el, csak egy másik útvonalra lépés vagy a teljes újratöltés. Ezért a szerkesztő évfüggő jog-hibája tájékoztató kártya (`NemSzerkeszthetoEv`), nem 404; a választott évtől függő új ellenőrzés se `notFound()`-dal válaszoljon.
 ```
 
 - [ ] **Step 3: Ellenőrzés**

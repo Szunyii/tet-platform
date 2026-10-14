@@ -1,7 +1,7 @@
 # Országprofil-szerkesztő: nem szerkeszthető év – tervezési spec
 
 Dátum: 2026-10-14
-Állapot: jóváhagyva
+Állapot: megvalósítva és átnézve (taskonként spec- és minőségi review, záró review), a böngészős próba kész (2026-10-14, a futó dev szerveren). Az eltéréseket lásd a „Megvalósítási eltérések” szakaszban.
 Ág: `szerkeszto-evvaltas`
 Előzmény: `2026-09-14-ciklus-ev-vezerles-design.md` (a fejléc éve vezérli a szerkesztőt; ott a
 múltbeli év a szerkesztőben még 404 volt).
@@ -73,3 +73,20 @@ tartalmaz.
     2025-ben is.
   - Admin: a szerkesztőben 2025 → üres űrlapok, 2026 → a mentett adatok (változatlan).
   - A QA végén kijelentkezés; a DB-t nem commitoljuk.
+
+## Megvalósítási eltérések
+
+A taskonkénti review-k nyomán a terv első változatához képest:
+
+- **Január 1.** A kártya január 1-je után csak akkor jelenik meg, ha a `tet-ev` cookie még az
+  előző évet tartja; cookie nélkül a választott év az aktuális, ott az űrlapok jelennek meg. A
+  page doc-kommentje így írja (a „Mikor jelenik meg a kártya” sor „nyitva hagyott szerkesztő
+  január 1-jén” esetének pontosítása).
+- **Kommentek.** A beragadó 404 indoklása csak a szerkesztő page doc-kommentjében áll, a
+  `NemSzerkeszthetoEv` kommentje oda hivatkozik; a `SzerkesztesGomb` doc-kommentje felsorolja az
+  új hívóhelyet (a kártyát).
+- **Osztályok.** A kártya szövege és lábléce nem kap a shadcn alapértelmezéssel azonos osztályt (a
+  `Card` már `text-sm`, a `CardFooter` már `flex items-center`): `<p>`, `CardFooter className="flex-wrap gap-3"`.
+- **CLAUDE.md.** Az első „Amire figyelni kell” pont „a választott évtől független” jog-hibát mond;
+  az új pont szerint a beragadt 404-et a teljes újratöltés mellett egy másik útvonalra lépés is
+  megszünteti (a határ útvonal-változáskor áll vissza).
