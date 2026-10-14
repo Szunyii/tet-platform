@@ -4,8 +4,8 @@ import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { HAZAI_SZIN, listaMatrix } from '../../../../lib/osszehasonlitas';
 import { cn } from '../../../../lib/utils';
 
-/** A magyar oszlop: halvány háttér és szaggatott bal szegély (fejléc és cellák). */
-const HU_OSZLOP = 'w-8 border-l border-dashed bg-muted/40 text-center';
+/** A magyar oszlop: halvány háttér és szaggatott bal szegély (fejléc és cellák), a mutatókártya magyar elválasztójának tónusával. */
+const HU_OSZLOP = 'w-8 border-l border-dashed border-foreground/20 bg-muted text-center';
 
 /** Az elem szerepel a listában: pötty az ország színében (Magyarországnál rombusz), felolvasónak „van”. */
 function Van({ szin, rombusz }: { szin: string; rombusz?: boolean }) {
@@ -41,8 +41,11 @@ export function ListaMatrix<T extends string>({ cim, sorrend, elemek, orszagok, 
   cim: string;
   /** A szótár (pl. `AGAZATOK`): a csoporton belüli sorrend. */
   sorrend: readonly T[];
-  /** Az ország listája (pl. `(o) => o.iparagak`). */
-  elemek: (o: TerkepOrszag) => readonly T[];
+  /**
+   * Az ország listája (pl. `(o) => o.iparagak`). A `NoInfer` miatt a `T`-t csak a `sorrend` adja: más
+   * szótár listája fordítási hiba (különben a `T` a kettő uniója lenne, és a sorrend némán felborulna).
+   */
+  elemek: (o: TerkepOrszag) => readonly NoInfer<T>[];
   /** A halmaz rekordjai a hozzáadás sorrendjében (Magyarország nélkül). */
   orszagok: readonly TerkepOrszag[];
   /** Kód → az ország színe az összehasonlításban. */
@@ -63,9 +66,10 @@ export function ListaMatrix<T extends string>({ cim, sorrend, elemek, orszagok, 
         <p className="text-sm text-muted-foreground">Nincs adat.</p>
       ) : (
         <>
-          <p className="text-xs text-muted-foreground">{matrix.osszegzes}</p>
-          {/* Keskeny kártyán a táblázat a kártyán belül görgethető. */}
-          <div className="overflow-x-auto">
+          {matrix.osszegzes && <p className="text-xs text-muted-foreground">{matrix.osszegzes}</p>}
+          {/* Keskeny kártyán a táblázat a kártyán belül görgethető. A `relative` a rejtett (sr-only) feliratok
+              befoglaló doboza: nélküle azok a görgetett dobozon kívül maradnak, és az oldalt szélesítik. */}
+          <div className="relative overflow-x-auto">
             <table className="w-full border-collapse text-xs">
               <caption className="sr-only">{cim}</caption>
               <thead>
@@ -98,7 +102,8 @@ export function ListaMatrix<T extends string>({ cim, sorrend, elemek, orszagok, 
                     </th>
                   </tr>
                   {cs.sorok.map((s) => (
-                    <tr key={s.elem}>
+                    // A hover a széles kártyán a címke és a pöttyei közti utat könnyíti.
+                    <tr key={s.elem} className="hover:bg-muted/50">
                       <th scope="row" className="py-0.5 pr-2 text-left font-normal">{s.elem}</th>
                       {orszagok.map((o, i) => (
                         <td key={o.kod} className="text-center">

@@ -97,7 +97,7 @@ export function OsszehasonlitasFejlec({ orszagok, szinek, hazai, jeloltek, mutat
         </div>
       )}
       {hazai && (
-        <div className={cn(KARTYA, 'border-dashed bg-muted/40')}>
+        <div className={cn(KARTYA, 'border-dashed border-foreground/20 bg-muted/40')}>
           <Csik szin={HAZAI_SZIN} />
           <span className="flex w-full flex-wrap items-start gap-1.5">
             <NevGomb o={hazai} onKivalaszt={onKivalaszt} />
