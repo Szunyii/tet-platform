@@ -1524,7 +1524,7 @@ export function ListaMatrix<T extends string>({ cim, sorrend, elemek, orszagok, 
 
 - [ ] **Step 2: `OsszehasonlitasPanel.tsx` végleges tartalma**
 
-A 3. taskhoz képest két dolog változik: az importok közé bekerül az `AGAZATOK`, a `KFI_PRIORITASOK`, a `TAGSAGOK` és a `ListaMatrix`, és a „Mutatók” után jön a „Listák” szakasz.
+A 3. taskhoz képest két dolog változik: az importok közé bekerül az `AGAZATOK`, a `KFI_PRIORITASOK`, a `TAGSAGOK` és a `ListaMatrix`, és a „Mutatók” után jön a „Listák” szakasz. A kód már tartalmazza a 3. task minőségi reviewjának javításait, amelyek a 3. task utáni külön javító commitban kerültek a panelbe. A jelmagyarázat a címsoron kívül, `aria-hidden` `<p>`-ben van, a mutatórács legfeljebb 4 oszlopos, és a kommentek szerint Magyarország akkor viszonyítási alap, ha legfeljebb a nézett évig van profilja.
 
 ```tsx
 'use client';
@@ -1540,16 +1540,18 @@ import { ListaMatrix } from './ListaMatrix';
 import { MutatoKartya } from './MutatoKartya';
 import { OsszehasonlitasFejlec } from './OsszehasonlitasFejlec';
 
-/** Egy szakasz (Mutatók, Listák): kicsi, nagybetűs cím, mellette opcionális egysoros jelmagyarázat. */
+/**
+ * Egy szakasz (Mutatók, Listák): kicsi, nagybetűs cím, mellette opcionális egysoros jelmagyarázat. A
+ * jelmagyarázat a címsoron kívül van (különben a felolvasó a címsor nevébe olvasná), és `aria-hidden`:
+ * csak a szintén rejtett grafikát (jelölő, rombusz) magyarázza.
+ */
 function Szakasz({ cim, jelmagyarazat, children }: { cim: string; jelmagyarazat?: ReactNode; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-        {cim}
-        {jelmagyarazat && (
-          <span className="flex items-center gap-1.5 font-normal tracking-normal normal-case">{jelmagyarazat}</span>
-        )}
-      </h2>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        <h2 className="font-medium tracking-wide uppercase">{cim}</h2>
+        {jelmagyarazat && <p aria-hidden className="flex items-center gap-1.5">{jelmagyarazat}</p>}
+      </div>
       {children}
     </section>
   );
@@ -1558,15 +1560,15 @@ function Szakasz({ cim, jelmagyarazat, children }: { cim: string; jelmagyarazat?
 /**
  * Az összehasonlítás a térkép alatt, teljes szélességben (a keskeny jobb panelen nem férne el): fejléc
  * (országkártyák, „+ Ország", Magyarország), számszerű mutatónként egy kártya, és a listák mátrixa.
- * Minden ország saját színt kap (`szinek`); Magyarország – ha van rekordja a nézett évre – mindig
- * viszonyítási alap.
+ * Minden ország saját színt kap (`szinek`); Magyarország – ha legfeljebb a nézett évig van profilja –
+ * mindig viszonyítási alap.
  */
 export function OsszehasonlitasPanel({ orszagok, szinek, hazai, jeloltek, mutato, onKivalaszt, onKivesz, onHozzaad, onTorol }: {
   /** A halmaz rekordjai a hozzáadás sorrendjében (Magyarország nélkül). */
   orszagok: TerkepOrszag[];
   /** Kód → az ország színe az összehasonlításban. */
   szinek: Readonly<Record<string, string>>;
-  /** A magyar rekord (viszonyítási alap); `null`, ha nincs a nézett évre. */
+  /** A magyar rekord (viszonyítási alap); `null`, ha legfeljebb a nézett évig nincs profilja. */
   hazai: TerkepOrszag | null;
   /** A „+ Ország" lista (a halmazban nem lévők, Magyarország nélkül; a hívó rendezi). */
   jeloltek: TerkepOrszag[];
@@ -1608,7 +1610,8 @@ export function OsszehasonlitasPanel({ orszagok, szinek, hazai, jeloltek, mutato
             </>
           )}
         >
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(15rem,100%),1fr))] gap-2.5">
+          {/* Legalább 15rem széles oszlopok, de legfeljebb 4 (a 23% miatt): széles képernyőn 4+3 kártya. */}
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,max(15rem,23%)),1fr))] gap-2.5">
             {SZAM_MUTATOK.map((m) => (
               <MutatoKartya key={m.kulcs} mutato={m} {...kozos} kiemelt={m.kulcs === mutato.kulcs} />
             ))}
