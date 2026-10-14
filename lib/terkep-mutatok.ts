@@ -28,7 +28,7 @@ export interface SzamMutato {
   skala: 'linearis' | 'log';
   /**
    * Az összehasonlítás sáv-skálájának teteje legalább ennyi (a kitöltöttségnél a blokkok száma, hogy a
-   * 9/9 teli sáv legyen); nélküle a tető a megjelenített értékek legnagyobbika.
+   * 9/9 teli sáv legyen); nélküle a tető a megjelenített értékek legnagyobbika (de legalább 0).
    */
   felsoHatar?: number;
   ertek: (o: TerkepOrszag) => number | null;
@@ -83,7 +83,7 @@ const MUTATO_TABLA: { [K in MutatoKulcs]: Mutato & { kulcs: K } } = {
   },
 };
 
-/** A mutatók a `MUTATO_KULCSOK` sorrendjében (a Select és az összehasonlító tábla sorrendje). */
+/** A mutatók a `MUTATO_KULCSOK` sorrendjében (a Select és az összehasonlítás mutatókártyáinak sorrendje). */
 export const MUTATOK: readonly Mutato[] = MUTATO_KULCSOK.map((k) => MUTATO_TABLA[k]);
 export const SZAM_MUTATOK: readonly SzamMutato[] = MUTATOK.filter((m): m is SzamMutato => m.tipus === 'szam');
 export const KATEGORIA_MUTATOK: readonly KategoriaMutato[] = MUTATOK.filter((m): m is KategoriaMutato => m.tipus === 'kategoria');

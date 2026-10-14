@@ -94,7 +94,7 @@ export interface TerkepOrszag {
   iparagak: Agazat[];
   /** K+F ráfordítás a GDP %-ában (KFI-blokk), ha a blokk mentett. */
   gerd: number | null;
-  /** KFI-prioritások (KFI-blokk) az összehasonlító táblához; nem mentett blokknál üres. */
+  /** KFI-prioritások (KFI-blokk) az összehasonlítás listamátrixához; nem mentett blokknál üres. */
   prioritasok: KfiPrioritas[];
   osszegzes: string;
   alapadatok: Alapadatok | null;

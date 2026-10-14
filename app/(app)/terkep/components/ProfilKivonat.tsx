@@ -80,7 +80,7 @@ export function ProfilKivonat({
       <CardContent className="flex flex-col gap-4">
         {ertek !== undefined && (
           // Inline style szándékosan: a sáv színe a térkép skálájának legvilágosabb fokozata (mint az
-          // összehasonlító tábla kiemelt sora) – ez köti a sort a térkép aktuális színezéséhez. Érték
+          // összehasonlítás kiemelt mutatókártyája) – ez köti a sort a térkép aktuális színezéséhez. Érték
           // nélkül nincs sáv: a térkép sem színezi az országot, és a halvány szöveg a színen nem olvasható.
           <p className="rounded-md px-2 py-1 text-sm text-foreground" style={ertek === null ? undefined : { background: SKALA_SZINEK[0] }}>
             <span>{mutato.cimke}: </span>

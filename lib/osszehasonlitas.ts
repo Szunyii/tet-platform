@@ -105,7 +105,7 @@ export interface ListaCsoport<T extends string> {
 export interface ListaMatrixAdat<T extends string> {
   /** Az üres csoportok nélkül; ha egyik listának sincs eleme, üres. */
   csoportok: ListaCsoport<T>[];
-  /** Az összegző sor; a nulla darabszámú részek kimaradnak, kivéve a „Magyarországgal közös”-t (az 0-nál is kiíródik). Üres mátrixnál üres string. */
+  /** Az összegző sor; a nulla darabszámú részek kimaradnak, kivéve a „Magyarországgal közös”-t (ha a magyar lista nem üres, 0-nál is kiíródik). Üres mátrixnál üres string. */
   osszegzes: string;
 }
 

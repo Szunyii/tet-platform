@@ -4,8 +4,10 @@ import type { ReactNode } from 'react';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { Button } from '../../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../components/ui/card';
+import { AGAZATOK, KFI_PRIORITASOK, TAGSAGOK } from '../../../../lib/orszagprofil-szotar';
 import { HAZAI_SZIN } from '../../../../lib/osszehasonlitas';
 import { SZAM_MUTATOK, type Mutato } from '../../../../lib/terkep-mutatok';
+import { ListaMatrix } from './ListaMatrix';
 import { MutatoKartya } from './MutatoKartya';
 import { OsszehasonlitasFejlec } from './OsszehasonlitasFejlec';
 
@@ -84,6 +86,22 @@ export function OsszehasonlitasPanel({ orszagok, szinek, hazai, jeloltek, mutato
             {SZAM_MUTATOK.map((m) => (
               <MutatoKartya key={m.kulcs} mutato={m} {...kozos} kiemelt={m.kulcs === mutato.kulcs} />
             ))}
+          </div>
+        </Szakasz>
+        <Szakasz
+          cim="Listák"
+          jelmagyarazat={hazai && (
+            <>
+              {/* Inline style szándékosan: a rombusz színe a mátrixéval azonos. */}
+              <span aria-hidden className="inline-block size-2 rotate-45" style={{ background: HAZAI_SZIN }} />
+              Magyarország
+            </>
+          )}
+        >
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] items-start gap-2.5">
+            <ListaMatrix cim="Kiemelt iparágak" sorrend={AGAZATOK} elemek={(o) => o.iparagak} {...kozos} />
+            <ListaMatrix cim="KFI-prioritások" sorrend={KFI_PRIORITASOK} elemek={(o) => o.prioritasok} {...kozos} />
+            <ListaMatrix cim="Tagságok" sorrend={TAGSAGOK} elemek={(o) => o.alapadatok?.tagsagok ?? []} {...kozos} />
           </div>
         </Szakasz>
       </CardContent>
