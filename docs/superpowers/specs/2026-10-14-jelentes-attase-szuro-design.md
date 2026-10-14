@@ -106,7 +106,9 @@ az attasé nézetében a saját-szűrő nem szűrőérték.
 ## Kiegészítés: ismeretlen ország-kód az admin szűrőjében
 
 A záró review megfigyelése nyomán, a felhasználó kérésére (2026-10-14), külön ágon
-(`jelentes-orszag-szuro`, a `main` tetején, amelybe az attasé-szűrő már bekerült).
+(`jelentes-orszag-szuro`, a `main` tetején, amelybe az attasé-szűrő már bekerült). Állapot: megvalósítva
+(`db59510`, a komment és a CLAUDE.md pontosítása `3e01ee7`), spec- és minőségi review-n átment, böngészőben
+kipróbálva (2026-10-14, ideiglenes QA-bejegyzéssel, utána törölve).
 
 **Kiinduló állapot.** Az admin `?orszag=XX`-e akkor is szűrőként él, ha a kód nincs a `listOrszagok()`
 listájában (ismeretlen kód, kisbetűs kód, vagy olyan ország, amelyről nincs bejegyzés): a lista üres,
