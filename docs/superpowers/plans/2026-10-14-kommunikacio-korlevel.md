@@ -10,6 +10,13 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-14-kommunikacio-korlevel-design.md`
 
+> **Megvalósítva (2026-10-14).** A lenti kódblokkok a terv eredeti állapotát mutatják; a review-k
+> nyomán a végleges kód több ponton eltér: csak hozzáadó gyorsgombok (nem `aria-pressed` kapcsolók),
+> azonos időbélyeg + magyar névsoros holtverseny a `listTicketek`-ben, `listKorlevelTagok(korlevelId,
+> nezo)`, `listaUrl` a `lib/ticket-szotar.ts`-ben (a `lista-url.ts` nem létezik), `RegioKulcs` az
+> `ORSZAG_REGIOK`-ból, széles dialógus, kétsoros körlevél-sorok. A részletek a spec „Megvalósítási
+> eltérések” szakaszában; a mérvadó a kód.
+
 ---
 
 ## Közös tudnivalók minden taskhoz
@@ -1197,7 +1204,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 Nem subagent-task: a dev szervert a felhasználó indítja (a 3000-es porton más projekt fut; a TéT a kimenetben jelzett porton). gstack: `~/.claude/skills/gstack/browse/dist/browse`. Jelszót ne írj ki, kitöltés után ne `snapshot`-olj.
 
 - [ ] Adminként `/kommunikacio` → „Új ticket”: a gombok „Mindenki (15)”, „Európa (7)”, „Ázsia és Óceánia (4)”, „Közel-Kelet (1)”, „Afrika (1)”, „Amerika (3)”; „Kijelölés törlése” letiltva.
-- [ ] „Európa” → 7 kijelölve, a gomb benyomott; „Afrika” → 7 marad (a párizsi attasé már benne), a gomb benyomott; „Európa” újra → csak az európaiak kikerülnek, az Afrika-gomb benyomatlan lesz (a párizsi attasé kiesett). „Mindenki” → 15, a gombfelirat „Létrehozás (15 címzett)”.
+- [ ] „Európa” → 7 kijelölve, az Európa- és az Afrika-gomb is pipás (a párizsi attasé mindkettőben); „Afrika” → 7 marad (nincs változás); egy jelölő kivétele után az érintett gomb pipája eltűnik; „Amerika” → 10. „Mindenki” → 15, minden gomb pipás, a gombfelirat „Létrehozás (15 címzett)”. „Kijelölés törlése” → 0, a gomb letiltott, de a fókusz rajta marad. (A gombok felolvasói neve pipásan „…, mind kijelölve” – szelektorral előtag szerint.)
 - [ ] Hibás beküldés (üres tárgy) után a kijelölés és a jelölőnégyzetek állapota megmarad, a fókusz a tárgyra ugrik; kijelölés nélkül „Válassz legalább egy címzettet.”, a fókusz az első jelölőre.
 - [ ] Létrehozás 15 címzettnek → az első ticketre visz; a listában 15 „Körlevél ·” sor; az adatlapon „Körlevél · 15 címzett” a státuszokkal, a sorokra kattintva átvált.
 - [ ] Attaséként (demó attasé) a saját ticket látszik, olvasatlan; az adatlapon a „Körlevél” megjegyzés, más címzett neve nincs; válasz után az admin adatlapján az ő sora „Folyamatban”.

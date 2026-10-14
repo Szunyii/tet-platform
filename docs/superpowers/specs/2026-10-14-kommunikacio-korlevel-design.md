@@ -1,7 +1,7 @@
 # Kommunikáció: ticket több címzettnek – „Mindenki” és régiók – tervezési spec
 
 Dátum: 2026-10-14
-Állapot: jóváhagyott terv
+Állapot: megvalósítva és átnézve (taskonként spec- és minőségi review); a böngészős próba és a demó DB commitja a dev szerverre vár. Az eltéréseket lásd a „Megvalósítási eltérések” szakaszban.
 Ág: `kommunikacio-korlevel` (a `jelentes-fo-uzenet` ág tetején)
 
 ## Cél
@@ -42,9 +42,10 @@ régiónak, vagy tetszőleges összeállításnak. A válaszokat attasénként k
 
 ## 1. Régiók az országszótárban (`lib/orszagok.ts`)
 
-- Új típus: `RegioKulcs = 'europa' | 'azsia' | 'kozelKelet' | 'afrika' | 'amerika'`.
-- Új konstans: `ORSZAG_REGIOK: readonly { kulcs: RegioKulcs; cimke: string }[]` ebben a sorrendben:
-  Európa, Ázsia és Óceánia, Közel-Kelet, Afrika, Amerika (ez a gombok sorrendje).
+- Új konstans: `ORSZAG_REGIOK` (`as const` tömb `{ kulcs, cimke }` elemekkel) ebben a sorrendben:
+  Európa, Ázsia és Óceánia, Közel-Kelet, Afrika, Amerika (ez a gombok sorrendje); belőle származik a
+  `RegioKulcs = 'europa' | 'azsia' | 'kozelKelet' | 'afrika' | 'amerika'` típus, így a kettő nem
+  csúszhat szét.
 - Az `Orszag` interfész kötelező `regio: RegioKulcs` mezőt kap; mind a 174 sor kitöltve (a besorolás
   a függelékben). A kötelező mező miatt új ország régió nélkül nem kerülhet a szótárba.
 - Új segéd: `orszagRegio(kod): RegioKulcs | undefined` (ismeretlen kódra `undefined`).
@@ -56,8 +57,8 @@ régiónak, vagy tetszőleges összeállításnak. A válaszokat attasénként k
   `orszagok: string[]` (az attasé összes országkódja, a székhely elöl). Az `orszag` marad a székhely
   kódja (a ticket pillanatképe).
 - `listCimzettJeloltek()` (`db/queries/ticket.ts`) ezeket is visszaadja: a székhely-sorhoz joinolt
-  lekérdezés mellett az attasék összes `attase_orszag` sora egy második lekérdezéssel, JS-ben
-  csoportosítva. A szűrés (nem admin, nem tiltott, van székhely) és a magyar névsorrend változatlan.
+  lekérdezés mellett a regionális (`szekhely = false`) `attase_orszag` sorok egy második
+  lekérdezéssel, JS-ben csoportosítva. A szűrés (nem admin, nem tiltott, van székhely) és a magyar névsorrend változatlan.
 - Új tiszta modul `lib/ticket-cimzettek.ts`:
   - `jeloltRegioi(j: CimzettJelolt): RegioKulcs[]` – az attasé országainak régiói, ismétlés nélkül,
     az `ORSZAG_REGIOK` sorrendjében (ismeretlen kód kimarad);
@@ -95,8 +96,11 @@ attasé Európában és Afrikában is).
 
 - `createTicket` helyett `createTicketek(input): string[]`: egy tranzakcióban címzettenként egy
   ticket (`statusz: 'nyitott'`, a címzett `orszag`-a, közös `korlevelId`) + a nyitó üzenet + a nyitó
-  olvasás-jelölése, azonos időbélyeggel. Bármely hiba → semmi nem jön létre. Visszaadja az id-ket a
-  címzettek sorrendjében.
+  olvasás-jelölése, azonos időbélyeggel (a ticketek `created_at`/`updated_at`-je is ugyanaz). Bármely
+  hiba → semmi nem jön létre. Visszaadja az id-ket a címzettek sorrendjében.
+- `listTicketek`: a körlevél ticketjeinek azonos `updated_at`-je miatti holtversenyt JS-ben, a címzett
+  neve szerinti magyar névsorral oldja fel (az SQL bájtsorrendje az ékezetes nagybetűket és a „dr.”-t
+  a végére tenné), így az átirányítás célja a csoport elején áll.
 - `createTicketAction`: validálás → (elavult címzettnél `frissit()` és hiba) → `createTicketek` →
   `frissit()` → átirányítás az első létrehozott ticketre (`/kommunikacio?t=<id>`).
 
@@ -105,10 +109,12 @@ attasé Európában és Afrikában is).
 **Címzettválasztó** – új komponens `app/(app)/kommunikacio/components/CimzettValaszto.tsx`, a dialógus
 legördülője helyett, „Címzettek” felirattal (`fieldset` + `legend`).
 
-- Gyorsgombok (`type="button"`, kapcsolók `aria-pressed`-del): „Mindenki (15)”, régiónként
-  „Európa (7)” stb. (csak a nem üres régiók), és „Kijelölés törlése”. Egy csoport gombja akkor
-  benyomott, ha a csoport minden tagja ki van jelölve; benyomatlanul kattintva hozzáadja a tagokat a
-  kijelöléshez, benyomva kiveszi őket. (Így két régió egymás után összeadható.)
+- Gyorsgombok (`type="button"`): „Mindenki (15)”, régiónként „Európa (7)” stb. (csak a nem üres
+  régiók), és „Kijelölés törlése”. A csoport-gombok **csak hozzáadnak** (unió), így két régió
+  egymás után összeadható; ha a csoport minden tagja ki van jelölve, a gomb pipát kap
+  (`secondary` változat, felolvasónak „, mind kijelölve”), és a kattintás nem változtat semmit.
+  Kivenni jelölőnként vagy a „Kijelölés törlése” gombbal lehet; ez üres kijelölésnél letiltott, de
+  fókuszálható marad (`focusableWhenDisabled`).
 - Alatta a jelöltek listája natív jelölőnégyzetekkel (`name="cimzettId"`, `value` = user id),
   soronként „Név · Város” (város nélkül a székhely országa), görgethető (kb. 16rem magas). A
   jelölőnégyzetek vezéreltek, és a `VezetoJelolo` mintájára render után a `defaultChecked`-et a
@@ -130,14 +136,16 @@ legördülője helyett, „Címzettek” felirattal (`fieldset` + `legend`).
 
 **Adatlap (`TicketAdatlap`)**
 
-- Admin, körlevél-ticketnél: új „Körlevél · N címzett” rész a dl alatt, soronként „Név · ország” +
-  státusz-jelvény, mindegyik link a saját ticketére (a lista aktuális szűrőjével), az aktuális sor
-  `aria-current`-tel kiemelve. Adatforrás: új `listKorlevelTagok(korlevelId)` lekérdezés
-  (`id`, `cimzettNev`, `orszag`, `statusz`, név szerint rendezve); a page csak adminnál és csak
-  körlevél-ticketnél hívja.
+- Admin, körlevél-ticketnél: új „Körlevél · N címzett” rész a dl alatt, soronként a név és alatta
+  az ország (a keskeny oldalsávban két sorban, `title`-lel a teljes szöveg) + státusz-jelvény,
+  mindegyik link a saját ticketére (a lista aktuális szűrőjével), az aktuális sor
+  `aria-current="true"`-val és a lista kiemelésével. Adatforrás: új
+  `listKorlevelTagok(korlevelId, nezo)` lekérdezés (`id`, `cimzettNev`, `orszag`, `statusz`, magyar
+  névsorban; nem adminnak üres lista); a page csak adminnál és csak körlevél-ticketnél hívja.
 - Attasé, körlevél-ticketnél: egy „Körlevél” sor: „A központ több attasénak is elküldte; a válaszodat
   csak a központ látja.” Más címzett neve nem látszik.
-- A lista szűrős URL-építője (`listaUrl`) közös helyre kerül, hogy a lista és az adatlap is használja.
+- A lista szűrős URL-építője (`listaUrl`) a `lib/ticket-szotar.ts`-be kerül (a `parseSzuro` mellé,
+  annak párja), hogy a lista és az adatlap is használja.
 
 ## 7. Hibakezelés
 
@@ -161,6 +169,27 @@ legördülője helyett, „Címzettek” felirattal (`fieldset` + `legend`).
   létrehozás 15 címzettnek, a lista és az adatlap körlevél-része, attaséként a saját ticket és a
   megjegyzés, hibás beküldés utáni állapot. A próba ticketjeit utána törölni kell a demó DB-ből.
 - CLAUDE.md Kommunikáció szakasza frissül.
+
+## Megvalósítási eltérések
+
+A taskonkénti review-k nyomán a terv első változatához képest:
+
+- **A gyorsgombok csak hozzáadnak, nem kapcsolók.** Az első változat `aria-pressed` kapcsoló volt
+  (benyomva kivette a csoportot). A demó adatokban Afrika egyetlen attaséja a párizsi, aki Európában
+  is benne van: „Európa” után az Afrika-gomb már benyomottnak látszott, és rákattintva kivette a
+  párizsi attasét. A felhasználó által jóváhagyott megfogalmazás („bejelölik a csoportot, utána
+  egyenként módosítható”) a hozzáadó viselkedést írja le.
+- **Sorrend.** A körlevél ticketjei azonos időbélyeget kapnak, a `listTicketek` holtverseny-feloldása
+  JS-ben, magyar névsor szerint történik (az SQL `asc(name)` bájtsorrend szerint rendez).
+- **`listKorlevelTagok(korlevelId, nezo)`**: a lekérdezés maga is admin-only (nem adminnak üres
+  lista), a `getTicket` láthatósági elvéhez igazodva.
+- **`listaUrl`** a `lib/ticket-szotar.ts`-be került (tiszta segéd a `lib/`-ben, a `parseSzuro` párja),
+  nem a route alá.
+- **Felület.** A dialógus széles (`szeles`), hogy a pipás gombok ne törjenek több sorba; hibánál
+  a jelöltlista piros keretet kap; a körlevél-sorok két sorban (név, ország) `title`-lel, mert a
+  17–18rem-es oldalsávban az ország különben sosem látszott.
+- **`RegioKulcs`** az `ORSZAG_REGIOK`-ból származik (nem külön unió).
+- **A címzett-id-k** a közös `tisztitSzoveg`-gel tisztulnak (mint a többi validátor-mező).
 
 ## Függelék: az országok régiói
 
