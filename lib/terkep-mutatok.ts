@@ -26,6 +26,11 @@ export interface SzamMutato {
   utotag: string;
   /** `log`: nagyságrendeket átfogó mutató (GDP, lakosság) – a szín és a rangsor-sáv symlog skálán. */
   skala: 'linearis' | 'log';
+  /**
+   * Az összehasonlítás sávjainak rögzített felső határa (a kitöltöttségnél a blokkok száma, hogy a
+   * 9/9 teli sáv legyen); nélküle a megjelenített értékek legnagyobbika.
+   */
+  felsoHatar?: number;
   ertek: (o: TerkepOrszag) => number | null;
 }
 export interface KategoriaMutato {
@@ -69,6 +74,7 @@ const MUTATO_TABLA: { [K in MutatoKulcs]: Mutato & { kulcs: K } } = {
   gerd: { kulcs: 'gerd', tipus: 'szam', cimke: 'K+F ráfordítás (GERD)', utotag: ' %', skala: 'linearis', ertek: (o) => o.gerd },
   kitoltottseg: {
     kulcs: 'kitoltottseg', tipus: 'szam', cimke: 'Kitöltöttség (mentett blokk)', utotag: `/${BLOKK_KULCSOK.length}`, skala: 'linearis',
+    felsoHatar: BLOKK_KULCSOK.length,
     ertek: (o) => (o.allapot === 'nincs' ? null : o.mentettDb),
   },
   rendezvenyDb: {
