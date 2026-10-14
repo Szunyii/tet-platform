@@ -16,9 +16,11 @@ export default async function RiportokPage({ searchParams }: { searchParams: Pro
   const session = await requireSession();
   const admin = session.role === 'admin';
   const szuro = szuroFromSearchParams(await searchParams);
+  const orszagok = admin ? listOrszagok() : [];
   const szerzok = admin ? listSzerzok() : [];
   if (admin) {
-    // Elavult vagy kézzel írt id: szűrő nélkül, hogy a legördülőben ne nyers id álljon.
+    // Elavult vagy kézzel írt érték: szűrő nélkül, hogy a legördülőben ne nyers kód vagy id álljon.
+    if (szuro.orszag && !orszagok.includes(szuro.orszag)) delete szuro.orszag;
     if (szuro.szerzoId && !szerzok.some((s) => s.id === szuro.szerzoId)) delete szuro.szerzoId;
   } else {
     // Az attasé nem szűrhet országra és szerzőre: az URL-ből jövőt eldobjuk.
@@ -40,7 +42,7 @@ export default async function RiportokPage({ searchParams }: { searchParams: Pro
       </div>
       <RiportSzurok
         ertekek={ertekek}
-        orszagok={admin ? listOrszagok() : []}
+        orszagok={orszagok}
         szerzok={szerzok}
         admin={admin}
       />
