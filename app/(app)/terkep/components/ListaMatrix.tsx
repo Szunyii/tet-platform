@@ -61,7 +61,7 @@ export function ListaMatrix<T extends string>({ cim, sorrend, elemek, orszagok, 
   const oszlopSzam = 1 + orszagok.length + (hazai ? 1 : 0);
   return (
     <section className="flex min-w-0 flex-col gap-1 rounded-lg border p-3">
-      <h3 className="text-sm font-medium">{cim}</h3>
+      <h4 className="text-sm font-medium">{cim}</h4>
       {matrix.csoportok.length === 0 ? (
         <p className="text-sm text-muted-foreground">Nincs adat.</p>
       ) : (

@@ -20,7 +20,7 @@ function Szakasz({ cim, jelmagyarazat, children }: { cim: string; jelmagyarazat?
   return (
     <section className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-        <h2 className="font-medium tracking-wide uppercase">{cim}</h2>
+        <h3 className="font-medium tracking-wide uppercase">{cim}</h3>
         {jelmagyarazat && <p aria-hidden className="flex items-center gap-1.5">{jelmagyarazat}</p>}
       </div>
       {children}
@@ -32,7 +32,8 @@ function Szakasz({ cim, jelmagyarazat, children }: { cim: string; jelmagyarazat?
  * Az összehasonlítás a térkép alatt, teljes szélességben (a keskeny jobb panelen nem férne el): fejléc
  * (országkártyák, „+ Ország", Magyarország), számszerű mutatónként egy kártya, és a listák mátrixa.
  * Minden ország saját színt kap (`szinek`); Magyarország – ha legfeljebb a nézett évig van profilja –
- * mindig viszonyítási alap.
+ * mindig viszonyítási alap. Címsor-szintek: a panel címe 2-es szintű (az AppShell lapcíme a `h1`), a
+ * szakaszok `h3`, a kártyák `h4`.
  */
 export function OsszehasonlitasPanel({ orszagok, szinek, hazai, jeloltek, mutato, onKivalaszt, onKivesz, onHozzaad, onTorol }: {
   /** A halmaz rekordjai a hozzáadás sorrendjében (Magyarország nélkül). */
@@ -54,7 +55,7 @@ export function OsszehasonlitasPanel({ orszagok, szinek, hazai, jeloltek, mutato
     <Card>
       <CardHeader className="flex items-start gap-2">
         <div className="min-w-0">
-          <CardTitle>Összehasonlítás</CardTitle>
+          <CardTitle role="heading" aria-level={2}>Összehasonlítás</CardTitle>
           <CardDescription>
             {orszagok.length} ország ·{' '}
             {hazai ? 'viszonyítási alap: Magyarország' : 'viszonyítási alap nélkül (Magyarországnak nincs profilja erre az évre)'}

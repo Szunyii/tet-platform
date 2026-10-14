@@ -49,6 +49,7 @@ export function TerkepPanel({ adatok, allapot, vsOrszagok, rangsor, csoportok, t
           benneVs={vs.includes(sel.kod)}
           vsTele={vsTele}
           onVs={() => allapot.vsValt(sel.kod)}
+          viszonyitasiAlap={allapot.hazai?.kod === sel.kod}
         />
       ) : (
         <RangsorPanel

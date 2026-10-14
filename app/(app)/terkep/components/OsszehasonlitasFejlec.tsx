@@ -103,7 +103,7 @@ export function OsszehasonlitasFejlec({ orszagok, szinek, hazai, jeloltek, mutat
             <NevGomb o={hazai} onKivalaszt={onKivalaszt} />
             <Badge variant="secondary" className="ml-auto">viszonyítási alap</Badge>
           </span>
-          <span className="text-xs text-muted-foreground">{attaseNelkulFelirat(hazai.kod)}</span>
+          <span className="text-xs text-muted-foreground">{attasekRovid(hazai.attasek, hazai.kod) ?? attaseNelkulFelirat(hazai.kod)}</span>
           <AllapotBadge allapot={hazai.allapot} ev={hazai.ev} />
         </div>
       )}

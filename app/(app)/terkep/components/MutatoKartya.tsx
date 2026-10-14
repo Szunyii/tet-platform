@@ -73,10 +73,10 @@ export function MutatoKartya({ mutato, orszagok, szinek, hazai, kiemelt }: {
       className={cn('flex flex-col gap-2 rounded-lg border p-3', kiemelt && '[--muted-foreground:oklch(0.5_0_0)]')}
       style={kiemelt ? { background: KIEMELT_HATTER } : undefined}
     >
-      <h3 className="flex flex-wrap items-baseline gap-x-2 text-sm font-medium">
+      <h4 className="flex flex-wrap items-baseline gap-x-2 text-sm font-medium">
         {mutato.cimke}
         {kiemelt && <span className="text-xs font-normal text-muted-foreground">a térkép mutatója</span>}
-      </h3>
+      </h4>
       {skala === null ? (
         <p className="text-sm text-muted-foreground">Nincs adat.</p>
       ) : (

@@ -19,7 +19,7 @@ import { cn } from '../../../../lib/utils';
 /** A kiválasztott ország profil-kivonata a térkép mellett. */
 export function ProfilKivonat({
   o, szerkeszthetEv, szerkeszthetMost, most, valasztEvAction, onClose,
-  mutato, rangsor, benneVs, vsTele, onVs,
+  mutato, rangsor, benneVs, vsTele, onVs, viszonyitasiAlap,
 }: {
   o: TerkepOrszag;
   szerkeszthetEv: boolean;
@@ -36,6 +36,8 @@ export function ProfilKivonat({
   vsTele: boolean;
   /** Hozzáadás / kivétel (a hívó dönti el `benneVs` alapján). */
   onVs: () => void;
+  /** Ez az ország az összehasonlítás viszonyítási alapja (`TerkepAllapot.hazai`, a `hazaiRekord` szerint). */
+  viszonyitasiAlap: boolean;
 }) {
   const a = o.alapadatok;
   const C = MEZO_CIMKEK.alapadatok;
@@ -144,12 +146,12 @@ export function ProfilKivonat({
         {o.attasek.length > 0 && (
           <Link href="/kommunikacio" className={cn(buttonVariants({ variant: 'outline' }))}>Üzenet a poszttal</Link>
         )}
-        {/* Magyarország a halmazba nem vehető fel; ha van profilja (legfeljebb a nézett évig), viszonyítási
-            alap (`hazaiRekord`), különben (pl. csak attasé-hozzárendelés miatt van rekordja) nincs mit kiírni.
-            Letiltott gombon a title nem jelenik meg (natív disabled + pointer-events-none); a korlátot az
-            OsszehasonlitasCsik írja ki. */}
+        {/* Magyarország a halmazba nem vehető fel; ha viszonyítási alap (a hívó `hazai`-jából, tehát a
+            `hazaiRekord` szerint), a gomb helyén tájékoztató szöveg, különben (pl. csak attasé-hozzárendelés
+            miatt van rekordja) semmi. Letiltott gombon a title nem jelenik meg (natív disabled +
+            pointer-events-none); a korlátot az OsszehasonlitasCsik írja ki. */}
         {hazaiE(o.kod) ? (
-          o.ev !== null && (
+          viszonyitasiAlap && (
             <span className="text-xs text-muted-foreground">Az összehasonlításban mindig szerepel viszonyítási alapként.</span>
           )
         ) : (
