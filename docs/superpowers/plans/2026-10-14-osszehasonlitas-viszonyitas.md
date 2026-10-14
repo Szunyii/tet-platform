@@ -1825,7 +1825,7 @@ a framework-mentes `lib/terkep-mutatok.ts`-ben vannak; ismeretlen mutató-kulcsr
 cseréld erre:
 
 ```text
-a framework-mentes `lib/terkep-mutatok.ts`-ben vannak (a számszerű mutató opcionális `felsoHatar`-a az összehasonlítás sáv-skálájának rögzített maximuma, a kitöltöttségnél 9); ismeretlen mutató-kulcsra `mutatoByKulcs` az alapértelmezettet adja. Az összehasonlítás tiszta logikája – `VS_SZINEK`, `HAZAI_SZIN`/`HAZAI_SAV_SZIN`, `hazaiRekord`, `vsHozzaadElem` (a legkisebb szabad szín; Magyarországra, a már benne lévőre és a tele halmazra változatlan), `savSkala`/`skalaHely`/`savHelye`/`nullaVonal`, `listaMatrix` – a szintén framework-mentes `lib/osszehasonlitas.ts`-ben van.
+a framework-mentes `lib/terkep-mutatok.ts`-ben vannak (a számszerű mutató opcionális `felsoHatar`-a: az összehasonlítás sáv-skálájának teteje legalább ennyi, a kitöltöttségnél 9); ismeretlen mutató-kulcsra `mutatoByKulcs` az alapértelmezettet adja. Az összehasonlítás tiszta logikája – `VS_SZINEK`, `HAZAI_SZIN`/`HAZAI_SAV_SZIN`, `hazaiRekord`, `vsHozzaadElem` (a legkisebb szabad szín; Magyarországra, a már benne lévőre és a tele halmazra változatlan), `savSkala`/`skalaHely`/`savHelye`/`nullaVonal`, `listaMatrix` – a szintén framework-mentes `lib/osszehasonlitas.ts`-ben van.
 ```
 
 - [ ] **Step 8: Ellenőrzés**
