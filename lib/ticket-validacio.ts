@@ -13,7 +13,7 @@ import {
   type PrioKulcs,
   type TipusKulcs,
 } from './ticket-szotar';
-import { mezo, type MezoHibak } from './urlap';
+import { mezo, tisztitSzoveg, type MezoHibak } from './urlap';
 
 export interface UjTicketCimzett {
   id: string;
@@ -53,14 +53,9 @@ function parseSzoveg(fd: FormData, errors: MezoHibak, kulcs: 'szoveg' | 'valasz'
 export function parseUjTicketForm(fd: FormData, jeloltek: readonly CimzettJelolt[]): ParseUjTicketResult {
   const errors: MezoHibak = {};
 
-  // Bejelölős lista: minden kijelölt attasé egy `cimzettId` mező. Csak nem üres string, ismétlés nélkül.
-  const kert = new Set(
-    fd
-      .getAll('cimzettId')
-      .filter((v): v is string => typeof v === 'string')
-      .map((v) => v.trim())
-      .filter(Boolean),
-  );
+  // Bejelölős lista: minden kijelölt attasé egy `cimzettId` mező. A közös tisztítóval (a fájl
+  // típusú érték `''` lesz), csak nem üres érték, ismétlés nélkül.
+  const kert = new Set(fd.getAll('cimzettId').map(tisztitSzoveg).filter(Boolean));
   const cimzettek = jeloltek.filter((j) => kert.has(j.id)).map((j) => ({ id: j.id, orszag: j.orszag }));
   const elavult = kert.size - cimzettek.length;
   if (jeloltek.length === 0) {

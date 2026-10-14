@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, count, desc, eq, ne, sql, type SQL } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ne, sql, type SQL } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import { db } from '../index';
 import { attaseOrszag, ticket, ticketOlvasas, ticketUzenet, user } from '../schema';
@@ -141,7 +141,9 @@ export function listTicketek(nezo: Nezo, szuro: TicketSzuro): TicketListItem[] {
     .from(ticket)
     .innerJoin(user, eq(ticket.cimzettId, user.id))
     .where(felt.length ? and(...felt) : undefined)
-    .orderBy(desc(ticket.updatedAt))
+    // Egy körlevél ticketjei azonos `updatedAt`-ot kapnak: a holtversenyt a címzett neve oldja
+    // fel, így az első (az átirányítás célja) a lista elején áll.
+    .orderBy(desc(ticket.updatedAt), asc(user.name))
     .all()
     .map((r) => tipusos(r));
 }
@@ -211,6 +213,8 @@ export function createTicketek(input: TicketCreate): string[] {
           orszag: c.orszag,
           nyitoId: input.nyito.id,
           korlevelId,
+          createdAt: most,
+          updatedAt: most,
         })
         .run();
       tx.insert(ticketUzenet)
@@ -372,9 +376,11 @@ export interface KorlevelTag {
 
 /**
  * Egy körlevél ticketjei az admin adatlapjához, a címzett neve szerinti magyar névsorban.
- * Láthatósági szűrés nincs benne: csak admin nézetből hívható (a page így hívja).
+ * A láthatóságot maga a lekérdezés kényszeríti ki, a `getTicket` szabályával egyezően: nem
+ * adminnak üres lista, az attasé nem láthatja a körlevél többi címzettjét.
  */
-export function listKorlevelTagok(korlevelId: string): KorlevelTag[] {
+export function listKorlevelTagok(korlevelId: string, nezo: Nezo): KorlevelTag[] {
+  if (nezo.role !== 'admin') return [];
   return db
     .select({ id: ticket.id, cimzettNev: user.name, orszag: ticket.orszag, statusz: ticket.statusz })
     .from(ticket)
