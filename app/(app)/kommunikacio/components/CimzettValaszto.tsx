@@ -1,5 +1,6 @@
 'use client';
 
+import { Check } from 'lucide-react';
 import { useLayoutEffect, useRef } from 'react';
 import { MezoHiba } from '../../../../components/form/MezoHiba';
 import { Button } from '../../../../components/ui/button';
@@ -9,12 +10,15 @@ import type { CimzettJelolt } from '../../../../lib/ticket-szotar';
 import type { MezoHibak } from '../../../../lib/urlap';
 
 /**
- * Az új ticket címzettjei: gyorsgombok („Mindenki”, régiónként, „Kijelölés törlése”) és bejelölős
- * lista. A gyorsgomb kapcsoló (`aria-pressed`): benyomott, ha a csoport minden tagja ki van jelölve;
- * benyomatlanul hozzáadja a tagokat a kijelöléshez, benyomva kiveszi őket – így két régió egymás
- * után összeadható. A jelölőnégyzetek (`name="cimzettId"`) mindig az aktuális jelöltlistából
- * épülnek: a revalidálás után eltűnt jelölt nem küldődik be, akkor sem, ha a kijelölésben maradt.
- * Az első jelölőnégyzet id-ja `cimzettId`: erre ugrik a fókusz a mezőhibánál (`useMuveletForm`).
+ * Az új ticket címzettjei: gyorsgombok („Mindenki”, régiónként) és bejelölős lista. A gyorsgombok
+ * csak hozzáadnak: a csoport tagjait a kijelöléshez veszik, soha nem vesznek ki belőle, így két régió
+ * összeadható (az attasé több régióban is lehet). Ha egy csoport minden tagja ki van jelölve, a gomb
+ * pipát kap és „mind kijelölve” szöveget ad a képernyőolvasónak; ilyenkor a kattintás hatástalan, de a
+ * gomb engedélyezett marad, hogy a fókusz ne vesszen el. Elvenni jelölőnként vagy a „Kijelölés
+ * törlése” gombbal lehet, amely letiltva is fókuszálható marad. A jelölőnégyzetek
+ * (`name="cimzettId"`) mindig az aktuális jelöltlistából épülnek: a revalidálás után eltűnt jelölt nem
+ * küldődik be, akkor sem, ha a kijelölésben maradt. Az első jelölőnégyzet id-ja `cimzettId`: erre ugrik
+ * a fókusz a mezőhibánál (`useMuveletForm`).
  */
 export function CimzettValaszto({
   jeloltek,
@@ -32,9 +36,9 @@ export function CimzettValaszto({
   const darab = jeloltek.filter((j) => kijeloltSet.has(j.id)).length;
   const hiba = Boolean(errors.cimzettId);
 
-  function kapcsol(idk: string[], mindBenne: boolean) {
-    if (mindBenne) onChange(kijelolt.filter((id) => !idk.includes(id)));
-    else onChange([...kijelolt, ...idk.filter((id) => !kijeloltSet.has(id))]);
+  function hozzaad(idk: string[]) {
+    const uj = idk.filter((id) => !kijeloltSet.has(id));
+    if (uj.length > 0) onChange([...kijelolt, ...uj]);
   }
 
   return (
@@ -48,15 +52,26 @@ export function CimzettValaszto({
               key={cs.kulcs}
               type="button"
               size="sm"
-              variant={mindBenne ? 'default' : 'outline'}
-              aria-pressed={mindBenne}
-              onClick={() => kapcsol(cs.idk, mindBenne)}
+              variant={mindBenne ? 'secondary' : 'outline'}
+              onClick={() => hozzaad(cs.idk)}
             >
+              {mindBenne && <Check />}
               {cs.cimke} ({cs.idk.length})
+              {mindBenne && <span className="sr-only"> (mind kijelölve)</span>}
             </Button>
           );
         })}
-        <Button type="button" size="sm" variant="ghost" disabled={darab === 0} onClick={() => onChange([])}>
+        {/* focusableWhenDisabled: aria-disabled natív disabled helyett, így a kattintás után sem vész el a
+            fókusz; a shadcn `disabled:` stílusai ilyenkor nem érvényesek, ezért az `aria-disabled:` párjuk. */}
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          disabled={darab === 0}
+          focusableWhenDisabled
+          className="aria-disabled:pointer-events-none aria-disabled:opacity-50"
+          onClick={() => onChange([])}
+        >
           Kijelölés törlése
         </Button>
       </div>
