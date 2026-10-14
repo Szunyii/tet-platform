@@ -1,7 +1,7 @@
 # Jelentések: szűrés attaséra – tervezési spec
 
 Dátum: 2026-10-14
-Állapot: jóváhagyott terv
+Állapot: megvalósítva és átnézve (taskonként spec- és minőségi review, záró review), a böngészős próba kész (2026-10-14, a futó dev szerveren, ideiglenes QA-bejegyzésekkel, utána törölve). Az eltéréseket lásd a „Megvalósítási eltérések” szakaszban.
 Ág: `jelentes-attase-szuro` (a `kommunikacio-korlevel` ág tetején)
 
 ## Cél
@@ -92,3 +92,13 @@ az attasé nézetében a saját-szűrő nem szűrőérték.
     ismeretlen `?attase=` → teljes lista, a legördülőn „Mind”;
   - attasé: nincs Attasé- és Ország-legördülő; a kézzel beírt `?attase=<más id>` és `?orszag=` nem
     hat, nincs „Szűrők törlése” gomb.
+
+## Megvalósítási eltérések
+
+- A README `/jelentesek` sora is frissült („admin: mind, ország- és attasé-szűrővel”).
+- A `szuroErtekek` JSDoc-figyelmeztetést kapott: csak az URL-ből jövő szűrő mehet bele, a
+  jogosultságból kényszerített szerző-szűrő csak a `listRiportok` hívásba.
+- A CLAUDE.md kimondja, hogy a `listRiportok` nem ellenőriz jogot, ezért a `szuroFromSearchParams`
+  eredménye attasénál csak felülírt `szerzoId`-vel mehet a lekérdezésbe.
+- Az első kódcommit (`bcf41c8`, adatréteg) önmagában nem bisect-tiszta: ott az attasé nézetében a
+  kényszerített saját-szűrő még aktív szűrőnek látszik; a következő commit (`b769b52`) javítja.
