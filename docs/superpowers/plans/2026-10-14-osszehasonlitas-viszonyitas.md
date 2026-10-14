@@ -10,6 +10,8 @@
 
 Spec: `docs/superpowers/specs/2026-10-14-osszehasonlitas-viszonyitas-design.md`. Ág: `osszehasonlitas-viszonyitas`. A jóváhagyott makett helyben, gitignore-olt fájlban van: `.superpowers/brainstorm/62102-1791981163/content/teljes-panel-v2.html`. A 8. kártyája („Példa: negatív érték”) csak illusztráció.
 
+> **Megvalósítva (2026-10-14).** Taskonként spec- és minőségi review, utána böngészős QA (6. task, mind a 9 lépés rendben). A teljes fájlokat mutató kódblokkok a task és a hozzá tartozó review-javítások utáni állapotot mutatják. A régi→új cserék a végrehajtott formájukban maradtak; ami később változott rajtuk, azt a taskonkénti „Review-javítások” megjegyzés sorolja fel. A részletek a spec „Megvalósítási eltérések” szakaszában vannak; a mérvadó a kód.
+
 **Tesztkeretrendszer nincs** (CLAUDE.md). Az ellenőrzés eszközei:
 - az 1. task tiszta függvényeihez eldobható tsx-script (`scripts/_osszehasonlitas-proba.ts`), amelyet nem commitolunk;
 - minden task végén `npx tsc --noEmit`, a UI-taskok végén `npm run build`;
@@ -23,6 +25,8 @@ A terv kódját a megírása előtt egy eldobható forrásmásolaton kipróbált
 3. A szakaszcímek (Mutatók, Listák) `h2`-k, a kártyacímek `h3`-ak; az AppShell lapcíme a `h1`.
 4. A magyar viszonyítási alap feltétele a profil, nem a rekord puszta jelenléte. A `hazaiRekord` csak az `ev !== null` magyar rekordot fogadja el, mert attasé-hozzárendelés miatt profil nélkül is lehet magyar rekord. A hook kiadja `hazai`-ként, és a `vsMin` ebből számol (a 2. task reviewja nyomán).
 5. A `vsKivesz` és a `vsTorol` változás nélkül ugyanazt a példányt adja vissza, hogy a `vs` „csak tényleges változásnál új” szerződése igaz legyen (a 2. task reviewja nyomán).
+
+A review-k további eltéréseit (kontraszt, akadálymentesség, `NoInfer` stb.) a spec „Megvalósítási eltérések” szakasza sorolja fel.
 
 **Közös szabályok (minden subagentnek):**
 - A felhasználó TéT dev szervere a 3000-es porton fut. Nem szabad leállítani vagy újraindítani, és saját dev szervert sem szabad indítani.
@@ -220,6 +224,11 @@ assert.deepEqual(listaMatrix(TAGSAGOK, [{ kod: 'PR', nev: 'Puerto Rico', elemek:
 assert.deepEqual(tomor(listaMatrix<string>(['a', 'b'], [{ kod: 'X', nev: 'X', elemek: ['c', 'b', 'a'] }], null)), [['Csak X', ['a', 'b', 'c']]]);
 assert.deepEqual(tomor(listaMatrix(TAGSAGOK, [], HU_TAG)), [['Csak Magyarország', ['EU', 'OECD', 'NATO']]]);
 
+// --- A Task 1 review esetei: a „Magyarországgal közös” 0-nál is kiíródik; csupa negatív skála.
+assert.equal(listaMatrix(TAGSAGOK, [{ kod: 'JP', nev: 'Japán', elemek: ['G7'] }, { kod: 'KR', nev: 'Koreai Köztársaság', elemek: ['G20'] }], ['EU']).osszegzes, '2 egyedi · Magyarországgal közös: 0');
+assert.deepEqual(savSkala([-3, -1]), { also: -3, felso: 0 });
+kozel(nullaVonal({ also: -3, felso: 0 })!, 1);
+
 console.log('ok');
 ```
 
@@ -241,7 +250,8 @@ import { TERKEP_SZINEK } from './terkep-mutatok';
 
 /**
  * Az összehasonlított országok színei (kék, narancs, lila, rózsa). A halmaz legnagyobb mérete
- * (`VS_MAX`) ebből adódik. Fehér alapon mind legalább 4,5:1, a kis kódfeliratokhoz is.
+ * (`VS_MAX`) ebből adódik; a `listaMatrix` „Mind a N országban” címkéjének „a” névelője is erre a
+ * legfeljebb 4 elemre épül. Fehér alapon mind legalább 4,5:1, a kis kódfeliratokhoz is.
  */
 export const VS_SZINEK = ['#2563eb', '#c2410c', '#9333ea', '#be185d'] as const;
 /** Magyarország (a viszonyítási alap) jelölője, rombusza és kártyacsíkja: a térkép kontúrszíne. */
@@ -275,9 +285,9 @@ export interface SavSkala {
 
 /**
  * A mutató közös sáv-skálája: `[min(0, értékek), max(0, felsoHatar, értékek)]`. Nulláról indul,
- * hogy a sáv hossza arányos legyen (negatív értéknél a nulla a skála belsejébe kerül); a
- * `felsoHatar` rögzített maximumot ad (a kitöltöttség 9 blokkja). `null`, ha egyik értéknek sincs
- * értéke.
+ * hogy a sáv hossza arányos legyen (negatív értéknél a nulla a skála belsejébe kerül). A skála teteje
+ * legalább `felsoHatar` (a kitöltöttség 9 blokkja: a 9/9 teli sáv), nagyobb értéknél tovább nő.
+ * `null`, ha egyik értéknek sincs értéke.
  */
 export function savSkala(ertekek: readonly (number | null)[], felsoHatar?: number): SavSkala | null {
   const szamok = ertekek.filter((v): v is number => v !== null);
@@ -326,15 +336,15 @@ export interface ListaCsoport<T extends string> {
 export interface ListaMatrixAdat<T extends string> {
   /** Az üres csoportok nélkül; ha egyik listának sincs eleme, üres. */
   csoportok: ListaCsoport<T>[];
-  /** Az összegző sor a nulla darabszámú részek nélkül; üres mátrixnál üres string. */
+  /** Az összegző sor; a nulla darabszámú részek kimaradnak, kivéve a „Magyarországgal közös”-t (az 0-nál is kiíródik). Üres mátrixnál üres string. */
   osszegzes: string;
 }
 
 /**
  * Egy lista mátrixa: a kiválasztott országok (`oszlopok`) és Magyarország (`hazai`; `null` = nincs
  * magyar rekord) elemeinek uniója, elemenként egy sor, csoportosítva. Csoporton belül a szótár
- * (`sorrend`) sorrendje; a szótárban nem szereplő elem a csoport végére kerül (a normalizálás után nem
- * fordulhat elő).
+ * (`sorrend`) sorrendje, a szótárban nem szereplő elem a szótárbeliek után (a normalizálás után nem
+ * fordulhat elő); a „Részben közös”-ben ezt megelőzi a darabszám.
  * - 2+ oszlopnál: „Mind a N országban” (N legfeljebb 4, ezért a névelő mindig „a”), „Részben közös”
  *   (előbb a több országban szereplők), „Csak egy országban”, „Csak Magyarország”;
  * - 1 oszlopnál: „Közös Magyarországgal”, „Csak <név>” (alanyesetben, mint a „Csak Magyarország”: a
@@ -409,8 +419,8 @@ cseréld erre:
 ```ts
   skala: 'linearis' | 'log';
   /**
-   * Az összehasonlítás sávjainak rögzített felső határa (a kitöltöttségnél a blokkok száma, hogy a
-   * 9/9 teli sáv legyen); nélküle a megjelenített értékek legnagyobbika.
+   * Az összehasonlítás sáv-skálájának teteje legalább ennyi (a kitöltöttségnél a blokkok száma, hogy a
+   * 9/9 teli sáv legyen); nélküle a tető a megjelenített értékek legnagyobbika.
    */
   felsoHatar?: number;
   ertek: (o: TerkepOrszag) => number | null;
@@ -451,6 +461,14 @@ git commit -m "feat(terkep): az összehasonlítás tiszta logikája – országs
 ```
 
 (A commit-üzenet végére a `Co-Authored-By` sor, lásd a közös szabályokat.) Ha egy reviewer vagy egy későbbi javítás a `lib/osszehasonlitas.ts`-hez nyúl, a scriptet az 1. lépés kódjából újra létre kell hozni, futtatni, majd törölni.
+
+**Review-javítások** (`9c20114` után `c242e01`; a fenti kódblokkok már ezt mutatják): négy komment lett pontosabb.
+- `VS_SZINEK`: a „Mind a N országban” névelője a legfeljebb 4 elemre épül.
+- `savSkala` és `SzamMutato.felsoHatar`: a skála teteje legalább `felsoHatar`, nagyobb értéknél tovább nő.
+- `osszegzes`: a „Magyarországgal közös” 0-nál is kiíródik.
+- `listaMatrix`: a szótáron kívüli elem a szótárbeliek után áll, a „Részben közös”-ben ezt megelőzi a darabszám.
+
+Az ellenőrző script a review két új esetével bővült: „Magyarországgal közös: 0” és a csupa negatív skála.
 
 ---
 
@@ -832,6 +850,8 @@ git add "app/(app)/terkep/components/useTerkepAllapot.ts" "app/(app)/terkep/comp
 git commit -m "feat(terkep): stabil országszínek az összehasonlításban, Magyarország nem vehető fel, magyar profil mellett 1 országtól"
 ```
 
+**Review-javítások:** a 2. taskhoz nem kellett javító commit. A review három pontja a 3. taskba került (`hazaiRekord`, a `vsKivesz`/`vsTorol` példány-szerződése, a `TerkepPanel` elavult kommentje). A `ProfilKivonat` magyar szövegét később a 3. task review-javítása (`1c93f0e`) a profil meglétéhez kötötte (`o.ev !== null`).
+
 ---
 
 ### Task 3: Magyar viszonyítási alap, országfejléc, mutatókártyák, új panel-keret
@@ -992,6 +1012,7 @@ import {
 } from '../../../../lib/osszehasonlitas';
 import { formatSzam } from '../../../../lib/szam';
 import { SKALA_SZINEK, type SzamMutato } from '../../../../lib/terkep-mutatok';
+import { cn } from '../../../../lib/utils';
 
 /** A térkép mutatójának kártyája: a skála legvilágosabb színe (mint a kivonat mutató-sora). */
 const KIEMELT_HATTER = SKALA_SZINEK[0];
@@ -1042,7 +1063,7 @@ export function MutatoKartya({ mutato, orszagok, szinek, hazai, kiemelt }: {
   orszagok: readonly TerkepOrszag[];
   /** Kód → az ország színe az összehasonlításban. */
   szinek: Readonly<Record<string, string>>;
-  /** A magyar rekord (viszonyítási alap); `null`, ha nincs a nézett évre. */
+  /** A magyar rekord (viszonyítási alap); `null`, ha legfeljebb a nézett évig nincs profilja. */
   hazai: TerkepOrszag | null;
   /** Ez a térkép mutatója: a kártya kiemelt hátteret kap. */
   kiemelt: boolean;
@@ -1052,9 +1073,10 @@ export function MutatoKartya({ mutato, orszagok, szinek, hazai, kiemelt }: {
   const nulla = skala && nullaVonal(skala);
   const jelolo = skala && hazaiErtek !== null ? skalaHely(hazaiErtek, skala) : null;
   return (
-    // Inline style szándékosan: a kiemelés színe a térkép skálájából jön.
+    // Inline style szándékosan: a kiemelés színe a térkép skálájából jön. A halvány szöveg a zöldön csak
+    // 4,1:1 lenne (12 px-nél 4,5:1 kell), ezért a kiemelt kártyán belül a --muted-foreground sötétebb (5,2:1).
     <section
-      className="flex flex-col gap-2 rounded-lg border p-3"
+      className={cn('flex flex-col gap-2 rounded-lg border p-3', kiemelt && '[--muted-foreground:oklch(0.5_0_0)]')}
       style={kiemelt ? { background: KIEMELT_HATTER } : undefined}
     >
       <h3 className="flex flex-wrap items-baseline gap-x-2 text-sm font-medium">
@@ -1078,7 +1100,8 @@ export function MutatoKartya({ mutato, orszagok, szinek, hazai, kiemelt }: {
             );
           })}
           {hazai && (
-            <li className="mt-1 border-t border-dashed pt-2 text-muted-foreground">
+            // A szaggatott vonal áttetsző sötét, hogy a kiemelt (zöld) kártyán is látsszon.
+            <li className="mt-1 border-t border-dashed border-foreground/20 pt-2 text-muted-foreground">
               <span className="flex items-baseline gap-2 text-xs">
                 <span className="min-w-0 flex-1 truncate">
                   Magyarország<span className="sr-only"> (viszonyítási alap)</span>
@@ -1104,6 +1127,7 @@ import { X } from 'lucide-react';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { NativeSelect } from '../../../../components/form/NativeSelect';
 import { AllapotBadge } from '../../../../components/orszagprofil/AllapotBadge';
+import { Badge } from '../../../../components/ui/badge';
 import { Button } from '../../../../components/ui/button';
 import { attaseNelkulFelirat, attasekRovid } from '../../../../lib/attase-orszag';
 import { HAZAI_SZIN } from '../../../../lib/osszehasonlitas';
@@ -1126,7 +1150,7 @@ function NevGomb({ o, onKivalaszt }: { o: TerkepOrszag; onKivalaszt: (kod: strin
   return (
     <button
       type="button"
-      className="min-w-0 rounded-sm text-left font-semibold text-foreground outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+      className="min-w-0 rounded-sm text-left font-semibold break-words text-foreground outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
       onClick={() => onKivalaszt(o.kod)}
     >
       {o.nev}
@@ -1144,7 +1168,7 @@ export function OsszehasonlitasFejlec({ orszagok, szinek, hazai, jeloltek, mutat
   orszagok: readonly TerkepOrszag[];
   /** Kód → az ország színe az összehasonlításban. */
   szinek: Readonly<Record<string, string>>;
-  /** A magyar rekord (viszonyítási alap); `null`, ha nincs a nézett évre. */
+  /** A magyar rekord (viszonyítási alap); `null`, ha legfeljebb a nézett évig nincs profilja. */
   hazai: TerkepOrszag | null;
   /** A „+ Ország" lista (a halmazban nem lévők, Magyarország nélkül; a hívó rendezi). */
   jeloltek: readonly TerkepOrszag[];
@@ -1200,7 +1224,7 @@ export function OsszehasonlitasFejlec({ orszagok, szinek, hazai, jeloltek, mutat
           <Csik szin={HAZAI_SZIN} />
           <span className="flex w-full flex-wrap items-start gap-1.5">
             <NevGomb o={hazai} onKivalaszt={onKivalaszt} />
-            <span className="ml-auto rounded-full bg-muted px-2 text-[11px] text-muted-foreground">viszonyítási alap</span>
+            <Badge variant="secondary" className="ml-auto">viszonyítási alap</Badge>
           </span>
           <span className="text-xs text-muted-foreground">{attaseNelkulFelirat(hazai.kod)}</span>
           <AllapotBadge allapot={hazai.allapot} ev={hazai.ev} />
@@ -1227,16 +1251,18 @@ import { SZAM_MUTATOK, type Mutato } from '../../../../lib/terkep-mutatok';
 import { MutatoKartya } from './MutatoKartya';
 import { OsszehasonlitasFejlec } from './OsszehasonlitasFejlec';
 
-/** Egy szakasz (Mutatók, Listák): kicsi, nagybetűs cím, mellette opcionális egysoros jelmagyarázat. */
+/**
+ * Egy szakasz (Mutatók, Listák): kicsi, nagybetűs cím, mellette opcionális egysoros jelmagyarázat. A
+ * jelmagyarázat a címsoron kívül van (különben a felolvasó a címsor nevébe olvasná), és `aria-hidden`:
+ * csak a szintén rejtett grafikát (jelölő, rombusz) magyarázza.
+ */
 function Szakasz({ cim, jelmagyarazat, children }: { cim: string; jelmagyarazat?: ReactNode; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-        {cim}
-        {jelmagyarazat && (
-          <span className="flex items-center gap-1.5 font-normal tracking-normal normal-case">{jelmagyarazat}</span>
-        )}
-      </h2>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        <h2 className="font-medium tracking-wide uppercase">{cim}</h2>
+        {jelmagyarazat && <p aria-hidden className="flex items-center gap-1.5">{jelmagyarazat}</p>}
+      </div>
       {children}
     </section>
   );
@@ -1245,15 +1271,15 @@ function Szakasz({ cim, jelmagyarazat, children }: { cim: string; jelmagyarazat?
 /**
  * Az összehasonlítás a térkép alatt, teljes szélességben (a keskeny jobb panelen nem férne el): fejléc
  * (országkártyák, „+ Ország", Magyarország), számszerű mutatónként egy kártya, és a listák mátrixa.
- * Minden ország saját színt kap (`szinek`); Magyarország – ha van rekordja a nézett évre – mindig
- * viszonyítási alap.
+ * Minden ország saját színt kap (`szinek`); Magyarország – ha legfeljebb a nézett évig van profilja –
+ * mindig viszonyítási alap.
  */
 export function OsszehasonlitasPanel({ orszagok, szinek, hazai, jeloltek, mutato, onKivalaszt, onKivesz, onHozzaad, onTorol }: {
   /** A halmaz rekordjai a hozzáadás sorrendjében (Magyarország nélkül). */
   orszagok: TerkepOrszag[];
   /** Kód → az ország színe az összehasonlításban. */
   szinek: Readonly<Record<string, string>>;
-  /** A magyar rekord (viszonyítási alap); `null`, ha nincs a nézett évre. */
+  /** A magyar rekord (viszonyítási alap); `null`, ha legfeljebb a nézett évig nincs profilja. */
   hazai: TerkepOrszag | null;
   /** A „+ Ország" lista (a halmazban nem lévők, Magyarország nélkül; a hívó rendezi). */
   jeloltek: TerkepOrszag[];
@@ -1295,7 +1321,8 @@ export function OsszehasonlitasPanel({ orszagok, szinek, hazai, jeloltek, mutato
             </>
           )}
         >
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(15rem,100%),1fr))] gap-2.5">
+          {/* Legalább 15rem széles oszlopok, de legfeljebb 4 (a 23% miatt): széles képernyőn 4+3 kártya. */}
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,max(15rem,23%)),1fr))] gap-2.5">
             {SZAM_MUTATOK.map((m) => (
               <MutatoKartya key={m.kulcs} mutato={m} {...kozos} kiemelt={m.kulcs === mutato.kulcs} />
             ))}
@@ -1387,6 +1414,15 @@ git add lib/osszehasonlitas.ts "app/(app)/terkep/components/useTerkepAllapot.ts"
 git commit -m "feat(terkep): összehasonlítás mutatókártyákkal és országfejléccel, Magyarország viszonyítási alapként"
 ```
 
+**Review-javítások** (`67e724b` után `1c93f0e`; a 3–5. lépés kódblokkjai már ezt mutatják):
+- A kiemelt kártyán sötétebb a `--muted-foreground` (`[--muted-foreground:oklch(0.5_0_0)]`): a halvány szöveg a `#e3f1ec` zöldön csak 4,07:1 volt.
+- A magyar sor szaggatott elválasztója `border-foreground/20`.
+- A jelmagyarázat a `h2`-n kívül, `aria-hidden` `<p>`-ben áll.
+- A mutatórács legfeljebb 4 oszlopos: `minmax(min(100%,max(15rem,23%)),1fr)`.
+- `break-words` került a névgombra, és `Badge variant="secondary"` a „viszonyítási alap” címkére.
+- A hook és a komponensek kommentjei szerint Magyarország akkor viszonyítási alap, ha „legfeljebb a nézett évig” van profilja. Ez a 2. lépés (2) cseréjének új szövegét is érinti.
+- A `ProfilKivonat` magyar szövege csak profillal jelenik meg (`o.ev !== null`).
+
 ---
 
 ### Task 4: Listamátrixok és a kommentek takarítása
@@ -1407,8 +1443,8 @@ import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { HAZAI_SZIN, listaMatrix } from '../../../../lib/osszehasonlitas';
 import { cn } from '../../../../lib/utils';
 
-/** A magyar oszlop: halvány háttér és szaggatott bal szegély (fejléc és cellák). */
-const HU_OSZLOP = 'w-8 border-l border-dashed bg-muted/40 text-center';
+/** A magyar oszlop: halvány háttér és szaggatott bal szegély (fejléc és cellák), a mutatókártya magyar elválasztójának tónusával. */
+const HU_OSZLOP = 'w-8 border-l border-dashed border-foreground/20 bg-muted text-center';
 
 /** Az elem szerepel a listában: pötty az ország színében (Magyarországnál rombusz), felolvasónak „van”. */
 function Van({ szin, rombusz }: { szin: string; rombusz?: boolean }) {
@@ -1444,8 +1480,11 @@ export function ListaMatrix<T extends string>({ cim, sorrend, elemek, orszagok, 
   cim: string;
   /** A szótár (pl. `AGAZATOK`): a csoporton belüli sorrend. */
   sorrend: readonly T[];
-  /** Az ország listája (pl. `(o) => o.iparagak`). */
-  elemek: (o: TerkepOrszag) => readonly T[];
+  /**
+   * Az ország listája (pl. `(o) => o.iparagak`). A `NoInfer` miatt a `T`-t csak a `sorrend` adja: más
+   * szótár listája fordítási hiba (különben a `T` a kettő uniója lenne, és a sorrend némán felborulna).
+   */
+  elemek: (o: TerkepOrszag) => readonly NoInfer<T>[];
   /** A halmaz rekordjai a hozzáadás sorrendjében (Magyarország nélkül). */
   orszagok: readonly TerkepOrszag[];
   /** Kód → az ország színe az összehasonlításban. */
@@ -1466,9 +1505,10 @@ export function ListaMatrix<T extends string>({ cim, sorrend, elemek, orszagok, 
         <p className="text-sm text-muted-foreground">Nincs adat.</p>
       ) : (
         <>
-          <p className="text-xs text-muted-foreground">{matrix.osszegzes}</p>
-          {/* Keskeny kártyán a táblázat a kártyán belül görgethető. */}
-          <div className="overflow-x-auto">
+          {matrix.osszegzes && <p className="text-xs text-muted-foreground">{matrix.osszegzes}</p>}
+          {/* Keskeny kártyán a táblázat a kártyán belül görgethető. A `relative` a rejtett (sr-only) feliratok
+              befoglaló doboza: nélküle azok a görgetett dobozon kívül maradnak, és az oldalt szélesítik. */}
+          <div className="relative overflow-x-auto">
             <table className="w-full border-collapse text-xs">
               <caption className="sr-only">{cim}</caption>
               <thead>
@@ -1501,7 +1541,8 @@ export function ListaMatrix<T extends string>({ cim, sorrend, elemek, orszagok, 
                     </th>
                   </tr>
                   {cs.sorok.map((s) => (
-                    <tr key={s.elem}>
+                    // A hover a széles kártyán a címke és a pöttyei közti utat könnyíti.
+                    <tr key={s.elem} className="hover:bg-muted/50">
                       <th scope="row" className="py-0.5 pr-2 text-left font-normal">{s.elem}</th>
                       {orszagok.map((o, i) => (
                         <td key={o.kod} className="text-center">
@@ -1719,6 +1760,13 @@ git add "app/(app)/terkep/components/ListaMatrix.tsx" "app/(app)/terkep/componen
 git commit -m "feat(terkep): az iparágak, prioritások és tagságok mátrixa az összehasonlításban; elavult kommentek"
 ```
 
+**Review-javítások** (`5bfda12` után `d2d2268`; az 1. lépés kódblokkja már ezt mutatja):
+- `NoInfer<T>` került az `elemek`-re, így más szótár listája fordítási hiba.
+- A görgetődoboz `relative overflow-x-auto`, mert az `sr-only` feliratok különben kilógtak és szélesítették a lapot.
+- Jobban látszik a magyar oszlop (`border-foreground/20 bg-muted`), és a fejléc magyar kártyájának szegélye is `border-foreground/20`.
+- Az üres összegző sor elmarad.
+- Az adatsorok hover-kiemelést kapnak.
+
 ---
 
 ### Task 5: CLAUDE.md
@@ -1797,7 +1845,7 @@ az `OsszehasonlitasPanel` a térkép **alatt**, teljes szélességben, ha `vs.le
 cseréld erre:
 
 ```text
-az `OsszehasonlitasPanel` a térkép **alatt**, teljes szélességben, ha `vs.length >= vsMin` (Magyarország – a `hazai`, ha legfeljebb a nézett évig van profilja – állandó viszonyítási alap, nélküle a leírás jelzi, hogy nincs viszonyítás; országonként saját szín a `VS_SZINEK`-ből): `OsszehasonlitasFejlec` (országkártya: színcsík, név → kivonat, a kód a saját színben, ×, `attasekRovid`/`attaseNelkulFelirat`, `AllapotBadge`; utána „+ Ország" `NativeSelect` a `jeloltek()` listából, Magyarország nélkül; végül Magyarország szaggatott „viszonyítási alap” kártyája), „Mutatók” (a szakaszcím melletti jelmagyarázat a `h2`-n kívül, `aria-hidden`): `SZAM_MUTATOK`-onként egy `MutatoKartya`, legfeljebb 4 oszlopban (kétsoros sorok a halmaz sorrendjében – nem érték szerint –, közös, nulláról induló lineáris skála: `savSkala` a kiválasztottak és Magyarország értékeiből, a mutató `felsoHatar`-ával, negatívnál nullavonal; alul Magyarország szürke sávja, minden ország sávján fekete jelölő a magyar szinten; a térkép számszerű mutatójának kártyája kiemelt – rajta a `--muted-foreground` sötétebb, mert a halvány szöveg a zöldön kevés kontrasztú –; félkövér nincs), „Listák”: három `ListaMatrix` (kiemelt iparágak, KFI-prioritások, tagságok; generikus, a `T`-t a `NoInfer` miatt csak a szótár (`sorrend`) adja, így más szótár listája fordítási hiba; a `listaMatrix()` csoportjai 2+ országnál „Mind a N országban / Részben közös / Csak egy országban / Csak Magyarország”, 1 országnál „Közös Magyarországgal / Csak <név> / Csak Magyarország”, fölöttük összegző sor a „Magyarországgal közös: N” és a „nincs megadva: …” résszel), „Összehasonlítás törlése");
+az `OsszehasonlitasPanel` a térkép **alatt**, teljes szélességben, ha `vs.length >= vsMin` (Magyarország – a `hazai`, ha legfeljebb a nézett évig van profilja – állandó viszonyítási alap, nélküle a leírás jelzi, hogy nincs viszonyítás; országonként saját szín a `VS_SZINEK`-ből): `OsszehasonlitasFejlec` (országkártya: színcsík, név → kivonat, a kód a saját színben, ×, `attasekRovid`/`attaseNelkulFelirat`, `AllapotBadge`; utána „+ Ország" `NativeSelect` a `jeloltek()` listából, Magyarország nélkül; végül Magyarország szaggatott „viszonyítási alap” kártyája), „Mutatók” (a szakaszcím melletti jelmagyarázat a `h2`-n kívül, `aria-hidden`): `SZAM_MUTATOK`-onként egy `MutatoKartya`, legfeljebb 4 oszlopban (kétsoros sorok a halmaz sorrendjében – nem érték szerint –, közös, nulláról induló lineáris skála: `savSkala` a kiválasztottak és Magyarország értékeiből, a mutató `felsoHatar`-ával, negatívnál nullavonal; alul Magyarország szürke sávja, minden ország sávján fekete jelölő a magyar szinten; a térkép számszerű mutatójának kártyája kiemelt – rajta a `--muted-foreground` sötétebb, mert a halvány szöveg a zöldön kevés kontrasztú –; félkövér nincs), „Listák”: három `ListaMatrix` (kiemelt iparágak, KFI-prioritások, tagságok; generikus, a `T`-t a `NoInfer` miatt csak a szótár (`sorrend`) adja, így más szótár listája fordítási hiba; a `listaMatrix()` csoportjai 2+ országnál „Mind a N országban / Részben közös / Csak egy országban / Csak Magyarország”, 1 országnál „Közös Magyarországgal / Csak <név> / Csak Magyarország”, fölöttük összegző sor a „Magyarországgal közös: N” és a „nincs megadva: …” résszel), „Összehasonlítás törlése";
 ```
 
 - [ ] **Step 6: Az `attasekRovid` (Térkép bekezdés)**
@@ -1852,9 +1900,20 @@ git add CLAUDE.md
 git commit -m "docs(terkep): az összehasonlítás új működése a CLAUDE.md-ben"
 ```
 
+**Review-javítások:**
+- `4e42309`: az 5. lépés új szövegének fölösleges zárójele törölve. Ez a terv hibája volt, a fenti szöveg már javítva.
+- `a67f57d`: a minőségi review hat szövegpontosítása:
+  - az összegző sor teljes leírása;
+  - a zárójeles rész olvashatósága, az „Összehasonlítás törlése” a cím mellett;
+  - „kétsoros”;
+  - a `vsHozzaadElem` „ugyanazt a példányt adja”;
+  - új mondat a „UI és stílus” bekezdésben: görgethető dobozban az `sr-only` miatt a doboz legyen `relative`.
+
 ---
 
 ### Task 6: Böngészős QA (a fő munkamenet végzi, nem subagent)
+
+**Eredmény (2026-10-14):** mind a 9 lépés rendben. A QA nem hagyott adatot a DB-ben: a session-sorok száma előtte és utána is 1.
 
 A felhasználó futó TéT dev szerverén (`localhost:3000`), gstack-kel (`B=~/.claude/skills/gstack/browse/dist/browse`). Előbb meg kell nézni, hogy a 3000-es port a TéT-é: `lsof -a -p <pid> -d cwd`.
 

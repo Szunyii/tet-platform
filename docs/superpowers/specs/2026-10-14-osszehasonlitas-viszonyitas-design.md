@@ -1,7 +1,7 @@
 # Összehasonlítás: viszonyító megjelenítés, Magyarország mint viszonyítási alap – tervezési spec
 
 Dátum: 2026-10-14
-Állapot: jóváhagyva
+Állapot: megvalósítva és átnézve (taskonként spec- és minőségi review), böngészőben kipróbálva (2026-10-14). Az eltéréseket lásd a „Megvalósítási eltérések” szakaszban.
 Ág: `osszehasonlitas-viszonyitas`
 
 ## Cél
@@ -270,3 +270,70 @@ Tesztkeretrendszer nincs.
   - a kiemelt kártya követi a térkép mutatóját;
   - keskeny ablak (pl. 800 px);
   - a végén kijelentkezés (a session-sor ne maradjon a DB-ben).
+
+## Megvalósítási eltérések
+
+A terv írásakor, illetve a taskonkénti review-k nyomán:
+
+- **A magyar viszonyítási alap feltétele a profil.** A „Mikor látszik a panel” pontja szerint a
+  magyar rekord akkor van az adatokban, ha Magyarországnak van profilja. Ez pontatlan: a
+  `listTerkepAdat` azt az országot is visszaadja, amelyhez attasé van rendelve, és a
+  felhasználó-kezelő Magyarországot sem tiltja. Ezért egy függvény dönt (`lib/osszehasonlitas.ts`
+  `hazaiRekord`): csak a profillal rendelkező (`ev !== null`) magyar rekord viszonyítási alap.
+  - A hook ezt `hazai`-ként adja ki, és a `vsMin` ebből számol.
+  - Profil nélküli magyar rekordnál nincs viszonyítás.
+  - A kivonat „Az összehasonlításban mindig szerepel viszonyítási alapként.” szövege is csak
+    profillal jelenik meg.
+- **A halmaz bővítése a `lib`-ben.** A `VsElem` és a `vsHozzaadElem` (a legkisebb szabad szín,
+  Magyarország kizárása) a `lib/osszehasonlitas.ts`-be került, nem a hookba, így az eldobható
+  tsx-script ellenőrizni tudja. A `vsKivesz` és a `vsTorol` változás nélkül ugyanazt a példányt
+  adja vissza, mert a `vs` szerződése: „csak tényleges változásnál új”.
+- **A `felsoHatar` a skála tetejének alsó korlátja,** nem rögzített maximum. A kitöltöttségnél ez
+  ugyanazt adja, mert az érték legfeljebb 9.
+- **Rácsok:**
+  - mindegyik `minmax(min(Xrem,100%),1fr)`, így nagyon keskeny ablakban sem lóg ki;
+  - a mutatórács legfeljebb 4 oszlopos: `minmax(min(100%,max(15rem,23%)),1fr)`. Széles
+    képernyőn 4+3 kártya, 1280 px körül 3+3+1.
+- **Címsorok:**
+  - a szakaszcímek (Mutatók, Listák) `h2`-k, a kártyacímek `h3`-ak; az AppShell lapcíme a `h1`;
+  - a szakaszcím melletti jelmagyarázat a `h2`-n kívül van, `aria-hidden` `<p>`-ben, különben a
+    felolvasó a címsor nevébe olvasná.
+- **Kontraszt:**
+  - A kiemelt mutatókártyán a halvány szöveg (`#737373`) a `#e3f1ec` zöldön csak 4,07:1 lett
+    volna. A kártyán belül ezért a `--muted-foreground` sötétebb (`oklch(0.5 0 0)`, kb. 5,2:1).
+  - A magyar sáv `#7b8494` (a makett `#a9b2bf`-je a sávháttérrel kb. 1,9:1 volt).
+  - A „viszonyítási alap” címke `Badge variant="secondary"` (a halvány pirula 4,34:1 volt).
+  - A magyar szaggatott vonalak `border-foreground/20`, hogy a zöld kártyán is látsszanak.
+  - A mátrix magyar oszlopa `bg-muted`, hogy a makett szerinti sáv látsszon.
+- **Listamátrix:**
+  - Az `elemek` típusa `readonly NoInfer<T>[]`, ezért más szótár listája fordítási hiba (különben
+    a sorrend némán felborulna).
+  - A görgetődoboz `relative overflow-x-auto`. Az `sr-only` feliratok abszolút pozíciósak, és
+    pozícionált ős nélkül kilógtak, keskeny ablakban szélesítve a lapot. Ez a „UI és stílus”
+    bekezdésbe is bekerült általános buktatóként.
+  - Az üres összegző sor nem jelenik meg.
+  - Az adatsorok hover-kiemelést kapnak.
+- **Egyéb:**
+  - A hosszú, egyszavas országnév a névgombon belül törik (`break-words`).
+  - Az ország-színpötty a jobb oldali csík chipjein is ott van.
+  - A táblára hivatkozó, elavult kommentek is javultak (`lib/terkep-mutatok.ts`,
+    `db/queries/orszagprofil.ts`, `ProfilKivonat.tsx`).
+
+## Ismert korlátok és lehetséges folytatások
+
+- **„+ Ország” natív választó:**
+  - Windows/Linux alatt a nyílbillentyű már választás közben `change`-et vált ki, így
+    böngészéskor egymás után kerülnek be országok.
+  - Egy ország kivétele, illetve a „+ Ország” kártya eltűnése után a fókusz a `body`-ra esik.
+  - Mindkettő a régi táblában is így volt.
+- **Windows nagy kontrasztú mód (forced colors):** a pöttyök és sávok csak háttérszínből állnak,
+  ezért eltűnnek. Ez projekt-szintű teendő.
+- **Safari:** túlcsorduló mátrixnál a görgetődoboz billentyűzettel nem fókuszálható (a shadcn
+  `Table`-nél is így van).
+- **Félkövér:** a „Magyarországgal közös: N” nem félkövér, mint a makettben, mert a `listaMatrix`
+  egyetlen szöveget ad vissza.
+- **A térkép kontúrjai:** az összehasonlított országok kontúrja a saját színükkel továbbra sincs
+  meg (hatókörön kívül).
+- **Kommunikáció:** a `app/(app)/kommunikacio/components/TicketLista.tsx` görgetett listájában
+  (`max-h-[68vh] overflow-auto`, `relative` nélkül) ugyanaz az `sr-only`-minta lehet. A
+  minőségi review vette észre, böngészőben nem ellenőriztük; ez a feature hatókörén kívül esik.
