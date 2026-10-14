@@ -8,7 +8,8 @@ import { TERKEP_SZINEK } from './terkep-mutatok';
 
 /**
  * Az összehasonlított országok színei (kék, narancs, lila, rózsa). A halmaz legnagyobb mérete
- * (`VS_MAX`) ebből adódik. Fehér alapon mind legalább 4,5:1, a kis kódfeliratokhoz is.
+ * (`VS_MAX`) ebből adódik; a `listaMatrix` „Mind a N országban” címkéjének „a” névelője is erre a
+ * legfeljebb 4 elemre épül. Fehér alapon mind legalább 4,5:1, a kis kódfeliratokhoz is.
  */
 export const VS_SZINEK = ['#2563eb', '#c2410c', '#9333ea', '#be185d'] as const;
 /** Magyarország (a viszonyítási alap) jelölője, rombusza és kártyacsíkja: a térkép kontúrszíne. */
@@ -42,9 +43,9 @@ export interface SavSkala {
 
 /**
  * A mutató közös sáv-skálája: `[min(0, értékek), max(0, felsoHatar, értékek)]`. Nulláról indul,
- * hogy a sáv hossza arányos legyen (negatív értéknél a nulla a skála belsejébe kerül); a
- * `felsoHatar` rögzített maximumot ad (a kitöltöttség 9 blokkja). `null`, ha egyik értéknek sincs
- * értéke.
+ * hogy a sáv hossza arányos legyen (negatív értéknél a nulla a skála belsejébe kerül). A skála teteje
+ * legalább `felsoHatar` (a kitöltöttség 9 blokkja: a 9/9 teli sáv), nagyobb értéknél tovább nő.
+ * `null`, ha egyik értéknek sincs értéke.
  */
 export function savSkala(ertekek: readonly (number | null)[], felsoHatar?: number): SavSkala | null {
   const szamok = ertekek.filter((v): v is number => v !== null);
@@ -93,15 +94,15 @@ export interface ListaCsoport<T extends string> {
 export interface ListaMatrixAdat<T extends string> {
   /** Az üres csoportok nélkül; ha egyik listának sincs eleme, üres. */
   csoportok: ListaCsoport<T>[];
-  /** Az összegző sor a nulla darabszámú részek nélkül; üres mátrixnál üres string. */
+  /** Az összegző sor; a nulla darabszámú részek kimaradnak, kivéve a „Magyarországgal közös”-t (az 0-nál is kiíródik). Üres mátrixnál üres string. */
   osszegzes: string;
 }
 
 /**
  * Egy lista mátrixa: a kiválasztott országok (`oszlopok`) és Magyarország (`hazai`; `null` = nincs
  * magyar rekord) elemeinek uniója, elemenként egy sor, csoportosítva. Csoporton belül a szótár
- * (`sorrend`) sorrendje; a szótárban nem szereplő elem a csoport végére kerül (a normalizálás után nem
- * fordulhat elő).
+ * (`sorrend`) sorrendje, a szótárban nem szereplő elem a szótárbeliek után (a normalizálás után nem
+ * fordulhat elő); a „Részben közös”-ben ezt megelőzi a darabszám.
  * - 2+ oszlopnál: „Mind a N országban” (N legfeljebb 4, ezért a névelő mindig „a”), „Részben közös”
  *   (előbb a több országban szereplők), „Csak egy országban”, „Csak Magyarország”;
  * - 1 oszlopnál: „Közös Magyarországgal”, „Csak <név>” (alanyesetben, mint a „Csak Magyarország”: a

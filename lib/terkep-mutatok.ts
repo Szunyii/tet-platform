@@ -27,8 +27,8 @@ export interface SzamMutato {
   /** `log`: nagyságrendeket átfogó mutató (GDP, lakosság) – a szín és a rangsor-sáv symlog skálán. */
   skala: 'linearis' | 'log';
   /**
-   * Az összehasonlítás sávjainak rögzített felső határa (a kitöltöttségnél a blokkok száma, hogy a
-   * 9/9 teli sáv legyen); nélküle a megjelenített értékek legnagyobbika.
+   * Az összehasonlítás sáv-skálájának teteje legalább ennyi (a kitöltöttségnél a blokkok száma, hogy a
+   * 9/9 teli sáv legyen); nélküle a tető a megjelenített értékek legnagyobbika.
    */
   felsoHatar?: number;
   ertek: (o: TerkepOrszag) => number | null;
