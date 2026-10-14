@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, asc, count, desc, eq, ne, sql, type SQL } from 'drizzle-orm';
+import { and, count, desc, eq, ne, sql, type SQL } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import { db } from '../index';
 import { attaseOrszag, ticket, ticketOlvasas, ticketUzenet, user } from '../schema';
@@ -141,11 +141,14 @@ export function listTicketek(nezo: Nezo, szuro: TicketSzuro): TicketListItem[] {
     .from(ticket)
     .innerJoin(user, eq(ticket.cimzettId, user.id))
     .where(felt.length ? and(...felt) : undefined)
-    // Egy körlevél ticketjei azonos `updatedAt`-ot kapnak: a holtversenyt a címzett neve oldja
-    // fel, így az első (az átirányítás célja) a lista elején áll.
-    .orderBy(desc(ticket.updatedAt), asc(user.name))
+    .orderBy(desc(ticket.updatedAt))
     .all()
-    .map((r) => tipusos(r));
+    .map((r) => tipusos(r))
+    // Egy körlevél ticketjei azonos `updatedAt`-ot kapnak: a holtversenyt JS-ben a címzett neve
+    // oldja fel, magyar ábécé szerint (az SQL bájtsorrendje az ékezetes nagybetűket és a „dr.”
+    // előtagot a sor végére tenné). Ez ugyanaz a sorrend, mint a `listCimzettJeloltek`-é és a
+    // `listKorlevelTagok`-é, így az első (az átirányítás célja) a lista elején áll.
+    .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime() || a.cimzettNev.localeCompare(b.cimzettNev, 'hu'));
 }
 
 /**
