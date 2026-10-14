@@ -5,10 +5,9 @@ import { Card, CardContent, CardFooter } from '../../../../components/ui/card';
 
 /**
  * A szerkesztő ezt mutatja az űrlapok helyett, ha a fejlécben választott év nem szerkeszthető,
- * de az aktuális igen (relációs vezető attasé múltbeli évvel). Szándékosan nem 404: a Next a
- * notFound()-ot egy csak útvonal-váltáskor visszaálló határon jeleníti meg, az évváltás pedig
- * cookie, így a 404 a visszaváltás után is beragadna. A gomb a SzerkesztesGomb form-ága: a
- * valasztEvAction az aktuális évre állítja a ciklust és a szerkesztőre irányít.
+ * de az aktuális igen (relációs vezető attasé múltbeli évvel; a miértjét lásd a szerkesztő page-en).
+ * A gomb a SzerkesztesGomb form-ága: a valasztEvAction az aktuális évre állítja a ciklust és a
+ * szerkesztőre irányít.
  */
 export function NemSzerkeszthetoEv({
   kod, ev, most, action,
@@ -22,11 +21,11 @@ export function NemSzerkeszthetoEv({
   return (
     <Card>
       <CardContent>
-        <p className="text-sm">
+        <p>
           A(z) {ev}. évi profil csak megtekinthető; szerkeszteni a(z) {most}. évi profilt lehet.
         </p>
       </CardContent>
-      <CardFooter className="flex flex-wrap items-center gap-3">
+      <CardFooter className="flex-wrap gap-3">
         <SzerkesztesGomb
           kod={kod}
           most={most}

@@ -30,11 +30,11 @@ export const metadata: Metadata = { title: 'Országprofil szerkesztése' };
  * Blokkonkénti szerkesztő. Az év a fejléc ciklusválasztójáé (tet-ev cookie). Admin: bármely
  * ország EV_MIN és az aktuális év között; attasé: csak az az ország, amelynek relációs vezetője,
  * és csak az aktuális év. Ha a választott év nem szerkeszthető, de az aktuális igen (attasé
- * múltbeli évvel – a fejléc ezt is felkínálja, és január 1-jén a nyitva hagyott szerkesztő is
- * ide jut), az űrlapok helyett a NemSzerkeszthetoEv kártya jelenik meg, nem 404: a notFound()
- * a Next 404-határán az útvonal változásáig beragadna, az évváltás pedig csak cookie, így a
- * visszaváltás után is 404 maradna. Ha az aktuális év sem szerkeszthető (nincs jog az
- * országhoz), 404 – ez a választott évtől független, ezért nem ragadhat be évváltáskor.
+ * múltbeli évvel – a fejléc ezt is felkínálja; január 1-je után is ide jut, ha a cookie még az
+ * előző évet tartja), az űrlapok helyett a NemSzerkeszthetoEv kártya jelenik meg, nem 404:
+ * a notFound() a Next 404-határán az útvonal változásáig beragadna, az évváltás pedig csak
+ * cookie, így a visszaváltás után is 404 maradna. Ha az aktuális év sem szerkeszthető (nincs
+ * jog az országhoz), 404 – ez a választott évtől független, ezért nem ragadhat be évváltáskor.
  */
 export default async function SzerkesztesPage({ params }: { params: Promise<{ kod: string }> }) {
   const session = await requireSession();

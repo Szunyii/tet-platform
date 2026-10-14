@@ -4,7 +4,7 @@ import { cn } from '../../lib/utils';
 import { KuldGomb } from './KuldGomb';
 
 /**
- * Az országprofil szerkesztőjére vivő gomb a térkép panelén és a profil oldalon.
+ * Az országprofil szerkesztőjére vivő gomb a térkép panelén, a profil oldalon és a szerkesztő NemSzerkeszthetoEv kártyáján.
  * Ha a nézett (választott) év szerkeszthető: sima link. Ha csak az aktuális év szerkeszthető
  * (attasé múltbeli évnézetben): form-gomb, amely a valasztEvAction-nel a ciklust az aktuális
  * évre állítja és a szerkesztőre irányít – a felirat jelzi az évet: „Szerkesztés (2026)".
