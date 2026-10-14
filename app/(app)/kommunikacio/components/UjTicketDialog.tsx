@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { hibaAttr, MezoHiba } from '../../../../components/form/MezoHiba';
 import { MuveletDialog } from '../../../../components/form/MuveletDialog';
 import { useMuveletForm } from '../../../../components/form/useMuveletForm';
@@ -9,7 +9,6 @@ import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
 import { Textarea } from '../../../../components/ui/textarea';
-import { orszagNev } from '../../../../lib/orszagok';
 import {
   isPrioKulcs,
   isTipusKulcs,
@@ -23,6 +22,7 @@ import {
 } from '../../../../lib/ticket-szotar';
 import type { MezoHibak } from '../../../../lib/urlap';
 import { createTicketAction } from '../actions';
+import { CimzettValaszto } from './CimzettValaszto';
 
 export function UjTicketDialog({ jeloltek }: { jeloltek: CimzettJelolt[] }) {
   const [open, setOpen] = useState(false);
@@ -112,17 +112,15 @@ function UjTicketModal({
   const [state, formAction, pending] = useMuveletForm(createTicketAction);
   const errors = state.errors ?? {};
   // Vezérelt mezők: a React 19 a <form action> után (hibánál is) reseteli a nem vezérelt inputokat.
-  const [cimzettId, setCimzettId] = useState('');
+  const [kijelolt, setKijelolt] = useState<string[]>([]);
   const [tipus, setTipus] = useState<TipusKulcs | ''>('');
   const [prio, setPrio] = useState<PrioKulcs>('kozepes');
   const [hatarido, setHatarido] = useState('');
   const [targy, setTargy] = useState('');
   const [szoveg, setSzoveg] = useState('');
 
-  const cimzettItems = useMemo(
-    () => Object.fromEntries(jeloltek.map((j) => [j.id, `${j.nev} · ${orszagNev(j.orszag)}`])),
-    [jeloltek],
-  );
+  // A gomb felirata csak a még választható kijelölteket számolja (revalidálás után a lista szűkülhet).
+  const darab = jeloltek.filter((j) => kijelolt.includes(j.id)).length;
 
   return (
     <MuveletDialog
@@ -130,8 +128,8 @@ function UjTicketModal({
       onOpenChange={onOpenChange}
       pending={pending}
       cim="Új ticket"
-      leiras="Kérés vagy feladat egy TéT attasénak. Az első üzenet a ticket nyitó szövege."
-      gomb="Létrehozás"
+      leiras="Kérés vagy feladat egy vagy több TéT attasénak. Több címzettnél mindenki külön ticketet kap, a válaszokat csak a központ látja. Az első üzenet a ticket nyitó szövege."
+      gomb={darab > 1 ? `Létrehozás (${darab} címzett)` : 'Létrehozás'}
       gombFolyamatban="Létrehozás…"
       formAction={formAction}
       errors={errors}
@@ -141,17 +139,9 @@ function UjTicketModal({
           Nincs címezhető attasé: a Felhasználók oldalon hozz létre attasét székhellyel.
         </p>
       )}
-      <Valaszto
-        id="cimzettId"
-        cimke="Címzett attasé"
-        value={cimzettId}
-        onChange={setCimzettId}
-        items={cimzettItems}
-        placeholder="Válassz attasét"
-        errors={errors}
-        required
-        disabled={jeloltek.length === 0}
-      />
+      {jeloltek.length > 0 && (
+        <CimzettValaszto jeloltek={jeloltek} kijelolt={kijelolt} onChange={setKijelolt} errors={errors} />
+      )}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Valaszto
           id="tipus"
