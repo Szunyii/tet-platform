@@ -102,3 +102,28 @@ az attasé nézetében a saját-szűrő nem szűrőérték.
   eredménye attasénál csak felülírt `szerzoId`-vel mehet a lekérdezésbe.
 - Az első kódcommit (`bcf41c8`, adatréteg) önmagában nem bisect-tiszta: ott az attasé nézetében a
   kényszerített saját-szűrő még aktív szűrőnek látszik; a következő commit (`b769b52`) javítja.
+
+## Kiegészítés: ismeretlen ország-kód az admin szűrőjében
+
+A záró review megfigyelése nyomán, a felhasználó kérésére (2026-10-14), külön ágon
+(`jelentes-orszag-szuro`, a `main` tetején, amelybe az attasé-szűrő már bekerült).
+
+**Kiinduló állapot.** Az admin `?orszag=XX`-e akkor is szűrőként él, ha a kód nincs a `listOrszagok()`
+listájában (ismeretlen kód, kisbetűs kód, vagy olyan ország, amelyről nincs bejegyzés): a lista üres,
+megjelenik a „Szűrők törlése”, és a Base UI Select az `items`-ben nem szereplő értéket nyersen írja ki
+a triggerben („XX”). Az attasénál az `orszag` eddig is eldobódott.
+
+**Döntés.** Ugyanaz a szabály, mint az attasé-szűrőnél: az admin page a `listOrszagok()`-ban nem
+szereplő kódot eldobja, vagyis szűrő nélkülinek veszi. Kisbetűs kódot sem normalizálunk nagybetűsre (a
+felület csak nagybetűs kódot ír az URL-be).
+
+**Megoldás.** `app/(app)/jelentesek/page.tsx`: az `orszagok` a `szerzok` mellé kerül
+(`admin ? listOrszagok() : []`), az admin-ágban a meglévő id-ellenőrzés mellé
+`if (szuro.orszag && !orszagok.includes(szuro.orszag)) delete szuro.orszag;`, a `RiportSzurok`
+`orszagok` propja ezt a változót kapja. CLAUDE.md: a `listOrszagok()` mondata kimondja, hogy a benne
+nem szereplő kódot a page eldobja.
+
+**Ellenőrzés.** `npx tsc --noEmit`, `npm run build`; böngészőben adminnal, egy ideiglenes DE
+QA-bejegyzéssel: `?orszag=XX` és `?orszag=de` → teljes lista, az Ország-legördülőn „Mind”, nincs
+„Szűrők törlése”; `?orszag=DE` → szűr, a legördülőn „Németország”; `?orszag=XX&attase=<létező id>` →
+csak az attasé-szűrő hat.

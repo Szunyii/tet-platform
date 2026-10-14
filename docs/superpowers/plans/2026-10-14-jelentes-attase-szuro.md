@@ -420,3 +420,80 @@ Nem subagent-task. A TéT dev szerver a 3000-es porton fut (a figyelő folyamat 
 - [ ] `/jelentesek?attase=nincs-ilyen` → 4 bejegyzés, a legördülőn „Mind”, nincs „Szűrők törlése” gomb.
 - [ ] Attaséként (Komma Krisztián, a demó jelszó a `.env.example` `DEMO_ATTASE_PASSWORD`-je) `/jelentesek`: nincs Ország- és Attasé-legördülő, 2 bejegyzés, nincs „Szűrők törlése”; `?attase=<Kindert id>` és `?orszag=AT` mellett is a saját 2 bejegyzés, „Szűrők törlése” nélkül.
 - [ ] Takarítás: kijelentkezés mindkét fiókból (a gstack session-sorai törlődnek), `delete from riport where id like 'qa-attase-%'` a `data/tet.db`-n, `select count(*) from riport` → `0`. A `data/tet.db` nem kerül commitba.
+
+---
+
+### Task 5: Ismeretlen ország-kód eldobása az admin szűrőjében (kiegészítés)
+
+Ág: `jelentes-orszag-szuro` (a `main` tetején; az 1–4. task már a `main`-ben van). Spec: a spec
+„Kiegészítés: ismeretlen ország-kód az admin szűrőjében” szakasza.
+
+**Files:**
+- Modify: `app/(app)/jelentesek/page.tsx`
+- Modify: `CLAUDE.md` (a **Riportok** bekezdés)
+
+- [ ] **Step 1: A page**
+
+A `app/(app)/jelentesek/page.tsx`-ben ezt:
+
+```tsx
+  const szerzok = admin ? listSzerzok() : [];
+  if (admin) {
+    // Elavult vagy kézzel írt id: szűrő nélkül, hogy a legördülőben ne nyers id álljon.
+    if (szuro.szerzoId && !szerzok.some((s) => s.id === szuro.szerzoId)) delete szuro.szerzoId;
+  } else {
+```
+
+cseréld erre:
+
+```tsx
+  const orszagok = admin ? listOrszagok() : [];
+  const szerzok = admin ? listSzerzok() : [];
+  if (admin) {
+    // Elavult vagy kézzel írt érték: szűrő nélkül, hogy a legördülőben ne nyers kód vagy id álljon.
+    if (szuro.orszag && !orszagok.includes(szuro.orszag)) delete szuro.orszag;
+    if (szuro.szerzoId && !szerzok.some((s) => s.id === szuro.szerzoId)) delete szuro.szerzoId;
+  } else {
+```
+
+és a JSX-ben ezt:
+
+```tsx
+        orszagok={admin ? listOrszagok() : []}
+```
+
+erre:
+
+```tsx
+        orszagok={orszagok}
+```
+
+- [ ] **Step 2: CLAUDE.md**
+
+A **Riportok** bekezdésben ezt:
+
+```
+az admin ország-szűrő értéke a kód, a `listOrszagok()` a kódokat név szerint rendezve adja.
+```
+
+cseréld erre:
+
+```
+az admin ország-szűrő értéke a kód, a `listOrszagok()` a kódokat név szerint rendezve adja (a bejegyzésekben előforduló országok; a benne nem szereplő kódot a page eldobja, különben a legördülőben nyers kód állna).
+```
+
+- [ ] **Step 3: Ellenőrzés** – `npx tsc --noEmit`, majd `npm run build` (sikeres; a futó dev szerver elavult `.next/dev/types/validator.ts`-e esetén lásd a 3. task Step 3-át).
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add "app/(app)/jelentesek/page.tsx" CLAUDE.md
+git commit -m "fix(jelentesek): az admin ismeretlen ország-kódját a page eldobja, a legördülőben nem áll nyers kód
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+```
+
+- [ ] **Step 5: Böngészős próba (a vezérlő)** – egy ideiglenes DE QA-bejegyzéssel adminként: `?orszag=XX` és
+  `?orszag=de` → teljes lista, „Mind”, nincs „Szűrők törlése”; `?orszag=DE` → szűr, „Németország”;
+  `?orszag=XX&attase=<a QA-bejegyzés szerzője>` → csak az attasé-szűrő hat. Takarítás: kijelentkezés, a
+  QA-bejegyzés törlése, a `data/tet.db` nem kerül commitba.
