@@ -11,7 +11,9 @@ import { uresBlokk, type BlokkKulcs, type ProfilBlokkok } from '../../../../../l
 import { requireSession } from '../../../../../lib/session';
 import { cn } from '../../../../../lib/utils';
 import { getValasztottEv } from '../../../../../lib/valasztott-ev';
+import { valasztEvAction } from '../../../actions';
 import { mentBlokkAction } from '../../actions';
+import { NemSzerkeszthetoEv } from '../../components/NemSzerkeszthetoEv';
 import { AlapadatokMezok } from '../../components/mezok/AlapadatokMezok';
 import { KfiRendszerMezok } from '../../components/mezok/KfiRendszerMezok';
 import { IntezmenyekMezok } from '../../components/mezok/IntezmenyekMezok';
@@ -25,11 +27,14 @@ import { MagyarErtekelesMezok } from '../../components/mezok/MagyarErtekelesMezo
 export const metadata: Metadata = { title: 'Országprofil szerkesztése' };
 
 /**
- * Blokkonkénti szerkesztő. Az év a fejléc ciklusválasztójáé (tet-ev cookie). Jogosultsági
- * hiba 404 (attasé: csak az az ország, amelynek relációs vezetője, és csak az aktuális év;
- * admin: bármely ország EV_MIN és az aktuális év között). Attasé múltbeli évnézetből a gombok
- * előbb az aktuális évre váltanak; a 404 így kézzel beírt URL-nél, vagy egy közben elvett
- * vezetőség után egy elavult gombbal fordul elő.
+ * Blokkonkénti szerkesztő. Az év a fejléc ciklusválasztójáé (tet-ev cookie). Admin: bármely
+ * ország EV_MIN és az aktuális év között; attasé: csak az az ország, amelynek relációs vezetője,
+ * és csak az aktuális év. Ha a választott év nem szerkeszthető, de az aktuális igen (attasé
+ * múltbeli évvel – a fejléc ezt is felkínálja, és január 1-jén a nyitva hagyott szerkesztő is
+ * ide jut), az űrlapok helyett a NemSzerkeszthetoEv kártya jelenik meg, nem 404: a notFound()
+ * a Next 404-határán az útvonal változásáig beragadna, az évváltás pedig csak cookie, így a
+ * visszaváltás után is 404 maradna. Ha az aktuális év sem szerkeszthető (nincs jog az
+ * országhoz), 404 – ez a választott évtől független, ezért nem ragadhat be évváltáskor.
  */
 export default async function SzerkesztesPage({ params }: { params: Promise<{ kod: string }> }) {
   const session = await requireSession();
@@ -38,7 +43,27 @@ export default async function SzerkesztesPage({ params }: { params: Promise<{ ko
   if (!orszag) notFound();
   const most = aktualisEv();
   const ev = await getValasztottEv(most);
-  if (!canEditProfil(session, kod, ev, most)) notFound();
+  const szerkeszthet = canEditProfil(session, kod, ev, most);
+  if (!szerkeszthet && !canEditProfil(session, kod, most, most)) notFound();
+
+  const fejlec = (
+    <div className="flex flex-wrap items-center gap-3">
+      <h2 className="text-lg font-semibold">{orszag.nev} – profil szerkesztése</h2>
+      <span className="text-sm text-muted-foreground">Év: {ev}</span>
+      <Link href={`/orszagprofil/${kod}`} className={cn('ml-auto', buttonVariants({ variant: 'outline' }))}>
+        Megtekintés
+      </Link>
+    </div>
+  );
+
+  if (!szerkeszthet) {
+    return (
+      <div className="flex max-w-4xl flex-col gap-4">
+        {fejlec}
+        <NemSzerkeszthetoEv kod={kod} ev={ev} most={most} action={valasztEvAction} />
+      </div>
+    );
+  }
 
   const profil = getProfil(kod, ev);
   const mentve = profil ? formatDatumIdo(profil.updatedAt) : null;
@@ -49,13 +74,7 @@ export default async function SzerkesztesPage({ params }: { params: Promise<{ ko
 
   return (
     <div className="flex max-w-4xl flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <h2 className="text-lg font-semibold">{orszag.nev} – profil szerkesztése</h2>
-        <span className="text-sm text-muted-foreground">Év: {ev}</span>
-        <Link href={`/orszagprofil/${kod}`} className={cn('ml-auto', buttonVariants({ variant: 'outline' }))}>
-          Megtekintés
-        </Link>
-      </div>
+      {fejlec}
       <p className="text-sm text-muted-foreground">
         Minden blokk külön menthető; a mentett blokkok azonnal megjelennek a térképen és a profil oldalon.
       </p>
