@@ -36,7 +36,7 @@ tartalmaz.
 | Mi legyen a nem szerkeszthető, de olvasható évvel | A felhasználó döntése: a szerkesztő oldalon marad, az űrlapok helyén tájékoztató kártya áll (nem átirányítás és nem az évlista szűkítése). |
 | Mikor jelenik meg a kártya | Ha a választott év nem szerkeszthető (`canEditProfil(session, kod, ev, most)` hamis), de az aktuális igen (`canEditProfil(session, kod, most, most)` igaz). Gyakorlatban: relációs vezető attasé múltbeli évvel – ide tartozik a kézzel beírt URL 2025-ös cookie-val és a nyitva hagyott szerkesztő január 1-jén is. |
 | Mikor marad a 404 | Ha az aktuális év sem szerkeszthető (nem vezető attasé, nincs jog az országhoz), illetve ismeretlen országkódnál. Ez egyik szerepkörnél sem függ a választott évtől, ezért nem ragadhat be évváltáskor. |
-| A kártya szövege | „A(z) 2025. évi profil csak megtekinthető; szerkeszteni a 2026-os évet lehet.” |
+| A kártya szövege | „A(z) 2025. évi profil csak megtekinthető; szerkeszteni a(z) 2026. évi profilt lehet.” (A jóváhagyott „a 2026-os évet” ragja évenként változna – 2027-ben „-es” –, toldalék-segéd pedig nincs; a „2026. évi” alak minden évre helyes, és a profil oldal „Ugrás a(z) 2025. évi profilra” gombjához igazodik.) |
 | A kártya gombjai | „Vissza a szerkesztéshez (2026)” – a meglévő `SzerkesztesGomb` form-ága (`valasztEvAction`: cookie az aktuális évre, átirányítás a szerkesztőre, `KuldGomb` pendinggel); „A(z) 2025. évi profil megtekintése” – link az olvasó nézetre (`/orszagprofil/<kod>`). |
 | A fejléc-sor | Változatlan: „<ország> – profil szerkesztése”, „Év: 2025”, „Megtekintés” link. |
 | Nem mentett beírások | Évváltáskor elvesznek (a `<Fragment key={ev}>` eddig is újramountolt; a kártya-ágban az űrlapok nincsenek a DOM-ban). A felhasználó elfogadta. |
