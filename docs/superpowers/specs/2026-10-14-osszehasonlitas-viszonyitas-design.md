@@ -97,7 +97,8 @@ A régi tábla „Attasé” és „Állapot” sora ide költözik, külön tá
 - **Magyarország-kártya** (ha van magyar rekord, mindig az utolsó): szaggatott keret, halvány
   háttér, sötét csík. Az országnév gomb (a kivonatot nyitja), mellette „viszonyítási alap”
   címke. Alatta `attaseNelkulFelirat('HU')` („hazai profil – a központ tartja karban”) és
-  `AllapotBadge`. × gomb nincs.
+  `AllapotBadge`. × gomb nincs. (Megvalósítva: az attasé-sor a többi kártyáéval azonos,
+  `attasekRovid(…) ?? attaseNelkulFelirat(…)`, így egy Magyarországhoz rendelt attasé is látszik.)
 - **„+ Ország” kártya**, ha `orszagok.length < VS_MAX` és van jelölt: szaggatott keret, benne a
   mostani `NativeSelect` („Ország hozzáadása”). Az opciók a `jeloltek()` listából jönnek,
   Magyarország nélkül, a mostani felirattal (számszerű mutatónál „név · érték”).
@@ -217,14 +218,15 @@ Tiszta logika, React és DB nélkül (a `TerkepOrszag` és a `SzamMutato` csak t
   - Kifelé a `vs` kódlista marad, `useMemo`-val stabil példánnyal, mert a `TerkepNezet` memói
     erre épülnek.
   - Új mezők: `vsSzinek: Readonly<Record<string, string>>` (kód → szín, szintén memózva) és
-    `vsMin: number`.
+    `vsMin: number`. (Megvalósítva: `hazai` is – a `hazaiRekord` eredménye –, és a `vsMin` ebből
+    számol; lásd a „Megvalósítási eltérések” szakaszt.)
   - A `VS_MAX` a `VS_SZINEK.length`-ből adódik. A `VS_MIN` konstans helyére a `vsMin` lép
     (1 magyar rekorddal, 2 nélküle).
   - A Magyarország-kizárás szerint módosul.
 - `lib/terkep-mutatok.ts`: `SzamMutato.felsoHatar?: number`, a `kitoltottseg`-nél
   `BLOKK_KULCSOK.length`.
 - `TerkepNezet.tsx`:
-  - `hazai` (`useMemo`, `adatok.find(hazaiE)`);
+  - `hazai` (`useMemo`, `adatok.find(hazaiE)`) – megvalósítva a hook adja (`allapot.hazai`);
   - a panel a `vsMin`-től látszik;
   - a jelöltekből kimarad Magyarország;
   - új propok a panelnek (`hazai`, `szinek`).
@@ -283,7 +285,8 @@ A terv írásakor, illetve a taskonkénti review-k nyomán:
   - A hook ezt `hazai`-ként adja ki, és a `vsMin` ebből számol.
   - Profil nélküli magyar rekordnál nincs viszonyítás.
   - A kivonat „Az összehasonlításban mindig szerepel viszonyítási alapként.” szövege is csak
-    profillal jelenik meg.
+    profillal jelenik meg: a `TerkepPanel` a `hazai`-ból számolt `viszonyitasiAlap` propot adja át,
+    így ez is a `hazaiRekord`-ból dönt.
 - **A halmaz bővítése a `lib`-ben.** A `VsElem` és a `vsHozzaadElem` (a legkisebb szabad szín,
   Magyarország kizárása) a `lib/osszehasonlitas.ts`-be került, nem a hookba, így az eldobható
   tsx-script ellenőrizni tudja. A `vsKivesz` és a `vsTorol` változás nélkül ugyanazt a példányt
@@ -295,8 +298,10 @@ A terv írásakor, illetve a taskonkénti review-k nyomán:
   - a mutatórács legfeljebb 4 oszlopos: `minmax(min(100%,max(15rem,23%)),1fr)`. Széles
     képernyőn 4+3 kártya, 1280 px körül 3+3+1.
 - **Címsorok:**
-  - a szakaszcímek (Mutatók, Listák) `h2`-k, a kártyacímek `h3`-ak; az AppShell lapcíme a `h1`;
-  - a szakaszcím melletti jelmagyarázat a `h2`-n kívül van, `aria-hidden` `<p>`-ben, különben a
+  - a panel címe (`CardTitle role="heading" aria-level={2}`, mint a projekt más kártyáin) 2-es
+    szintű, a szakaszcímek (Mutatók, Listák) `h3`-ak, a kártyacímek `h4`-ek; az AppShell lapcíme a
+    `h1`;
+  - a szakaszcím melletti jelmagyarázat a címsoron kívül van, `aria-hidden` `<p>`-ben, különben a
     felolvasó a címsor nevébe olvasná.
 - **Kontraszt:**
   - A kiemelt mutatókártyán a halvány szöveg (`#737373`) a `#e3f1ec` zöldön csak 4,07:1 lett

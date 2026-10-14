@@ -11,6 +11,12 @@
 Spec: `docs/superpowers/specs/2026-10-14-osszehasonlitas-viszonyitas-design.md`. Ág: `osszehasonlitas-viszonyitas`. A jóváhagyott makett helyben, gitignore-olt fájlban van: `.superpowers/brainstorm/62102-1791981163/content/teljes-panel-v2.html`. A 8. kártyája („Példa: negatív érték”) csak illusztráció.
 
 > **Megvalósítva (2026-10-14).** Taskonként spec- és minőségi review, utána böngészős QA (6. task, mind a 9 lépés rendben). A teljes fájlokat mutató kódblokkok a task és a hozzá tartozó review-javítások utáni állapotot mutatják. A régi→új cserék a végrehajtott formájukban maradtak; ami később változott rajtuk, azt a taskonkénti „Review-javítások” megjegyzés sorolja fel. A részletek a spec „Megvalósítási eltérések” szakaszában vannak; a mérvadó a kód.
+>
+> A záró, teljes ágat átnéző review (Ready to merge: Yes) négy apróságát a `9910583` javította, ez a fenti kódblokkokban még nem szerepel:
+> - a kivonat a hook `hazai`-jából dönt (`viszonyitasiAlap` prop);
+> - címsor-szerkezet: a panel címe `role="heading" aria-level={2}`, a szakaszok `h3`, a kártyák `h4`;
+> - a magyar kártya attasé-sora a többi kártyáéval azonos;
+> - a CLAUDE.md jelmagyarázat-mondata.
 
 **Tesztkeretrendszer nincs** (CLAUDE.md). Az ellenőrzés eszközei:
 - az 1. task tiszta függvényeihez eldobható tsx-script (`scripts/_osszehasonlitas-proba.ts`), amelyet nem commitolunk;
@@ -1973,7 +1979,7 @@ Segédkifejezések a `$B js`-hez:
 
 ### Task 7: Spec és terv a végleges állapothoz (fő munkamenet)
 
-- [ ] **Step 1:** A spec „Állapot” sora: „megvalósítva, böngészőben kipróbálva”. A végére „Megvalósítási eltérések” szakasz kerül: a terv fejlécében felsorolt három eltérés, és ami a review-k és a QA nyomán még változott.
+- [ ] **Step 1:** A spec „Állapot” sora: „megvalósítva, böngészőben kipróbálva”. A végére „Megvalósítási eltérések” szakasz kerül: a terv fejlécében felsorolt öt eltérés, és ami a review-k és a QA nyomán még változott.
 - [ ] **Step 2:** A terv kódblokkjait igazítsd a végleges fájlokhoz (ha a review-k nyomán változtak).
 - [ ] **Step 3: Commit**
 
