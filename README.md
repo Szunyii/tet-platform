@@ -69,7 +69,7 @@ A `data/tet.db` demó-adatbázis a repóban van (felhasználókkal és az attas�
 | `/jelentesek/[id]` | Bejegyzés részletei, csatolmány-letöltés, a központ „Megtett intézkedés” kártyája |
 | `/jelentesek/[id]/szerkesztes` | Bejegyzés szerkesztése |
 | `/uj-jelentes` | Új bejegyzés (több országos attasénál ország-választó; kategória, tárgy, vezetői összefoglaló, fő üzenet, kulcsszavak, rendezvény adatai, csatolmány) |
-| `/kommunikacio` | Ticketek és üzenetszálak: az admin nyit ticketet egy attasénak, mindkét fél válaszol; `?t=<id>` a kiválasztott ticket, `?sz=` szűrő (`aktiv`/`magas`/`mind`) |
+| `/kommunikacio` | Ticketek és üzenetszálak: az admin nyit ticketet egy vagy több attasénak (mindenkinek, régiónként vagy egyenként választva – címzettenként külön szál), mindkét fél válaszol; `?t=<id>` a kiválasztott ticket, `?sz=` szűrő (`aktiv`/`magas`/`mind`) |
 | `/tudastar` | Tudástár – Magyarországról ajánlható programok, partnerek, együttműködési formák |
 | `/monitoring` | Hálózati rangsor + 14 szempontos részletes értékelés |
 | `/login` | Bejelentkezés (email + jelszó) |
@@ -78,7 +78,7 @@ A `data/tet.db` demó-adatbázis a repóban van (felhasználókkal és az attas�
 ## Felépítés
 
 - `lib/data.ts` – demóadatok a monitoringhoz: 14 poszt, 3 kategória, 14 értékelési szempont
-- `lib/orszagok.ts` – országszótár (ISO-kód, magyar név, world-atlas térképnév, főváros koordinátája)
+- `lib/orszagok.ts` – országszótár (ISO-kód, magyar név, world-atlas térképnév, főváros koordinátája, régió)
 - `lib/attase-orszag.ts` – attasé–ország hozzárendelés: típusok, vezető-szabályok tiszta segédei (a DB-oldal `db/queries/attase-orszag.ts`)
 - `lib/orszagprofil-szotar.ts` – az országprofil blokkjai, opciólistái, címkéi és korlátai
 - `components/orszagprofil/` – a profil olvasó nézet komponensei (`BlokkNezet`, jelvények)
@@ -86,7 +86,8 @@ A `data/tet.db` demó-adatbázis a repóban van (felhasználókkal és az attas�
 - `lib/knowledge.ts` – tudástár demóadatok: 6 program, 6 ökoszisztéma-elem, 5 együttműködési forma
 - `lib/score.ts` – determinisztikus dummy pontszámok a monitoringhoz (a doksi logikája szerint)
 - `lib/riport-szotar.ts` – kategóriák, kulcsszavak, csatolmány-limit
-- `lib/ticket-szotar.ts` – ticket típusok, prioritások, státuszok, szűrők
+- `lib/ticket-szotar.ts` – ticket típusok, prioritások, státuszok, szűrők, a lista szűrős URL-je (`listaUrl`)
+- `lib/ticket-cimzettek.ts` – a címzett-jelöltek régió-csoportjai az új ticket dialógushoz (`regioCsoportok`)
 - `components/riport/` – a bejegyzés űrlap, lista és részlet komponensei
 - `app/(app)/kommunikacio/components/` – a ticketlista, beszélgetés, adatlap és új-ticket dialógus
 - `components/form/` – megosztott form-minta (`useMuveletForm`, `MezoHiba`, `MuveletDialog`, `Mezo`, `SzamMezo`, `CimkeValaszto`, `NativeSelect`)
