@@ -65,7 +65,7 @@ régiónak, vagy tetszőleges összeállításnak. A válaszokat attasénként k
   - `regioCsoportok(jeloltek): { kulcs, cimke, idk: string[] }[]` – csak a nem üres régiók, az
     `ORSZAG_REGIOK` sorrendjében (ebből lesznek a gombok).
 
-A demó adatokkal: Európa 8, Ázsia és Óceánia 4, Amerika 3, Közel-Kelet 1, Afrika 1 attasé (a párizsi
+A demó adatokkal: Európa 7 (Ausztria, Németország 3, Franciaország, Egyesült Királyság, Oroszország), Ázsia és Óceánia 4, Amerika 3, Közel-Kelet 1, Afrika 1 attasé (a párizsi
 attasé Európában és Afrikában is).
 
 ## 3. Adatmodell
@@ -106,7 +106,7 @@ attasé Európában és Afrikában is).
 legördülője helyett, „Címzettek” felirattal (`fieldset` + `legend`).
 
 - Gyorsgombok (`type="button"`, kapcsolók `aria-pressed`-del): „Mindenki (15)”, régiónként
-  „Európa (8)” stb. (csak a nem üres régiók), és „Kijelölés törlése”. Egy csoport gombja akkor
+  „Európa (7)” stb. (csak a nem üres régiók), és „Kijelölés törlése”. Egy csoport gombja akkor
   benyomott, ha a csoport minden tagja ki van jelölve; benyomatlanul kattintva hozzáadja a tagokat a
   kijelöléshez, benyomva kiveszi őket. (Így két régió egymás után összeadható.)
 - Alatta a jelöltek listája natív jelölőnégyzetekkel (`name="cimzettId"`, `value` = user id),
@@ -152,7 +152,7 @@ legördülője helyett, „Címzettek” felirattal (`fieldset` + `legend`).
 - `npx tsc --noEmit`, `npm run build`.
 - Eldobható tsx scriptek (scratchpad, DB-másolaton):
   - minden szótárbeli országnak van régiója, a régiónkénti darabszámok;
-  - a demó attasék régiói (a fenti 8/4/3/1/1, a párizsi attasé két régióban);
+  - a demó attasék régiói (a fenti 7/4/3/1/1, a párizsi attasé két régióban);
   - `parseUjTicketForm`: 0, 1, több, ismétlődő és ismeretlen címzett;
   - `createTicketek`: N ticket közös `korlevelId`-val, N nyitó üzenet és olvasás-jelölés; egy
     címzettnél `korlevelId = null`; `listKorlevelTagok`; az attasé `listTicketek`-je csak a sajátját
