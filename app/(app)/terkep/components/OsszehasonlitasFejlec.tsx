@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { NativeSelect } from '../../../../components/form/NativeSelect';
 import { AllapotBadge } from '../../../../components/orszagprofil/AllapotBadge';
+import { Badge } from '../../../../components/ui/badge';
 import { Button } from '../../../../components/ui/button';
 import { attaseNelkulFelirat, attasekRovid } from '../../../../lib/attase-orszag';
 import { HAZAI_SZIN } from '../../../../lib/osszehasonlitas';
@@ -26,7 +27,7 @@ function NevGomb({ o, onKivalaszt }: { o: TerkepOrszag; onKivalaszt: (kod: strin
   return (
     <button
       type="button"
-      className="min-w-0 rounded-sm text-left font-semibold text-foreground outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+      className="min-w-0 rounded-sm text-left font-semibold break-words text-foreground outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
       onClick={() => onKivalaszt(o.kod)}
     >
       {o.nev}
@@ -44,7 +45,7 @@ export function OsszehasonlitasFejlec({ orszagok, szinek, hazai, jeloltek, mutat
   orszagok: readonly TerkepOrszag[];
   /** Kód → az ország színe az összehasonlításban. */
   szinek: Readonly<Record<string, string>>;
-  /** A magyar rekord (viszonyítási alap); `null`, ha nincs a nézett évre. */
+  /** A magyar rekord (viszonyítási alap); `null`, ha legfeljebb a nézett évig nincs profilja. */
   hazai: TerkepOrszag | null;
   /** A „+ Ország" lista (a halmazban nem lévők, Magyarország nélkül; a hívó rendezi). */
   jeloltek: readonly TerkepOrszag[];
@@ -100,7 +101,7 @@ export function OsszehasonlitasFejlec({ orszagok, szinek, hazai, jeloltek, mutat
           <Csik szin={HAZAI_SZIN} />
           <span className="flex w-full flex-wrap items-start gap-1.5">
             <NevGomb o={hazai} onKivalaszt={onKivalaszt} />
-            <span className="ml-auto rounded-full bg-muted px-2 text-[11px] text-muted-foreground">viszonyítási alap</span>
+            <Badge variant="secondary" className="ml-auto">viszonyítási alap</Badge>
           </span>
           <span className="text-xs text-muted-foreground">{attaseNelkulFelirat(hazai.kod)}</span>
           <AllapotBadge allapot={hazai.allapot} ev={hazai.ev} />

@@ -6,6 +6,7 @@ import {
 } from '../../../../lib/osszehasonlitas';
 import { formatSzam } from '../../../../lib/szam';
 import { SKALA_SZINEK, type SzamMutato } from '../../../../lib/terkep-mutatok';
+import { cn } from '../../../../lib/utils';
 
 /** A térkép mutatójának kártyája: a skála legvilágosabb színe (mint a kivonat mutató-sora). */
 const KIEMELT_HATTER = SKALA_SZINEK[0];
@@ -56,7 +57,7 @@ export function MutatoKartya({ mutato, orszagok, szinek, hazai, kiemelt }: {
   orszagok: readonly TerkepOrszag[];
   /** Kód → az ország színe az összehasonlításban. */
   szinek: Readonly<Record<string, string>>;
-  /** A magyar rekord (viszonyítási alap); `null`, ha nincs a nézett évre. */
+  /** A magyar rekord (viszonyítási alap); `null`, ha legfeljebb a nézett évig nincs profilja. */
   hazai: TerkepOrszag | null;
   /** Ez a térkép mutatója: a kártya kiemelt hátteret kap. */
   kiemelt: boolean;
@@ -66,9 +67,10 @@ export function MutatoKartya({ mutato, orszagok, szinek, hazai, kiemelt }: {
   const nulla = skala && nullaVonal(skala);
   const jelolo = skala && hazaiErtek !== null ? skalaHely(hazaiErtek, skala) : null;
   return (
-    // Inline style szándékosan: a kiemelés színe a térkép skálájából jön.
+    // Inline style szándékosan: a kiemelés színe a térkép skálájából jön. A halvány szöveg a zöldön csak
+    // 4,1:1 lenne (12 px-nél 4,5:1 kell), ezért a kiemelt kártyán belül a --muted-foreground sötétebb (5,2:1).
     <section
-      className="flex flex-col gap-2 rounded-lg border p-3"
+      className={cn('flex flex-col gap-2 rounded-lg border p-3', kiemelt && '[--muted-foreground:oklch(0.5_0_0)]')}
       style={kiemelt ? { background: KIEMELT_HATTER } : undefined}
     >
       <h3 className="flex flex-wrap items-baseline gap-x-2 text-sm font-medium">
@@ -92,7 +94,8 @@ export function MutatoKartya({ mutato, orszagok, szinek, hazai, kiemelt }: {
             );
           })}
           {hazai && (
-            <li className="mt-1 border-t border-dashed pt-2 text-muted-foreground">
+            // A szaggatott vonal áttetsző sötét, hogy a kiemelt (zöld) kártyán is látsszon.
+            <li className="mt-1 border-t border-dashed border-foreground/20 pt-2 text-muted-foreground">
               <span className="flex items-baseline gap-2 text-xs">
                 <span className="min-w-0 flex-1 truncate">
                   Magyarország<span className="sr-only"> (viszonyítási alap)</span>

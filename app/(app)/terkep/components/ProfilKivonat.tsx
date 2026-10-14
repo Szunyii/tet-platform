@@ -144,10 +144,14 @@ export function ProfilKivonat({
         {o.attasek.length > 0 && (
           <Link href="/kommunikacio" className={cn(buttonVariants({ variant: 'outline' }))}>Üzenet a poszttal</Link>
         )}
-        {/* Magyarország mindig viszonyítási alap, a halmazba nem vehető fel. Letiltott gombon a title nem
-            jelenik meg (natív disabled + pointer-events-none); a korlátot az OsszehasonlitasCsik írja ki. */}
+        {/* Magyarország a halmazba nem vehető fel; ha van profilja (legfeljebb a nézett évig), viszonyítási
+            alap (`hazaiRekord`), különben (pl. csak attasé-hozzárendelés miatt van rekordja) nincs mit kiírni.
+            Letiltott gombon a title nem jelenik meg (natív disabled + pointer-events-none); a korlátot az
+            OsszehasonlitasCsik írja ki. */}
         {hazaiE(o.kod) ? (
-          <span className="text-xs text-muted-foreground">Az összehasonlításban mindig szerepel viszonyítási alapként.</span>
+          o.ev !== null && (
+            <span className="text-xs text-muted-foreground">Az összehasonlításban mindig szerepel viszonyítási alapként.</span>
+          )
         ) : (
           <Button
             type="button"
