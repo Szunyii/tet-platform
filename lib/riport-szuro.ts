@@ -22,8 +22,9 @@ export function szuroFromSearchParams(sp: SearchParams): RiportFilter {
   if (isKulcsszo(kulcsszo)) f.kulcsszo = kulcsszo;
   const orszag = egy(sp.orszag);
   if (orszag) f.orszag = orszag.slice(0, 100);
-  // Az admin attasé-szűrője. A page a listán nem szereplő id-t eldobja, az attasé nézetében pedig
-  // bármilyen értéket (ott a lekérdezés a sajátjára szűr), ezért itt elég a formai tisztítás.
+  // Az admin attasé-szűrője. A hívó (a page) az opciólistán (`listSzerzok()`) nem szereplő id-t
+  // eldobja, az attasé nézetében pedig bármilyen értéket (ott a lekérdezés a sajátjára szűr),
+  // ezért itt elég a formai tisztítás.
   const attase = egy(sp.attase);
   if (attase) f.szerzoId = attase.slice(0, 100);
   const q = egy(sp.q);
