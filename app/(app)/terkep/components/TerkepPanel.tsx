@@ -17,7 +17,7 @@ import type { TerkepAllapot } from './useTerkepAllapot';
 export function TerkepPanel({ adatok, allapot, vsOrszagok, rangsor, csoportok, tartomany, szamlalo, ev, most, valasztEvAction }: {
   adatok: TerkepOrszag[];
   allapot: TerkepAllapot;
-  /** A halmaz rekordjai a hozzáadás sorrendjében (a TerkepNezet számolja, a táblának is kell). */
+  /** A halmaz rekordjai a hozzáadás sorrendjében (a TerkepNezet számolja, az összehasonlításnak is kell). */
   vsOrszagok: TerkepOrszag[];
   rangsor: Rangsor | null;
   csoportok: Csoport[];

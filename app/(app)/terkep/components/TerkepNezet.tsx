@@ -145,6 +145,8 @@ export function TerkepNezet({
       {vsOrszagok.length >= allapot.vsMin && (
         <OsszehasonlitasPanel
           orszagok={vsOrszagok}
+          szinek={allapot.vsSzinek}
+          hazai={allapot.hazai}
           jeloltek={jeloltLista}
           mutato={mutato}
           onKivalaszt={allapot.kivalaszt}

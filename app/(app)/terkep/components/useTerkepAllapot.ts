@@ -2,8 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
-import { hazaiE } from '../../../../lib/orszagok';
-import { VS_SZINEK, vsHozzaadElem, type VsElem } from '../../../../lib/osszehasonlitas';
+import { hazaiRekord, VS_SZINEK, vsHozzaadElem, type VsElem } from '../../../../lib/osszehasonlitas';
 import { ALAP_MUTATO, mutatoByKulcs, type Mutato, type MutatoKulcs } from '../../../../lib/terkep-mutatok';
 
 /** Legfeljebb ennyi ország lehet az összehasonlításban: ahány színe van (`VS_SZINEK`). */
@@ -19,7 +18,9 @@ export interface TerkepAllapot {
   vs: readonly string[];
   /** Kód → az ország színe az összehasonlításban (`VS_SZINEK`); amíg az ország a halmazban van, nem változik. */
   vsSzinek: Readonly<Record<string, string>>;
-  /** Ennyi országtól látszik az összehasonlítás: 1, ha van magyar rekord (viszonyítási alap), különben 2. */
+  /** Magyarország rekordja, ha van profilja a nézett évre (`hazaiRekord`): az összehasonlítás viszonyítási alapja. */
+  hazai: TerkepOrszag | null;
+  /** Ennyi országtól látszik az összehasonlítás: 1, ha van magyar viszonyítási alap (`hazai`), különben 2. */
   vsMin: number;
   /** `vs.length >= VS_MAX` – a hozzáadás-gombok letiltásához. */
   vsTele: boolean;
@@ -30,9 +31,11 @@ export interface TerkepAllapot {
   bezar: () => void;
   setMutatoKulcs: (k: string) => void;
   setIparag: (i: string) => void;
+  /** Hozzáadás a legkisebb szabad színnel; Magyarországra, a már benne lévőre és tele halmazra nem csinál semmit (`vsHozzaadElem`). */
   vsHozzaad: (kod: string) => void;
+  /** Kivétel; a többi ország színe marad. Ha az ország nincs benne, nem csinál semmit. */
   vsKivesz: (kod: string) => void;
-  /** Hozzáad, ha nincs benne (és van hely); kivesz, ha benne van – a „+"/pipa gombok művelete. */
+  /** Hozzáad, ha nincs benne (és van hely); kivesz, ha benne van – a „+"/pipa gombok művelete. Magyarországra nem csinál semmit. */
   vsValt: (kod: string) => void;
   vsTorol: () => void;
 }
@@ -80,15 +83,20 @@ export function useTerkepAllapot(adatok: TerkepOrszag[], kezdoKod: string | null
   const bezar = useCallback(() => setKod(null), []);
   const setMutatoKulcs = useCallback((k: string) => setMutatoKulcsState(mutatoByKulcs(k).kulcs), []);
   const vsHozzaad = useCallback((k: string) => setVsElemek((v) => vsHozzaadElem(v, k)), []);
-  const vsKivesz = useCallback((k: string) => setVsElemek((v) => v.filter((e) => e.kod !== k)), []);
+  const vsKivesz = useCallback(
+    (k: string) => setVsElemek((v) => (v.some((e) => e.kod === k) ? v.filter((e) => e.kod !== k) : v)),
+    [],
+  );
   const vsValt = useCallback(
     (k: string) => setVsElemek((v) => (v.some((e) => e.kod === k) ? v.filter((e) => e.kod !== k) : vsHozzaadElem(v, k))),
     [],
   );
-  const vsTorol = useCallback(() => setVsElemek([]), []);
+  // Üres halmaznál ugyanaz a példány marad: a `vs` csak tényleges változásnál új.
+  const vsTorol = useCallback(() => setVsElemek((v) => (v.length === 0 ? v : [])), []);
 
+  const hazai = hazaiRekord(adatok);
   return {
-    kod, vs, vsSzinek, vsMin: adatok.some((o) => hazaiE(o.kod)) ? 1 : 2, vsTele: vs.length >= VS_MAX,
+    kod, vs, vsSzinek, hazai, vsMin: hazai ? 1 : 2, vsTele: vs.length >= VS_MAX,
     mutato: mutatoByKulcs(mutatoKulcs), iparag,
     kivalaszt, bezar, setMutatoKulcs, setIparag, vsHozzaad, vsKivesz, vsValt, vsTorol,
   };

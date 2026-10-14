@@ -1,8 +1,10 @@
 /**
  * Az összehasonlítás (a térkép alatti panel) tiszta logikája: az országok színei és a halmaz
  * bővítése, a mutatókártyák sávjainak skálája és helye, és a listák (kiemelt iparágak,
- * KFI-prioritások, tagságok) mátrixa. Framework-mentes: React és DB nélkül.
+ * KFI-prioritások, tagságok) mátrixa. Framework-mentes: React és DB nélkül (a `TerkepOrszag` csak
+ * típusként jön a server-only query-modulból).
  */
+import type { TerkepOrszag } from '../db/queries/orszagprofil';
 import { hazaiE } from './orszagok';
 import { TERKEP_SZINEK } from './terkep-mutatok';
 
@@ -16,6 +18,15 @@ export const VS_SZINEK = ['#2563eb', '#c2410c', '#9333ea', '#be185d'] as const;
 export const HAZAI_SZIN = TERKEP_SZINEK.kontur;
 /** A magyar sáv: semleges szürke, a `bg-muted` sávháttérrel kb. 3,4:1 (grafikus elemnél legalább 3:1 kell). */
 export const HAZAI_SAV_SZIN = '#7b8494';
+
+/**
+ * Magyarország rekordja, ha van profilja legfeljebb a nézett évig: az összehasonlítás állandó
+ * viszonyítási alapja. Attasé-hozzárendelés miatt profil nélkül is szerepelhet az adatokban
+ * (`ev === null`) – akkor nincs viszonyítási alap.
+ */
+export function hazaiRekord(adatok: readonly TerkepOrszag[]): TerkepOrszag | null {
+  return adatok.find((o) => hazaiE(o.kod) && o.ev !== null) ?? null;
+}
 
 /** Az összehasonlítás-halmaz egy eleme: az ország és a színe (`VS_SZINEK`-index). */
 export interface VsElem {
