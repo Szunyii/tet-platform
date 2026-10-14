@@ -1450,7 +1450,7 @@ export function ListaMatrix<T extends string>({ cim, sorrend, elemek, orszagok, 
   orszagok: readonly TerkepOrszag[];
   /** Kód → az ország színe az összehasonlításban. */
   szinek: Readonly<Record<string, string>>;
-  /** A magyar rekord (viszonyítási alap); `null`, ha nincs a nézett évre. */
+  /** A magyar rekord (viszonyítási alap); `null`, ha legfeljebb a nézett évig nincs profilja. */
   hazai: TerkepOrszag | null;
 }) {
   const matrix = listaMatrix(
