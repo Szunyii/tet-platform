@@ -10,6 +10,7 @@ import { Badge } from '../../../../components/ui/badge';
 import { Button, buttonVariants } from '../../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../../../components/ui/card';
 import { attaseFelirat, attaseNelkulFelirat } from '../../../../lib/attase-orszag';
+import { hazaiE } from '../../../../lib/orszagok';
 import { BLOKK_KULCSOK, MEZO_CIMKEK } from '../../../../lib/orszagprofil-szotar';
 import { formatSzam as sz } from '../../../../lib/szam';
 import { ertekEsHely, SKALA_SZINEK, type Mutato, type Rangsor } from '../../../../lib/terkep-mutatok';
@@ -143,15 +144,20 @@ export function ProfilKivonat({
         {o.attasek.length > 0 && (
           <Link href="/kommunikacio" className={cn(buttonVariants({ variant: 'outline' }))}>Üzenet a poszttal</Link>
         )}
-        {/* Letiltott gombon a title nem jelenik meg (natív disabled + pointer-events-none); a korlátot az OsszehasonlitasCsik írja ki. */}
-        <Button
-          type="button"
-          variant="outline"
-          disabled={!benneVs && vsTele}
-          onClick={onVs}
-        >
-          {benneVs ? <><Check /> Összehasonlításban</> : <><Plus /> Összehasonlítás</>}
-        </Button>
+        {/* Magyarország mindig viszonyítási alap, a halmazba nem vehető fel. Letiltott gombon a title nem
+            jelenik meg (natív disabled + pointer-events-none); a korlátot az OsszehasonlitasCsik írja ki. */}
+        {hazaiE(o.kod) ? (
+          <span className="text-xs text-muted-foreground">Az összehasonlításban mindig szerepel viszonyítási alapként.</span>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!benneVs && vsTele}
+            onClick={onVs}
+          >
+            {benneVs ? <><Check /> Összehasonlításban</> : <><Plus /> Összehasonlítás</>}
+          </Button>
+        )}
         <SzerkesztesGomb
           kod={o.kod}
           most={most}

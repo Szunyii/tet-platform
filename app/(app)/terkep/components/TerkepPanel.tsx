@@ -11,8 +11,8 @@ import type { TerkepAllapot } from './useTerkepAllapot';
 
 /**
  * A térkép melletti panel: `kod` → kivonat, különben rangsor; fölötte az összehasonlítás-csík, ha a
- * halmaz nem üres. Az összehasonlító tábla nem itt, hanem a térkép alatt, teljes szélességben van
- * (TerkepNezet): 2–4 oszlop a keskeny panelen nem fér el.
+ * halmaz nem üres. Az összehasonlítás nem itt, hanem a térkép alatt, teljes szélességben van
+ * (TerkepNezet): a kártyák és a mátrixok a keskeny panelen nem férnének el.
  */
 export function TerkepPanel({ adatok, allapot, vsOrszagok, rangsor, csoportok, tartomany, szamlalo, ev, most, valasztEvAction }: {
   adatok: TerkepOrszag[];
@@ -33,7 +33,9 @@ export function TerkepPanel({ adatok, allapot, vsOrszagok, rangsor, csoportok, t
 
   return (
     <>
-      {vsOrszagok.length > 0 && <OsszehasonlitasCsik orszagok={vsOrszagok} onKivesz={allapot.vsKivesz} />}
+      {vsOrszagok.length > 0 && (
+        <OsszehasonlitasCsik orszagok={vsOrszagok} szinek={allapot.vsSzinek} minimum={allapot.vsMin} onKivesz={allapot.vsKivesz} />
+      )}
       {sel ? (
         <ProfilKivonat
           o={sel}

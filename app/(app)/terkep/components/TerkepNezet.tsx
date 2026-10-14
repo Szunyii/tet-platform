@@ -10,6 +10,7 @@ import {
 } from '../../../../components/ui/select';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { elsoVezetettKod } from '../../../../lib/attase-orszag';
+import { HAZAI_KOD } from '../../../../lib/orszagok';
 import { canEditProfil } from '../../../../lib/orszagprofil-jog';
 import { AGAZATOK } from '../../../../lib/orszagprofil-szotar';
 import {
@@ -18,7 +19,7 @@ import {
 } from '../../../../lib/terkep-mutatok';
 import { OsszehasonlitasPanel } from './OsszehasonlitasPanel';
 import { TerkepPanel } from './TerkepPanel';
-import { useTerkepAllapot, VS_MIN } from './useTerkepAllapot';
+import { useTerkepAllapot } from './useTerkepAllapot';
 import { VilagTerkep } from './VilagTerkep';
 
 /** A „Mind" opció értéke: a Base UI Select üres stringet nem tud választható értékként kezelni. */
@@ -53,7 +54,8 @@ export function TerkepNezet({
     () => vs.map((k) => adatok.find((o) => o.kod === k)).filter((o): o is TerkepOrszag => !!o),
     [adatok, vs],
   );
-  const jeloltLista = useMemo(() => jeloltek(adatok, vs, mutato), [adatok, vs, mutato]);
+  // Magyarország mindig viszonyítási alap, ezért a „+ Ország" jelöltjei között sincs.
+  const jeloltLista = useMemo(() => jeloltek(adatok, [...vs, HAZAI_KOD], mutato), [adatok, vs, mutato]);
   const szamlalo = rangsor
     ? `${rangsor.sorok.length} ország adattal · ${rangsor.adatNelkul.length} adat nélkül`
     : iparag
@@ -138,8 +140,9 @@ export function TerkepNezet({
           />
         </div>
       </div>
-      {/* Az összehasonlító tábla a térkép alatt, teljes szélességben: 2–4 oszlop a keskeny panelen nem férne el. */}
-      {vsOrszagok.length >= VS_MIN && (
+      {/* Az összehasonlítás a térkép alatt, teljes szélességben: a keskeny panelen nem férne el. Magyar
+          profil mellett (viszonyítási alap) már 1 országtól látszik (`vsMin`). */}
+      {vsOrszagok.length >= allapot.vsMin && (
         <OsszehasonlitasPanel
           orszagok={vsOrszagok}
           jeloltek={jeloltLista}

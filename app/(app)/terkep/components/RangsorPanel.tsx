@@ -4,6 +4,7 @@ import { Check, Plus } from 'lucide-react';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { Button } from '../../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../components/ui/card';
+import { hazaiE } from '../../../../lib/orszagok';
 import { formatSzam } from '../../../../lib/szam';
 import { arany, SKALA_SZINEK, type Csoport, type Mutato, type Rangsor, type Tartomany } from '../../../../lib/terkep-mutatok';
 
@@ -36,17 +37,23 @@ function OrszagSor({ o, hely, sav, ertek, benne, vsTele, onKivalaszt, onVsToggle
           <span className="min-w-0 flex-1 truncate font-medium" title={o.nev}>{o.nev}</span>
           {ertek !== undefined && <span className="shrink-0 font-mono text-xs text-muted-foreground">{ertek}</span>}
         </button>
-        {/* Letiltott gombon a title nem jelenne meg (natív disabled + pointer-events-none); a korlátot az OsszehasonlitasCsik írja ki. */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          aria-label={benne ? `${o.nev} kivétele az összehasonlításból` : `${o.nev} hozzáadása az összehasonlításhoz`}
-          disabled={!benne && vsTele}
-          onClick={() => onVsToggle(o.kod)}
-        >
-          {benne ? <Check /> : <Plus />}
-        </Button>
+        {/* Magyarország mindig viszonyítási alap, a halmazba nem vehető fel: a gomb helyén azonos méretű
+            helykitöltő tartja az igazítást. Letiltott gombon a title nem jelenne meg (natív disabled +
+            pointer-events-none); a korlátot az OsszehasonlitasCsik írja ki. */}
+        {hazaiE(o.kod) ? (
+          <span aria-hidden className="size-6 shrink-0" />
+        ) : (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            aria-label={benne ? `${o.nev} kivétele az összehasonlításból` : `${o.nev} hozzáadása az összehasonlításhoz`}
+            disabled={!benne && vsTele}
+            onClick={() => onVsToggle(o.kod)}
+          >
+            {benne ? <Check /> : <Plus />}
+          </Button>
+        )}
       </div>
       {sav !== undefined && (
         <span className="mx-1 mb-1 block h-1.5 overflow-hidden rounded-sm bg-muted">

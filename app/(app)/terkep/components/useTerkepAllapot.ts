@@ -1,19 +1,26 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
+import { hazaiE } from '../../../../lib/orszagok';
+import { VS_SZINEK, vsHozzaadElem, type VsElem } from '../../../../lib/osszehasonlitas';
 import { ALAP_MUTATO, mutatoByKulcs, type Mutato, type MutatoKulcs } from '../../../../lib/terkep-mutatok';
 
-/** Ennyi országtól látszik az összehasonlító tábla. */
-export const VS_MIN = 2;
-/** Legfeljebb ennyi ország lehet az összehasonlításban. */
-export const VS_MAX = 4;
+/** Legfeljebb ennyi ország lehet az összehasonlításban: ahány színe van (`VS_SZINEK`). */
+export const VS_MAX = VS_SZINEK.length;
 
 export interface TerkepAllapot {
   /** Egyes kijelölés (a kivonat országa). */
   kod: string | null;
-  /** Összehasonlítás-halmaz a hozzáadás sorrendjében; ne mutáld. */
+  /**
+   * Összehasonlítás-halmaz a hozzáadás sorrendjében, Magyarország nélkül (az mindig viszonyítási
+   * alap). Csak tényleges változásnál új példány (a hívó memói erre épülnek); ne mutáld.
+   */
   vs: readonly string[];
+  /** Kód → az ország színe az összehasonlításban (`VS_SZINEK`); amíg az ország a halmazban van, nem változik. */
+  vsSzinek: Readonly<Record<string, string>>;
+  /** Ennyi országtól látszik az összehasonlítás: 1, ha van magyar rekord (viszonyítási alap), különben 2. */
+  vsMin: number;
   /** `vs.length >= VS_MAX` – a hozzáadás-gombok letiltásához. */
   vsTele: boolean;
   mutato: Mutato;
@@ -32,15 +39,17 @@ export interface TerkepAllapot {
 
 /**
  * A térkép-oldal kliens-állapota. A jobb panel a hívóban: `kod` → kivonat, különben rangsor; az
- * összehasonlító tábla a térkép alatt jelenik meg, ha `vs.length >= VS_MIN`. Évváltáskor (új `adatok`) a nem
- * létező kijelölés és halmaz-elemek render közben kikerülnek, a `?o=` (kezdoKod) változására a
- * kijelölés frissül, a többi állapot marad – ez a React „prop változásra állapot igazítása" mintája,
- * ezért a page NEM ad `key`-t a nézetnek. A visszaadott objektum renderenként új (nem memoizálható).
+ * összehasonlítás a térkép alatt jelenik meg, ha `vs.length >= vsMin`. Évváltáskor (új `adatok`) a nem
+ * létező kijelölés és halmaz-elemek render közben kikerülnek (a kieső ország színe felszabadul), a
+ * `?o=` (kezdoKod) változására a kijelölés frissül, a többi állapot marad – ez a React „prop
+ * változásra állapot igazítása" mintája, ezért a page NEM ad `key`-t a nézetnek. A visszaadott
+ * objektum renderenként új (nem memoizálható).
  */
 export function useTerkepAllapot(adatok: TerkepOrszag[], kezdoKod: string | null): TerkepAllapot {
   const letezik = (k: string) => adatok.some((o) => o.kod === k);
   const [kod, setKod] = useState<string | null>(() => (kezdoKod && letezik(kezdoKod) ? kezdoKod : null));
-  const [vs, setVs] = useState<readonly string[]>([]);
+  // Az összehasonlítás-halmaz: az ország és a színe; kifelé a `vs` kódlista és a `vsSzinek` térkép.
+  const [vsElemek, setVsElemek] = useState<readonly VsElem[]>([]);
   const [mutatoKulcs, setMutatoKulcsState] = useState<MutatoKulcs>(ALAP_MUTATO);
   const [iparag, setIparag] = useState('');
 
@@ -58,22 +67,29 @@ export function useTerkepAllapot(adatok: TerkepOrszag[], kezdoKod: string | null
     }
   }
   if (ujKod && !letezik(ujKod)) setKod(null);
-  const vsElo = vs.filter(letezik);
-  if (vsElo.length !== vs.length) setVs(vsElo);
+  const vsElo = vsElemek.filter((e) => letezik(e.kod));
+  if (vsElo.length !== vsElemek.length) setVsElemek(vsElo);
+
+  const vs = useMemo(() => vsElemek.map((e) => e.kod), [vsElemek]);
+  const vsSzinek = useMemo(
+    () => Object.fromEntries(vsElemek.map((e) => [e.kod, VS_SZINEK[e.szin]])),
+    [vsElemek],
+  );
 
   const kivalaszt = useCallback((k: string) => setKod(k), []);
   const bezar = useCallback(() => setKod(null), []);
   const setMutatoKulcs = useCallback((k: string) => setMutatoKulcsState(mutatoByKulcs(k).kulcs), []);
-  const vsHozzaad = useCallback((k: string) => setVs((v) => (v.includes(k) || v.length >= VS_MAX ? v : [...v, k])), []);
-  const vsKivesz = useCallback((k: string) => setVs((v) => v.filter((x) => x !== k)), []);
+  const vsHozzaad = useCallback((k: string) => setVsElemek((v) => vsHozzaadElem(v, k)), []);
+  const vsKivesz = useCallback((k: string) => setVsElemek((v) => v.filter((e) => e.kod !== k)), []);
   const vsValt = useCallback(
-    (k: string) => setVs((v) => (v.includes(k) ? v.filter((x) => x !== k) : v.length >= VS_MAX ? v : [...v, k])),
+    (k: string) => setVsElemek((v) => (v.some((e) => e.kod === k) ? v.filter((e) => e.kod !== k) : vsHozzaadElem(v, k))),
     [],
   );
-  const vsTorol = useCallback(() => setVs([]), []);
+  const vsTorol = useCallback(() => setVsElemek([]), []);
 
   return {
-    kod, vs, vsTele: vs.length >= VS_MAX, mutato: mutatoByKulcs(mutatoKulcs), iparag,
+    kod, vs, vsSzinek, vsMin: adatok.some((o) => hazaiE(o.kod)) ? 1 : 2, vsTele: vs.length >= VS_MAX,
+    mutato: mutatoByKulcs(mutatoKulcs), iparag,
     kivalaszt, bezar, setMutatoKulcs, setIparag, vsHozzaad, vsKivesz, vsValt, vsTorol,
   };
 }
