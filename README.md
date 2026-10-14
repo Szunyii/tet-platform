@@ -109,7 +109,8 @@ A `data/tet.db` demó-adatbázis a repóban van (felhasználókkal és az attas�
 - Kommunikáció: nincs valós idejű frissítés (küldéskor és újratöltéskor frissül); a ticket nyitás
   után nem szerkeszthető és nem törölhető; az olvasatlan-jelzés szerep-alapú (két admin egymás
   üzeneteit nem látja olvasatlannak; szerepkör-váltásnál a régi üzenetek a régi szerepnél
-  maradnak); a lista lapozás nélküli.
+  maradnak); a lista lapozás nélküli. A több címzettnek küldött ticket (körlevél) N külön sor a
+  listában, és nem zárható le egy lépésben (ticketenként kell).
 - Felhasználó törlésekor a hozzá címzett ticketek az üzeneteikkel együtt törlődnek (FK cascade);
   a törölt nyitó/szerző neve pillanatképként megmarad az üzeneteken.
 - A Kommunikáció menü olvasatlan-számlálója kliens-oldali navigációnál a következő ticket-műveletig

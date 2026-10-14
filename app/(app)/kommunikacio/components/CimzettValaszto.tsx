@@ -133,7 +133,7 @@ function CimzettJelolo({
         aria-describedby={hiba ? 'cimzettId-hiba' : undefined}
         className="size-4 shrink-0 accent-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       />
-      <span className="min-w-0 truncate">
+      <span className="min-w-0 truncate" title={`${jelolt.nev} · ${jelolt.varos || orszagNev(jelolt.orszag)}`}>
         {jelolt.nev} <span className="text-muted-foreground">· {jelolt.varos || orszagNev(jelolt.orszag)}</span>
       </span>
     </label>

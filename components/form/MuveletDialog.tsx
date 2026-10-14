@@ -42,7 +42,7 @@ export function MuveletDialog({
   gombFolyamatban?: string;
   formAction: (formData: FormData) => void;
   errors: MezoHibak;
-  /** Szélesebb dialógus (42rem, keskeny ablakban 1rem margóval) a többoszlopos űrlapokhoz (felhasználó-dialógusok). */
+  /** Szélesebb dialógus (42rem, keskeny ablakban 1rem margóval) a többoszlopos űrlapokhoz (felhasználó-dialógusok, új ticket címzettválasztóval). */
   szeles?: boolean;
   children: ReactNode;
 }) {

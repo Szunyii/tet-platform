@@ -60,7 +60,7 @@ régiónak, vagy tetszőleges összeállításnak. A válaszokat attasénként k
   lekérdezés mellett a regionális (`szekhely = false`) `attase_orszag` sorok egy második
   lekérdezéssel, JS-ben csoportosítva. A szűrés (nem admin, nem tiltott, van székhely) és a magyar névsorrend változatlan.
 - Új tiszta modul `lib/ticket-cimzettek.ts`:
-  - `jeloltRegioi(j: CimzettJelolt): RegioKulcs[]` – az attasé országainak régiói, ismétlés nélkül,
+  - `jeloltRegioi(j: Pick<CimzettJelolt, 'orszagok'>): RegioKulcs[]` – az attasé országainak régiói, ismétlés nélkül,
     az `ORSZAG_REGIOK` sorrendjében (ismeretlen kód kimarad);
   - `regioJeloltjei(jeloltek, regio): string[]` – a régió attaséinak id-jai a lista sorrendjében;
   - `regioCsoportok(jeloltek): { kulcs, cimke, idk: string[] }[]` – csak a nem üres régiók, az
