@@ -8,12 +8,13 @@ import { orszagNev } from '../../../../lib/orszagok';
 import { regioCsoportok } from '../../../../lib/ticket-cimzettek';
 import type { CimzettJelolt } from '../../../../lib/ticket-szotar';
 import type { MezoHibak } from '../../../../lib/urlap';
+import { cn } from '../../../../lib/utils';
 
 /**
  * Az új ticket címzettjei: gyorsgombok („Mindenki”, régiónként) és bejelölős lista. A gyorsgombok
  * csak hozzáadnak: a csoport tagjait a kijelöléshez veszik, soha nem vesznek ki belőle, így két régió
  * összeadható (az attasé több régióban is lehet). Ha egy csoport minden tagja ki van jelölve, a gomb
- * pipát kap és „mind kijelölve” szöveget ad a képernyőolvasónak; ilyenkor a kattintás hatástalan, de a
+ * pipát kap és a képernyőolvasónak „, mind kijelölve” szöveget ad; ilyenkor a kattintás hatástalan, de a
  * gomb engedélyezett marad, hogy a fókusz ne vesszen el. Elvenni jelölőnként vagy a „Kijelölés
  * törlése” gombbal lehet, amely letiltva is fókuszálható marad. A jelölőnégyzetek
  * (`name="cimzettId"`) mindig az aktuális jelöltlistából épülnek: a revalidálás után eltűnt jelölt nem
@@ -43,7 +44,7 @@ export function CimzettValaszto({
 
   return (
     <fieldset className="flex min-w-0 flex-col gap-2">
-      <legend className="mb-1.5 text-sm font-medium">Címzettek</legend>
+      <legend className="mb-1.5 text-sm leading-none font-medium">Címzettek</legend>
       <div className="flex flex-wrap gap-1.5">
         {csoportok.map((cs) => {
           const mindBenne = cs.idk.length > 0 && cs.idk.every((id) => kijeloltSet.has(id));
@@ -57,7 +58,7 @@ export function CimzettValaszto({
             >
               {mindBenne && <Check />}
               {cs.cimke} ({cs.idk.length})
-              {mindBenne && <span className="sr-only"> (mind kijelölve)</span>}
+              {mindBenne && <span className="sr-only">, mind kijelölve</span>}
             </Button>
           );
         })}
@@ -78,7 +79,7 @@ export function CimzettValaszto({
       <p className="text-xs text-muted-foreground" aria-live="polite">
         {darab} kijelölve
       </p>
-      <ul className="flex max-h-64 flex-col overflow-y-auto rounded-md border">
+      <ul className={cn('flex max-h-64 flex-col overflow-y-auto rounded-md border', hiba && 'border-destructive')}>
         {jeloltek.map((j, i) => (
           <li key={j.id} className="border-b last:border-b-0">
             <CimzettJelolo

@@ -58,7 +58,6 @@ function Valaszto({
   placeholder,
   errors,
   required = false,
-  disabled = false,
 }: {
   id: string;
   cimke: string;
@@ -68,7 +67,6 @@ function Valaszto({
   placeholder: string;
   errors: MezoHibak;
   required?: boolean;
-  disabled?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -81,7 +79,6 @@ function Valaszto({
         onValueChange={(v) => onChange(v ?? '')}
         items={items}
         required={required}
-        disabled={disabled}
       >
         <SelectTrigger id={id} aria-labelledby={`${id}-label ${id}`} {...hibaAttr(errors, id)} className="w-full">
           <SelectValue placeholder={placeholder} />
@@ -127,6 +124,7 @@ function UjTicketModal({
       open={open}
       onOpenChange={onOpenChange}
       pending={pending}
+      szeles
       cim="Új ticket"
       leiras="Kérés vagy feladat egy vagy több TéT attasénak. Több címzettnél mindenki külön ticketet kap, a válaszokat csak a központ látja. Az első üzenet a ticket nyitó szövege."
       gomb={darab > 1 ? `Létrehozás (${darab} címzett)` : 'Létrehozás'}
