@@ -4,9 +4,15 @@ import { Card } from '../../../../components/ui/card';
 import type { TicketListItem } from '../../../../db/queries/ticket';
 import { formatNaptariDatum } from '../../../../lib/datum';
 import { orszagNev } from '../../../../lib/orszagok';
-import { lejartE, PRIORITASOK, SZURO_KULCSOK, SZUROK, type TicketSzuro } from '../../../../lib/ticket-szotar';
+import {
+  lejartE,
+  listaUrl,
+  PRIORITASOK,
+  SZURO_KULCSOK,
+  SZUROK,
+  type TicketSzuro,
+} from '../../../../lib/ticket-szotar';
 import { cn } from '../../../../lib/utils';
-import { listaUrl } from '../lista-url';
 import { prioSzegely, TipusBadge } from './TicketJelzesek';
 
 export function TicketLista({

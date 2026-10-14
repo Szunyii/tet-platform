@@ -75,3 +75,18 @@ export function parseSzuro(v: string | string[] | undefined): TicketSzuro {
   const elso = Array.isArray(v) ? v[0] : v;
   return typeof elso === 'string' && Object.prototype.hasOwnProperty.call(SZUROK, elso) ? (elso as TicketSzuro) : 'aktiv';
 }
+
+/**
+ * `/kommunikacio` URL a szűrővel és a kiválasztott tickettel – a `parseSzuro` párja. Az `aktiv`
+ * az alapértelmezett (ugyanaz, amire a `parseSzuro` esik vissza), ezért nem kerül az URL-be.
+ * A `t`-t szándékosan megtartjuk akkor is, ha az adott ticket nem felel meg az új szűrőnek:
+ * az oldal így nyitva tartja a beszélgetést, csak a sor nem lesz kiemelve a listában. A lista
+ * és az adatlap körlevél-része is ezt használja.
+ */
+export function listaUrl(szuro: TicketSzuro, t?: string): string {
+  const p = new URLSearchParams();
+  if (szuro !== 'aktiv') p.set('sz', szuro);
+  if (t) p.set('t', t);
+  const q = p.toString();
+  return q ? `/kommunikacio?${q}` : '/kommunikacio';
+}
