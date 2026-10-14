@@ -24,15 +24,15 @@ export function KorlevelTagok({ tagok, aktivId, szuro }: { tagok: KorlevelTag[];
             <li key={t.id}>
               <Link
                 href={listaUrl(szuro, t.id)}
-                title={`${t.cimzettNev} · ${orszagNev(t.orszag)}`}
                 aria-current={aktiv ? 'true' : undefined}
                 className={cn(
                   'flex items-center gap-2 rounded px-1.5 py-1 text-[13px] text-foreground no-underline outline-none hover:bg-muted/40 hover:no-underline focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
                   aktiv && 'bg-primary/10 ring-1 ring-inset ring-primary/20',
                 )}
               >
-                <span className="min-w-0 flex-1">
+                <span className="min-w-0 flex-1" title={`${t.cimzettNev} · ${orszagNev(t.orszag)}`}>
                   <span className="block truncate">{t.cimzettNev}</span>
+                  <span className="sr-only">, </span>
                   <span className="block truncate text-xs text-muted-foreground">{orszagNev(t.orszag)}</span>
                 </span>
                 <span className="sr-only">, </span>
