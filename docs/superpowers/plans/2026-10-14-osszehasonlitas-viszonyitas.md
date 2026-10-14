@@ -21,6 +21,8 @@ A terv kódját a megírása előtt egy eldobható forrásmásolaton kipróbált
 1. A halmaz bővítése (`VsElem`, `vsHozzaadElem`: a legkisebb szabad szín, Magyarország kizárása) a `lib/osszehasonlitas.ts`-ben van, nem a hookban, így a tsx-script ellenőrizni tudja. A hook csak hívja.
 2. A rácsok `minmax(min(Xrem,100%),1fr)`-et kapnak, hogy nagyon keskeny ablakban se lógjanak ki.
 3. A szakaszcímek (Mutatók, Listák) `h2`-k, a kártyacímek `h3`-ak; az AppShell lapcíme a `h1`.
+4. A magyar viszonyítási alap feltétele a profil, nem a rekord puszta jelenléte. A `hazaiRekord` csak az `ev !== null` magyar rekordot fogadja el, mert attasé-hozzárendelés miatt profil nélkül is lehet magyar rekord. A hook kiadja `hazai`-ként, és a `vsMin` ebből számol (a 2. task reviewja nyomán).
+5. A `vsKivesz` és a `vsTorol` változás nélkül ugyanazt a példányt adja vissza, hogy a `vs` „csak tényleges változásnál új” szerződése igaz legyen (a 2. task reviewja nyomán).
 
 **Közös szabályok (minden subagentnek):**
 - A felhasználó TéT dev szervere a 3000-es porton fut. Nem szabad leállítani vagy újraindítani, és saját dev szervert sem szabad indítani.
@@ -36,17 +38,19 @@ A terv kódját a megírása előtt egy eldobható forrásmásolaton kipróbált
   - színek: `VS_SZINEK`, `HAZAI_SZIN`, `HAZAI_SAV_SZIN`;
   - a halmaz bővítése: `VsElem`, `vsHozzaadElem`;
   - sáv-skála: `savSkala`, `skalaHely`, `savHelye`, `nullaVonal`;
-  - listamátrix: `listaMatrix` és a típusai.
-- Modify: `lib/terkep-mutatok.ts` – `SzamMutato.felsoHatar?`, a kitöltöttségnél `BLOKK_KULCSOK.length`.
-- Modify: `app/(app)/terkep/components/useTerkepAllapot.ts` – a halmaz ország + szín párokból áll; új mezők `vsSzinek` és `vsMin`; a `VS_MAX` a `VS_SZINEK.length`-ből adódik, a `VS_MIN` konstans megszűnik.
+  - listamátrix: `listaMatrix` és a típusai;
+  - a magyar viszonyítási alap: `hazaiRekord` (3. task).
+- Modify: `lib/terkep-mutatok.ts` – `SzamMutato.felsoHatar?`, a kitöltöttségnél `BLOKK_KULCSOK.length`; a 4. taskban két komment.
+- Modify: `db/queries/orszagprofil.ts` – egy elavult komment (4. task).
+- Modify: `app/(app)/terkep/components/useTerkepAllapot.ts` – a halmaz ország + szín párokból áll; új mezők `vsSzinek`, `vsMin` és (a 3. taskban) `hazai`; a `VS_MAX` a `VS_SZINEK.length`-ből adódik, a `VS_MIN` konstans megszűnik.
 - Modify: `app/(app)/terkep/components/OsszehasonlitasCsik.tsx` – színpötty a chipeken, az állapotszöveg a `minimum`-hoz igazodik.
 - Modify: `app/(app)/terkep/components/TerkepNezet.tsx`:
   - a panel a `vsMin`-től látszik;
   - a „+ Ország” jelöltjeiből kimarad Magyarország;
   - a magyar rekord (`hazai`) és az új panel-propok.
-- Modify: `app/(app)/terkep/components/TerkepPanel.tsx` – a csíknak `szinek` és `minimum` megy, a doc-komment frissül.
+- Modify: `app/(app)/terkep/components/TerkepPanel.tsx` – a csíknak `szinek` és `minimum` megy, a doc-kommentek frissülnek.
 - Modify: `app/(app)/terkep/components/RangsorPanel.tsx` – Magyarország sorában a „+” helyén helykitöltő.
-- Modify: `app/(app)/terkep/components/ProfilKivonat.tsx` – Magyarországnál a gomb helyén tájékoztató szöveg.
+- Modify: `app/(app)/terkep/components/ProfilKivonat.tsx` – Magyarországnál a gomb helyén tájékoztató szöveg; a 4. taskban egy komment.
 - Create: `app/(app)/terkep/components/MutatoKartya.tsx` – egy számszerű mutató kártyája.
 - Create: `app/(app)/terkep/components/OsszehasonlitasFejlec.tsx` – az országkártyák, a „+ Ország” és a Magyarország-kártya.
 - Create: `app/(app)/terkep/components/ListaMatrix.tsx` – egy lista mátrixa.
@@ -830,15 +834,154 @@ git commit -m "feat(terkep): stabil országszínek az összehasonlításban, Mag
 
 ---
 
-### Task 3: Országfejléc, mutatókártyák, új panel-keret
+### Task 3: Magyar viszonyítási alap, országfejléc, mutatókártyák, új panel-keret
+
+A 2. task minőségi reviewja nyomán ez a task kiegészült:
+- a „van-e magyar viszonyítási alap” egy helyen dől el (`hazaiRekord`: csak a profillal rendelkező magyar rekord számít);
+- a hook kiadja a `hazai` mezőt, és a `vsMin` ebből számol;
+- a `vsKivesz` és a `vsTorol` változás nélkül ugyanazt a példányt adja vissza;
+- a `TerkepPanel` egy elavult kommentje is javul.
 
 **Files:**
+- Modify: `lib/osszehasonlitas.ts` (2 csere: `hazaiRekord`)
+- Modify: `app/(app)/terkep/components/useTerkepAllapot.ts` (5 csere)
 - Create: `app/(app)/terkep/components/MutatoKartya.tsx`
 - Create: `app/(app)/terkep/components/OsszehasonlitasFejlec.tsx`
 - Modify: `app/(app)/terkep/components/OsszehasonlitasPanel.tsx` (teljes új tartalom; a „Listák” szakasz a 4. taskban jön)
-- Modify: `app/(app)/terkep/components/TerkepNezet.tsx` (3 csere)
+- Modify: `app/(app)/terkep/components/TerkepNezet.tsx` (1 csere)
+- Modify: `app/(app)/terkep/components/TerkepPanel.tsx` (1 csere, komment)
+- Ideiglenes: `scripts/_osszehasonlitas-proba.ts` (az ellenőrzés után törlendő)
 
-- [ ] **Step 1: `MutatoKartya.tsx`**
+- [ ] **Step 1: `hazaiRekord` a `lib/osszehasonlitas.ts`-ben**
+
+(1) A fejléc-komment vége és az importok – ezt:
+
+```ts
+ * KFI-prioritások, tagságok) mátrixa. Framework-mentes: React és DB nélkül.
+ */
+import { hazaiE } from './orszagok';
+import { TERKEP_SZINEK } from './terkep-mutatok';
+```
+
+cseréld erre:
+
+```ts
+ * KFI-prioritások, tagságok) mátrixa. Framework-mentes: React és DB nélkül (a `TerkepOrszag` csak
+ * típusként jön a server-only query-modulból).
+ */
+import type { TerkepOrszag } from '../db/queries/orszagprofil';
+import { hazaiE } from './orszagok';
+import { TERKEP_SZINEK } from './terkep-mutatok';
+```
+
+(2) A `VsElem` elé – ezt:
+
+```ts
+/** Az összehasonlítás-halmaz egy eleme: az ország és a színe (`VS_SZINEK`-index). */
+```
+
+cseréld erre:
+
+```ts
+/**
+ * Magyarország rekordja, ha van profilja legfeljebb a nézett évig: az összehasonlítás állandó
+ * viszonyítási alapja. Attasé-hozzárendelés miatt profil nélkül is szerepelhet az adatokban
+ * (`ev === null`) – akkor nincs viszonyítási alap.
+ */
+export function hazaiRekord(adatok: readonly TerkepOrszag[]): TerkepOrszag | null {
+  return adatok.find((o) => hazaiE(o.kod) && o.ev !== null) ?? null;
+}
+
+/** Az összehasonlítás-halmaz egy eleme: az ország és a színe (`VS_SZINEK`-index). */
+```
+
+- [ ] **Step 2: `useTerkepAllapot.ts`**
+
+(1) Import – ezt:
+
+```ts
+import { hazaiE } from '../../../../lib/orszagok';
+import { VS_SZINEK, vsHozzaadElem, type VsElem } from '../../../../lib/osszehasonlitas';
+```
+
+cseréld erre:
+
+```ts
+import { hazaiRekord, VS_SZINEK, vsHozzaadElem, type VsElem } from '../../../../lib/osszehasonlitas';
+```
+
+(2) A `hazai` mező – ezt:
+
+```ts
+  /** Ennyi országtól látszik az összehasonlítás: 1, ha van magyar rekord (viszonyítási alap), különben 2. */
+  vsMin: number;
+```
+
+cseréld erre:
+
+```ts
+  /** Magyarország rekordja, ha van profilja a nézett évre (`hazaiRekord`): az összehasonlítás viszonyítási alapja. */
+  hazai: TerkepOrszag | null;
+  /** Ennyi országtól látszik az összehasonlítás: 1, ha van magyar viszonyítási alap (`hazai`), különben 2. */
+  vsMin: number;
+```
+
+(3) A műveletek doc-kommentjei – ezt:
+
+```ts
+  vsHozzaad: (kod: string) => void;
+  vsKivesz: (kod: string) => void;
+  /** Hozzáad, ha nincs benne (és van hely); kivesz, ha benne van – a „+"/pipa gombok művelete. */
+  vsValt: (kod: string) => void;
+```
+
+cseréld erre:
+
+```ts
+  /** Hozzáadás a legkisebb szabad színnel; Magyarországra, a már benne lévőre és tele halmazra nem csinál semmit (`vsHozzaadElem`). */
+  vsHozzaad: (kod: string) => void;
+  /** Kivétel; a többi ország színe marad. Ha az ország nincs benne, nem csinál semmit. */
+  vsKivesz: (kod: string) => void;
+  /** Hozzáad, ha nincs benne (és van hely); kivesz, ha benne van – a „+"/pipa gombok művelete. Magyarországra nem csinál semmit. */
+  vsValt: (kod: string) => void;
+```
+
+(4) A `vsKivesz` – ezt:
+
+```ts
+  const vsKivesz = useCallback((k: string) => setVsElemek((v) => v.filter((e) => e.kod !== k)), []);
+```
+
+cseréld erre:
+
+```ts
+  const vsKivesz = useCallback(
+    (k: string) => setVsElemek((v) => (v.some((e) => e.kod === k) ? v.filter((e) => e.kod !== k) : v)),
+    [],
+  );
+```
+
+(5) A `vsTorol` és a visszatérési érték – ezt:
+
+```ts
+  const vsTorol = useCallback(() => setVsElemek([]), []);
+
+  return {
+    kod, vs, vsSzinek, vsMin: adatok.some((o) => hazaiE(o.kod)) ? 1 : 2, vsTele: vs.length >= VS_MAX,
+```
+
+cseréld erre:
+
+```ts
+  // Üres halmaznál ugyanaz a példány marad: a `vs` csak tényleges változásnál új.
+  const vsTorol = useCallback(() => setVsElemek((v) => (v.length === 0 ? v : [])), []);
+
+  const hazai = hazaiRekord(adatok);
+  return {
+    kod, vs, vsSzinek, hazai, vsMin: hazai ? 1 : 2, vsTele: vs.length >= VS_MAX,
+```
+
+- [ ] **Step 3: `MutatoKartya.tsx`**
 
 ```tsx
 'use client';
@@ -952,7 +1095,7 @@ export function MutatoKartya({ mutato, orszagok, szinek, hazai, kiemelt }: {
 }
 ```
 
-- [ ] **Step 2: `OsszehasonlitasFejlec.tsx`**
+- [ ] **Step 4: `OsszehasonlitasFejlec.tsx`**
 
 ```tsx
 'use client';
@@ -1070,7 +1213,7 @@ export function OsszehasonlitasFejlec({ orszagok, szinek, hazai, jeloltek, mutat
 
 A sorrend: a kiválasztott országok, utána a „+ Ország” (ide kerül az újonnan felvett ország), végül Magyarország. A Magyarország-kártya mindig az utolsó, mint a mutatókártyák magyar sora.
 
-- [ ] **Step 3: `OsszehasonlitasPanel.tsx` teljes új tartalma (még a „Listák” nélkül)**
+- [ ] **Step 5: `OsszehasonlitasPanel.tsx` teljes új tartalma (még a „Listák” nélkül)**
 
 ```tsx
 'use client';
@@ -1164,35 +1307,9 @@ export function OsszehasonlitasPanel({ orszagok, szinek, hazai, jeloltek, mutato
 }
 ```
 
-- [ ] **Step 4: `TerkepNezet.tsx`**
+- [ ] **Step 6: `TerkepNezet.tsx` – a panel propjai**
 
-(1) Import – ezt:
-
-```tsx
-import { HAZAI_KOD } from '../../../../lib/orszagok';
-```
-
-cseréld erre:
-
-```tsx
-import { HAZAI_KOD, hazaiE } from '../../../../lib/orszagok';
-```
-
-(2) A magyar rekord – ezt:
-
-```tsx
-  // Magyarország mindig viszonyítási alap, ezért a „+ Ország" jelöltjei között sincs.
-```
-
-cseréld erre:
-
-```tsx
-  // Magyarország rekordja, ha van profilja a nézett évre: az összehasonlítás állandó viszonyítási alapja.
-  const hazai = useMemo(() => adatok.find((o) => hazaiE(o.kod)) ?? null, [adatok]);
-  // Magyarország mindig viszonyítási alap, ezért a „+ Ország" jelöltjei között sincs.
-```
-
-(3) A panel propjai – ezt:
+Ezt:
 
 ```tsx
         <OsszehasonlitasPanel
@@ -1206,32 +1323,80 @@ cseréld erre:
         <OsszehasonlitasPanel
           orszagok={vsOrszagok}
           szinek={allapot.vsSzinek}
-          hazai={hazai}
+          hazai={allapot.hazai}
           jeloltek={jeloltLista}
 ```
 
-- [ ] **Step 5: Ellenőrzés**
+- [ ] **Step 7: `TerkepPanel.tsx` – elavult komment**
 
-Run: `npx tsc --noEmit`
-Expected: kimenet nélkül, 0-s kilépési kód.
+Ezt:
 
-Run: `npm run build`
-Expected: `✓ Compiled successfully`, hiba nélkül.
+```tsx
+  /** A halmaz rekordjai a hozzáadás sorrendjében (a TerkepNezet számolja, a táblának is kell). */
+```
 
-- [ ] **Step 6: Commit**
+cseréld erre:
+
+```tsx
+  /** A halmaz rekordjai a hozzáadás sorrendjében (a TerkepNezet számolja, az összehasonlításnak is kell). */
+```
+
+- [ ] **Step 8: Az ellenőrző script a `hazaiRekord`-dal**
+
+Hozd létre újra az 1. task scriptjét, a záró `console.log('ok');` sora nélkül (mintára, nem sorszámra, mert a terv sorai eltolódhatnak):
 
 ```bash
-git add "app/(app)/terkep/components/MutatoKartya.tsx" "app/(app)/terkep/components/OsszehasonlitasFejlec.tsx" "app/(app)/terkep/components/OsszehasonlitasPanel.tsx" "app/(app)/terkep/components/TerkepNezet.tsx"
+sed -n '/^\/\/ Eldobható ellenőrzés a lib\/osszehasonlitas.ts-hez/,/^console.log(.ok.);$/p' docs/superpowers/plans/2026-10-14-osszehasonlitas-viszonyitas.md | sed '$d' > scripts/_osszehasonlitas-proba.ts
+```
+
+A script elején az `../lib/osszehasonlitas` importot cseréld erre:
+
+```ts
+import type { TerkepOrszag } from '../db/queries/orszagprofil';
+import {
+  hazaiRekord, listaMatrix, nullaVonal, savHelye, savSkala, skalaHely, vsHozzaadElem, type ListaMatrixAdat, type VsElem,
+} from '../lib/osszehasonlitas';
+```
+
+A script végére fűzd hozzá ezt, utána a `console.log('ok');` sort:
+
+```ts
+// --- A magyar viszonyítási alap: csak profillal (ev !== null) számít; attasé-hozzárendelés miatti, profil nélküli rekord nem.
+const rek = (kod: string, ev: number | null) => ({ kod, ev }) as unknown as TerkepOrszag;
+const huProfillal = rek('HU', 2026);
+assert.equal(hazaiRekord([rek('JP', 2026), huProfillal]), huProfillal);
+assert.equal(hazaiRekord([rek('JP', 2026), rek('HU', null)]), null);
+assert.equal(hazaiRekord([rek('JP', 2026)]), null);
+```
+
+Run: `npx tsx scripts/_osszehasonlitas-proba.ts`
+Expected: `ok`
+
+- [ ] **Step 9: Ellenőrzés**
+
+Run: `npx tsc --noEmit` (a script még a fában van, neki is fordulnia kell)
+Expected: kimenet nélkül, 0-s kilépési kód.
+
+Run: `rm scripts/_osszehasonlitas-proba.ts && npm run build`
+Expected: `✓ Compiled successfully`, hiba nélkül.
+
+- [ ] **Step 10: Commit**
+
+```bash
+git add lib/osszehasonlitas.ts "app/(app)/terkep/components/useTerkepAllapot.ts" "app/(app)/terkep/components/MutatoKartya.tsx" "app/(app)/terkep/components/OsszehasonlitasFejlec.tsx" "app/(app)/terkep/components/OsszehasonlitasPanel.tsx" "app/(app)/terkep/components/TerkepNezet.tsx" "app/(app)/terkep/components/TerkepPanel.tsx"
 git commit -m "feat(terkep): összehasonlítás mutatókártyákkal és országfejléccel, Magyarország viszonyítási alapként"
 ```
 
 ---
 
-### Task 4: Listamátrixok
+### Task 4: Listamátrixok és a kommentek takarítása
+
+Az 1. task reviewja nyomán a táblára hivatkozó, a tábla megszűnésével elavult kommentek és két pontatlan komment is itt javul.
 
 **Files:**
 - Create: `app/(app)/terkep/components/ListaMatrix.tsx`
 - Modify: `app/(app)/terkep/components/OsszehasonlitasPanel.tsx` (teljes új tartalom: a „Listák” szakasz és a hozzá tartozó importok)
+- Modify: `lib/terkep-mutatok.ts` (2 komment), `db/queries/orszagprofil.ts` (1 komment), `app/(app)/terkep/components/ProfilKivonat.tsx` (1 komment), `lib/osszehasonlitas.ts` (1 komment)
 
 - [ ] **Step 1: `ListaMatrix.tsx`**
 
@@ -1471,7 +1636,72 @@ export function OsszehasonlitasPanel({ orszagok, szinek, hazai, jeloltek, mutato
 }
 ```
 
-- [ ] **Step 3: Ellenőrzés**
+- [ ] **Step 3: Kommentek (csak komment, kódváltozás nincs)**
+
+(1) `lib/terkep-mutatok.ts` – ezt:
+
+```ts
+/** A mutatók a `MUTATO_KULCSOK` sorrendjében (a Select és az összehasonlító tábla sorrendje). */
+```
+
+cseréld erre:
+
+```ts
+/** A mutatók a `MUTATO_KULCSOK` sorrendjében (a Select és az összehasonlítás mutatókártyáinak sorrendje). */
+```
+
+(2) `lib/terkep-mutatok.ts` – ezt:
+
+```ts
+   * 9/9 teli sáv legyen); nélküle a tető a megjelenített értékek legnagyobbika.
+```
+
+cseréld erre:
+
+```ts
+   * 9/9 teli sáv legyen); nélküle a tető a megjelenített értékek legnagyobbika (de legalább 0).
+```
+
+(3) `db/queries/orszagprofil.ts` – ezt:
+
+```ts
+  /** KFI-prioritások (KFI-blokk) az összehasonlító táblához; nem mentett blokknál üres. */
+```
+
+cseréld erre:
+
+```ts
+  /** KFI-prioritások (KFI-blokk) az összehasonlítás listamátrixához; nem mentett blokknál üres. */
+```
+
+(4) `app/(app)/terkep/components/ProfilKivonat.tsx` – ezt:
+
+```tsx
+          // összehasonlító tábla kiemelt sora) – ez köti a sort a térkép aktuális színezéséhez. Érték
+```
+
+cseréld erre:
+
+```tsx
+          // összehasonlítás kiemelt mutatókártyája) – ez köti a sort a térkép aktuális színezéséhez. Érték
+```
+
+(5) `lib/osszehasonlitas.ts` – ezt:
+
+```ts
+  /** Az összegző sor; a nulla darabszámú részek kimaradnak, kivéve a „Magyarországgal közös”-t (az 0-nál is kiíródik). Üres mátrixnál üres string. */
+```
+
+cseréld erre:
+
+```ts
+  /** Az összegző sor; a nulla darabszámú részek kimaradnak, kivéve a „Magyarországgal közös”-t (ha a magyar lista nem üres, 0-nál is kiíródik). Üres mátrixnál üres string. */
+```
+
+- [ ] **Step 4: Ellenőrzés**
+
+Run: `grep -rn "összehasonlító tábl" app components lib db`
+Expected: nincs találat.
 
 Run: `npx tsc --noEmit`
 Expected: kimenet nélkül, 0-s kilépési kód.
@@ -1479,11 +1709,11 @@ Expected: kimenet nélkül, 0-s kilépési kód.
 Run: `npm run build`
 Expected: `✓ Compiled successfully`, hiba nélkül.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
-git add "app/(app)/terkep/components/ListaMatrix.tsx" "app/(app)/terkep/components/OsszehasonlitasPanel.tsx"
-git commit -m "feat(terkep): az iparágak, prioritások és tagságok mátrixa az összehasonlításban"
+git add "app/(app)/terkep/components/ListaMatrix.tsx" "app/(app)/terkep/components/OsszehasonlitasPanel.tsx" lib/terkep-mutatok.ts db/queries/orszagprofil.ts "app/(app)/terkep/components/ProfilKivonat.tsx" lib/osszehasonlitas.ts
+git commit -m "feat(terkep): az iparágak, prioritások és tagságok mátrixa az összehasonlításban; elavult kommentek"
 ```
 
 ---
