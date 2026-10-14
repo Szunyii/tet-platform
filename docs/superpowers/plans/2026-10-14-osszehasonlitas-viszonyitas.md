@@ -1726,6 +1726,8 @@ git commit -m "feat(terkep): az iparágak, prioritások és tagságok mátrixa a
 **Files:**
 - Modify: `CLAUDE.md`. A cserék 1–5. része az Országprofil szakasz „Route-ok:” bekezdésének `/terkep` részében, a 6–7. a „**Térkép.**” bekezdésben van. Mindegyik régi szöveg pontosan egyszer fordul elő.
 
+Az új szövegek már a review-k nyomán változott végleges állapotot írják le (`hazai`/`hazaiRekord`, a kivonat szövegének feltétele, a jelmagyarázat a `h2`-n kívül, a legfeljebb 4 oszlop, a kiemelt kártya kontrasztja, a `NoInfer`).
+
 A régi szövegekben a nyitó idézőjel `„` (U+201E), a záró ASCII `"`: az Edit-hez betűre így kell megadni. Az új szövegek a meglévő részeken megtartják ezt, az új részekben `„…”` áll.
 
 - [ ] **Step 1: A hook leírása**
@@ -1739,7 +1741,7 @@ Ezt:
 cseréld erre:
 
 ```text
-`vs` összehasonlítás-halmaz (legfeljebb `VS_MAX`=4, a `VS_SZINEK` színeinek száma; Magyarország nem kerülhet bele), `vsSzinek` (kód → szín: felvételkor a legkisebb szabad, és az országnál marad, amíg benne van), `vsMin` (1, ha van magyar rekord, különben 2), `vsTele`, `vsValt`, `mutato`, `iparag`;
+`vs` összehasonlítás-halmaz (legfeljebb `VS_MAX`=4, a `VS_SZINEK` színeinek száma; Magyarország nem kerülhet bele), `vsSzinek` (kód → szín: felvételkor a legkisebb szabad, és az országnál marad, amíg benne van), `hazai` (`hazaiRekord`: Magyarország rekordja, ha legfeljebb a nézett évig van profilja – attasé-hozzárendelés miatt profil nélkül is lehet magyar rekord, az nem viszonyítási alap), `vsMin` (1, ha van `hazai`, különben 2), `vsTele`, `vsValt`, `mutato`, `iparag`;
 ```
 
 - [ ] **Step 2: A kivonat gombja**
@@ -1753,7 +1755,7 @@ mutató-sáv + ikonos „Összehasonlítás"/„Összehasonlításban" gomb)
 cseréld erre:
 
 ```text
-mutató-sáv + ikonos „Összehasonlítás"/„Összehasonlításban" gomb, Magyarországnál helyette „Az összehasonlításban mindig szerepel viszonyítási alapként.”)
+mutató-sáv + ikonos „Összehasonlítás"/„Összehasonlításban" gomb, Magyarországnál helyette – ha van profilja – „Az összehasonlításban mindig szerepel viszonyítási alapként.”)
 ```
 
 - [ ] **Step 3: A rangsor-panel**
@@ -1795,7 +1797,7 @@ az `OsszehasonlitasPanel` a térkép **alatt**, teljes szélességben, ha `vs.le
 cseréld erre:
 
 ```text
-az `OsszehasonlitasPanel` a térkép **alatt**, teljes szélességben, ha `vs.length >= vsMin` (Magyarország – ha van profilja legfeljebb a nézett évig – állandó viszonyítási alap, nélküle a leírás jelzi, hogy nincs viszonyítás; országonként saját szín a `VS_SZINEK`-ből): `OsszehasonlitasFejlec` (országkártya: színcsík, név → kivonat, a kód a saját színben, ×, `attasekRovid`/`attaseNelkulFelirat`, `AllapotBadge`; utána „+ Ország" `NativeSelect` a `jeloltek()` listából, Magyarország nélkül; végül Magyarország szaggatott „viszonyítási alap” kártyája), „Mutatók”: `SZAM_MUTATOK`-onként egy `MutatoKartya` (kétsoros sorok a halmaz sorrendjében – nem érték szerint –, közös, nulláról induló lineáris skála: `savSkala` a kiválasztottak és Magyarország értékeiből, a mutató `felsoHatar`-ával, negatívnál nullavonal; alul Magyarország szürke sávja, minden ország sávján fekete jelölő a magyar szinten; a térkép számszerű mutatójának kártyája kiemelt; félkövér nincs), „Listák”: három `ListaMatrix` (kiemelt iparágak, KFI-prioritások, tagságok; a `listaMatrix()` csoportjai 2+ országnál „Mind a N országban / Részben közös / Csak egy országban / Csak Magyarország”, 1 országnál „Közös Magyarországgal / Csak <név> / Csak Magyarország”, fölöttük összegző sor a „Magyarországgal közös: N” és a „nincs megadva: …” résszel), „Összehasonlítás törlése");
+az `OsszehasonlitasPanel` a térkép **alatt**, teljes szélességben, ha `vs.length >= vsMin` (Magyarország – a `hazai`, ha legfeljebb a nézett évig van profilja – állandó viszonyítási alap, nélküle a leírás jelzi, hogy nincs viszonyítás; országonként saját szín a `VS_SZINEK`-ből): `OsszehasonlitasFejlec` (országkártya: színcsík, név → kivonat, a kód a saját színben, ×, `attasekRovid`/`attaseNelkulFelirat`, `AllapotBadge`; utána „+ Ország" `NativeSelect` a `jeloltek()` listából, Magyarország nélkül; végül Magyarország szaggatott „viszonyítási alap” kártyája), „Mutatók” (a szakaszcím melletti jelmagyarázat a `h2`-n kívül, `aria-hidden`): `SZAM_MUTATOK`-onként egy `MutatoKartya`, legfeljebb 4 oszlopban (kétsoros sorok a halmaz sorrendjében – nem érték szerint –, közös, nulláról induló lineáris skála: `savSkala` a kiválasztottak és Magyarország értékeiből, a mutató `felsoHatar`-ával, negatívnál nullavonal; alul Magyarország szürke sávja, minden ország sávján fekete jelölő a magyar szinten; a térkép számszerű mutatójának kártyája kiemelt – rajta a `--muted-foreground` sötétebb, mert a halvány szöveg a zöldön kevés kontrasztú –; félkövér nincs), „Listák”: három `ListaMatrix` (kiemelt iparágak, KFI-prioritások, tagságok; generikus, a `T`-t a `NoInfer` miatt csak a szótár (`sorrend`) adja, így más szótár listája fordítási hiba; a `listaMatrix()` csoportjai 2+ országnál „Mind a N országban / Részben közös / Csak egy országban / Csak Magyarország”, 1 országnál „Közös Magyarországgal / Csak <név> / Csak Magyarország”, fölöttük összegző sor a „Magyarországgal közös: N” és a „nincs megadva: …” résszel), „Összehasonlítás törlése");
 ```
 
 - [ ] **Step 6: Az `attasekRovid` (Térkép bekezdés)**
@@ -1823,7 +1825,7 @@ a framework-mentes `lib/terkep-mutatok.ts`-ben vannak; ismeretlen mutató-kulcsr
 cseréld erre:
 
 ```text
-a framework-mentes `lib/terkep-mutatok.ts`-ben vannak (a számszerű mutató opcionális `felsoHatar`-a az összehasonlítás sáv-skálájának rögzített maximuma, a kitöltöttségnél 9); ismeretlen mutató-kulcsra `mutatoByKulcs` az alapértelmezettet adja. Az összehasonlítás tiszta logikája – `VS_SZINEK`, `HAZAI_SZIN`/`HAZAI_SAV_SZIN`, `vsHozzaadElem` (a legkisebb szabad szín; Magyarországra, a már benne lévőre és a tele halmazra változatlan), `savSkala`/`skalaHely`/`savHelye`/`nullaVonal`, `listaMatrix` – a szintén framework-mentes `lib/osszehasonlitas.ts`-ben van.
+a framework-mentes `lib/terkep-mutatok.ts`-ben vannak (a számszerű mutató opcionális `felsoHatar`-a az összehasonlítás sáv-skálájának rögzített maximuma, a kitöltöttségnél 9); ismeretlen mutató-kulcsra `mutatoByKulcs` az alapértelmezettet adja. Az összehasonlítás tiszta logikája – `VS_SZINEK`, `HAZAI_SZIN`/`HAZAI_SAV_SZIN`, `hazaiRekord`, `vsHozzaadElem` (a legkisebb szabad szín; Magyarországra, a már benne lévőre és a tele halmazra változatlan), `savSkala`/`skalaHely`/`savHelye`/`nullaVonal`, `listaMatrix` – a szintén framework-mentes `lib/osszehasonlitas.ts`-ben van.
 ```
 
 - [ ] **Step 8: Ellenőrzés**
@@ -1839,6 +1841,9 @@ Expected: `1`
 
 Run: `grep -c "MutatoKartya" CLAUDE.md`
 Expected: `1`
+
+Run: `grep -c "hazaiRekord" CLAUDE.md`
+Expected: `2`
 
 - [ ] **Step 9: Commit**
 
