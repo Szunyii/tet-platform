@@ -6,21 +6,8 @@ import { formatNaptariDatum } from '../../../../lib/datum';
 import { orszagNev } from '../../../../lib/orszagok';
 import { lejartE, PRIORITASOK, SZURO_KULCSOK, SZUROK, type TicketSzuro } from '../../../../lib/ticket-szotar';
 import { cn } from '../../../../lib/utils';
+import { listaUrl } from '../lista-url';
 import { prioSzegely, TipusBadge } from './TicketJelzesek';
-
-/**
- * `/kommunikacio` URL a szűrővel (aktiv = alapértelmezett, nem kerül az URL-be) és a
- * kiválasztott tickettel. A `t`-t szándékosan megtartjuk akkor is, ha az adott ticket nem
- * felel meg az új szűrőnek: az oldal így nyitva tartja a beszélgetést, csak a sor nem
- * lesz kiemelve a listában.
- */
-function listaUrl(szuro: TicketSzuro, t?: string): string {
-  const p = new URLSearchParams();
-  if (szuro !== 'aktiv') p.set('sz', szuro);
-  if (t) p.set('t', t);
-  const q = p.toString();
-  return q ? `/kommunikacio?${q}` : '/kommunikacio';
-}
 
 export function TicketLista({
   sorok,
@@ -105,6 +92,7 @@ export function TicketLista({
                     {t.targy}
                   </p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
+                    {admin && t.korlevelId && 'Körlevél · '}
                     {admin && `${orszagNev(t.orszag)} · ${t.cimzettNev} · `}
                     {t.uzenetSzam} üzenet
                   </p>

@@ -5,6 +5,7 @@ import {
   getTicket,
   jelolOlvasottnak,
   listCimzettJeloltek,
+  listKorlevelTagok,
   listTicketek,
   type TicketDetail,
 } from '../../../db/queries/ticket';
@@ -55,6 +56,9 @@ export default async function KommunikacioPage({ searchParams }: { searchParams:
   const olvasatlan = countOlvasatlan(session);
   const ma = maiNaptariNap();
   const jeloltek = admin ? listCimzettJeloltek() : [];
+  // A körlevél ticketjei: csak az admin adatlapja mutatja (az attasé a többi címzettet nem látja;
+  // a lekérdezés maga is üres listát ad nem adminnak).
+  const korlevel = admin && kivalasztott?.korlevelId ? listKorlevelTagok(kivalasztott.korlevelId, session) : null;
 
   return (
     <div className="grid max-w-[1500px] items-start gap-4 lg:grid-cols-[18rem_minmax(0,1fr)] 2xl:grid-cols-[22rem_minmax(0,1fr)_17rem]">
@@ -81,6 +85,8 @@ export default async function KommunikacioPage({ searchParams }: { searchParams:
             ticket={kivalasztott}
             admin={admin}
             ma={ma}
+            szuro={szuro}
+            korlevel={korlevel}
             lezarAction={closeTicketAction.bind(null, kivalasztott.id)}
             ujranyitAction={reopenTicketAction.bind(null, kivalasztott.id)}
           />

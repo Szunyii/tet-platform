@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react';
 import type { MuveletState } from '../../../../components/form/useMuveletForm';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/card';
-import type { TicketDetail } from '../../../../db/queries/ticket';
+import type { KorlevelTag, TicketDetail } from '../../../../db/queries/ticket';
 import { formatDatum, formatNaptariDatum } from '../../../../lib/datum';
 import { orszagNev } from '../../../../lib/orszagok';
-import { lejartE } from '../../../../lib/ticket-szotar';
+import { lejartE, type TicketSzuro } from '../../../../lib/ticket-szotar';
 import { cn } from '../../../../lib/utils';
+import { KorlevelTagok } from './KorlevelTagok';
 import { PrioJelzes, StatuszBadge, TipusBadge } from './TicketJelzesek';
 import { TicketStatuszGombok } from './TicketStatuszGombok';
 
@@ -22,6 +23,8 @@ export function TicketAdatlap({
   ticket,
   admin,
   ma,
+  szuro,
+  korlevel,
   lezarAction,
   ujranyitAction,
 }: {
@@ -29,6 +32,10 @@ export function TicketAdatlap({
   admin: boolean;
   /** Mai nap YYYY-MM-DD (Europe/Budapest). */
   ma: string;
+  /** A lista aktuális szűrője (a körlevél-linkekhez). */
+  szuro: TicketSzuro;
+  /** A körlevél ticketjei – csak adminnál és csak körlevél-ticketnél, különben `null`. */
+  korlevel: KorlevelTag[] | null;
   lezarAction: () => Promise<MuveletState>;
   ujranyitAction: () => Promise<MuveletState>;
 }) {
@@ -69,7 +76,13 @@ export function TicketAdatlap({
             {formatDatum(ticket.createdAt)}
           </Sor>
           {ticket.lezarvaAt && <Sor cimke="Lezárva">{formatDatum(ticket.lezarvaAt)}</Sor>}
+          {!admin && ticket.korlevelId && (
+            <Sor cimke="Körlevél">A központ több attasénak is elküldte; a válaszodat csak a központ látja.</Sor>
+          )}
         </dl>
+        {admin && korlevel && korlevel.length > 0 && (
+          <KorlevelTagok tagok={korlevel} aktivId={ticket.id} szuro={szuro} />
+        )}
         {admin && (
           <div className="mt-4">
             <TicketStatuszGombok
