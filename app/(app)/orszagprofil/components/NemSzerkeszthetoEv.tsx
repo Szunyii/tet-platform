@@ -5,9 +5,9 @@ import { Card, CardContent, CardFooter } from '../../../../components/ui/card';
 
 /**
  * A szerkesztő ezt mutatja az űrlapok helyett, ha a fejlécben választott év nem szerkeszthető,
- * de az aktuális igen (relációs vezető attasé múltbeli évvel; a miértjét lásd a szerkesztő page-en).
- * A gomb a SzerkesztesGomb form-ága: a valasztEvAction az aktuális évre állítja a ciklust és a
- * szerkesztőre irányít.
+ * de az aktuális igen (relációs vezető attasé múltbeli évvel; a miértjét lásd a szerkesztő
+ * page-en). A gomb a SzerkesztesGomb form-ága: a valasztEvAction az aktuális évre állítja a
+ * ciklust és a szerkesztőre irányít.
  */
 export function NemSzerkeszthetoEv({
   kod, ev, most, action,
