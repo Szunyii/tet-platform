@@ -62,7 +62,7 @@ export function RiportReszlet({
         <Card size="sm" className="border-l-4 border-l-emerald-500">
           <CardHeader>
             <CardTitle role="heading" aria-level={3}>
-              Fő üzenet/jó gyakorlat/javaslat
+              Fő üzenet, Mo. számára átvehető jó gyakorlat, javaslat
             </CardTitle>
           </CardHeader>
           <CardContent className="text-sm whitespace-pre-wrap">{riport.joGyakorlat}</CardContent>

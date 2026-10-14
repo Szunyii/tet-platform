@@ -192,7 +192,7 @@ export function parseRiportForm(
     else esemenyHelyszin = h;
   }
 
-  const joGyakorlat = opcionalis(fd, 'joGyakorlat', SZOVEG_MAX, 'A fő üzenet/jó gyakorlat/javaslat', errors);
+  const joGyakorlat = opcionalis(fd, 'joGyakorlat', SZOVEG_MAX, 'A fő üzenet, Mo. számára átvehető jó gyakorlat, javaslat', errors);
   const kapcsolodoFeladat = opcionalis(fd, 'kapcsolodoFeladat', SZOVEG_MAX, 'A kapcsolódó feladat', errors);
 
   const meglevoSet = new Set(meglevoCsatolmanyIdk);
