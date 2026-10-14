@@ -22,6 +22,10 @@ export function szuroFromSearchParams(sp: SearchParams): RiportFilter {
   if (isKulcsszo(kulcsszo)) f.kulcsszo = kulcsszo;
   const orszag = egy(sp.orszag);
   if (orszag) f.orszag = orszag.slice(0, 100);
+  // Az admin attasé-szűrője. A page a listán nem szereplő id-t eldobja, és az attasé nézetében
+  // a sajátjával helyettesíti, ezért itt elég a formai tisztítás.
+  const attase = egy(sp.attase);
+  if (attase) f.szerzoId = attase.slice(0, 100);
   const q = egy(sp.q);
   if (q) f.q = q.slice(0, 100);
   // Naptárilag is érvényes dátum kell: a `2026-02-31` egyébként egy másik napra
@@ -39,6 +43,7 @@ export interface SzuroErtekek {
   kategoria: string;
   kulcsszo: string;
   orszag: string;
+  attase: string;
   tol: string;
   ig: string;
 }
@@ -49,6 +54,7 @@ export function szuroErtekek(f: RiportFilter): SzuroErtekek {
     kategoria: f.kategoria ?? '',
     kulcsszo: f.kulcsszo ?? '',
     orszag: f.orszag ?? '',
+    attase: f.szerzoId ?? '',
     tol: f.datumTol ?? '',
     ig: f.datumIg ?? '',
   };

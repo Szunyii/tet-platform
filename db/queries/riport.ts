@@ -43,6 +43,12 @@ export interface RiportListItem {
   createdAt: Date;
 }
 
+/** Az admin attasé-szűrőjének egy opciója: egy bejegyzéssel rendelkező szerző. */
+export interface RiportSzerzo {
+  id: string;
+  nev: string;
+}
+
 export interface CsatolmanyMeta {
   id: string;
   fajlnev: string;
@@ -284,4 +290,17 @@ export function listOrszagok(): string[] {
     .all()
     .map((r) => r.orszag)
     .sort((a, b) => orszagNev(a).localeCompare(orszagNev(b), 'hu'));
+}
+
+/**
+ * A bejegyzéssel rendelkező szerzők (az admin attasé-szűrőjének opciói), magyar névsorban. A
+ * rendezés JS-ben, mert a SQLite BINARY collation az ékezetes neveket a lista végére tenné.
+ */
+export function listSzerzok(): RiportSzerzo[] {
+  return db
+    .selectDistinct({ id: user.id, nev: user.name })
+    .from(riport)
+    .innerJoin(user, eq(riport.szerzoId, user.id))
+    .all()
+    .sort((a, b) => a.nev.localeCompare(b.nev, 'hu'));
 }
