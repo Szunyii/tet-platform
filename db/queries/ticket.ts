@@ -42,6 +42,8 @@ export interface TicketListItem {
   updatedAt: Date;
   /** A nézőhöz képest: van-e a másik szereptől üzenet a néző utolsó megtekintése után. */
   olvasatlan: boolean;
+  /** Több címzettes küldés közös azonosítója; egy címzettnél `null`. */
+  korlevelId: string | null;
 }
 
 export interface Uzenet {
@@ -93,6 +95,7 @@ function listOszlopok(nezo: Nezo) {
     uzenetSzam: uzenetSzamSql,
     updatedAt: ticket.updatedAt,
     olvasatlan: olvasatlanSql(nezo),
+    korlevelId: ticket.korlevelId,
   };
 }
 
@@ -183,38 +186,48 @@ export function getTicket(id: string, nezo: Nezo): TicketDetail | null {
   return { ...tipusos(sor), uzenetek };
 }
 
-/** Tranzakcióban: ticket + nyitó üzenet; a nyitó rögtön olvasottnak jelöli. Visszaadja az id-t. */
-export function createTicket(input: TicketCreate): string {
-  const id = crypto.randomUUID();
+/**
+ * Tranzakcióban címzettenként egy ticket + a nyitó üzenet + a nyitó olvasás-jelölése (azonos
+ * időbélyeggel); bármely hibánál egyik sem jön létre. Több címzettnél a ticketek közös
+ * `korlevelId`-t kapnak, egynél `null`. Visszaadja az id-ket a címzettek sorrendjében.
+ */
+export function createTicketek(input: TicketCreate): string[] {
+  if (input.cimzettek.length === 0) throw new Error('Nincs címzett.');
+  const korlevelId = input.cimzettek.length > 1 ? crypto.randomUUID() : null;
+  const idk = input.cimzettek.map(() => crypto.randomUUID());
   const most = new Date();
   db.transaction((tx) => {
-    tx.insert(ticket)
-      .values({
-        id,
-        targy: input.targy,
-        tipus: input.tipus,
-        prio: input.prio,
-        hatarido: input.hatarido,
-        statusz: 'nyitott',
-        cimzettId: input.cimzettId,
-        orszag: input.orszag,
-        nyitoId: input.nyito.id,
-      })
-      .run();
-    tx.insert(ticketUzenet)
-      .values({
-        id: crypto.randomUUID(),
-        ticketId: id,
-        szerzoId: input.nyito.id,
-        szerzoNev: input.nyito.nev,
-        szerzoSzerep: input.nyito.szerep,
-        szoveg: input.szoveg,
-        createdAt: most,
-      })
-      .run();
-    tx.insert(ticketOlvasas).values({ ticketId: id, userId: input.nyito.id, latottAt: most }).run();
+    input.cimzettek.forEach((c, i) => {
+      const id = idk[i];
+      tx.insert(ticket)
+        .values({
+          id,
+          targy: input.targy,
+          tipus: input.tipus,
+          prio: input.prio,
+          hatarido: input.hatarido,
+          statusz: 'nyitott',
+          cimzettId: c.id,
+          orszag: c.orszag,
+          nyitoId: input.nyito.id,
+          korlevelId,
+        })
+        .run();
+      tx.insert(ticketUzenet)
+        .values({
+          id: crypto.randomUUID(),
+          ticketId: id,
+          szerzoId: input.nyito.id,
+          szerzoNev: input.nyito.nev,
+          szerzoSzerep: input.nyito.szerep,
+          szoveg: input.szoveg,
+          createdAt: most,
+        })
+        .run();
+      tx.insert(ticketOlvasas).values({ ticketId: id, userId: input.nyito.id, latottAt: most }).run();
+    });
   });
-  return id;
+  return idk;
 }
 
 /** A küldő szerepe szerinti státusz: admin után az attasé következik, és fordítva. */
@@ -348,4 +361,26 @@ export function listCimzettJeloltek(): CimzettJelolt[] {
       orszagok: [u.orszag, ...(regionalis.get(u.id) ?? [])],
     }))
     .sort((a, b) => a.nev.localeCompare(b.nev, 'hu'));
+}
+
+export interface KorlevelTag {
+  id: string;
+  cimzettNev: string;
+  orszag: string;
+  statusz: StatuszKulcs;
+}
+
+/**
+ * Egy körlevél ticketjei az admin adatlapjához, a címzett neve szerinti magyar névsorban.
+ * Láthatósági szűrés nincs benne: csak admin nézetből hívható (a page így hívja).
+ */
+export function listKorlevelTagok(korlevelId: string): KorlevelTag[] {
+  return db
+    .select({ id: ticket.id, cimzettNev: user.name, orszag: ticket.orszag, statusz: ticket.statusz })
+    .from(ticket)
+    .innerJoin(user, eq(ticket.cimzettId, user.id))
+    .where(eq(ticket.korlevelId, korlevelId))
+    .all()
+    .map((r) => ({ ...r, statusz: r.statusz as StatuszKulcs }))
+    .sort((a, b) => a.cimzettNev.localeCompare(b.cimzettNev, 'hu'));
 }

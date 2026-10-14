@@ -78,6 +78,13 @@
       "when": 1791881287274,
       "tag": "0010_intezkedes",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1791965604155,
+      "tag": "0011_korlevel",
+      "breakpoints": true
     }
   ]
 }

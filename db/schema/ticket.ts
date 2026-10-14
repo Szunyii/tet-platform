@@ -5,6 +5,7 @@ import { user } from './auth';
 // Ticket: az admin nyitja egy attasénak. A tipus/prio/statusz a lib/ticket-szotar.ts
 // kulcsai. Az orszag a címzett nyitáskori országa (pillanatkép), nem követi a user
 // későbbi módosítását. A nyitó kérés szövege az első ticket_uzenet sor.
+// Több címzettnél címzettenként külön ticket készül, közös korlevel_id-val.
 export const ticket = sqliteTable(
   'ticket',
   {
@@ -27,11 +28,15 @@ export const ticket = sqliteTable(
       .$onUpdate(() => new Date())
       .notNull(),
     lezarvaAt: integer('lezarva_at', { mode: 'timestamp_ms' }),
+    // Több címzettes küldés („körlevél”) közös azonosítója: a küldés minden ticketje ugyanazt kapja,
+    // egy címzettnél null. Nincs külön tábla és FK – a körlevél a ticketek összessége.
+    korlevelId: text('korlevel_id'),
   },
   (t) => [
     index('ticket_cimzett_idx').on(t.cimzettId),
     index('ticket_statusz_idx').on(t.statusz),
     index('ticket_updated_idx').on(t.updatedAt),
+    index('ticket_korlevel_idx').on(t.korlevelId),
   ],
 );
 

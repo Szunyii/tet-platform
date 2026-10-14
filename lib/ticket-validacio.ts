@@ -15,9 +15,15 @@ import {
 } from './ticket-szotar';
 import { mezo, type MezoHibak } from './urlap';
 
-export interface UjTicketInput {
-  cimzettId: string;
+export interface UjTicketCimzett {
+  id: string;
+  /** A címzett székhely-országa (a ticket `orszag` pillanatképe). */
   orszag: string;
+}
+
+export interface UjTicketInput {
+  /** Legalább egy címzett, ismétlés nélkül, a jelöltlista sorrendjében. */
+  cimzettek: UjTicketCimzett[];
   tipus: TipusKulcs;
   prio: PrioKulcs;
   hatarido: string | null;
@@ -25,7 +31,14 @@ export interface UjTicketInput {
   szoveg: string;
 }
 
-export type ParseUjTicketResult = { ok: true; data: UjTicketInput } | { ok: false; errors: MezoHibak };
+/**
+ * Hibánál az `elavultCimzett` jelzi, hogy a beküldött címzettek között a jelöltlistán már nem
+ * szereplő is volt (közben letiltották, vagy megszűnt a székhelye): az action ilyenkor a
+ * layoutot is revalidálja, hogy a dialógus listája frissüljön.
+ */
+export type ParseUjTicketResult =
+  | { ok: true; data: UjTicketInput }
+  | { ok: false; errors: MezoHibak; elavultCimzett: boolean };
 export type ParseUzenetResult = { ok: true; szoveg: string } | { ok: false; errors: MezoHibak };
 
 // A `kulcs` a mező neve és a hiba kulcsa is: a válasz-űrlap és az új-ticket dialógus egy
@@ -40,14 +53,22 @@ function parseSzoveg(fd: FormData, errors: MezoHibak, kulcs: 'szoveg' | 'valasz'
 export function parseUjTicketForm(fd: FormData, jeloltek: readonly CimzettJelolt[]): ParseUjTicketResult {
   const errors: MezoHibak = {};
 
-  const cimzettId = mezo(fd, 'cimzettId');
-  const cimzett = jeloltek.find((j) => j.id === cimzettId);
+  // Bejelölős lista: minden kijelölt attasé egy `cimzettId` mező. Csak nem üres string, ismétlés nélkül.
+  const kert = new Set(
+    fd
+      .getAll('cimzettId')
+      .filter((v): v is string => typeof v === 'string')
+      .map((v) => v.trim())
+      .filter(Boolean),
+  );
+  const cimzettek = jeloltek.filter((j) => kert.has(j.id)).map((j) => ({ id: j.id, orszag: j.orszag }));
+  const elavult = kert.size - cimzettek.length;
   if (jeloltek.length === 0) {
     errors.form = 'Nincs címezhető attasé.';
-  } else if (!cimzettId) {
-    errors.cimzettId = 'Válassz címzettet.';
-  } else if (!cimzett) {
-    errors.cimzettId = 'A címzett nem választható (nem attasé, tiltott, vagy nincs székhelye).';
+  } else if (kert.size === 0) {
+    errors.cimzettId = 'Válassz legalább egy címzettet.';
+  } else if (elavult > 0) {
+    errors.cimzettId = `A kijelöltek közül ${elavult} címzett már nem választható (nem attasé, tiltott, vagy nincs székhelye). A lista frissült, ellenőrizd a kijelölést.`;
   }
 
   const tipusRaw = mezo(fd, 'tipus');
@@ -67,20 +88,12 @@ export function parseUjTicketForm(fd: FormData, jeloltek: readonly CimzettJelolt
 
   const szoveg = parseSzoveg(fd, errors);
 
-  if (Object.keys(errors).length > 0 || !cimzett || !tipus || !prio) {
-    return { ok: false, errors };
+  if (Object.keys(errors).length > 0 || !tipus || !prio) {
+    return { ok: false, errors, elavultCimzett: elavult > 0 };
   }
   return {
     ok: true,
-    data: {
-      cimzettId: cimzett.id,
-      orszag: cimzett.orszag,
-      tipus,
-      prio,
-      hatarido: hataridoRaw || null,
-      targy,
-      szoveg,
-    },
+    data: { cimzettek, tipus, prio, hatarido: hataridoRaw || null, targy, szoveg },
   };
 }
 

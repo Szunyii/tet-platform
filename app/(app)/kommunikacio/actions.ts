@@ -6,7 +6,7 @@ import type { MuveletState } from '../../../components/form/useMuveletForm';
 import {
   addUzenet,
   closeTicket,
-  createTicket,
+  createTicketek,
   getTicket,
   listCimzettJeloltek,
   reopenTicket,
@@ -34,17 +34,22 @@ function frissit(): void {
 export async function createTicketAction(_prev: TicketFormState, formData: FormData): Promise<TicketFormState> {
   const session = await requireAdmin();
   const parsed = parseUjTicketForm(formData, listCimzettJeloltek());
-  if (!parsed.ok) return { errors: parsed.errors };
-  let id: string;
+  if (!parsed.ok) {
+    // Közben kiesett címzett: a dialógus jelöltlistája is frissüljön.
+    if (parsed.elavultCimzett) frissit();
+    return { errors: parsed.errors };
+  }
+  let idk: string[];
   try {
-    id = createTicket({ ...parsed.data, nyito: { id: session.userId, nev: session.name, szerep: 'admin' } });
+    idk = createTicketek({ ...parsed.data, nyito: { id: session.userId, nev: session.name, szerep: 'admin' } });
   } catch (err) {
     unstable_rethrow(err);
-    console.error('[ticket] createTicket sikertelen:', err);
+    console.error('[ticket] createTicketek sikertelen:', err);
     return { errors: { form: MENTES_HIBA } };
   }
   frissit();
-  redirect(`/kommunikacio?t=${id}`);
+  // Több címzettnél az első (a jelöltlista sorrendjében) ticketre visz; a többi a listában van.
+  redirect(`/kommunikacio?t=${idk[0]}`);
 }
 
 export async function sendUzenetAction(
