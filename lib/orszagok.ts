@@ -1,27 +1,29 @@
 /**
  * Országszótár: ISO 3166-1 alpha-2 kód, magyar név, world-atlas 110m térképnév (a
- * `countries-110m.json` `properties.name` értéke – ezzel párosít a `VilagTerkep`) és a
- * főváros koordinátája (a pin helye). Az `attase_orszag.orszag_kod`, a `riport.orszag` és a
- * `ticket.orszag` a `kod`-ot tárolja; a felület `orszagNev()`-vel ír. Framework-mentes.
+ * `countries-110m.json` `properties.name` értéke – ezzel párosít a `VilagTerkep`), a
+ * főváros koordinátája (a pin helye) és a régió-besorolás (`regio`, `ORSZAG_REGIOK`). Az
+ * `attase_orszag.orszag_kod`, a `riport.orszag` és a `ticket.orszag` a `kod`-ot tárolja; a
+ * felület `orszagNev()`-vel ír. Framework-mentes.
  */
 
 /**
- * Régiók a kommunikáció címzett-csoportjaihoz (Új ticket: „Európa” stb. gyorsgombok). Minden
- * szótárbeli ország pontosan egy régióban van (az `Orszag.regio` kötelező, így új ország régió
- * nélkül nem vehető fel). Határesetek: Oroszország, a Kaukázus és Törökország Európa; Egyiptom és
- * a Maghreb Afrika; Közép-Ázsia, Afganisztán, Pakisztán Ázsia és Óceánia. A térkép `REGIOK`-ja
- * (`lib/terkep-mutatok.ts`) ettől független: az nagyítási befoglaló téglalap, átfedő régiókkal.
+ * Régiók a kommunikáció címzett-csoportjaihoz (Új ticket: „Európa” stb. gyorsgombok), a
+ * gyorsgombok sorrendjében. Minden szótárbeli ország pontosan egy régióban van (az `Orszag.regio`
+ * kötelező, így új ország régió nélkül nem vehető fel). Határesetek: Oroszország, a Kaukázus és
+ * Törökország Európa; Egyiptom és a Maghreb Afrika; Közép-Ázsia, Afganisztán, Pakisztán Ázsia és
+ * Óceánia. A térkép `REGIOK`-ja (`lib/terkep-mutatok.ts`) ettől független: ott a régiók nagyítási
+ * befoglaló téglalapok, átfedésekkel, és az azonos kulcsok (pl. `azsia`) mást fednek le. A
+ * `RegioKulcs` ebből a tömbből származik, így a kettő nem csúszhat szét.
  */
-export type RegioKulcs = 'europa' | 'azsia' | 'kozelKelet' | 'afrika' | 'amerika';
-
-/** A régiók a gyorsgombok sorrendjében. */
-export const ORSZAG_REGIOK: readonly { kulcs: RegioKulcs; cimke: string }[] = [
+export const ORSZAG_REGIOK = [
   { kulcs: 'europa', cimke: 'Európa' },
   { kulcs: 'azsia', cimke: 'Ázsia és Óceánia' },
   { kulcs: 'kozelKelet', cimke: 'Közel-Kelet' },
   { kulcs: 'afrika', cimke: 'Afrika' },
   { kulcs: 'amerika', cimke: 'Amerika' },
-];
+] as const satisfies readonly { kulcs: string; cimke: string }[];
+
+export type RegioKulcs = (typeof ORSZAG_REGIOK)[number]['kulcs'];
 
 export interface Orszag {
   kod: string;
@@ -33,7 +35,7 @@ export interface Orszag {
   geo: string;
   /** [hosszúság, szélesség] */
   lonlat: [number, number];
-  /** A kommunikáció régió-csoportja (`ORSZAG_REGIOK`). */
+  /** Régió-besorolás (`ORSZAG_REGIOK`; jelenleg a kommunikáció címzett-csoportjai használják). */
   regio: RegioKulcs;
 }
 
