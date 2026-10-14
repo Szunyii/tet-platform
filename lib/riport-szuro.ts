@@ -48,6 +48,10 @@ export interface SzuroErtekek {
   ig: string;
 }
 
+/**
+ * Csak az URL-ből jövő szűrőt add át: a jogosultságból kényszerített szerző-szűrő (az attasé
+ * saját bejegyzései) csak a `listRiportok` hívásba kerüljön, különben aktív szűrőnek látszana.
+ */
 export function szuroErtekek(f: RiportFilter): SzuroErtekek {
   return {
     q: f.q ?? '',

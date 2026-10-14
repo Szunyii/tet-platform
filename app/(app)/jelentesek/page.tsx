@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { RiportSzurok } from '../../../components/riport/RiportSzurok';
 import { RiportTabla } from '../../../components/riport/RiportTabla';
 import { buttonVariants } from '../../../components/ui/button';
-import { listOrszagok, listRiportok } from '../../../db/queries/riport';
+import { listOrszagok, listRiportok, listSzerzok } from '../../../db/queries/riport';
 import { canIntezkedni } from '../../../lib/riport-jog';
 import { szuroErtekek, szuroFromSearchParams, type SearchParams } from '../../../lib/riport-szuro';
 import { requireSession } from '../../../lib/session';
@@ -16,14 +16,20 @@ export default async function RiportokPage({ searchParams }: { searchParams: Pro
   const session = await requireSession();
   const admin = session.role === 'admin';
   const szuro = szuroFromSearchParams(await searchParams);
-  // Attasé csak a sajátjait látja: a szerző-szűrő kényszerítve, az ország-szűrő nem értelmezett.
-  if (!admin) {
-    szuro.szerzoId = session.userId;
+  const szerzok = admin ? listSzerzok() : [];
+  if (admin) {
+    // Elavult vagy kézzel írt id: szűrő nélkül, hogy a legördülőben ne nyers id álljon.
+    if (szuro.szerzoId && !szerzok.some((s) => s.id === szuro.szerzoId)) delete szuro.szerzoId;
+  } else {
+    // Az attasé nem szűrhet országra és szerzőre: az URL-ből jövőt eldobjuk.
     delete szuro.orszag;
+    delete szuro.szerzoId;
   }
-  const sorok = listRiportok(szuro);
   const ertekek = szuroErtekek(szuro);
   const vanSzuro = Object.values(ertekek).some(Boolean);
+  // Attasé csak a sajátjait látja. A kényszerített szerző-szűrő csak a lekérdezésbe kerül, a
+  // szűrőértékekbe nem, különben aktív szűrőnek látszana („Szűrők törlése”, üres-állapot szöveg).
+  const sorok = listRiportok(admin ? szuro : { ...szuro, szerzoId: session.userId });
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3">
@@ -32,7 +38,12 @@ export default async function RiportokPage({ searchParams }: { searchParams: Pro
           Új bejegyzés
         </Link>
       </div>
-      <RiportSzurok ertekek={ertekek} orszagok={admin ? listOrszagok() : []} admin={admin} />
+      <RiportSzurok
+        ertekek={ertekek}
+        orszagok={admin ? listOrszagok() : []}
+        szerzok={szerzok}
+        admin={admin}
+      />
       <RiportTabla
         sorok={sorok}
         admin={admin}

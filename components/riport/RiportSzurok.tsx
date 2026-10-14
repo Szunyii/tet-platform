@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
+import type { RiportSzerzo } from '../../db/queries/riport';
 import { orszagNev } from '../../lib/orszagok';
 import { KATEGORIAK, KULCSSZAVAK } from '../../lib/riport-szotar';
 import type { SzuroErtekek } from '../../lib/riport-szuro';
@@ -75,10 +76,13 @@ const KULCSSZO_OPCIOK: SzuroOpcio[] = KULCSSZAVAK.map((k) => ({ ertek: k, cimke:
 export function RiportSzurok({
   ertekek,
   orszagok,
+  szerzok,
   admin,
 }: {
   ertekek: SzuroErtekek;
   orszagok: string[];
+  /** Az attasé-szűrő opciói (csak adminnak, egyébként üres). */
+  szerzok: RiportSzerzo[];
   admin: boolean;
 }) {
   const router = useRouter();
@@ -167,14 +171,24 @@ export function RiportSzurok({
         className="w-56"
       />
       {admin && (
-        <SzuroSelect
-          id="szuro-orszag"
-          cimke="Ország"
-          ertek={ertekek.orszag}
-          opciok={orszagok.map((o) => ({ ertek: o, cimke: orszagNev(o) }))}
-          onChange={(v) => frissit({ orszag: v })}
-          className="w-44"
-        />
+        <>
+          <SzuroSelect
+            id="szuro-orszag"
+            cimke="Ország"
+            ertek={ertekek.orszag}
+            opciok={orszagok.map((o) => ({ ertek: o, cimke: orszagNev(o) }))}
+            onChange={(v) => frissit({ orszag: v })}
+            className="w-44"
+          />
+          <SzuroSelect
+            id="szuro-attase"
+            cimke="Attasé"
+            ertek={ertekek.attase}
+            opciok={szerzok.map((s) => ({ ertek: s.id, cimke: s.nev }))}
+            onChange={(v) => frissit({ attase: v })}
+            className="w-56"
+          />
+        </>
       )}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="szuro-tol">Beadva ettől</Label>
