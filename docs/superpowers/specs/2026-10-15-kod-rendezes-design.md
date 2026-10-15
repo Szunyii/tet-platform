@@ -1,7 +1,9 @@
 # Kódrendezés: szerkezet, teljesítmény, duplikáció, halott kód – tervezési spec
 
 Dátum: 2026-10-15
-Állapot: jóváhagyott terv, megvalósítás előtt
+Állapot: megvalósítva és átnézve (taskonként spec- és minőségi review, záró ág-review), a
+böngészős próba kész (2026-10-15, a futó dev szerveren). Az eltéréseket lásd a „Megvalósítási
+eltérések” szakaszban.
 Ág: `kod-rendezes` (a `main` `3b665f6`-ból)
 
 ## Cél
@@ -84,11 +86,11 @@ viselkedésváltozások” szakasz négy pontja kivételével.
     `AppRole` ennek aliasa) – a `lib/session.ts`, a `db/queries/felhasznalo.ts` és a szerepkör-select
     ezt hívja.
   - Magyar névsor: `lib/rendezes.ts` `huOsszevet(a, b)` – egy modulszintű `Intl.Collator('hu')`
-    `compare`-je (ugyanazt a sorrendet adja, mint a `localeCompare(…, 'hu')`); a `db/queries` 10
+    `compare`-je (ugyanazt a sorrendet adja, mint a `localeCompare(…, 'hu')`); a `db/queries` 7
     `localeCompare(…, 'hu')` hívása ezt használja. A
     `listTicketek`, `listCimzettJeloltek`, `listKorlevelTagok` azonos rendezése így szerkezetileg
     biztosított. (A tervezéskor: a `lib/attase-orszag.ts` három és a `lib/terkep-mutatok.ts` egy
-    hívása is ezt használja – összesen 12.)
+    hívása is ezt használja – összesen 11.)
   - Korlátok: `JELSZO_MIN`, `JELSZO_MAX`, `NEV_MAX` a `lib/felhasznalo-validacio.ts`-ben (a meglévő
     `EMAIL_MAX`, `TELEFON_MAX` mellett); a `scripts/demo-attasek.ts`, `scripts/seed.ts`, a
     `felhasznalok/actions.ts` üzenete és a dialógusok `minLength`/`maxLength`-je ezt használja.
@@ -269,6 +271,15 @@ viselkedésváltozások” szakasz négy pontja kivételével.
    normalizálása után protokoll-relatívvá váló célt (`/.//evil.com` → `//evil.com`) is elutasítja –
    a régi `safeNext` ezt átengedte, ami nyílt átirányítás volt (bejelentkezett felhasználónál a
    szerver `Location: //evil.com`-ot küldött, belépés után a kliens oda navigált).
+6. (A böngészős QA nyomán, hatókörön kívüli javítás egy a `main`-ben is meglévő hibára.) Csatolmány
+   nélkül a jelentés nem volt beadható: az üres file-input helykitöltőjét a React 19.2 server action
+   „blob” nevű, 0 bájtos fájlként adja át (a Next beépített `react-server-dom` `decodeReplyFromBusboy`-ja
+   a fájlnév nélküli Blobot így nevezi), a validátor ezt valódi fájlnak vette → „Üres fájl: blob.”. Most
+   a `CsatolmanyMezo` rejtett inputja csak fájllal kap `name`-et, a `valodiFajlok` pedig a 0 bájtos
+   `blob` nevű helykitöltőt is kiszűri (a `''` és az `'undefined'` mellett).
+7. (Az 5. task tanulsága.) A szerkesztő „Vissza a szerkesztéshez” kártyáján (`NemSzerkeszthetoEv`)
+   a „profil megtekintése” outline link látható keretet kap: eddig `cn()` nélkül kapta a
+   `buttonVariants`-t, és az alap `border-transparent` elnyomta az outline keretszínét.
 
 Minden más – szöveg, elrendezés, színek, sorrend, jogosultság, lekérdezés-eredmény – változatlan.
 
@@ -307,3 +318,83 @@ Minden más – szöveg, elrendezés, színek, sorrend, jogosultság, lekérdez�
   bennragadhat a régi útvonalakkal; a CLAUDE.md szerint törölni kell, a forrás jó.
 - **Közös munkafa:** a felhasználó más TéT-munkamenetei ugyanebben a munkafában futhatnak; ágváltás
   vagy merge előtt `git branch --show-current`, `git reflog`, `ListAgents`.
+
+## Megvalósítási eltérések
+
+A spec törzse a tervezéskori döntéseket írja; az alábbiak a megvalósítás és a review-k közben
+változtak (commitok a `kod-rendezes` ágon).
+
+- **1. task:** a `KuldGomb` doc-kommentje nem sorolja a hívóit (általános `components/form`-komponens).
+- **2. task:**
+  - A fájl-ellenőrzés közös segédje `fajlHiba(file)` helyett `ellenorizFajl(file, tipusUtotag)`
+    (`{ ok, nev, mime } | { ok: false, hiba }`) és külön `darabHiba(meglevoDb, ujDb)`; az
+    „Engedett: …” utótag az `ENGEDETT_TIPUSOK`-kal megy át.
+  - A `MENTETT_DB` SQL-ben a JSON `'null'` szöveget sem számolja mentettnek
+    (`col is not null and col <> 'null'`), így pontosan a régi JS-szabály és a `getProfil` szerint számol.
+  - A `getCsatolmanyMeta` a `riportId` **helyett** adja a `szerzoId`-t; a záró review nyomán a
+    `getCsatolmany` `riportId`-je is kikerült (nem használta senki).
+  - A `RiportFormState` és a `TicketFormState` nem egy helyre került, hanem megszűnt: az actionök
+    közvetlenül a `MuveletState`-et használják.
+  - A CLAUDE.md régi, téves `signOut`-említése (a `lib/auth-client.ts` nem exportálja) javítva.
+- **3. task:**
+  - A `safeNext` `biztonsagosNext` néven került a `lib/routes.ts`-be; a minőségi review nyomán a
+    pont-szegmensek utáni protokoll-relatív célt is elutasítja (szándékos változás 5.).
+  - Az útvonaltábla neve `UTVONALAK` (a törzs egy helyen `ROUTES`-t ír), a menüpont új
+    `olvasatlanSzamlalo` jelzője adja a Kommunikáció számlálóját (nincs href-hez drótozva); az
+    `isActive` belső függvény.
+  - Pixel-egyezés miatt a terv kódjától eltérve: `rounded-[50%]` a `rounded-full` helyett (a régi
+    inline `50%`), és egyoldali keretszín (`border-b border-b-sidebar-border` stb.), mert a régi
+    `borderBottom` csak azt az oldalt színezte. A nem törő szóköz ` ` escape-pel áll.
+  - A monogram háttere a `--sidebar-primary` tokenbe került; saját változók: `--sidebar-halvany`,
+    `--sidebar-menu`, `--sidebar-cim` (az `OldalsavAllapot` címsoraihoz), `--sidebar-szamlalo`,
+    `--sidebar-hiba`.
+  - `ciklusEvek(szerep, most, ev, profilEvek)`: a profil-évek lusta függvényként jönnek (adminnál nincs
+    lekérdezés).
+- **4. task:**
+  - A `cn(buttonVariants(…))` **marad** (a tailwind-merge oldja fel az alap `border-transparent` és az
+    outline `border-border` ütközését) – emiatt az 5. task „egyargumentumú `cn`” pontja elmaradt, és
+    a `NemSzerkeszthetoEv` outline linkje megkapta a `cn`-t (szándékos változás 7.).
+  - A `vetulet.ts` a terven túl a `SRAFF_ID`-t és a pin DOM-szelektorokat (`PIN_RETEG_SEL`, `PIN_SEL`,
+    `PIN_BELSO_SEL`) is tartja – a térkép három fájljának DOM-szerződése egy helyen; a zoom-hook
+    paramétere `svgMountolva`.
+  - A `'__nincs'` kulcs függvény (`csoportKulcs(cs)`), a számláló `szamlaloSzoveg(adatok, r, iparag, ev)`;
+    a `szures` belső, mellé jött a `kiemeli()`; az `IPARAG_CIMKEK` `Readonly`.
+  - Az összehasonlítás „tele” jelzője mindenhol `vsTele` néven fut; az `ertekEsHely`
+    `{ szoveg, helyezett }`-et ad.
+  - A `useVilagAtlasz`-ban nem kellett cast; a `ProfilKivonat` 9 (nem 10) `<dt>/<dd>` párt tartalmaz.
+- **5. task:**
+  - A 7. blokk összegzése megtartja a saját korlátját (`OSSZEGZES_MAX`, 3 sor) – explicit propokkal.
+  - A `TicketJelzesek` kommentje: a riport-kategóriák színe Tailwind-osztály (`KATEGORIAK[].szin`), nem hex.
+  - A `SearchParams` a `lib/routes.ts`-ben; a `riport-szuro.ts` nem exportálja tovább, a térkép page is
+    ezt használja.
+  - A `RiportSzurok`-ban helyi `SzuroSelect` burok fogja össze a „Mind” őrszemet a `CimkesSelect` körül
+    (a „Mind” az első opció); a `CimkesSelect` `errors`-a kötelező (`MezoHibak | null`).
+  - A `useBlokkAllapot(blokk, initial)` `{ e, set, mezo }` objektumot ad; a rendezvénysorok kezdőértéke
+    `kezdoRendezvenySorok()`, a sor-id-k a közös `mezoId`-ból.
+  - A `SZOVEGES_MEZOK` teljességi őre tisztán típusszintű (`SzovegesMezokTeljesek`, a hiányzó mezőt a
+    hibaüzenet megnevezi).
+  - A részletoldal rendezvény-feliratai („Dátum:”, „Helyszín:”) is a `RIPORT_MEZO_CIMKEK`-ből jönnek.
+- **6. task:** a monitoring „pontszám-színküszöbök a `col()`-ból” pontja nem valósult meg: a sávok ≥4/≥3
+  küszöbbel és más palettával színeznek, mint a `col()` (4/3,5) – az egyesítés színváltozás lenne. Az
+  `avg` a szempontok id-jain megy végig (`CRITERIA.reduce`), értékre azonos.
+- **Hatókörön kívüli javítás (böngészős QA):** a csatolmány nélküli jelentés-beadás hibája (szándékos
+  változás 6., `c412cc4`).
+
+### Mérések
+
+- `/terkep` RSC-payload (admin, demó DB): 61 854 → 52 724 bájt (−14,8%).
+- A `listTerkepAdat` kimenete minden évre (`EV_MIN`..2026) bájtra azonos (a 10 alapadat-mezőre vetítve,
+  és a nyers kimenet is a kivágott mezők nélkül).
+- A demóadat kliens-chunkja (9 KB) csak a `/monitoring` manifestjében (előtte mind a 11 védett oldaléban).
+- A shell számított stílusai (32 tulajdonság + befoglaló téglalap minden elemre) előtte/utána: admin 0
+  eltérés, attasé csak a monogram („DG” → „GL”).
+- A monitoring renderelt HTML-je és 252 számított pontérték azonos.
+
+### Ismert korlátok, follow-upok
+
+- A `FelhasznaloMuveletek` dialógusai bezáráskor a fókuszt a body-ra ejtik: a nyitó menüpont addigra
+  eltűnik (a refaktor előtt is így volt). Javítás: `finalFocus` a sor „⋯” gombjára.
+- Nem végzett, felvetett apróságok: a `mezo()` a címkét is adhatná (és a blokk-kulcsot a `T`-hez
+  kötné); a pin-sugár igazítása `useLayoutEffect`-tel (évváltáskor egy képkocka); a zoom-gombok
+  memo-zása; a `MIND = '__mind'` két helyen; az `UjTicketDialog` „Határidő (opcionális)” felirata
+  szövegként (a régi kinézet); a `.dark` téma sidebar-tokenjei (sötét mód nincs).
