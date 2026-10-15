@@ -5,10 +5,7 @@ import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { geoNev } from '../../../../lib/orszagok';
 import { TERKEP_SZINEK } from '../../../../lib/terkep-mutatok';
 import type { Poligon } from './useVilagAtlasz';
-import { PIN_BELSO_R, PIN_R, proj } from './vetulet';
-
-/** A számszerű mutató érték nélküli országainak sraffozása: a VilagTerkep `<pattern>`-jének id-ja. */
-export const SRAFF_ID = 'terkep-sraff';
+import { PIN_BELSO_R, PIN_R, proj, SRAFF_ID } from './vetulet';
 
 export type HoverFn = (e: ReactPointerEvent<SVGElement>, nev: string, o: TerkepOrszag | null) => void;
 
@@ -55,7 +52,8 @@ export const TerkepRetegek = memo(function TerkepRetegek({
           />
         );
       })}
-      {/* Külön réteg, hogy a zoom-kezelő csak ezt pásztázza a sugarak állításához. */}
+      {/* Külön réteg, hogy a zoom-kezelő csak ezt pásztázza a sugarak állításához. A data-pinek, data-pin és
+          data-pin-belso attribútumokra a useTerkepZoom keres – vetulet.ts. */}
       <g data-pinek="">
         {adatok.map((o) => {
           const p = proj(o.lonlat);

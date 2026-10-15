@@ -38,7 +38,7 @@ function Szakasz({ cim, jelmagyarazat, children }: { cim: string; jelmagyarazat?
  * a mátrixokat.
  */
 export const OsszehasonlitasPanel = memo(function OsszehasonlitasPanel({
-  orszagok, szinek, hazai, jeloltek, mutato, tele, onKivalaszt, onKivesz, onHozzaad, onTorol,
+  orszagok, szinek, hazai, jeloltek, mutato, vsTele, onKivalaszt, onKivesz, onHozzaad, onTorol,
 }: {
   /** A halmaz rekordjai a hozzáadás sorrendjében (Magyarország nélkül). */
   orszagok: TerkepOrszag[];
@@ -50,7 +50,7 @@ export const OsszehasonlitasPanel = memo(function OsszehasonlitasPanel({
   jeloltek: TerkepOrszag[];
   mutato: Mutato;
   /** A halmaz tele (`TerkepAllapot.vsTele`). */
-  tele: boolean;
+  vsTele: boolean;
   onKivalaszt: (kod: string) => void;
   onKivesz: (kod: string) => void;
   onHozzaad: (kod: string) => void;
@@ -74,7 +74,7 @@ export const OsszehasonlitasPanel = memo(function OsszehasonlitasPanel({
           {...kozos}
           jeloltek={jeloltek}
           mutato={mutato}
-          tele={tele}
+          vsTele={vsTele}
           onKivalaszt={onKivalaszt}
           onKivesz={onKivesz}
           onHozzaad={onHozzaad}

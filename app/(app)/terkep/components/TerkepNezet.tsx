@@ -49,8 +49,9 @@ export function TerkepNezet({
   // Magyarország mindig viszonyítási alap, ezért a „+ Ország" jelöltjei között sincs.
   const jeloltLista = useMemo(() => jeloltek(adatok, [...vs, HAZAI_KOD], mutato), [adatok, vs, mutato]);
   const szamlalo = szamlaloSzoveg(adatok, rangsor, iparag, ev);
-  // A Szerkesztés-gomb jogát a nézett (ev) és az aktuális (most) évre számoljuk; egyszer kötjük meg, a
-  // fejléc, a panel és a kivonat csak az országot és a feliratokat adja hozzá.
+  // A Szerkesztés-gomb jogát a nézett (ev) és az aktuális (most) évre számoljuk; egyszer kötjük meg: a
+  // fejléc („Saját országprofil”) és a ProfilKivonat hívja az országgal és a feliratokkal, a TerkepPanel
+  // csak továbbadja.
   const szerkesztesGomb = useCallback<SzerkesztesGombFn>(
     (kod, opciok) => (
       <SzerkesztesGomb
@@ -111,7 +112,7 @@ export function TerkepNezet({
           hazai={allapot.hazai}
           jeloltek={jeloltLista}
           mutato={mutato}
-          tele={allapot.vsTele}
+          vsTele={allapot.vsTele}
           onKivalaszt={allapot.kivalaszt}
           onKivesz={allapot.vsKivesz}
           onHozzaad={allapot.vsHozzaad}

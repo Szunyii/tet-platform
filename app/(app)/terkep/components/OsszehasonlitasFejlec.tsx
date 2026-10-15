@@ -49,7 +49,7 @@ function AttaseEsAllapot({ o }: { o: TerkepOrszag }) {
  * mátrix oszlopfejlécéhez –; kivétel; attasé; állapot), utána a „+ Ország" választó, ha van még hely és
  * jelölt, végül Magyarország viszonyítási kártyája (kivétel-gomb nélkül).
  */
-export function OsszehasonlitasFejlec({ orszagok, szinek, hazai, jeloltek, mutato, tele, onKivalaszt, onKivesz, onHozzaad }: {
+export function OsszehasonlitasFejlec({ orszagok, szinek, hazai, jeloltek, mutato, vsTele, onKivalaszt, onKivesz, onHozzaad }: {
   /** A halmaz rekordjai a hozzáadás sorrendjében (Magyarország nélkül). */
   orszagok: readonly TerkepOrszag[];
   /** Kód → az ország színe az összehasonlításban. */
@@ -61,12 +61,12 @@ export function OsszehasonlitasFejlec({ orszagok, szinek, hazai, jeloltek, mutat
   /** A térkép mutatója: számszerűnél a „+ Ország" opciói az értéket is mutatják. */
   mutato: Mutato;
   /** A halmaz tele (`TerkepAllapot.vsTele`). */
-  tele: boolean;
+  vsTele: boolean;
   onKivalaszt: (kod: string) => void;
   onKivesz: (kod: string) => void;
   onHozzaad: (kod: string) => void;
 }) {
-  const plusz = !tele && jeloltek.length > 0;
+  const plusz = !vsTele && jeloltek.length > 0;
   const felirat = (o: TerkepOrszag) =>
     mutato.tipus === 'szam' ? `${o.nev} · ${formatSzam(mutato.ertek(o), mutato.utotag)}` : o.nev;
   return (

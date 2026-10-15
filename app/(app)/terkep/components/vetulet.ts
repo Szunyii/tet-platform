@@ -2,13 +2,26 @@ import { geoGraticule10, geoNaturalEarth1, geoPath } from 'd3-geo';
 import { zoomIdentity, type ZoomTransform } from 'd3-zoom';
 
 // A térkép vetülete és koordinátarendszere (viewBox) – modulszinten, mert rögzített: a poligonok
-// path-jai (useVilagAtlasz) és a régió-keretek (regioTranszform) is ebből számolnak.
+// path-jai (useVilagAtlasz), a pinek helye (`proj` a TerkepRetegek-ben) és a régió-keretek
+// (regioTranszform) is ebből számolnak.
 
 export const W = 960;
 export const H = 505;
 export const ZOOM_MAX = 8;
 export const PIN_R = 5.5;
 export const PIN_BELSO_R = 1.8;
+
+/**
+ * A számszerű mutató érték nélküli országainak sraffozása: a VilagTerkep `<pattern>`-jének id-ja (a
+ * TerkepRetegek `url(#…)`-tal hivatkozik rá).
+ */
+export const SRAFF_ID = 'terkep-sraff';
+
+// A TerkepRetegek a `data-pinek`, `data-pin`, `data-pin-belso` attribútumokat rendereli, a useTerkepZoom
+// ezekkel keresi meg és méretezi át a pineket.
+export const PIN_RETEG_SEL = '[data-pinek]';
+export const PIN_SEL = 'circle[data-pin]';
+export const PIN_BELSO_SEL = 'circle[data-pin-belso]';
 
 export const proj = geoNaturalEarth1().fitExtent([[6, 6], [W - 6, H - 6]], { type: 'Sphere' });
 export const path = geoPath(proj);

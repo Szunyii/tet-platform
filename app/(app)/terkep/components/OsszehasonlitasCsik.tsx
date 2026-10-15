@@ -10,7 +10,7 @@ import { VS_MAX } from '../../../../lib/osszehasonlitas';
  * jelmagyarázat) és egy állapotszöveg. Az összehasonlítás magától megjelenik a térkép alatt, amint
  * `minimum` ország van a halmazban, ezért itt nincs gomb.
  */
-export function OsszehasonlitasCsik({ orszagok, szinek, minimum, tele, onKivesz }: {
+export function OsszehasonlitasCsik({ orszagok, szinek, minimum, vsTele, onKivesz }: {
   /** A halmaz rekordjai a hozzáadás sorrendjében. */
   orszagok: TerkepOrszag[];
   /** Kód → az ország színe az összehasonlításban. */
@@ -18,11 +18,11 @@ export function OsszehasonlitasCsik({ orszagok, szinek, minimum, tele, onKivesz 
   /** Ennyi országtól látszik az összehasonlítás (`TerkepAllapot.vsMin`: magyar profil mellett 1, különben 2). */
   minimum: number;
   /** A halmaz tele (`TerkepAllapot.vsTele`). */
-  tele: boolean;
+  vsTele: boolean;
   onKivesz: (kod: string) => void;
 }) {
   // A „+" gombok letiltva, ha tele; a letiltott gombon a title nem jelenik meg, ezért itt a felirat.
-  const allapot = tele
+  const allapot = vsTele
     ? `Legfeljebb ${VS_MAX} ország`
     : orszagok.length < minimum
       ? 'Válassz még egy országot'

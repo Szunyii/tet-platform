@@ -9,11 +9,11 @@ import {
 } from '../../../../lib/terkep-mutatok';
 import { Jelmagyarazat } from './Jelmagyarazat';
 import { RegioGombok } from './RegioGombok';
-import { SRAFF_ID, TerkepRetegek, type HoverFn } from './TerkepRetegek';
+import { TerkepRetegek, type HoverFn } from './TerkepRetegek';
 import { TerkepTooltip, type HoverAllapot } from './TerkepTooltip';
 import { useTerkepZoom } from './useTerkepZoom';
 import { useVilagAtlasz } from './useVilagAtlasz';
-import { GOMB_D, H, RACS_D, W } from './vetulet';
+import { GOMB_D, H, RACS_D, SRAFF_ID, W } from './vetulet';
 
 // A térkép: React rendereli az SVG-t, a d3-geo csak a vetületet és a path-okat adja. A zoom a
 // `useTerkepZoom`-ban, a vetület a `vetulet.ts`-ben, a poligon- és pin-réteg a `TerkepRetegek`

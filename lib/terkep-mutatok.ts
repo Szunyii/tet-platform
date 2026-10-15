@@ -52,7 +52,7 @@ export interface KategoriaMutato {
 export type Mutato = SzamMutato | KategoriaMutato;
 
 /** Az iparágnál a kategória neve maga a felirat; az egységes `cimkek` mező kedvéért azonosság-térkép. */
-export const IPARAG_CIMKEK: Record<string, string> = Object.fromEntries(AGAZATOK.map((i) => [i, i]));
+export const IPARAG_CIMKEK: Readonly<Record<string, string>> = Object.fromEntries(AGAZATOK.map((i) => [i, i]));
 
 /** Kulcsonként egy mutató; a kimerítő kulcs-térkép miatt egy kihagyott kulcs fordítási hiba. */
 const MUTATO_TABLA: { [K in MutatoKulcs]: Mutato & { kulcs: K } } = {
@@ -108,7 +108,7 @@ function kiemeli(o: TerkepOrszag, iparag: string): boolean {
 }
 
 /** Az iparág-szűrő: '' = nincs szűrő; a kiemelt iparágak listájában keres. Új tömböt ad. */
-export function szures(adatok: readonly TerkepOrszag[], iparag: string): TerkepOrszag[] {
+function szures(adatok: readonly TerkepOrszag[], iparag: string): TerkepOrszag[] {
   return iparag ? adatok.filter((o) => kiemeli(o, iparag)) : [...adatok];
 }
 

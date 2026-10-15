@@ -30,7 +30,7 @@ export function TerkepPanel({ adatok, allapot, vsOrszagok, rangsor, csoportok, t
   return (
     <>
       {vsOrszagok.length > 0 && (
-        <OsszehasonlitasCsik orszagok={vsOrszagok} szinek={allapot.vsSzinek} minimum={allapot.vsMin} tele={vsTele} onKivesz={allapot.vsKivesz} />
+        <OsszehasonlitasCsik orszagok={vsOrszagok} szinek={allapot.vsSzinek} minimum={allapot.vsMin} vsTele={vsTele} onKivesz={allapot.vsKivesz} />
       )}
       {sel ? (
         <ProfilKivonat

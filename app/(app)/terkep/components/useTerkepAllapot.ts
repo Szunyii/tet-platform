@@ -15,7 +15,11 @@ export interface TerkepAllapot {
   vs: readonly string[];
   /** Kód → az ország színe az összehasonlításban (`VS_SZINEK`); amíg az ország a halmazban van, nem változik. */
   vsSzinek: Readonly<Record<string, string>>;
-  /** Magyarország rekordja, ha legfeljebb a nézett évig van profilja (`hazaiRekord`): az összehasonlítás viszonyítási alapja. */
+  /**
+   * Magyarország rekordja, ha legfeljebb a nézett évig van profilja (`hazaiRekord`): az összehasonlítás
+   * viszonyítási alapja. Az `adatok` egy elemére mutat (nem másolat): amíg az `adatok` ugyanaz, a referencia
+   * stabil – erre épül az OsszehasonlitasPanel memo-ja.
+   */
   hazai: TerkepOrszag | null;
   /** Ennyi országtól látszik az összehasonlítás: 1, ha van magyar viszonyítási alap (`hazai`), különben 2. */
   vsMin: number;
