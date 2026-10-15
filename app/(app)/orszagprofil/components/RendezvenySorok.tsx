@@ -9,6 +9,7 @@ import type { MezoHibak } from '../../../../lib/urlap';
 import {
   REND_MEZO_CIMKEK, RENDEZVENY_MAX, RENDEZVENY_TIPUSOK, ROVID_MAX, rendezvenyTipus, type Rendezveny,
 } from '../../../../lib/orszagprofil-szotar';
+import { mezoId } from './BlokkForm';
 
 /** Egy rendezvénysor az űrlapon; az `id` stabil kliens-kulcs (a sorok törölhetők, a pozíció változik), a mentésbe nem kerül. */
 export interface RendezvenySor extends Rendezveny {
@@ -18,7 +19,7 @@ export interface RendezvenySor extends Rendezveny {
 const R = REND_MEZO_CIMKEK;
 
 /** Az űrlap kezdősorai a mentett listából. */
-export function rendezvenySorok(lista: readonly Rendezveny[]): RendezvenySor[] {
+export function kezdoRendezvenySorok(lista: readonly Rendezveny[]): RendezvenySor[] {
   return lista.map((r, i) => ({ ...r, id: i + 1 }));
 }
 
@@ -37,7 +38,7 @@ export function RendezvenySorok({
   const [elavultHibak, setElavultHibak] = useState<MezoHibak | null>(null);
   const hibak = elavultHibak === errors ? {} : errors;
   const set = (id: number, patch: Partial<Rendezveny>) => onChange(value.map((r) => (r.id === id ? { ...r, ...patch } : r)));
-  const mezoId = (i: number, m: keyof Rendezveny) => `rendezvenyek.rendezveny.${i}.${m}`;
+  const sorId = (i: number, m: keyof Rendezveny) => mezoId('rendezvenyek', `rendezveny.${i}.${m}`);
   const ujSor = () => {
     flushSync(() => {
       onChange([
@@ -45,7 +46,7 @@ export function RendezvenySorok({
         { id: Math.max(0, ...value.map((r) => r.id)) + 1, nev: '', tipus: RENDEZVENY_TIPUSOK[0].kulcs, idopont: '', megjegyzes: '' },
       ]);
     });
-    document.getElementById(mezoId(value.length, 'nev'))?.focus();
+    document.getElementById(sorId(value.length, 'nev'))?.focus();
   };
   const torolSor = (id: number) => {
     flushSync(() => {
@@ -59,17 +60,17 @@ export function RendezvenySorok({
       {value.map((r, i) => (
         <fieldset key={r.id} className="grid gap-3 rounded-md border border-border p-3 sm:grid-cols-2">
           <legend className="px-1 text-xs text-muted-foreground">{i + 1}. rendezvény</legend>
-          <RovidMezo id={mezoId(i, 'nev')} name={`rendezveny.${i}.nev`} {...R.nev} value={r.nev}
+          <RovidMezo id={sorId(i, 'nev')} name={`rendezveny.${i}.nev`} {...R.nev} value={r.nev}
             onChange={(v) => set(r.id, { nev: v })} max={ROVID_MAX} errors={hibak} />
-          <Mezo id={mezoId(i, 'tipus')} {...R.tipus} errors={hibak}>
-            <NativeSelect id={mezoId(i, 'tipus')} name={`rendezveny.${i}.tipus`} value={r.tipus}
+          <Mezo id={sorId(i, 'tipus')} {...R.tipus} errors={hibak}>
+            <NativeSelect id={sorId(i, 'tipus')} name={`rendezveny.${i}.tipus`} value={r.tipus}
               onChange={(e) => set(r.id, { tipus: rendezvenyTipus(e.target.value) })}>
               {RENDEZVENY_TIPUSOK.map((t) => <option key={t.kulcs} value={t.kulcs}>{t.cimke}</option>)}
             </NativeSelect>
           </Mezo>
-          <RovidMezo id={mezoId(i, 'idopont')} name={`rendezveny.${i}.idopont`} {...R.idopont} value={r.idopont}
+          <RovidMezo id={sorId(i, 'idopont')} name={`rendezveny.${i}.idopont`} {...R.idopont} value={r.idopont}
             onChange={(v) => set(r.id, { idopont: v })} max={ROVID_MAX} errors={hibak} />
-          <RovidMezo id={mezoId(i, 'megjegyzes')} name={`rendezveny.${i}.megjegyzes`} {...R.megjegyzes} value={r.megjegyzes}
+          <RovidMezo id={sorId(i, 'megjegyzes')} name={`rendezveny.${i}.megjegyzes`} {...R.megjegyzes} value={r.megjegyzes}
             onChange={(v) => set(r.id, { megjegyzes: v })} max={ROVID_MAX} errors={hibak} />
           <div className="sm:col-span-2">
             <Button type="button" variant="outline" size="sm" aria-label={`${i + 1}. rendezvény törlése`} onClick={() => torolSor(r.id)}>

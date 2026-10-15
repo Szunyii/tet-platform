@@ -16,7 +16,8 @@ export interface SelectOpcio {
  * `<label for>` nem minden AT-nél számít névnek, ezért `aria-labelledby`: a címke id-ja + a sajátja (a név
  * így „címke + aktuális érték”). `name` megadásával a Base UI rejtett inputot renderel, így az érték a
  * FormData-ban is megjelenik. Üres `value` = nincs kiválasztva (a `placeholder` látszik). A hiba kulcsa az
- * `id`; `errors` nélkül nincs hibasor. A `children` a hibasor alá kerül (pl. megjegyzés).
+ * `id`; `errors: null` (pl. szűrők) = nincs hibasor. A `children` a hibasor alá kerül (pl. megjegyzés).
+ * Nem azonos a `CimkeValaszto`-val (címke-chipek fix listából): ez címkés legördülő.
  */
 export function CimkesSelect({
   id, cimke, value, onChange, opciok, name, placeholder, required, errors, className, children,
@@ -29,7 +30,7 @@ export function CimkesSelect({
   name?: string;
   placeholder?: string;
   required?: boolean;
-  errors?: MezoHibak;
+  errors: MezoHibak | null;
   /** A trigger osztályai (pl. szélesség). */
   className?: string;
   children?: ReactNode;

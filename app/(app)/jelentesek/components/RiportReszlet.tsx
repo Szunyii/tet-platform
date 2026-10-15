@@ -89,10 +89,10 @@ export function RiportReszlet({
           </CardHeader>
           <CardContent className="text-sm">
             <div>
-              Dátum: <span className="font-medium">{formatNaptariDatum(riport.esemenyDatum)}</span>
+              {RIPORT_MEZO_CIMKEK.esemenyDatum}: <span className="font-medium">{formatNaptariDatum(riport.esemenyDatum)}</span>
             </div>
             <div>
-              Helyszín: <span className="font-medium">{riport.esemenyHelyszin}</span>
+              {RIPORT_MEZO_CIMKEK.esemenyHelyszin}: <span className="font-medium">{riport.esemenyHelyszin}</span>
             </div>
           </CardContent>
         </Card>

@@ -19,11 +19,39 @@ function szuroErtek(v: string): string {
   return v === MIND ? '' : v;
 }
 
-/** A „Mind" opció: a szűrő-legördülők első eleme. */
 const MIND_OPCIO: SelectOpcio = { ertek: MIND, cimke: 'Mind' };
 
-const KATEGORIA_OPCIOK: SelectOpcio[] = [MIND_OPCIO, ...KATEGORIAK.map((k) => ({ ertek: k.kulcs, cimke: k.rovid }))];
-const KULCSSZO_OPCIOK: SelectOpcio[] = [MIND_OPCIO, ...KULCSSZAVAK.map((k) => ({ ertek: k, cimke: k }))];
+/** Szűrő-legördülő: a „Mind” az első opció; az üres `ertek` (és a „Mind” választása) = nincs szűrő. */
+function SzuroSelect({
+  id,
+  cimke,
+  ertek,
+  opciok,
+  onChange,
+  className,
+}: {
+  id: string;
+  cimke: string;
+  ertek: string;
+  opciok: readonly SelectOpcio[];
+  onChange: (v: string) => void;
+  className?: string;
+}) {
+  return (
+    <CimkesSelect
+      id={id}
+      cimke={cimke}
+      value={ertek || MIND}
+      opciok={[MIND_OPCIO, ...opciok]}
+      onChange={(v) => onChange(szuroErtek(v))}
+      className={className}
+      errors={null}
+    />
+  );
+}
+
+const KATEGORIA_OPCIOK: SelectOpcio[] = KATEGORIAK.map((k) => ({ ertek: k.kulcs, cimke: k.rovid }));
+const KULCSSZO_OPCIOK: SelectOpcio[] = KULCSSZAVAK.map((k) => ({ ertek: k, cimke: k }));
 
 export function RiportSzurok({
   ertekek,
@@ -106,38 +134,38 @@ export function RiportSzurok({
           onChange={(e) => setQ(e.target.value)}
         />
       </div>
-      <CimkesSelect
+      <SzuroSelect
         id="szuro-kategoria"
         cimke="Kategória"
-        value={ertekek.kategoria || MIND}
+        ertek={ertekek.kategoria}
         opciok={KATEGORIA_OPCIOK}
-        onChange={(v) => frissit({ kategoria: szuroErtek(v) })}
+        onChange={(v) => frissit({ kategoria: v })}
         className="w-44"
       />
-      <CimkesSelect
+      <SzuroSelect
         id="szuro-kulcsszo"
         cimke="Kulcsszó"
-        value={ertekek.kulcsszo || MIND}
+        ertek={ertekek.kulcsszo}
         opciok={KULCSSZO_OPCIOK}
-        onChange={(v) => frissit({ kulcsszo: szuroErtek(v) })}
+        onChange={(v) => frissit({ kulcsszo: v })}
         className="w-56"
       />
       {admin && (
         <>
-          <CimkesSelect
+          <SzuroSelect
             id="szuro-orszag"
             cimke="Ország"
-            value={ertekek.orszag || MIND}
-            opciok={[MIND_OPCIO, ...orszagok.map((o) => ({ ertek: o, cimke: orszagNev(o) }))]}
-            onChange={(v) => frissit({ orszag: szuroErtek(v) })}
+            ertek={ertekek.orszag}
+            opciok={orszagok.map((o) => ({ ertek: o, cimke: orszagNev(o) }))}
+            onChange={(v) => frissit({ orszag: v })}
             className="w-44"
           />
-          <CimkesSelect
+          <SzuroSelect
             id="szuro-attase"
             cimke="Attasé"
-            value={ertekek.attase || MIND}
-            opciok={[MIND_OPCIO, ...szerzok.map((s) => ({ ertek: s.id, cimke: s.nev }))]}
-            onChange={(v) => frissit({ attase: szuroErtek(v) })}
+            ertek={ertekek.attase}
+            opciok={szerzok.map((s) => ({ ertek: s.id, cimke: s.nev }))}
+            onChange={(v) => frissit({ attase: v })}
             className="w-56"
           />
         </>

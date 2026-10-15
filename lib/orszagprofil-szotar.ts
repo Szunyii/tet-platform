@@ -608,11 +608,14 @@ export const SZOVEGES_MEZOK = {
 } as const satisfies { [K in BlokkKulcs]?: readonly (keyof ProfilBlokkok[K])[] };
 
 type SzovegesBlokk = keyof typeof SZOVEGES_MEZOK;
-// Fordítási őr: minden lista a blokk összes mezőjét tartalmazza (egy kimaradt mező az űrlapról és a nézetből is eltűnne).
-const SZOVEGES_TELJES: { [K in SzovegesBlokk]: [Exclude<keyof ProfilBlokkok[K], (typeof SZOVEGES_MEZOK)[K][number]>] extends [never] ? true : never } = {
-  intezmenyek: true, programok: true, nemzetkoziKapcsolatok: true, magyarErtekeles: true,
-};
-void SZOVEGES_TELJES;
+/** A `SZOVEGES_MEZOK` listáiból kimaradt mezőnevek (minden blokkból együtt); `never`, ha mind teljes. */
+type Hianyzo = { [K in SzovegesBlokk]: Exclude<keyof ProfilBlokkok[K], (typeof SZOVEGES_MEZOK)[K][number]> }[SzovegesBlokk];
+type Csak<T extends true> = T;
+/**
+ * Fordítási őr: minden lista a blokk összes mezőjét tartalmazza (egy kimaradt mező az űrlapról és a nézetből is
+ * eltűnne); hiánynál a hibaüzenet a hiányzó mezőnevet mutatja. Csak típus, futásidőben nincs nyoma.
+ */
+export type SzovegesMezokTeljesek = Csak<[Hianyzo] extends [never] ? true : Hianyzo>;
 
 /** A rendezvénysorok mezői: nem a `MEZO_CIMKEK` kulcsai, mert a sor a `Rendezvenyek.lista` eleme. */
 export const REND_MEZO_CIMKEK: Record<keyof Rendezveny, MezoCimke> = {

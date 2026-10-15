@@ -8,8 +8,6 @@ import { BlokkForm, useBlokkAllapot, type BlokkMezokProps } from '../BlokkForm';
 
 const C = MEZO_CIMKEK.magyarErtekeles;
 const B = 'magyarErtekeles';
-// Az összegzés a térkép panelén is megjelenik: rövidebb korlát, kisebb mező.
-const OSSZEGZES = { max: OSSZEGZES_MAX, sorok: 3 };
 
 export function MagyarErtekelesMezok({
   kod, ev, initial, mentve, action,
@@ -18,7 +16,9 @@ export function MagyarErtekelesMezok({
   return (
     <BlokkForm kod={kod} ev={ev} blokk={B} mentve={mentve} action={action}>
       {(errors) => SZOVEGES_MEZOK[B].map((k) => (
-        <SzovegMezo key={k} {...mezo(k)} {...C[k]} max={SZOVEG_MAX} {...(k === 'osszegzes' ? OSSZEGZES : {})} errors={errors} />
+        // Az összegzés a térkép panelén is megjelenik: rövidebb korlát, kisebb mező.
+        <SzovegMezo key={k} {...mezo(k)} {...C[k]} max={k === 'osszegzes' ? OSSZEGZES_MAX : SZOVEG_MAX}
+          sorok={k === 'osszegzes' ? 3 : undefined} errors={errors} />
       ))}
     </BlokkForm>
   );

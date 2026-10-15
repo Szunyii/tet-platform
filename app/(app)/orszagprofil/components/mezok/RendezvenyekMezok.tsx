@@ -3,7 +3,7 @@
 import { SugoGomb } from '../../../../../components/form/SugoGomb';
 import { MEZO_CIMKEK, type Rendezvenyek } from '../../../../../lib/orszagprofil-szotar';
 import { BlokkForm, useBlokkAllapot, type BlokkMezokProps } from '../BlokkForm';
-import { RendezvenySorok, rendezvenySorok } from '../RendezvenySorok';
+import { kezdoRendezvenySorok, RendezvenySorok } from '../RendezvenySorok';
 
 const B = 'rendezvenyek';
 const L = MEZO_CIMKEK.rendezvenyek.lista;
@@ -11,7 +11,7 @@ const L = MEZO_CIMKEK.rendezvenyek.lista;
 export function RendezvenyekMezok({
   kod, ev, initial, mentve, action,
 }: BlokkMezokProps<Rendezvenyek>) {
-  const { e, set } = useBlokkAllapot(B, { ...initial, lista: rendezvenySorok(initial.lista) });
+  const { e, set } = useBlokkAllapot(B, { ...initial, lista: kezdoRendezvenySorok(initial.lista) });
   return (
     <BlokkForm kod={kod} ev={ev} blokk={B} mentve={mentve} action={action}>
       {(errors) => (
