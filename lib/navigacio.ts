@@ -11,6 +11,8 @@ export interface Menupont {
   felirat: string;
   /** További útvonal-prefixek, amelyeken a menüpont aktív (pl. /orszagprofil/* → Országprofil). */
   alHrefek?: readonly string[];
+  /** Az olvasatlan ticketek száma megjelenik a menüpont mellett. */
+  olvasatlanSzamlalo?: true;
 }
 
 export interface Utvonal {
@@ -51,7 +53,7 @@ export const UTVONALAK: readonly Utvonal[] = [
     href: '/kommunikacio',
     cim: 'Kommunikáció',
     alcim: 'Ticket + üzenetszál az adminok és a TéT attasék között',
-    menu: { ikon: '✉', felirat: 'Kommunikáció' },
+    menu: { ikon: '✉', felirat: 'Kommunikáció', olvasatlanSzamlalo: true },
   },
   {
     href: '/tudastar',

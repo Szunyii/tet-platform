@@ -16,7 +16,7 @@ function szerepFelirat(user: AppSession): string {
   if (user.role === 'admin') return 'NIÜ admin';
   const szekhely = szekhelyKod(user.orszagok);
   const tovabbi = user.orszagok.length - (szekhely ? 1 : 0);
-  return `TéT attasé${szekhely ? ' · ' + orszagNev(szekhely) : ''}${tovabbi > 0 ? ` +${tovabbi}` : ''}`;
+  return `TéT attasé${szekhely ? ' · ' + orszagNev(szekhely) : ''}${tovabbi > 0 ? `\u00a0+${tovabbi}` : ''}`;
 }
 
 /**
@@ -52,7 +52,7 @@ export function Oldalsav({ user, olvasatlan, oldalsavAlja, logoutAction }: {
             >
               <span className="w-4 text-center text-[13px]">{u.menu.ikon}</span>
               {u.menu.felirat}
-              {u.href === '/kommunikacio' && olvasatlan > 0 && (
+              {u.menu.olvasatlanSzamlalo && olvasatlan > 0 && (
                 <>
                   <span aria-hidden className="ml-auto rounded-[9px] bg-sidebar-szamlalo px-1.5 py-px text-[10px] font-semibold text-white">
                     {olvasatlan}
