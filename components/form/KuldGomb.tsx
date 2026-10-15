@@ -4,8 +4,8 @@ import { useFormStatus } from 'react-dom';
 import { Button } from '../ui/button';
 
 /**
- * Form submit gomb pending állapottal (useFormStatus). A SzerkesztesGomb form-ága és a profil oldal
- * évugró gombja használja, hogy a hívó maga szerver-kompatibilis maradjon.
+ * Általános submit gomb pending állapottal (useFormStatus): a `<form action>`-t renderelő hívó így
+ * Server Component maradhat (pl. a SzerkesztesGomb form-ága).
  */
 export function KuldGomb({ children, variant }: { children: React.ReactNode; variant?: React.ComponentProps<typeof Button>['variant'] }) {
   const { pending } = useFormStatus();
