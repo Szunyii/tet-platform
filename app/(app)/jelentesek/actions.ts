@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect, unstable_rethrow } from 'next/navigation';
-import { deleteRiport, getRiport, setIntezkedes, updateRiport } from '../../../db/queries/riport';
+import { deleteRiport, getRiport, getRiportSzerzo, setIntezkedes, updateRiport } from '../../../db/queries/riport';
 import { fajlokCsatolmannya } from '../../../lib/riport-fajl';
 import { canEditRiport, canIntezkedni } from '../../../lib/riport-jog';
 import { parseIntezkedes, parseRiportForm } from '../../../lib/riport-validacio';
@@ -44,7 +44,7 @@ export async function updateRiportAction(
 
 export async function deleteRiportAction(id: string): Promise<RiportFormState> {
   const session = await requireSession();
-  const meglevo = getRiport(id);
+  const meglevo = getRiportSzerzo(id);
   if (!meglevo || !canEditRiport(session, meglevo)) return { errors: { form: NINCS_JOG } };
   try {
     deleteRiport(id);
@@ -72,7 +72,7 @@ export async function mentIntezkedesAction(
   const parsed = parseIntezkedes(formData);
   if (!parsed.ok) return { errors: parsed.errors };
   try {
-    if (!setIntezkedes(id, parsed.szoveg, session.name)) {
+    if (!setIntezkedes(id, parsed.data, session.name)) {
       return { errors: { form: 'A bejegyzés már nem létezik.' } };
     }
   } catch (err) {

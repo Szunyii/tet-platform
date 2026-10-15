@@ -1,4 +1,4 @@
-import { getCsatolmany, getCsatolmanyMeta, getRiport } from '../../../../../db/queries/riport';
+import { getCsatolmany, getCsatolmanyMeta } from '../../../../../db/queries/riport';
 import { canViewRiport } from '../../../../../lib/riport-jog';
 import { getSession } from '../../../../../lib/session';
 
@@ -18,8 +18,8 @@ function contentDisposition(fajlnev: string): string {
 // Csatolmány letöltése. A proxy csak a cookie meglétét nézi, itt a valódi session és a
 // bejegyzés láthatósága dönt; idegen bejegyzés csatolmánya 404 (nem áruljuk el, hogy létezik).
 // A jogosultságot a blob (potenciálisan nagy) beolvasása ELŐTT ellenőrizzük: előbb a
-// blob nélküli metaadatot (getCsatolmanyMeta) és a bejegyzést nézzük meg, a tényleges
-// tartalmat (getCsatolmany) csak ezután olvassuk be.
+// blob nélküli metaadatot nézzük meg a bejegyzés szerzőjével (getCsatolmanyMeta), a
+// tényleges tartalmat (getCsatolmany) csak ezután olvassuk be.
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   // A proxy cookie nélkül már a loginra irányít; ide csak elavult/érvénytelen cookie-val jut
@@ -29,9 +29,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const meta = getCsatolmanyMeta(id);
   if (!meta) return new Response(null, { status: 404 });
-
-  const rip = getRiport(meta.riportId);
-  if (!rip || !canViewRiport(session, rip)) return new Response(null, { status: 404 });
+  if (!canViewRiport(session, meta)) return new Response(null, { status: 404 });
 
   const cs = getCsatolmany(id);
   if (!cs) return new Response(null, { status: 404 });

@@ -1,9 +1,10 @@
 import 'server-only';
 import { cache } from 'react';
-import { and, desc, eq, lte } from 'drizzle-orm';
+import { and, desc, eq, lte, sql } from 'drizzle-orm';
 import { db } from '../index';
 import { orszagprofil, user } from '../schema';
 import { orszagByKod } from '../../lib/orszagok';
+import { huOsszevet } from '../../lib/rendezes';
 import { listAttasekOrszagonkent } from './attase-orszag';
 import type { OrszagAttase } from '../../lib/attase-orszag';
 import {
@@ -81,6 +82,20 @@ export function listProfilEvek(): number[] {
     .map((r) => r.ev);
 }
 
+/** Az Alapadatokból ennyit használ a térkép kliens-oldala (kivonat, mutatók, tagság-mátrix); a többi mező nem kerül a payloadba. */
+export type TerkepAlapadatok = Pick<
+  Alapadatok,
+  'fovaros' | 'terulet' | 'penznem' | 'lakossag' | 'gdp' | 'gdpEgyFore' | 'gdpNovekedes' | 'adatEv' | 'forras' | 'tagsagok'
+>;
+
+function terkepAlapadatok(a: Alapadatok): TerkepAlapadatok {
+  const { fovaros, terulet, penznem, lakossag, gdp, gdpEgyFore, gdpNovekedes, adatEv, forras, tagsagok } = a;
+  return { fovaros, terulet, penznem, lakossag, gdp, gdpEgyFore, gdpNovekedes, adatEv, forras, tagsagok };
+}
+
+// A mentett blokkok száma SQL-ben, a `BLOKK_KULCSOK`-ból (kimerítő): így a kilenc JSON-oszlopot nem kell beolvasni.
+const MENTETT_DB = sql<number>`${sql.join(BLOKK_KULCSOK.map((k) => sql`(${orszagprofil[k]} is not null)`), sql` + `)}`;
+
 export interface TerkepOrszag {
   kod: string;
   nev: string;
@@ -97,7 +112,7 @@ export interface TerkepOrszag {
   /** KFI-prioritások (KFI-blokk) az összehasonlítás listamátrixához; nem mentett blokknál üres. */
   prioritasok: KfiPrioritas[];
   osszegzes: string;
-  alapadatok: Alapadatok | null;
+  alapadatok: TerkepAlapadatok | null;
   mentettDb: number;
   rendezvenyDb: number;
 }
@@ -107,7 +122,8 @@ export interface TerkepOrszag {
  * (székhelyként vagy régiósan) vagy van profil, országonként a legnagyobb év ≤ ev profiljával.
  * Az `allapot` az `ev`-hez viszonyít: van profil az évre → friss, csak régebbi → elavult,
  * semmi → nincs (ev = aktuális évnél ez a korábbi viselkedés). Két lekérdezés + JS-összefésülés;
- * az orszagprofil tábla országok × évek méretű, minden sorát beolvassuk – ezen a skálán rendben van.
+ * az orszagprofil tábla országok × évek méretű, csak a ≤ ev sorok és a térkép által használt
+ * oszlopok jönnek.
  * React.cache: egy kérésen belül (layout + page) azonos argumentummal egyszer fut le, a hívók
  * ugyanazt a tömb-példányt kapják – ne mutáld.
  */
@@ -117,16 +133,22 @@ export const listTerkepAdat = cache((ev: number): TerkepOrszag[] => {
   // Országonként a legnagyobb, ev-nél nem nagyobb év sora. (Az év szerint csökkenő listából
   // az első előfordulás országonként; a max(ev)-es al-lekérdezéses join helyett, mert a
   // Drizzle az aliasolt sql-oszlopot a join-feltételben minősítés nélkül írja ki.)
-  const profilok: (typeof orszagprofil.$inferSelect)[] = [];
-  const lattuk = new Set<string>();
-  for (const p of db.select().from(orszagprofil).orderBy(desc(orszagprofil.ev)).all()) {
-    if (p.ev > ev || lattuk.has(p.orszagKod)) continue;
-    lattuk.add(p.orszagKod);
-    profilok.push(p);
-  }
-
-  // Országkód → az `ev`-hez tartozó (≤ ev legnagyobb évű) profil.
-  const profilKodhoz = new Map(profilok.map((p) => [p.orszagKod, p] as const));
+  const sorok = db
+    .select({
+      orszagKod: orszagprofil.orszagKod,
+      ev: orszagprofil.ev,
+      alapadatok: orszagprofil.alapadatok,
+      kfiRendszer: orszagprofil.kfiRendszer,
+      rendezvenyek: orszagprofil.rendezvenyek,
+      magyarErtekeles: orszagprofil.magyarErtekeles,
+      mentettDb: MENTETT_DB,
+    })
+    .from(orszagprofil)
+    .where(lte(orszagprofil.ev, ev))
+    .orderBy(desc(orszagprofil.ev))
+    .all();
+  const profilKodhoz = new Map<string, (typeof sorok)[number]>();
+  for (const p of sorok) if (!profilKodhoz.has(p.orszagKod)) profilKodhoz.set(p.orszagKod, p);
 
   const kodok = new Set<string>([...attasek.keys(), ...profilKodhoz.keys()]);
 
@@ -134,23 +156,27 @@ export const listTerkepAdat = cache((ev: number): TerkepOrszag[] => {
   for (const kod of kodok) {
     const o = orszagByKod(kod);
     if (!o) continue;
-    const p = profilKodhoz.get(kod) ?? null;
-    const prof = p ? sorbol(p, null) : null;
+    const p = profilKodhoz.get(kod);
+    // Csak a térkép által olvasott négy blokk normalizálódik.
+    const alap = p?.alapadatok != null ? normalizalBlokk('alapadatok', p.alapadatok) : null;
+    const kfi = p?.kfiRendszer != null ? normalizalBlokk('kfiRendszer', p.kfiRendszer) : null;
+    const rend = p?.rendezvenyek != null ? normalizalBlokk('rendezvenyek', p.rendezvenyek) : null;
+    const magyar = p?.magyarErtekeles != null ? normalizalBlokk('magyarErtekeles', p.magyarErtekeles) : null;
     eredmeny.push({
       kod, nev: o.nev, geo: o.geo, lonlat: o.lonlat,
       attasek: attasek.get(kod) ?? [],
-      ev: prof?.ev ?? null,
-      allapot: profilAllapot(prof?.ev ?? null, ev),
-      iparagak: prof?.blokkok.kfiRendszer?.kiemeltIparagak ?? [],
-      gerd: prof?.blokkok.kfiRendszer?.gerd ?? null,
-      prioritasok: prof?.blokkok.kfiRendszer?.prioritasok ?? [],
-      osszegzes: prof?.blokkok.magyarErtekeles?.osszegzes ?? '',
-      alapadatok: prof?.blokkok.alapadatok ?? null,
-      mentettDb: prof?.mentett.length ?? 0,
-      rendezvenyDb: prof?.blokkok.rendezvenyek?.lista.length ?? 0,
+      ev: p?.ev ?? null,
+      allapot: profilAllapot(p?.ev ?? null, ev),
+      iparagak: kfi?.kiemeltIparagak ?? [],
+      gerd: kfi?.gerd ?? null,
+      prioritasok: kfi?.prioritasok ?? [],
+      osszegzes: magyar?.osszegzes ?? '',
+      alapadatok: alap ? terkepAlapadatok(alap) : null,
+      mentettDb: p?.mentettDb ?? 0,
+      rendezvenyDb: rend?.lista.length ?? 0,
     });
   }
-  return eredmeny.sort((x, y) => x.nev.localeCompare(y.nev, 'hu'));
+  return eredmeny.sort((x, y) => huOsszevet(x.nev, y.nev));
 });
 
 /**

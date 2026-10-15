@@ -13,7 +13,7 @@
  */
 import { REGIO_MAX, RESZTERULET_MAX, VAROS_MAX, type AttaseOrszag } from './attase-orszag';
 import { orszagByKod } from './orszagok';
-import { mezo, type MezoHibak } from './urlap';
+import { mezo, type MezoHibak, type ParseResult } from './urlap';
 
 export const SZEREPKOROK = ['admin', 'attase'] as const;
 export type Szerepkor = (typeof SZEREPKOROK)[number];
@@ -23,8 +23,10 @@ export const SZEREPKOR_CIMKE: Record<Szerepkor, string> = {
   attase: 'TéT attasé',
 };
 
-/** Mezőnév → hibaüzenet. A `form` kulcs az űrlap-szintű hibáé. A típus a közös `lib/urlap.ts`-ből jön. */
-export type { MezoHibak };
+/** Az adatbázis `role` mezője → szerepkör; a hiányzó vagy ismeretlen érték (régi rekord) attasénak számít. */
+export function szerepkorbol(role: string | null | undefined): Szerepkor {
+  return role === 'admin' ? 'admin' : 'attase';
+}
 
 /** Az elérhetőségek (mindkét szerepkörnél opcionálisak). */
 export interface ElerhetosegAdatok {
@@ -47,8 +49,6 @@ export interface SzerkesztesInput extends ElerhetosegAdatok {
   orszagok: AttaseOrszag[];
 }
 
-export type ParseResult<T> = { ok: true; data: T } | { ok: false; errors: MezoHibak };
-
 // Közel a Better Auth (zod) e-mail szabályához: nincs vezető/záró/dupla pont a helyi
 // részben, a domain végén legalább 2 betűs TLD. Ami itt átmegy, de a Better Auth elutasít
 // (pl. ékezetes cím), azt a server action INVALID_EMAIL hibaként az email mezőre teszi.
@@ -60,14 +60,19 @@ function raw(fd: FormData, key: string): string {
   return typeof v === 'string' ? v : '';
 }
 
+export const NEV_MAX = 100;
+/** A Better Auth alapértelmezett jelszó-korlátai. */
+export const JELSZO_MIN = 8;
+export const JELSZO_MAX = 128;
+
 function validNev(nev: string, errors: MezoHibak) {
   if (!nev) errors.nev = 'A név kötelező.';
-  else if (nev.length > 100) errors.nev = 'A név legfeljebb 100 karakter.';
+  else if (nev.length > NEV_MAX) errors.nev = `A név legfeljebb ${NEV_MAX} karakter.`;
 }
 
 function validJelszo(jelszo: string, errors: MezoHibak) {
-  if (jelszo.length < 8) errors.jelszo = 'A jelszó legalább 8 karakter.';
-  else if (jelszo.length > 128) errors.jelszo = 'A jelszó legfeljebb 128 karakter.';
+  if (jelszo.length < JELSZO_MIN) errors.jelszo = `A jelszó legalább ${JELSZO_MIN} karakter.`;
+  else if (jelszo.length > JELSZO_MAX) errors.jelszo = `A jelszó legfeljebb ${JELSZO_MAX} karakter.`;
 }
 
 function validSzerepkor(raw: string, errors: MezoHibak): Szerepkor | null {

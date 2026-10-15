@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { RiportSzurok } from './components/RiportSzurok';
 import { RiportTabla } from './components/RiportTabla';
 import { buttonVariants } from '../../../components/ui/button';
-import { listOrszagok, listRiportok, listSzerzok } from '../../../db/queries/riport';
+import { listRiportOrszagok, listRiportok, listRiportSzerzok } from '../../../db/queries/riport';
 import { canIntezkedni } from '../../../lib/riport-jog';
 import { szuroErtekek, szuroFromSearchParams, type SearchParams } from '../../../lib/riport-szuro';
 import { requireSession } from '../../../lib/session';
@@ -16,8 +16,8 @@ export default async function RiportokPage({ searchParams }: { searchParams: Pro
   const session = await requireSession();
   const admin = session.role === 'admin';
   const szuro = szuroFromSearchParams(await searchParams);
-  const orszagok = admin ? listOrszagok() : [];
-  const szerzok = admin ? listSzerzok() : [];
+  const orszagok = admin ? listRiportOrszagok() : [];
+  const szerzok = admin ? listRiportSzerzok() : [];
   if (admin) {
     // Elavult vagy kézzel írt érték: szűrő nélkül, hogy a legördülőben ne nyers kód vagy id álljon.
     if (szuro.orszag && !orszagok.includes(szuro.orszag)) delete szuro.orszag;

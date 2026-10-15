@@ -23,7 +23,7 @@ import {
   type KategoriaKulcs,
   type Kulcsszo,
 } from './riport-szotar';
-import { mezo, type MezoHibak } from './urlap';
+import { mezo, type MezoHibak, type ParseResult } from './urlap';
 
 export interface RiportInput {
   kategoria: KategoriaKulcs;
@@ -36,9 +36,6 @@ export interface RiportInput {
   kapcsolodoFeladat: string | null;
 }
 
-/** Kompatibilitási alias: a hibatérkép-típus a közös `lib/urlap.ts`-ből jön. */
-export type RiportErrors = MezoHibak;
-
 export interface ElfogadottFajl {
   file: File;
   mime: string;
@@ -48,16 +45,16 @@ export interface ElfogadottFajl {
 
 export type ParseRiportResult =
   | { ok: true; data: RiportInput; fajlok: ElfogadottFajl[]; torlendoCsatolmanyIdk: string[] }
-  | { ok: false; errors: RiportErrors };
+  | { ok: false; errors: MezoHibak };
 
-function opcionalis(fd: FormData, key: string, max: number, cimke: string, errors: RiportErrors): string | null {
+function opcionalis(fd: FormData, key: string, max: number, cimke: string, errors: MezoHibak): string | null {
   const v = mezo(fd, key);
   if (!v) return null;
   if (v.length > max) errors[key] = `${cimke} legfeljebb ${max} karakter.`;
   return v;
 }
 
-function parseKulcsszavak(raw: string, errors: RiportErrors): Kulcsszo[] {
+function parseKulcsszavak(raw: string, errors: MezoHibak): Kulcsszo[] {
   if (raw.length > KULCSSZO_RAW_MAX) {
     errors.kulcsszavak = 'Érvénytelen kulcsszó-lista.';
     return [];
@@ -106,29 +103,44 @@ function nevHibahoz(nev: string): string {
   return nev.length > 80 ? `${nev.slice(0, 80)}…` : nev;
 }
 
-function parseFajlok(fajlok: File[], meglevoDb: number, errors: RiportErrors): ElfogadottFajl[] {
-  const { maxDarab, maxMeret } = CSATOLMANY_LIMIT;
-  if (meglevoDb + fajlok.length > maxDarab) {
-    errors.csatolmany = `Legfeljebb ${maxDarab} csatolmány lehet egy bejegyzésen.`;
+/** A szerver-oldali típushiba vége: felsorolja az engedett típusokat (a kliens-előellenőrzésé nem). */
+const ENGEDETT_TIPUSOK = ' Engedett: PDF, Word, Excel, PowerPoint, PNG, JPG.';
+
+function darabHiba(meglevoDb: number, ujDb: number): string | null {
+  const { maxDarab } = CSATOLMANY_LIMIT;
+  return meglevoDb + ujDb > maxDarab ? `Legfeljebb ${maxDarab} csatolmány lehet egy bejegyzésen.` : null;
+}
+
+/**
+ * Egy kiválasztott fájl a csatolmány-korlátokkal (üres, típus, méret): a `parseFajlok` és a
+ * `csatolmanyElocheck` közös szabálya. A tisztított névvel dolgozik, hogy az előellenőrzés és a
+ * szerver-oldali ellenőrzés (kiterjesztés, hibaüzenet) egybevágjon. `tipusUtotag` a típushiba vége.
+ */
+function ellenorizFajl(file: File, tipusUtotag: string): { ok: true; nev: string; mime: string } | { ok: false; hiba: string } {
+  const nev = tisztitFajlnev(file.name);
+  if (file.size === 0) return { ok: false, hiba: `Üres fájl: ${nevHibahoz(nev)}.` };
+  const mime = mimeFromFajlnev(nev);
+  if (!mime) return { ok: false, hiba: `Nem engedélyezett fájltípus: ${nevHibahoz(nev)}.${tipusUtotag}` };
+  if (file.size > CSATOLMANY_LIMIT.maxMeret) {
+    return { ok: false, hiba: `Túl nagy fájl: ${nevHibahoz(nev)} (max. ${formatMeret(CSATOLMANY_LIMIT.maxMeret)}).` };
+  }
+  return { ok: true, nev, mime };
+}
+
+function parseFajlok(fajlok: File[], meglevoDb: number, errors: MezoHibak): ElfogadottFajl[] {
+  const tul = darabHiba(meglevoDb, fajlok.length);
+  if (tul) {
+    errors.csatolmany = tul;
     return [];
   }
   const elfogadott: ElfogadottFajl[] = [];
   for (const file of fajlok) {
-    const nev = tisztitFajlnev(file.name);
-    if (file.size === 0) {
-      errors.csatolmany = `Üres fájl: ${nevHibahoz(nev)}.`;
+    const e = ellenorizFajl(file, ENGEDETT_TIPUSOK);
+    if (!e.ok) {
+      errors.csatolmany = e.hiba;
       return [];
     }
-    const mime = mimeFromFajlnev(nev);
-    if (!mime) {
-      errors.csatolmany = `Nem engedélyezett fájltípus: ${nevHibahoz(nev)}. Engedett: PDF, Word, Excel, PowerPoint, PNG, JPG.`;
-      return [];
-    }
-    if (file.size > maxMeret) {
-      errors.csatolmany = `Túl nagy fájl: ${nevHibahoz(nev)} (max. ${formatMeret(maxMeret)}).`;
-      return [];
-    }
-    elfogadott.push({ file, mime, nev });
+    elfogadott.push({ file, mime: e.mime, nev: e.nev });
   }
   return elfogadott;
 }
@@ -142,15 +154,11 @@ function parseFajlok(fajlok: File[], meglevoDb: number, errors: RiportErrors): E
  * @param meglevoDb a bejegyzésen megmaradó, korábban feltöltött csatolmányok száma
  */
 export function csatolmanyElocheck(fajlok: File[], meglevoDb: number): string | null {
-  const { maxDarab, maxMeret } = CSATOLMANY_LIMIT;
-  if (meglevoDb + fajlok.length > maxDarab) return `Legfeljebb ${maxDarab} csatolmány lehet egy bejegyzésen.`;
+  const tul = darabHiba(meglevoDb, fajlok.length);
+  if (tul) return tul;
   for (const f of fajlok) {
-    // Ugyanazzal a tisztított névvel dolgozunk, mint a `parseFajlok`, hogy az előcheck és a
-    // szerver-oldali ellenőrzés (kiterjesztés, hibaüzenet) egybevágjon.
-    const nev = tisztitFajlnev(f.name);
-    if (f.size === 0) return `Üres fájl: ${nevHibahoz(nev)}.`;
-    if (!mimeFromFajlnev(nev)) return `Nem engedélyezett fájltípus: ${nevHibahoz(nev)}.`;
-    if (f.size > maxMeret) return `Túl nagy fájl: ${nevHibahoz(nev)} (max. ${formatMeret(maxMeret)}).`;
+    const e = ellenorizFajl(f, '');
+    if (!e.ok) return e.hiba;
   }
   return null;
 }
@@ -163,7 +171,7 @@ export function parseRiportForm(
   fd: FormData,
   meglevoCsatolmanyIdk: readonly string[] = [],
 ): ParseRiportResult {
-  const errors: RiportErrors = {};
+  const errors: MezoHibak = {};
 
   const kategoriaRaw = mezo(fd, 'kategoria');
   const kategoria = isKategoriaKulcs(kategoriaRaw) ? kategoriaRaw : null;
@@ -213,19 +221,17 @@ export function parseRiportForm(
   };
 }
 
-export type ParseIntezkedesResult = { ok: true; szoveg: string | null } | { ok: false; errors: RiportErrors };
-
 /**
  * A „Megtett intézkedés” dialógus validátora. Az üres (vagy csak térközből álló) szöveg a
- * törlést jelenti: `szoveg: null`. A hibakulcs a mező DOM-id-ja (`intezkedes`). A hiányzó
+ * törlést jelenti: `data: null`. A hibakulcs a mező DOM-id-ja (`intezkedes`). A hiányzó
  * (vagy fájl típusú) mező viszont nem „üres szöveg”, hanem hibás kérés: a törlés
  * visszavonhatatlan, ezért az ilyen kérés ne töröljön.
  */
-export function parseIntezkedes(fd: FormData): ParseIntezkedesResult {
+export function parseIntezkedes(fd: FormData): ParseResult<string | null> {
   if (typeof fd.get('intezkedes') !== 'string') return { ok: false, errors: { form: 'Érvénytelen kérés.' } };
   const szoveg = mezo(fd, 'intezkedes');
   if (szoveg.length > INTEZKEDES_MAX) {
     return { ok: false, errors: { intezkedes: `A megtett intézkedés legfeljebb ${INTEZKEDES_MAX} karakter.` } };
   }
-  return { ok: true, szoveg: szoveg || null };
+  return { ok: true, data: szoveg || null };
 }

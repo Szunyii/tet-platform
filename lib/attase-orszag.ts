@@ -7,6 +7,7 @@
  * tartja (setAttaseOrszagok, normalizalVezetok).
  */
 import { hazaiE, orszagNev } from './orszagok';
+import { huOsszevet } from './rendezes';
 
 export const VAROS_MAX = 100;
 export const RESZTERULET_MAX = 1000;
@@ -40,7 +41,7 @@ export interface OrszagAttase {
 /** Székhely elöl, utána magyar országnév szerint. */
 export function rendezOrszagok<T extends { kod: string; szekhely: boolean }>(lista: readonly T[]): T[] {
   return [...lista].sort(
-    (a, b) => Number(b.szekhely) - Number(a.szekhely) || orszagNev(a.kod).localeCompare(orszagNev(b.kod), 'hu'),
+    (a, b) => Number(b.szekhely) - Number(a.szekhely) || huOsszevet(orszagNev(a.kod), orszagNev(b.kod)),
   );
 }
 
@@ -62,7 +63,7 @@ export function regionalisE(a: Pick<OrszagAttase, 'szekhelyKod'>, kod: string): 
 /** Vezető elöl, utána akiknek ez a székhelye, végül a régiósak; csoporton belül név szerint. */
 export function rendezAttasek(kod: string, lista: readonly OrszagAttase[]): OrszagAttase[] {
   const rang = (a: OrszagAttase) => (a.vezeto ? 0 : regionalisE(a, kod) ? 2 : 1);
-  return [...lista].sort((a, b) => rang(a) - rang(b) || a.nev.localeCompare(b.nev, 'hu'));
+  return [...lista].sort((a, b) => rang(a) - rang(b) || huOsszevet(a.nev, b.nev));
 }
 
 /** „Név · Város”; régiósnál „Név · regionálisan (Város)” – város nélkül a székhely országa. */
@@ -156,7 +157,7 @@ export function vezetoNelkuliOrszagok(m: OrszagTagok): HianyosOrszag[] {
     if (aktivDb === 0 || (vezeto && !vezeto.tiltott)) continue;
     ki.push({ kod, aktivDb, vezetoTiltott: Boolean(vezeto) });
   }
-  return ki.sort((a, b) => orszagNev(a.kod).localeCompare(orszagNev(b.kod), 'hu'));
+  return ki.sort((a, b) => huOsszevet(orszagNev(a.kod), orszagNev(b.kod)));
 }
 
 /** A dialógus vezető-jelölőjének helyzete egy országra, a szerkesztett felhasználón kívüli attasék alapján. */

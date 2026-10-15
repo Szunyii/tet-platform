@@ -2,11 +2,24 @@
  * A `/jelentesek` lista URL-szűrőinek tiszta fordítója: `searchParams` → `RiportFilter`,
  * és vissza a kliens szűrő-sávnak való nyers értékekre. Nincs React és nincs DB hívás.
  */
-import type { RiportFilter } from '../db/queries/riport';
 import { ervenyesNaptariDatum } from './datum';
-import { isKategoriaKulcs, isKulcsszo } from './riport-szotar';
+import { isKategoriaKulcs, isKulcsszo, type KategoriaKulcs } from './riport-szotar';
 
 export type SearchParams = Record<string, string | string[] | undefined>;
+
+export interface RiportFilter {
+  szerzoId?: string;
+  kategoria?: KategoriaKulcs;
+  kulcsszo?: string;
+  orszag?: string;
+  q?: string;
+  /**
+   * YYYY-MM-DD, a created_at budapesti naptári napjára (lib/datum.ts IDOZONA), a
+   * megjelenítéssel (formatDatum) konzisztensen.
+   */
+  datumTol?: string;
+  datumIg?: string;
+}
 
 function egy(v: string | string[] | undefined): string {
   const s = Array.isArray(v) ? v[0] : v;
@@ -20,9 +33,9 @@ export function szuroFromSearchParams(sp: SearchParams): RiportFilter {
   if (isKategoriaKulcs(kategoria)) f.kategoria = kategoria;
   const kulcsszo = egy(sp.kulcsszo);
   if (isKulcsszo(kulcsszo)) f.kulcsszo = kulcsszo;
-  // Az admin ország- és attasé-szűrője. A hívó (a page) az opciólistán (`listOrszagok()`,
-  // `listSzerzok()`) nem szereplő értéket eldobja, az attasé nézetében pedig bármilyen értéket (ott
-  // a lekérdezés a sajátjára szűr), ezért itt elég a formai tisztítás.
+  // Az admin ország- és attasé-szűrője. A hívó (a page) az opciólistán (`listRiportOrszagok()`,
+  // `listRiportSzerzok()`) nem szereplő értéket eldobja, az attasé nézetében pedig bármilyen
+  // értéket (ott a lekérdezés a sajátjára szűr), ezért itt elég a formai tisztítás.
   const orszag = egy(sp.orszag);
   if (orszag) f.orszag = orszag.slice(0, 100);
   const attase = egy(sp.attase);

@@ -244,8 +244,8 @@ function ellenoriz(fajl: string, o: DemoOrszag, hibak: string[]): EllenorzottOrs
     else if (blokkHibak.length === 0) {
       // Üres blokkot csak akkor jelzünk, ha más baja nincs: egy elgépelt mezőnév miatt üresen maradó blokk
       // gyökérokát (az ismeretlen mezőt) már jeleztük.
-      if (uresE(e.ertek)) blokkHibak.push(['', URES_BLOKK]);
-      else blokkok.push({ blokk, ertek: e.ertek });
+      if (uresE(e.data)) blokkHibak.push(['', URES_BLOKK]);
+      else blokkok.push({ blokk, ertek: e.data });
     }
     for (const [mezo, uzenet] of blokkHibak) hiba(mezo ? `${blokk}.${mezo}` : blokk, uzenet);
   }

@@ -4,22 +4,11 @@ import { db } from '../index';
 import { attaseOrszag, riport, riportCsatolmany, user } from '../schema';
 import { kovetkezoNapKezdete, napKezdete } from '../../lib/datum';
 import { orszagNev } from '../../lib/orszagok';
+import { huOsszevet } from '../../lib/rendezes';
+import type { CsatolmanyInput } from '../../lib/riport-fajl';
 import type { KategoriaKulcs } from '../../lib/riport-szotar';
+import type { RiportFilter } from '../../lib/riport-szuro';
 import type { RiportInput } from '../../lib/riport-validacio';
-
-export interface RiportFilter {
-  szerzoId?: string;
-  kategoria?: KategoriaKulcs;
-  kulcsszo?: string;
-  orszag?: string;
-  q?: string;
-  /**
-   * YYYY-MM-DD, a created_at budapesti naptári napjára (lib/datum.ts IDOZONA), a
-   * megjelenítéssel (formatDatum) konzisztensen.
-   */
-  datumTol?: string;
-  datumIg?: string;
-}
 
 export interface RiportListItem {
   id: string;
@@ -68,13 +57,6 @@ export interface RiportDetail extends RiportInput {
   intezkedesSzerzoNev: string | null;
   intezkedesIdopont: Date | null;
   csatolmanyok: CsatolmanyMeta[];
-}
-
-export interface CsatolmanyInput {
-  fajlnev: string;
-  mime: string;
-  meret: number;
-  tartalom: Buffer;
 }
 
 export type RiportCreate = RiportInput & { szerzoId: string; orszag: string };
@@ -265,42 +247,49 @@ export function getCsatolmany(id: string): (CsatolmanyMeta & { riportId: string;
   );
 }
 
-/** Letöltés előtti jogosultság-ellenőrzéshez, blob nélkül. */
-export function getCsatolmanyMeta(id: string): (CsatolmanyMeta & { riportId: string }) | null {
+/** Letöltés előtti jogosultság-ellenőrzéshez, blob nélkül; a bejegyzés szerzőjével (`canViewRiport`). */
+export function getCsatolmanyMeta(id: string): (CsatolmanyMeta & { riportId: string; szerzoId: string }) | null {
   return (
     db
       .select({
         id: riportCsatolmany.id,
         riportId: riportCsatolmany.riportId,
+        szerzoId: riport.szerzoId,
         fajlnev: riportCsatolmany.fajlnev,
         mime: riportCsatolmany.mime,
         meret: riportCsatolmany.meret,
       })
       .from(riportCsatolmany)
+      .innerJoin(riport, eq(riport.id, riportCsatolmany.riportId))
       .where(eq(riportCsatolmany.id, id))
       .get() ?? null
   );
 }
 
+/** A bejegyzés szerzője a jogosultság-ellenőrzéshez (törlés), a szöveg és a csatolmány-lista beolvasása nélkül. */
+export function getRiportSzerzo(id: string): { szerzoId: string } | null {
+  return db.select({ szerzoId: riport.szerzoId }).from(riport).where(eq(riport.id, id)).get() ?? null;
+}
+
 /** Az admin ország-szűrőjéhez: a bejegyzésekben előforduló országkódok, magyar név szerint rendezve. */
-export function listOrszagok(): string[] {
+export function listRiportOrszagok(): string[] {
   return db
     .selectDistinct({ orszag: riport.orszag })
     .from(riport)
     .all()
     .map((r) => r.orszag)
-    .sort((a, b) => orszagNev(a).localeCompare(orszagNev(b), 'hu'));
+    .sort((a, b) => huOsszevet(orszagNev(a), orszagNev(b)));
 }
 
 /**
  * A bejegyzéssel rendelkező szerzők (az admin attasé-szűrőjének opciói), magyar névsorban. A
  * rendezés JS-ben, mert a SQLite BINARY collation az ékezetes neveket a lista végére tenné.
  */
-export function listSzerzok(): RiportSzerzo[] {
+export function listRiportSzerzok(): RiportSzerzo[] {
   return db
     .selectDistinct({ id: user.id, nev: user.name })
     .from(riport)
     .innerJoin(user, eq(riport.szerzoId, user.id))
     .all()
-    .sort((a, b) => a.nev.localeCompare(b.nev, 'hu'));
+    .sort((a, b) => huOsszevet(a.nev, b.nev));
 }

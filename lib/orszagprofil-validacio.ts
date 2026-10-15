@@ -4,16 +4,12 @@
  * input id-ja legyen). A listás mezők több azonos nevű értékként érkeznek (fd.getAll);
  * a rendezvény-sorok `rendezveny.<i>.<mezo>`.
  */
-import { mezo, type MezoHibak } from './urlap';
+import { mezo, type MezoHibak, type ParseResult } from './urlap';
 import {
   EV_MIN, KFI_PRIORITASOK, MEZO_CIMKEK, OSSZEGZES_MAX, RENDEZVENY_MAX,
   ROVID_MAX, SZOVEG_MAX, TAGSAGOK, TOP_VALLALAT_MAX, agazatLista, rendezvenyTipus, szurtLista,
   type BlokkKulcs, type ProfilBlokkok, type Rendezveny,
 } from './orszagprofil-szotar';
-
-export type ValidalasEredmeny<K extends BlokkKulcs> =
-  | { ok: true; ertek: ProfilBlokkok[K] }
-  | { ok: false; errors: MezoHibak };
 
 function cimke<K extends BlokkKulcs>(blokk: K, kulcs: keyof ProfilBlokkok[K] & string): string {
   return MEZO_CIMKEK[blokk][kulcs].cimke;
@@ -177,8 +173,8 @@ const VALIDALOK: { [K in BlokkKulcs]: (fd: FormData, errors: MezoHibak, aktualis
 };
 
 /** Egy blokk validálása. Az `aktualisEv` az adatév felső határa. */
-export function validalBlokk<K extends BlokkKulcs>(blokk: K, fd: FormData, aktualisEv: number): ValidalasEredmeny<K> {
+export function validalBlokk<K extends BlokkKulcs>(blokk: K, fd: FormData, aktualisEv: number): ParseResult<ProfilBlokkok[K]> {
   const errors: MezoHibak = {};
   const ertek = VALIDALOK[blokk](fd, errors, aktualisEv);
-  return Object.keys(errors).length ? { ok: false, errors } : { ok: true, ertek };
+  return Object.keys(errors).length ? { ok: false, errors } : { ok: true, data: ertek };
 }

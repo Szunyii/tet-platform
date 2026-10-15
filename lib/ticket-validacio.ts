@@ -13,7 +13,7 @@ import {
   type PrioKulcs,
   type TipusKulcs,
 } from './ticket-szotar';
-import { mezo, tisztitSzoveg, type MezoHibak } from './urlap';
+import { mezo, tisztitSzoveg, type MezoHibak, type ParseResult } from './urlap';
 
 export interface UjTicketCimzett {
   id: string;
@@ -39,7 +39,6 @@ export interface UjTicketInput {
 export type ParseUjTicketResult =
   | { ok: true; data: UjTicketInput }
   | { ok: false; errors: MezoHibak; elavultCimzett: boolean };
-export type ParseUzenetResult = { ok: true; szoveg: string } | { ok: false; errors: MezoHibak };
 
 // A `kulcs` a mező neve és a hiba kulcsa is: a válasz-űrlap és az új-ticket dialógus egy
 // oldalon él, az id-k (és így a hibakulcsok) nem ütközhetnek – a válasz mezőneve `valasz`.
@@ -92,9 +91,9 @@ export function parseUjTicketForm(fd: FormData, jeloltek: readonly CimzettJelolt
   };
 }
 
-export function parseUzenetForm(fd: FormData): ParseUzenetResult {
+export function parseUzenetForm(fd: FormData): ParseResult<string> {
   const errors: MezoHibak = {};
   const szoveg = parseSzoveg(fd, errors, 'valasz');
   if (Object.keys(errors).length > 0) return { ok: false, errors };
-  return { ok: true, szoveg };
+  return { ok: true, data: szoveg };
 }

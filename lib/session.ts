@@ -5,9 +5,10 @@ import { cache } from 'react';
 import { listAttaseOrszagok } from '../db/queries/attase-orszag';
 import { auth } from './auth';
 import type { SessionOrszag } from './attase-orszag';
+import { szerepkorbol, type Szerepkor } from './felhasznalo-validacio';
 import { loginUtvonal } from './routes';
 
-export type AppRole = 'admin' | 'attase';
+export type AppRole = Szerepkor;
 
 export interface AppSession {
   userId: string;
@@ -31,8 +32,7 @@ export const getSession = cache(async (): Promise<AppSession | null> => {
   const result = await auth.api.getSession({ headers: await headers() });
   if (!result) return null;
   const u = result.user;
-  // A role hiánya (régi rekord) attasénak számít.
-  const role: AppRole = u.role === 'admin' ? 'admin' : 'attase';
+  const role = szerepkorbol(u.role);
   const orszagok = role === 'attase' ? listAttaseOrszagok(u.id) : [];
   return { userId: u.id, name: u.name, email: u.email, role, orszagok };
 });

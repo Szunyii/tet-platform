@@ -5,7 +5,7 @@ import { Button } from '../../../../components/ui/button';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
 import type { OrszagTagok } from '../../../../lib/attase-orszag';
-import type { Szerepkor } from '../../../../lib/felhasznalo-validacio';
+import { JELSZO_MIN, NEV_MAX, type Szerepkor } from '../../../../lib/felhasznalo-validacio';
 import { createFelhasznaloAction } from '../actions';
 import { hibaAttr, MezoHiba } from '../../../../components/form/MezoHiba';
 import { MuveletDialog } from '../../../../components/form/MuveletDialog';
@@ -78,7 +78,7 @@ function UjFelhasznaloModal({
             id="nev"
             name="nev"
             required
-            maxLength={100}
+            maxLength={NEV_MAX}
             autoComplete="off"
             value={nev}
             onChange={(e) => setNev(e.target.value)}
@@ -107,7 +107,7 @@ function UjFelhasznaloModal({
             name="jelszo"
             type="password"
             required
-            minLength={8}
+            minLength={JELSZO_MIN}
             autoComplete="new-password"
             value={jelszo}
             onChange={(e) => setJelszo(e.target.value)}

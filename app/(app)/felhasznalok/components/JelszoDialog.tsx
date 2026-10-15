@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
 import type { FelhasznaloSor } from '../../../../db/queries/felhasznalo';
+import { JELSZO_MIN } from '../../../../lib/felhasznalo-validacio';
 import { setJelszoAction } from '../actions';
 import { hibaAttr, MezoHiba } from '../../../../components/form/MezoHiba';
 import { MuveletDialog } from '../../../../components/form/MuveletDialog';
@@ -51,7 +52,7 @@ export function JelszoDialog({
           name="jelszo"
           type="password"
           required
-          minLength={8}
+          minLength={JELSZO_MIN}
           autoComplete="new-password"
           value={jelszo}
           onChange={(e) => setJelszo(e.target.value)}

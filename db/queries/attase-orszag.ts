@@ -3,7 +3,7 @@ import { and, eq, inArray, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import { db } from '../index';
 import { attaseOrszag, user } from '../schema';
-import { tiltottE } from '../../lib/felhasznalo-tiltas';
+import { aktivAttaseE } from '../../lib/felhasznalo-tiltas';
 import {
   rendezAttasek, rendezOrszagok, type AttaseOrszag, type OrszagAttase, type SessionOrszag,
 } from '../../lib/attase-orszag';
@@ -60,7 +60,7 @@ function attasekOrszagonkent(kod?: string): Map<string, OrszagAttase[]> {
   const m = new Map<string, OrszagAttase[]>();
   for (const r of sorok) {
     // Az admin nem attasé: ha egy sikertelen második mentési lépés után sora maradt, az ne jelenjen meg attaséként.
-    if (r.role === 'admin' || tiltottE(r, now)) continue;
+    if (!aktivAttaseE(r, now)) continue;
     const lista = m.get(r.kod) ?? [];
     lista.push({
       userId: r.userId,

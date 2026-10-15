@@ -24,6 +24,7 @@ import { account, user } from '../db/schema';
 import { setAttaseOrszagok } from '../db/queries/attase-orszag';
 import { REGIO_MAX, RESZTERULET_MAX, VAROS_MAX, type AttaseOrszag } from '../lib/attase-orszag';
 import { tiltottE } from '../lib/felhasznalo-tiltas';
+import { JELSZO_MAX, JELSZO_MIN } from '../lib/felhasznalo-validacio';
 import { orszagByKod } from '../lib/orszagok';
 
 interface DemoAttase {
@@ -73,10 +74,6 @@ const ATTASEK: DemoAttase[] = [
 ];
 
 const REGI_TESZTFIOKOK = ['teszt.attase@niu.hu', 'masodik.attase@niu.hu'];
-
-// A felület jelszó-szabálya (lib/felhasznalo-validacio.ts, validJelszo).
-const JELSZO_MIN = 8;
-const JELSZO_MAX = 128;
 
 /**
  * Írás előtti ellenőrzés: a lista és a jelszó hibái egyben (üres = rendben). A jelszó értékét

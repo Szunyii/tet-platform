@@ -3,8 +3,9 @@ import { db } from '../index';
 import { user } from '../schema';
 import { listOrszagokFelhasznalonkent } from './attase-orszag';
 import type { AttaseOrszag } from '../../lib/attase-orszag';
-import type { ElerhetosegAdatok, Szerepkor } from '../../lib/felhasznalo-validacio';
+import { szerepkorbol, type ElerhetosegAdatok, type Szerepkor } from '../../lib/felhasznalo-validacio';
 import { tiltottE } from '../../lib/felhasznalo-tiltas';
+import { huOsszevet } from '../../lib/rendezes';
 
 export interface FelhasznaloSor extends ElerhetosegAdatok {
   id: string;
@@ -19,7 +20,7 @@ export interface FelhasznaloSor extends ElerhetosegAdatok {
 
 /**
  * Minden felhasználó magyar név szerinti sorrendben, az országaival. Szinkron (better-sqlite3).
- * A rendezés JS-ben (localeCompare 'hu'): a SQLite BINARY collation az ékezetes neveket
+ * A rendezés JS-ben (`huOsszevet`): a SQLite BINARY collation az ékezetes neveket
  * (Ács, Örkény, Ürmös) a lista végére tenné. Néhány tucat sorra ez elhanyagolható.
  */
 export function listFelhasznalok(): FelhasznaloSor[] {
@@ -43,12 +44,12 @@ export function listFelhasznalok(): FelhasznaloSor[] {
       id: r.id,
       nev: r.nev,
       email: r.email,
-      szerepkor: r.role === 'admin' ? ('admin' as const) : ('attase' as const),
+      szerepkor: szerepkorbol(r.role),
       telefon: r.telefon ?? null,
       kapcsolatEmail: r.kapcsolatEmail ?? null,
       orszagok: orszagok.get(r.id) ?? [],
       tiltott: tiltottE(r, now),
       letrehozva: r.createdAt,
     }))
-    .sort((a, b) => a.nev.localeCompare(b.nev, 'hu'));
+    .sort((a, b) => huOsszevet(a.nev, b.nev));
 }

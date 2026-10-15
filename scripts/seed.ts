@@ -2,6 +2,7 @@ import { hashPassword } from 'better-auth/crypto';
 import { eq } from 'drizzle-orm';
 import { db } from '../db';
 import { account, user } from '../db/schema';
+import { JELSZO_MIN } from '../lib/felhasznalo-validacio';
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -17,8 +18,8 @@ async function main() {
   const password = requireEnv('SEED_ADMIN_PASSWORD');
   const name = requireEnv('SEED_ADMIN_NAME');
 
-  if (password.length < 8) {
-    console.error('SEED_ADMIN_PASSWORD legalább 8 karakter legyen.');
+  if (password.length < JELSZO_MIN) {
+    console.error(`SEED_ADMIN_PASSWORD legalább ${JELSZO_MIN} karakter legyen.`);
     process.exit(1);
   }
 

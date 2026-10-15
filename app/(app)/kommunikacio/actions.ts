@@ -68,7 +68,7 @@ export async function sendUzenetAction(
     return { errors: { form: LEZARVA } };
   }
   try {
-    addUzenet(ticketId, { id: session.userId, nev: session.name, szerep: session.role }, parsed.szoveg);
+    addUzenet(ticketId, { id: session.userId, nev: session.name, szerep: session.role }, parsed.data);
   } catch (err) {
     unstable_rethrow(err);
     // Elavult kliens-állapot (pl. másik fülön közben lezárták): az addUzenet dob, itt űrlap-hiba lesz.

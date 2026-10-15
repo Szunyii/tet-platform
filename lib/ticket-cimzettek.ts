@@ -7,13 +7,13 @@ import { ORSZAG_REGIOK, orszagRegio, type RegioKulcs } from './orszagok';
 import type { CimzettJelolt } from './ticket-szotar';
 
 /** Az attasé régiói ismétlés nélkül, az `ORSZAG_REGIOK` sorrendjében; ismeretlen országkód kimarad. */
-export function jeloltRegioi(j: Pick<CimzettJelolt, 'orszagok'>): RegioKulcs[] {
+function jeloltRegioi(j: Pick<CimzettJelolt, 'orszagok'>): RegioKulcs[] {
   const benne = new Set(j.orszagok.map((kod) => orszagRegio(kod)));
   return ORSZAG_REGIOK.map((r) => r.kulcs).filter((k) => benne.has(k));
 }
 
 /** A régió attaséinak id-jai a jelöltlista sorrendjében. */
-export function regioJeloltjei(jeloltek: readonly CimzettJelolt[], regio: RegioKulcs): string[] {
+function regioJeloltjei(jeloltek: readonly CimzettJelolt[], regio: RegioKulcs): string[] {
   return jeloltek.filter((j) => jeloltRegioi(j).includes(regio)).map((j) => j.id);
 }
 

@@ -4,7 +4,8 @@ import { alias } from 'drizzle-orm/sqlite-core';
 import { db } from '../index';
 import { attaseOrszag, ticket, ticketOlvasas, ticketUzenet, user } from '../schema';
 import type { AppRole } from '../../lib/session';
-import { tiltottE } from '../../lib/felhasznalo-tiltas';
+import { aktivAttaseE } from '../../lib/felhasznalo-tiltas';
+import { huOsszevet } from '../../lib/rendezes';
 import type {
   CimzettJelolt,
   PrioKulcs,
@@ -148,7 +149,7 @@ export function listTicketek(nezo: Nezo, szuro: TicketSzuro): TicketListItem[] {
     // oldja fel, magyar ábécé szerint (az SQL bájtsorrendje az ékezetes nagybetűket és a „dr.”
     // előtagot a sor végére tenné). Ez ugyanaz a sorrend, mint a `listCimzettJeloltek`-é és a
     // `listKorlevelTagok`-é, így az első (az átirányítás célja) a lista elején áll.
-    .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime() || a.cimzettNev.localeCompare(b.cimzettNev, 'hu'));
+    .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime() || huOsszevet(a.cimzettNev, b.cimzettNev));
 }
 
 /**
@@ -345,7 +346,7 @@ export function listCimzettJeloltek(): CimzettJelolt[] {
     .from(user)
     .innerJoin(attaseOrszag, and(eq(attaseOrszag.userId, user.id), eq(attaseOrszag.szekhely, true)))
     .all()
-    .filter((u) => u.role !== 'admin' && !tiltottE(u, most));
+    .filter((u) => aktivAttaseE(u, most));
   // A regionális országok egy lekérdezéssel, felhasználónként csoportosítva.
   const regionalis = new Map<string, string[]>();
   const regionalisSorok = db
@@ -367,7 +368,7 @@ export function listCimzettJeloltek(): CimzettJelolt[] {
       varos: u.varos || null,
       orszagok: [u.orszag, ...(regionalis.get(u.id) ?? [])],
     }))
-    .sort((a, b) => a.nev.localeCompare(b.nev, 'hu'));
+    .sort((a, b) => huOsszevet(a.nev, b.nev));
 }
 
 export interface KorlevelTag {
@@ -391,5 +392,5 @@ export function listKorlevelTagok(korlevelId: string, nezo: Nezo): KorlevelTag[]
     .where(eq(ticket.korlevelId, korlevelId))
     .all()
     .map((r) => ({ ...r, statusz: r.statusz as StatuszKulcs }))
-    .sort((a, b) => a.cimzettNev.localeCompare(b.cimzettNev, 'hu'));
+    .sort((a, b) => huOsszevet(a.cimzettNev, b.cimzettNev));
 }

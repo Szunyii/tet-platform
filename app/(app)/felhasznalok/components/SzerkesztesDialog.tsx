@@ -8,7 +8,7 @@ import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
 import type { FelhasznaloSor } from '../../../../db/queries/felhasznalo';
 import type { OrszagTagok } from '../../../../lib/attase-orszag';
-import type { Szerepkor } from '../../../../lib/felhasznalo-validacio';
+import { NEV_MAX, type Szerepkor } from '../../../../lib/felhasznalo-validacio';
 import { updateFelhasznaloAction } from '../actions';
 import { ElerhetosegMezok, type ElerhetosegErtekek } from './ElerhetosegMezok';
 import { OrszagMezok, orszagErtekek, type OrszagErtekek } from './OrszagMezok';
@@ -62,7 +62,7 @@ export function SzerkesztesDialog({
             id="nev"
             name="nev"
             required
-            maxLength={100}
+            maxLength={NEV_MAX}
             autoComplete="off"
             value={nev}
             onChange={(e) => setNev(e.target.value)}

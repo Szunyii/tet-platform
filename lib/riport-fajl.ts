@@ -1,6 +1,12 @@
 import 'server-only';
-import type { CsatolmanyInput } from '../db/queries/riport';
 import type { ElfogadottFajl } from './riport-validacio';
+
+export interface CsatolmanyInput {
+  fajlnev: string;
+  mime: string;
+  meret: number;
+  tartalom: Buffer;
+}
 
 /** A validátor által elfogadott File-ok beolvasása a DB-be írható alakra. */
 export async function fajlokCsatolmannya(fajlok: ElfogadottFajl[]): Promise<CsatolmanyInput[]> {

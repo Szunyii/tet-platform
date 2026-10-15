@@ -8,6 +8,8 @@ import { normalizalVezetok, setAttaseOrszagok } from '../../../db/queries/attase
 import { auth } from '../../../lib/auth';
 import type { AttaseOrszag } from '../../../lib/attase-orszag';
 import {
+  JELSZO_MAX,
+  JELSZO_MIN,
   parseJelszo,
   parseSzerkesztes,
   parseUjFelhasznalo,
@@ -57,9 +59,9 @@ function hiba(err: unknown, muvelet: string): MuveletState {
       return { errors: { email: 'Érvénytelen e-mail cím.' } };
     case 'PASSWORD_TOO_SHORT':
     case 'PASSWORD_TOO_LONG':
-      // A validátorunk 8–128 karaktert enged (a Better Auth alapértelmezése); ha a
-      // lib/auth.ts min/maxPasswordLength változna, ez a fallback marad.
-      return { errors: { jelszo: 'A jelszó hossza nem megfelelő (8–128 karakter).' } };
+      // A validátorunk a `JELSZO_MIN`–`JELSZO_MAX` tartományt engedi (a Better Auth
+      // alapértelmezése); ha a lib/auth.ts min/maxPasswordLength változna, ez a fallback marad.
+      return { errors: { jelszo: `A jelszó hossza nem megfelelő (${JELSZO_MIN}–${JELSZO_MAX} karakter).` } };
     case 'USER_NOT_FOUND':
       // Elavult lista (másik admin közben törölte): frissítjük, hogy a sor eltűnjön.
       revalidatePath('/', 'layout');

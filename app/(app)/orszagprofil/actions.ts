@@ -12,8 +12,6 @@ import { validalBlokk } from '../../../lib/orszagprofil-validacio';
 import { requireSession } from '../../../lib/session';
 import { mezo } from '../../../lib/urlap';
 
-export type { MuveletState };
-
 const NINCS_JOG = 'Nincs jogosultságod ehhez a profilhoz.';
 
 /**
@@ -45,7 +43,7 @@ export async function mentBlokkAction(_prev: MuveletState, formData: FormData): 
   }
 
   try {
-    upsertBlokk(kod, ev, blokk, eredmeny.ertek, session.userId);
+    upsertBlokk(kod, ev, blokk, eredmeny.data, session.userId);
   } catch (err) {
     unstable_rethrow(err);
     console.error('[orszagprofil] upsertBlokk sikertelen:', err);

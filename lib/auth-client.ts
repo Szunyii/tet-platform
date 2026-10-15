@@ -9,4 +9,4 @@ export const authClient = createAuthClient({
 
 // Kijelentkezés szándékosan nincs itt: az app/(app)/actions.ts logoutAction server action
 // végzi (cookie törlés + teljes kliens-cache ürítés), a kliens signOut() erre nem alkalmas.
-export const { signIn, useSession } = authClient;
+export const { signIn } = authClient;

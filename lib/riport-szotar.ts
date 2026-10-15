@@ -149,7 +149,7 @@ export const INTEZKEDES_MAX = 5000;
 export const KULCSSZO_RAW_MAX = 2000;
 
 /** Fájlnév kiterjesztése kisbetűvel, ponttal (pl. ".pdf"), vagy üres string. */
-export function kiterjesztes(fajlnev: string): string {
+function kiterjesztes(fajlnev: string): string {
   const i = fajlnev.lastIndexOf('.');
   return i >= 0 ? fajlnev.slice(i).toLowerCase() : '';
 }
@@ -166,7 +166,7 @@ export function formatMeret(bajt: number): string {
   return `${(bajt / (1024 * 1024)).toFixed(1).replace(/\.0$/, '').replace('.', ',')} MB`;
 }
 
-export const FAJLNEV_MAX = 200;
+const FAJLNEV_MAX = 200;
 
 // Útvonal-elválasztó utáni rész, majd C0 vezérlő- (U+0000–U+001F, U+007F) és láthatatlan
 // (U+200B–U+200D, U+FEFF) karakterek eltávolítása: ezek a tárolt fájlnévben csak zajt és

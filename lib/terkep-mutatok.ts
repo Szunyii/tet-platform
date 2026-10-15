@@ -8,6 +8,7 @@
 import { interpolateLab, piecewise } from 'd3-interpolate';
 import { scaleLinear, scaleSymlog } from 'd3-scale';
 import { formatSzam } from './szam';
+import { huOsszevet } from './rendezes';
 import type { TerkepOrszag } from '../db/queries/orszagprofil';
 import { AGAZATOK, AGAZAT_SZINEK, ALLAPOTOK, ALLAPOT_CIMKE, ALLAPOT_SZINEK, BLOKK_KULCSOK } from './orszagprofil-szotar';
 
@@ -99,7 +100,7 @@ export function mutatoByKulcs(k: string): Mutato {
   return isMutatoKulcs(k) ? MUTATO_TABLA[k] : MUTATO_TABLA[ALAP_MUTATO];
 }
 
-const nevSzerint = (a: TerkepOrszag, b: TerkepOrszag) => a.nev.localeCompare(b.nev, 'hu');
+const nevSzerint = (a: TerkepOrszag, b: TerkepOrszag) => huOsszevet(a.nev, b.nev);
 
 /** Az iparág-szűrő: '' = nincs szűrő; a kiemelt iparágak listájában keres. Új tömböt ad. */
 export function szures(adatok: readonly TerkepOrszag[], iparag: string): TerkepOrszag[] {
