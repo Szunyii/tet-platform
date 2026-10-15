@@ -4,8 +4,7 @@
  */
 import { ervenyesNaptariDatum } from './datum';
 import { isKategoriaKulcs, isKulcsszo, type KategoriaKulcs } from './riport-szotar';
-
-export type SearchParams = Record<string, string | string[] | undefined>;
+import type { SearchParams } from './routes';
 
 export interface RiportFilter {
   szerzoId?: string;

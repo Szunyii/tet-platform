@@ -6,72 +6,24 @@ import type { RiportSzerzo } from '../../../../db/queries/riport';
 import { orszagNev } from '../../../../lib/orszagok';
 import { KATEGORIAK, KULCSSZAVAK } from '../../../../lib/riport-szotar';
 import type { SzuroErtekek } from '../../../../lib/riport-szuro';
+import { CimkesSelect, type SelectOpcio } from '../../../../components/form/CimkesSelect';
 import { Button } from '../../../../components/ui/button';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
 
 /** A „Mind" opció értéke: a Base UI Select üres stringet nem tud választható értékként kezelni. */
 const MIND = '__mind';
 
-/** A Select `onValueChange` értéke `null` is lehet (törlés); a „Mind" és a `null` egyaránt „nincs szűrő". */
-function szuroErtek(v: string | null): string {
-  return v === null || v === MIND ? '' : v;
+/** A „Mind" és az üres érték (törlés: a `CimkesSelect` a Select `null`-ját üres stringként adja) egyaránt „nincs szűrő". */
+function szuroErtek(v: string): string {
+  return v === MIND ? '' : v;
 }
 
-interface SzuroOpcio {
-  ertek: string;
-  cimke: string;
-}
+/** A „Mind" opció: a szűrő-legördülők első eleme. */
+const MIND_OPCIO: SelectOpcio = { ertek: MIND, cimke: 'Mind' };
 
-/**
- * Egy szűrő-legördülő „Mind" opcióval. A trigger `role=combobox` gomb, amire a `<label for>`
- * nem minden AT-nél számít névnek, ezért `aria-labelledby`: a címke id-ja + a sajátja
- * (így a név a „címke + aktuális érték").
- */
-function SzuroSelect({
-  id,
-  cimke,
-  ertek,
-  opciok,
-  onChange,
-  className,
-}: {
-  id: string;
-  cimke: string;
-  ertek: string;
-  opciok: readonly SzuroOpcio[];
-  onChange: (v: string) => void;
-  className?: string;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label id={`${id}-label`} htmlFor={id}>
-        {cimke}
-      </Label>
-      <Select
-        value={ertek || MIND}
-        onValueChange={(v) => onChange(szuroErtek(v))}
-        items={{ [MIND]: 'Mind', ...Object.fromEntries(opciok.map((o) => [o.ertek, o.cimke])) }}
-      >
-        <SelectTrigger id={id} aria-labelledby={`${id}-label ${id}`} className={className}>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={MIND}>Mind</SelectItem>
-          {opciok.map((o) => (
-            <SelectItem key={o.ertek} value={o.ertek}>
-              {o.cimke}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
-}
-
-const KATEGORIA_OPCIOK: SzuroOpcio[] = KATEGORIAK.map((k) => ({ ertek: k.kulcs, cimke: k.rovid }));
-const KULCSSZO_OPCIOK: SzuroOpcio[] = KULCSSZAVAK.map((k) => ({ ertek: k, cimke: k }));
+const KATEGORIA_OPCIOK: SelectOpcio[] = [MIND_OPCIO, ...KATEGORIAK.map((k) => ({ ertek: k.kulcs, cimke: k.rovid }))];
+const KULCSSZO_OPCIOK: SelectOpcio[] = [MIND_OPCIO, ...KULCSSZAVAK.map((k) => ({ ertek: k, cimke: k }))];
 
 export function RiportSzurok({
   ertekek,
@@ -154,38 +106,38 @@ export function RiportSzurok({
           onChange={(e) => setQ(e.target.value)}
         />
       </div>
-      <SzuroSelect
+      <CimkesSelect
         id="szuro-kategoria"
         cimke="Kategória"
-        ertek={ertekek.kategoria}
+        value={ertekek.kategoria || MIND}
         opciok={KATEGORIA_OPCIOK}
-        onChange={(v) => frissit({ kategoria: v })}
+        onChange={(v) => frissit({ kategoria: szuroErtek(v) })}
         className="w-44"
       />
-      <SzuroSelect
+      <CimkesSelect
         id="szuro-kulcsszo"
         cimke="Kulcsszó"
-        ertek={ertekek.kulcsszo}
+        value={ertekek.kulcsszo || MIND}
         opciok={KULCSSZO_OPCIOK}
-        onChange={(v) => frissit({ kulcsszo: v })}
+        onChange={(v) => frissit({ kulcsszo: szuroErtek(v) })}
         className="w-56"
       />
       {admin && (
         <>
-          <SzuroSelect
+          <CimkesSelect
             id="szuro-orszag"
             cimke="Ország"
-            ertek={ertekek.orszag}
-            opciok={orszagok.map((o) => ({ ertek: o, cimke: orszagNev(o) }))}
-            onChange={(v) => frissit({ orszag: v })}
+            value={ertekek.orszag || MIND}
+            opciok={[MIND_OPCIO, ...orszagok.map((o) => ({ ertek: o, cimke: orszagNev(o) }))]}
+            onChange={(v) => frissit({ orszag: szuroErtek(v) })}
             className="w-44"
           />
-          <SzuroSelect
+          <CimkesSelect
             id="szuro-attase"
             cimke="Attasé"
-            ertek={ertekek.attase}
-            opciok={szerzok.map((s) => ({ ertek: s.id, cimke: s.nev }))}
-            onChange={(v) => frissit({ attase: v })}
+            value={ertekek.attase || MIND}
+            opciok={[MIND_OPCIO, ...szerzok.map((s) => ({ ertek: s.id, cimke: s.nev }))]}
+            onChange={(v) => frissit({ attase: szuroErtek(v) })}
             className="w-56"
           />
         </>

@@ -15,8 +15,6 @@ import { requireAdmin, requireSession } from '../../../lib/session';
 import { canViewTicket, canWriteTicket } from '../../../lib/ticket-jog';
 import { parseUjTicketForm, parseUzenetForm } from '../../../lib/ticket-validacio';
 
-export type TicketFormState = MuveletState;
-
 // Azonos szöveg hiányzó és idegen ticketre: nem áruljuk el a létezését.
 const NINCS_JOG = 'Nincs jogosultságod ehhez a tickethez.';
 // Admin-only action: itt nem kell titkolni a hiányt, a hibaüzenet ezt tükrözi.
@@ -31,7 +29,7 @@ function frissit(): void {
   revalidatePath('/', 'layout');
 }
 
-export async function createTicketAction(_prev: TicketFormState, formData: FormData): Promise<TicketFormState> {
+export async function createTicketAction(_prev: MuveletState, formData: FormData): Promise<MuveletState> {
   const session = await requireAdmin();
   const parsed = parseUjTicketForm(formData, listCimzettJeloltek());
   if (!parsed.ok) {
@@ -54,9 +52,9 @@ export async function createTicketAction(_prev: TicketFormState, formData: FormD
 
 export async function sendUzenetAction(
   ticketId: string,
-  _prev: TicketFormState,
+  _prev: MuveletState,
   formData: FormData,
-): Promise<TicketFormState> {
+): Promise<MuveletState> {
   const session = await requireSession();
   const parsed = parseUzenetForm(formData);
   if (!parsed.ok) return { errors: parsed.errors };
@@ -79,7 +77,7 @@ export async function sendUzenetAction(
   return { ok: true };
 }
 
-export async function closeTicketAction(ticketId: string): Promise<TicketFormState> {
+export async function closeTicketAction(ticketId: string): Promise<MuveletState> {
   const session = await requireAdmin();
   const t = getTicket(ticketId, session);
   if (!t) {
@@ -101,7 +99,7 @@ export async function closeTicketAction(ticketId: string): Promise<TicketFormSta
   return { ok: true };
 }
 
-export async function reopenTicketAction(ticketId: string): Promise<TicketFormState> {
+export async function reopenTicketAction(ticketId: string): Promise<MuveletState> {
   const session = await requireAdmin();
   const t = getTicket(ticketId, session);
   if (!t) {

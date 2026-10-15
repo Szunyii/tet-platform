@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { MuveletState } from '../../../../components/form/useMuveletForm';
+import type { MuveletAction } from '../../../../components/form/useMuveletForm';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/card';
 import type { KorlevelTag, TicketDetail } from '../../../../db/queries/ticket';
 import { formatDatum, formatNaptariDatum } from '../../../../lib/datum';
@@ -36,8 +36,8 @@ export function TicketAdatlap({
   szuro: TicketSzuro;
   /** A körlevél ticketjei – csak adminnál és csak körlevél-ticketnél, különben `null`. */
   korlevel: KorlevelTag[] | null;
-  lezarAction: () => Promise<MuveletState>;
-  ujranyitAction: () => Promise<MuveletState>;
+  lezarAction: MuveletAction;
+  ujranyitAction: MuveletAction;
 }) {
   const lejart = lejartE(ticket.hatarido, ticket.statusz, ma);
   return (

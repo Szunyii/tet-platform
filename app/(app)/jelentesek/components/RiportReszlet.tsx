@@ -3,9 +3,10 @@ import Link from 'next/link';
 import type { RiportDetail } from '../../../../db/queries/riport';
 import { formatDatum, formatNaptariDatum } from '../../../../lib/datum';
 import { orszagNev } from '../../../../lib/orszagok';
-import { formatMeret, kategoriaByKulcs } from '../../../../lib/riport-szotar';
+import { formatMeret, kategoriaByKulcs, RIPORT_MEZO_CIMKEK } from '../../../../lib/riport-szotar';
+import { csatolmanyUrl } from '../../../../lib/routes';
 import { cn } from '../../../../lib/utils';
-import type { FormAction, MuveletState } from '../../../../components/form/useMuveletForm';
+import type { FormAction, MuveletAction } from '../../../../components/form/useMuveletForm';
 import { Badge } from '../../../../components/ui/badge';
 import { buttonVariants } from '../../../../components/ui/button';
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '../../../../components/ui/card';
@@ -21,7 +22,7 @@ export function RiportReszlet({
 }: {
   riport: RiportDetail;
   szerkeszthet: boolean;
-  torlesAction: () => Promise<MuveletState>;
+  torlesAction: MuveletAction;
   /** A „Megtett intézkedés” mentése; a page csak a központnak (admin) adja. */
   intezkedesAction?: FormAction;
 }) {
@@ -54,7 +55,7 @@ export function RiportReszlet({
       </header>
 
       <section className="flex flex-col gap-1.5">
-        <h3 className="text-sm font-medium">Vezetői Összefoglaló</h3>
+        <h3 className="text-sm font-medium">{RIPORT_MEZO_CIMKEK.leiras}</h3>
         <p className="text-sm leading-relaxed whitespace-pre-wrap">{riport.leiras}</p>
       </section>
 
@@ -62,7 +63,7 @@ export function RiportReszlet({
         <Card size="sm" className="border-l-4 border-l-emerald-500">
           <CardHeader>
             <CardTitle role="heading" aria-level={3}>
-              Fő üzenet, Mo. számára átvehető jó gyakorlat, javaslat
+              {RIPORT_MEZO_CIMKEK.joGyakorlat}
             </CardTitle>
           </CardHeader>
           <CardContent className="text-sm whitespace-pre-wrap">{riport.joGyakorlat}</CardContent>
@@ -83,7 +84,7 @@ export function RiportReszlet({
         <Card size="sm">
           <CardHeader>
             <CardTitle role="heading" aria-level={3}>
-              Rendezvény adatai
+              {RIPORT_MEZO_CIMKEK.esemeny}
             </CardTitle>
           </CardHeader>
           <CardContent className="text-sm">
@@ -101,7 +102,7 @@ export function RiportReszlet({
         <Card size="sm" className="border-l-4 border-l-amber-500">
           <CardHeader>
             <CardTitle role="heading" aria-level={3}>
-              Kapcsolódó feladat, kérés
+              {RIPORT_MEZO_CIMKEK.kapcsolodoFeladat}
             </CardTitle>
           </CardHeader>
           <CardContent className="text-sm whitespace-pre-wrap">{riport.kapcsolodoFeladat}</CardContent>
@@ -150,7 +151,7 @@ export function RiportReszlet({
             {riport.csatolmanyok.map((c) => (
               <li key={c.id} className="flex items-center gap-2">
                 <PaperclipIcon className="size-4 text-muted-foreground" aria-hidden />
-                <a href={`/api/jelentes/csatolmany/${c.id}`} className="underline underline-offset-2">
+                <a href={csatolmanyUrl(c.id)} className="underline underline-offset-2">
                   {c.fajlnev}
                 </a>
                 <span className="text-xs text-muted-foreground">{formatMeret(c.meret)}</span>

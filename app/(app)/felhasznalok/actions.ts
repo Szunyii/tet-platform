@@ -19,8 +19,6 @@ import {
 import { requireAdmin } from '../../../lib/session';
 import { mezo } from '../../../lib/urlap';
 
-export type { MuveletState };
-
 /** A Better Auth `user` rekord általunk írt mezői (createUser / adminUpdateUser `data`). Az országok külön táblában. */
 interface FelhasznaloAdatok extends ElerhetosegAdatok {
   name?: string;

@@ -9,15 +9,13 @@ import { parseIntezkedes, parseRiportForm } from '../../../lib/riport-validacio'
 import { requireSession } from '../../../lib/session';
 import type { MuveletState } from '../../../components/form/useMuveletForm';
 
-export type RiportFormState = MuveletState;
-
 const NINCS_JOG = 'Nincs jogosultságod ehhez a bejegyzéshez.';
 
 export async function updateRiportAction(
   id: string,
-  _prev: RiportFormState,
+  _prev: MuveletState,
   formData: FormData,
-): Promise<RiportFormState> {
+): Promise<MuveletState> {
   const session = await requireSession();
   const meglevo = getRiport(id);
   if (!meglevo || !canEditRiport(session, meglevo)) return { errors: { form: NINCS_JOG } };
@@ -42,7 +40,7 @@ export async function updateRiportAction(
   redirect(`/jelentesek/${id}`);
 }
 
-export async function deleteRiportAction(id: string): Promise<RiportFormState> {
+export async function deleteRiportAction(id: string): Promise<MuveletState> {
   const session = await requireSession();
   const meglevo = getRiportSzerzo(id);
   if (!meglevo || !canEditRiport(session, meglevo)) return { errors: { form: NINCS_JOG } };
@@ -64,9 +62,9 @@ export async function deleteRiportAction(id: string): Promise<RiportFormState> {
  */
 export async function mentIntezkedesAction(
   id: string,
-  _prev: RiportFormState,
+  _prev: MuveletState,
   formData: FormData,
-): Promise<RiportFormState> {
+): Promise<MuveletState> {
   const session = await requireSession();
   if (!canIntezkedni(session)) return { errors: { form: NINCS_JOG } };
   const parsed = parseIntezkedes(formData);

@@ -1,18 +1,19 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Fragment } from 'react';
+import { Fragment, type ComponentType } from 'react';
 import { buttonVariants } from '../../../../../components/ui/button';
 import { getProfil } from '../../../../../db/queries/orszagprofil';
 import { aktualisEv, formatDatumIdo } from '../../../../../lib/datum';
 import { orszagByKod } from '../../../../../lib/orszagok';
 import { canEditProfil } from '../../../../../lib/orszagprofil-jog';
-import { uresBlokk, type BlokkKulcs, type ProfilBlokkok } from '../../../../../lib/orszagprofil-szotar';
+import { BLOKK_KULCSOK, uresBlokk, type BlokkKulcs, type ProfilBlokkok } from '../../../../../lib/orszagprofil-szotar';
 import { requireSession } from '../../../../../lib/session';
 import { cn } from '../../../../../lib/utils';
 import { getValasztottEv } from '../../../../../lib/valasztott-ev';
 import { valasztEvAction } from '../../../actions';
 import { mentBlokkAction } from '../../actions';
+import type { BlokkMezokProps } from '../../components/BlokkForm';
 import { NemSzerkeszthetoEv } from '../../components/NemSzerkeszthetoEv';
 import { AlapadatokMezok } from '../../components/mezok/AlapadatokMezok';
 import { KfiRendszerMezok } from '../../components/mezok/KfiRendszerMezok';
@@ -25,6 +26,19 @@ import { MagyarKapcsolatokMezok } from '../../components/mezok/MagyarKapcsolatok
 import { MagyarErtekelesMezok } from '../../components/mezok/MagyarErtekelesMezok';
 
 export const metadata: Metadata = { title: 'Országprofil szerkesztése' };
+
+/** Blokkonként a szerkesztő mező-komponense; a kimerítő kulcs-térkép miatt egy kihagyott blokk fordítási hiba. */
+const MEZOK: { [K in BlokkKulcs]: ComponentType<BlokkMezokProps<ProfilBlokkok[K]>> } = {
+  alapadatok: AlapadatokMezok,
+  kfiRendszer: KfiRendszerMezok,
+  intezmenyek: IntezmenyekMezok,
+  vallalati: VallalatiMezok,
+  programok: ProgramokMezok,
+  rendezvenyek: RendezvenyekMezok,
+  nemzetkoziKapcsolatok: NemzetkoziKapcsolatokMezok,
+  magyarKapcsolatok: MagyarKapcsolatokMezok,
+  magyarErtekeles: MagyarErtekelesMezok,
+};
 
 /**
  * Blokkonkénti szerkesztő. Az év a fejléc ciklusválasztójáé (tet-ev cookie). Admin: bármely
@@ -71,6 +85,11 @@ export default async function SzerkesztesPage({ params }: { params: Promise<{ ko
   const m = (k: BlokkKulcs) => (profil?.mentett.includes(k) ? mentve : null);
   const b: Partial<ProfilBlokkok> = profil?.blokkok ?? {};
   const kozos = { kod, ev, action: mentBlokkAction };
+  // Korrelált generikus: a K köti össze a kulcsot, a komponenst és a kezdőértéket (a map-ben unió lenne).
+  const blokk = <K extends BlokkKulcs>(k: K) => {
+    const Mezok: ComponentType<BlokkMezokProps<ProfilBlokkok[K]>> = MEZOK[k];
+    return <Mezok key={k} {...kozos} initial={b[k] ?? uresBlokk(k)} mentve={m(k)} />;
+  };
 
   return (
     <div className="flex max-w-4xl flex-col gap-4">
@@ -81,17 +100,7 @@ export default async function SzerkesztesPage({ params }: { params: Promise<{ ko
       {/* key={ev}: az App Router a cookie-ból jövő évet nem veszi az állapot-kulcsba, így
           évváltásnál a 9 blokk kliens-állapota (a beírt, nem mentett értékek) különben
           átcsúszna a másik évre. */}
-      <Fragment key={ev}>
-        <AlapadatokMezok {...kozos} initial={b.alapadatok ?? uresBlokk('alapadatok')} mentve={m('alapadatok')} />
-        <KfiRendszerMezok {...kozos} initial={b.kfiRendszer ?? uresBlokk('kfiRendszer')} mentve={m('kfiRendszer')} />
-        <IntezmenyekMezok {...kozos} initial={b.intezmenyek ?? uresBlokk('intezmenyek')} mentve={m('intezmenyek')} />
-        <VallalatiMezok {...kozos} initial={b.vallalati ?? uresBlokk('vallalati')} mentve={m('vallalati')} />
-        <ProgramokMezok {...kozos} initial={b.programok ?? uresBlokk('programok')} mentve={m('programok')} />
-        <RendezvenyekMezok {...kozos} initial={b.rendezvenyek ?? uresBlokk('rendezvenyek')} mentve={m('rendezvenyek')} />
-        <NemzetkoziKapcsolatokMezok {...kozos} initial={b.nemzetkoziKapcsolatok ?? uresBlokk('nemzetkoziKapcsolatok')} mentve={m('nemzetkoziKapcsolatok')} />
-        <MagyarKapcsolatokMezok {...kozos} initial={b.magyarKapcsolatok ?? uresBlokk('magyarKapcsolatok')} mentve={m('magyarKapcsolatok')} />
-        <MagyarErtekelesMezok {...kozos} initial={b.magyarErtekeles ?? uresBlokk('magyarErtekeles')} mentve={m('magyarErtekeles')} />
-      </Fragment>
+      <Fragment key={ev}>{BLOKK_KULCSOK.map(blokk)}</Fragment>
     </div>
   );
 }

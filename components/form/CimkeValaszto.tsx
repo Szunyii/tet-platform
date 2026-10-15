@@ -19,9 +19,9 @@ import { hibaAttr, leiroAttr, MezoHiba } from './MezoHiba';
  * inputokat is renderelne, és az értékek duplán mennének be a submitba.
  */
 export function CimkeValaszto<T extends string>({
-  id, name, cimke, sugo, magyarazat, pelda, items, value, onChange, errors, egyeb,
+  id, name, cimke, magyarazat, pelda, items, value, onChange, errors, egyeb,
 }: {
-  id: string; name: string; cimke: string; sugo?: string; magyarazat?: string; pelda?: string;
+  id: string; name: string; cimke: string; magyarazat?: string; pelda?: string;
   items: readonly T[]; value: T[]; onChange: (v: T[]) => void; errors: MezoHibak;
   /** „Egyéb" mező: id/name + vezérelt érték; a `magyarazat`/`pelda` a kérdőjeles felugrót adja. */
   egyeb?: {
@@ -34,7 +34,6 @@ export function CimkeValaszto<T extends string>({
   return (
     <div className="flex flex-col gap-1.5">
       <CimkeSor id={`${id}-label`} htmlFor={id} cimke={cimke} magyarazat={magyarazat} pelda={pelda} />
-      {sugo && <p id={`${id}-sugo`} className="text-xs text-muted-foreground">{sugo}</p>}
       {value.map((v) => <input key={v} type="hidden" name={name} value={v} />)}
       <Combobox multiple items={items} value={value} onValueChange={(v) => onChange(v as T[])} onOpenChange={setNyitva}>
         <ComboboxChips ref={anchor} id={`${id}-doboz`} tabIndex={-1} className="cursor-text">
@@ -50,7 +49,7 @@ export function CimkeValaszto<T extends string>({
                   id={id}
                   placeholder={kivalasztott.length === 0 ? 'Válassz a listából…' : ''}
                   aria-labelledby={`${id}-label`}
-                  {...leiroAttr(errors, id, Boolean(sugo))}
+                  {...leiroAttr(errors, id)}
                   onKeyDown={(e) => { if (e.key === 'Escape' && !nyitva) e.preventBaseUIHandler(); }}
                 />
               </>

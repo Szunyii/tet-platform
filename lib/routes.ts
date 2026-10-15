@@ -3,6 +3,14 @@
 export const HOME_ROUTE = '/terkep';
 export const LOGIN_ROUTE = '/login';
 
+/** A csatolmány letöltési útvonala (app/api/jelentes/csatolmany/[id]). */
+export function csatolmanyUrl(id: string): string {
+  return `/api/jelentes/csatolmany/${id}`;
+}
+
+/** A page-ek `searchParams` propjának (feloldott) alakja. */
+export type SearchParams = Record<string, string | string[] | undefined>;
+
 // A ?next= hossza korlátozott, hogy a Location fejléc ne nőjön proxy-limit fölé.
 export const NEXT_MAX_LENGTH = 512;
 

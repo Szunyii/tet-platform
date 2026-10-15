@@ -3,7 +3,7 @@
 import { unstable_rethrow } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { toast } from 'sonner';
-import type { MuveletState } from '../../../../components/form/useMuveletForm';
+import type { MuveletAction } from '../../../../components/form/useMuveletForm';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +16,7 @@ import {
 } from '../../../../components/ui/alert-dialog';
 import { Button } from '../../../../components/ui/button';
 
-export function RiportTorles({ targy, action }: { targy: string; action: () => Promise<MuveletState> }) {
+export function RiportTorles({ targy, action }: { targy: string; action: MuveletAction }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { biztonsagosNext } from '../../lib/routes';
+import { biztonsagosNext, type SearchParams } from '../../lib/routes';
 import { getSession } from '../../lib/session';
 import LoginForm from './components/LoginForm';
 
@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: 'Bejelentkezés' };
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams: Promise<SearchParams>;
 }) {
   const next = biztonsagosNext((await searchParams).next);
   // Érvényes sessionnel nincs mit keresni itt. Ezt a valódi session dönti el, nem a

@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { Input } from '../../../../components/ui/input';
-import { Label } from '../../../../components/ui/label';
 import type { FelhasznaloSor } from '../../../../db/queries/felhasznalo';
 import { JELSZO_MIN } from '../../../../lib/felhasznalo-validacio';
 import { setJelszoAction } from '../actions';
-import { hibaAttr, MezoHiba } from '../../../../components/form/MezoHiba';
+import { Mezo } from '../../../../components/form/Mezo';
+import { hibaAttr } from '../../../../components/form/MezoHiba';
 import { MuveletDialog } from '../../../../components/form/MuveletDialog';
 import { useMuveletForm } from '../../../../components/form/useMuveletForm';
 
@@ -45,8 +45,7 @@ export function JelszoDialog({
       formAction={formAction}
       errors={errors}
     >
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="jelszo">Új jelszó</Label>
+      <Mezo id="jelszo" cimke="Új jelszó" errors={errors}>
         <Input
           id="jelszo"
           name="jelszo"
@@ -58,8 +57,7 @@ export function JelszoDialog({
           onChange={(e) => setJelszo(e.target.value)}
           {...hibaAttr(errors, 'jelszo')}
         />
-        <MezoHiba mezo="jelszo" errors={errors} />
-      </div>
+      </Mezo>
     </MuveletDialog>
   );
 }

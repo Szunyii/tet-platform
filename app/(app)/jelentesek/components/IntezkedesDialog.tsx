@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { INTEZKEDES_MAX } from '../../../../lib/riport-szotar';
-import { hibaAttr, MezoHiba } from '../../../../components/form/MezoHiba';
+import { Mezo } from '../../../../components/form/Mezo';
+import { hibaAttr } from '../../../../components/form/MezoHiba';
 import { MuveletDialog } from '../../../../components/form/MuveletDialog';
 import { useMuveletForm, type FormAction } from '../../../../components/form/useMuveletForm';
-import { Label } from '../../../../components/ui/label';
 import { Textarea } from '../../../../components/ui/textarea';
 
 /**
@@ -46,8 +46,7 @@ export function IntezkedesDialog({
       errors={errors}
       szeles
     >
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="intezkedes">Intézkedés szövege</Label>
+      <Mezo id="intezkedes" cimke="Intézkedés szövege" errors={errors}>
         <Textarea
           id="intezkedes"
           name="intezkedes"
@@ -61,8 +60,7 @@ export function IntezkedesDialog({
         <p className="text-xs text-muted-foreground">
           {szoveg.length}/{INTEZKEDES_MAX}
         </p>
-        <MezoHiba mezo="intezkedes" errors={errors} />
-      </div>
+      </Mezo>
     </MuveletDialog>
   );
 }

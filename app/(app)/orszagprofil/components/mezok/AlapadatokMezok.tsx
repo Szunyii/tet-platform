@@ -4,7 +4,7 @@ import { CimkeValaszto } from '../../../../../components/form/CimkeValaszto';
 import { RovidMezo } from '../../../../../components/form/Mezo';
 import { SzamMezo } from '../../../../../components/form/SzamMezo';
 import { AGAZATOK, MEZO_CIMKEK, ROVID_MAX, SZAM_MAX_HOSSZ, TAGSAGOK, type Alapadatok } from '../../../../../lib/orszagprofil-szotar';
-import { BlokkForm, mezoId, szamStr, useBlokkAllapot, type BlokkMezokProps } from '../BlokkForm';
+import { BlokkForm, szamStr, useBlokkAllapot, type BlokkMezokProps } from '../BlokkForm';
 
 const C = MEZO_CIMKEK.alapadatok;
 const B = 'alapadatok';
@@ -12,7 +12,7 @@ const B = 'alapadatok';
 export function AlapadatokMezok({
   kod, ev, initial, mentve, action,
 }: BlokkMezokProps<Alapadatok>) {
-  const [e, set] = useBlokkAllapot({
+  const { mezo } = useBlokkAllapot(B, {
     ...initial,
     terulet: szamStr(initial.terulet),
     lakossag: szamStr(initial.lakossag), gdp: szamStr(initial.gdp), gdpEgyFore: szamStr(initial.gdpEgyFore),
@@ -23,22 +23,22 @@ export function AlapadatokMezok({
       {(errors) => (
         <>
           <div className="grid gap-4 sm:grid-cols-2">
-            <RovidMezo id={mezoId(B, 'fovaros')} name="fovaros" {...C.fovaros} value={e.fovaros} onChange={set('fovaros')} max={ROVID_MAX} errors={errors} />
-            <RovidMezo id={mezoId(B, 'penznem')} name="penznem" {...C.penznem} value={e.penznem} onChange={set('penznem')} max={ROVID_MAX} errors={errors} />
-            <SzamMezo id={mezoId(B, 'terulet')} name="terulet" {...C.terulet} value={e.terulet} onChange={set('terulet')} errors={errors} maxHossz={SZAM_MAX_HOSSZ} utotag="km²" />
-            <SzamMezo id={mezoId(B, 'lakossag')} name="lakossag" {...C.lakossag} value={e.lakossag} onChange={set('lakossag')} errors={errors} maxHossz={SZAM_MAX_HOSSZ} utotag="fő" />
-            <SzamMezo id={mezoId(B, 'gdp')} name="gdp" {...C.gdp} value={e.gdp} onChange={set('gdp')} errors={errors} maxHossz={SZAM_MAX_HOSSZ} utotag="mrd USD" />
-            <SzamMezo id={mezoId(B, 'gdpEgyFore')} name="gdpEgyFore" {...C.gdpEgyFore} value={e.gdpEgyFore} onChange={set('gdpEgyFore')} errors={errors} maxHossz={SZAM_MAX_HOSSZ} utotag="USD" />
-            <SzamMezo id={mezoId(B, 'gdpNovekedes')} name="gdpNovekedes" {...C.gdpNovekedes} value={e.gdpNovekedes} onChange={set('gdpNovekedes')} errors={errors} maxHossz={SZAM_MAX_HOSSZ} utotag="%" />
-            <SzamMezo id={mezoId(B, 'adatEv')} name="adatEv" {...C.adatEv} value={e.adatEv} onChange={set('adatEv')} errors={errors} maxHossz={SZAM_MAX_HOSSZ} />
+            <RovidMezo {...mezo('fovaros')} {...C.fovaros} max={ROVID_MAX} errors={errors} />
+            <RovidMezo {...mezo('penznem')} {...C.penznem} max={ROVID_MAX} errors={errors} />
+            <SzamMezo {...mezo('terulet')} {...C.terulet} errors={errors} maxHossz={SZAM_MAX_HOSSZ} utotag="km²" />
+            <SzamMezo {...mezo('lakossag')} {...C.lakossag} errors={errors} maxHossz={SZAM_MAX_HOSSZ} utotag="fő" />
+            <SzamMezo {...mezo('gdp')} {...C.gdp} errors={errors} maxHossz={SZAM_MAX_HOSSZ} utotag="mrd USD" />
+            <SzamMezo {...mezo('gdpEgyFore')} {...C.gdpEgyFore} errors={errors} maxHossz={SZAM_MAX_HOSSZ} utotag="USD" />
+            <SzamMezo {...mezo('gdpNovekedes')} {...C.gdpNovekedes} errors={errors} maxHossz={SZAM_MAX_HOSSZ} utotag="%" />
+            <SzamMezo {...mezo('adatEv')} {...C.adatEv} errors={errors} maxHossz={SZAM_MAX_HOSSZ} />
             <div className="sm:col-span-2">
-              <RovidMezo id={mezoId(B, 'forras')} name="forras" {...C.forras} value={e.forras} onChange={set('forras')} max={ROVID_MAX} errors={errors} />
+              <RovidMezo {...mezo('forras')} {...C.forras} max={ROVID_MAX} errors={errors} />
             </div>
           </div>
-          <CimkeValaszto id={mezoId(B, 'tagsagok')} name="tagsagok" {...C.tagsagok} items={TAGSAGOK} value={e.tagsagok} onChange={set('tagsagok')} errors={errors}
-            egyeb={{ id: mezoId(B, 'tagsagEgyeb'), name: 'tagsagEgyeb', ...C.tagsagEgyeb, value: e.tagsagEgyeb, onChange: set('tagsagEgyeb'), max: ROVID_MAX }} />
-          <CimkeValaszto id={mezoId(B, 'agazatok')} name="agazatok" {...C.agazatok} items={AGAZATOK} value={e.agazatok} onChange={set('agazatok')} errors={errors}
-            egyeb={{ id: mezoId(B, 'agazatEgyeb'), name: 'agazatEgyeb', ...C.agazatEgyeb, value: e.agazatEgyeb, onChange: set('agazatEgyeb'), max: ROVID_MAX }} />
+          <CimkeValaszto {...mezo('tagsagok')} {...C.tagsagok} items={TAGSAGOK} errors={errors}
+            egyeb={{ ...mezo('tagsagEgyeb'), ...C.tagsagEgyeb, max: ROVID_MAX }} />
+          <CimkeValaszto {...mezo('agazatok')} {...C.agazatok} items={AGAZATOK} errors={errors}
+            egyeb={{ ...mezo('agazatEgyeb'), ...C.agazatEgyeb, max: ROVID_MAX }} />
         </>
       )}
     </BlokkForm>

@@ -23,6 +23,9 @@ export const SZEREPKOR_CIMKE: Record<Szerepkor, string> = {
   attase: 'TéT attasé',
 };
 
+/** A szerepkör-választó opciói (`CimkesSelect`), a `SZEREPKOROK` sorrendjében. */
+export const SZEREPKOR_OPCIOK = SZEREPKOROK.map((k) => ({ ertek: k, cimke: SZEREPKOR_CIMKE[k] }));
+
 /** Az adatbázis `role` mezője → szerepkör; a hiányzó vagy ismeretlen érték (régi rekord) attasénak számít. */
 export function szerepkorbol(role: string | null | undefined): Szerepkor {
   return role === 'admin' ? 'admin' : 'attase';

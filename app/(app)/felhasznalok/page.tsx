@@ -1,9 +1,12 @@
+import type { Metadata } from 'next';
 import { listFelhasznalok } from '../../../db/queries/felhasznalo';
 import { orszagonkent, vezetoNelkuliOrszagok } from '../../../lib/attase-orszag';
 import { requireAdmin } from '../../../lib/session';
 import { FelhasznaloTabla } from './components/FelhasznaloTabla';
 import { UjFelhasznaloDialog } from './components/UjFelhasznaloDialog';
 import { VezetoFigyelmeztetes } from './components/VezetoFigyelmeztetes';
+
+export const metadata: Metadata = { title: 'Felhasználók' };
 
 export default async function FelhasznalokPage() {
   const me = await requireAdmin();

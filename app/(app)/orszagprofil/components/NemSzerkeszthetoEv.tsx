@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { SzerkesztesGomb } from '../../../../components/orszagprofil/SzerkesztesGomb';
 import { buttonVariants } from '../../../../components/ui/button';
 import { Card, CardContent, CardFooter } from '../../../../components/ui/card';
+import { cn } from '../../../../lib/utils';
 
 /**
  * A szerkesztő ezt mutatja az űrlapok helyett, ha a fejlécben választott év nem szerkeszthető,
@@ -34,7 +35,7 @@ export function NemSzerkeszthetoEv({
           action={action}
           felirat="Vissza a szerkesztéshez"
         />
-        <Link href={`/orszagprofil/${kod}`} className={buttonVariants({ variant: 'outline' })}>
+        <Link href={`/orszagprofil/${kod}`} className={cn(buttonVariants({ variant: 'outline' }))}>
           A(z) {ev}. évi profil megtekintése
         </Link>
       </CardFooter>

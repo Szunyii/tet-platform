@@ -10,6 +10,7 @@ import {
   type TicketDetail,
 } from '../../../db/queries/ticket';
 import { maiNaptariNap } from '../../../lib/datum';
+import type { SearchParams } from '../../../lib/routes';
 import { requireSession } from '../../../lib/session';
 import { canViewTicket } from '../../../lib/ticket-jog';
 import { parseSzuro } from '../../../lib/ticket-szotar';
@@ -21,8 +22,6 @@ import { TicketLista } from './components/TicketLista';
 import { UjTicketDialog } from './components/UjTicketDialog';
 
 export const metadata: Metadata = { title: 'Kommunikáció' };
-
-type SearchParams = Record<string, string | string[] | undefined>;
 
 export default async function KommunikacioPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const session = await requireSession();

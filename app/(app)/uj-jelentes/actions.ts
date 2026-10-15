@@ -9,11 +9,9 @@ import { requireSession } from '../../../lib/session';
 import { mezo } from '../../../lib/urlap';
 import type { MuveletState } from '../../../components/form/useMuveletForm';
 
-export type RiportFormState = MuveletState;
-
 const NINCS_ORSZAG = 'A fiókodhoz nincs ország rendelve, ezért nem adhatsz be bejegyzést.';
 
-export async function createRiportAction(_prev: RiportFormState, formData: FormData): Promise<RiportFormState> {
+export async function createRiportAction(_prev: MuveletState, formData: FormData): Promise<MuveletState> {
   const session = await requireSession();
   if (session.orszagok.length === 0) return { errors: { form: NINCS_ORSZAG } };
   // Választó csak a több országgal renderelt lapon van. Ha volt, a beküldött értéknek most is a saját

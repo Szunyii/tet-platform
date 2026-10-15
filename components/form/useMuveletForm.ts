@@ -14,6 +14,9 @@ export interface MuveletState {
 /** A hookkal használható server action alakja. */
 export type FormAction = (prev: MuveletState, formData: FormData) => Promise<MuveletState>;
 
+/** Paraméter nélküli (bind-olt) server action, pl. törlés vagy státuszváltás. */
+export type MuveletAction = () => Promise<MuveletState>;
+
 /**
  * useActionState + siker-toast + záró callback + hibakezelés egy helyen.
  * - A siker-kezelés az action wrapperben történik, nem useEffect-ben: pontosan egyszer fut,

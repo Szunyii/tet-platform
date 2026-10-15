@@ -117,6 +117,20 @@ export function isKulcsszo(v: string): v is Kulcsszo {
   return (KULCSSZAVAK as readonly string[]).includes(v);
 }
 
+/** A jelentés mezőinek feliratai: az űrlap (RiportForm, EsemenyMezok) és a részletoldal (RiportReszlet) közös forrása. */
+export const RIPORT_MEZO_CIMKEK = {
+  orszag: 'Ország',
+  kategoria: 'Kategória',
+  targy: 'Tárgy',
+  leiras: 'Vezetői Összefoglaló',
+  joGyakorlat: 'Fő üzenet, Mo. számára átvehető jó gyakorlat, javaslat',
+  kulcsszavak: 'Kulcsszavak (1–5)',
+  esemeny: 'Rendezvény adatai',
+  esemenyDatum: 'Dátum',
+  esemenyHelyszin: 'Helyszín',
+  kapcsolodoFeladat: 'Kapcsolódó feladat, kérés',
+} as const;
+
 /** Csatolmány-korlátok. A MIME-t a kiterjesztés alapján rögzítjük (a böngésző néha üreset küld). */
 export const CSATOLMANY_LIMIT = {
   maxDarab: 5,

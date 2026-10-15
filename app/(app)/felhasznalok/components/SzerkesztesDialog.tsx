@@ -1,18 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { hibaAttr, MezoHiba } from '../../../../components/form/MezoHiba';
+import { CimkesSelect } from '../../../../components/form/CimkesSelect';
+import { Mezo } from '../../../../components/form/Mezo';
+import { hibaAttr } from '../../../../components/form/MezoHiba';
 import { MuveletDialog } from '../../../../components/form/MuveletDialog';
 import { useMuveletForm } from '../../../../components/form/useMuveletForm';
 import { Input } from '../../../../components/ui/input';
-import { Label } from '../../../../components/ui/label';
 import type { FelhasznaloSor } from '../../../../db/queries/felhasznalo';
 import type { OrszagTagok } from '../../../../lib/attase-orszag';
-import { NEV_MAX, type Szerepkor } from '../../../../lib/felhasznalo-validacio';
+import { NEV_MAX, SZEREPKOR_OPCIOK, szerepkorbol, type Szerepkor } from '../../../../lib/felhasznalo-validacio';
 import { updateFelhasznaloAction } from '../actions';
 import { ElerhetosegMezok, type ElerhetosegErtekek } from './ElerhetosegMezok';
 import { OrszagMezok, orszagErtekek, type OrszagErtekek } from './OrszagMezok';
-import { SzerepkorSelect } from './SzerepkorSelect';
 
 export function SzerkesztesDialog({
   felhasznalo,
@@ -56,8 +56,7 @@ export function SzerkesztesDialog({
       szeles
     >
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="nev">Név</Label>
+        <Mezo id="nev" cimke="Név" errors={errors}>
           <Input
             id="nev"
             name="nev"
@@ -68,16 +67,22 @@ export function SzerkesztesDialog({
             onChange={(e) => setNev(e.target.value)}
             {...hibaAttr(errors, 'nev')}
           />
-          <MezoHiba mezo="nev" errors={errors} />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label id="szerepkor-label" htmlFor="szerepkor">Szerepkör</Label>
-          <SzerepkorSelect value={szerepkor} onChange={setSzerepkor} invalid={Boolean(errors.szerepkor)} />
-          <MezoHiba mezo="szerepkor" errors={errors} />
+        </Mezo>
+        <CimkesSelect
+          id="szerepkor"
+          name="szerepkor"
+          cimke="Szerepkör"
+          value={szerepkor}
+          onChange={(v) => setSzerepkor(szerepkorbol(v))}
+          opciok={SZEREPKOR_OPCIOK}
+          placeholder="Válassz szerepkört"
+          errors={errors}
+          className="w-full"
+        >
           {szerepkor === 'admin' && felhasznalo.orszagok.length > 0 && (
             <p className="text-xs text-muted-foreground">Adminra váltva az országok törlődnek.</p>
           )}
-        </div>
+        </CimkesSelect>
       </div>
       <ElerhetosegMezok ertekek={elerhetoseg} onChange={setElerhetoseg} errors={errors} />
       <OrszagMezok

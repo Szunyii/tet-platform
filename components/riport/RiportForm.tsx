@@ -8,12 +8,14 @@ import { csatolmanyElocheck } from '../../lib/riport-validacio';
 import {
   kategoriaByKulcs,
   LEIRAS_MAX,
+  RIPORT_MEZO_CIMKEK,
   SZOVEG_MAX,
   TARGY_MAX,
   type KategoriaKulcs,
   type Kulcsszo,
 } from '../../lib/riport-szotar';
 import { cn } from '../../lib/utils';
+import { Mezo } from '../form/Mezo';
 import { hibaAttr, MezoHiba } from '../form/MezoHiba';
 import { NativeSelect } from '../form/NativeSelect';
 import { useMuveletForm, type FormAction } from '../form/useMuveletForm';
@@ -26,6 +28,8 @@ import { CsatolmanyMezo } from './CsatolmanyMezo';
 import { EsemenyMezok } from './EsemenyMezok';
 import { KategoriaValaszto } from './KategoriaValaszto';
 import { KulcsszoValaszto } from './KulcsszoValaszto';
+
+const C = RIPORT_MEZO_CIMKEK;
 
 /** Létrehozásnál nincs `initial`, szerkesztésnél kötelező – a típus is ezt kényszeríti ki. */
 export type RiportFormProps = { action: FormAction } & (
@@ -81,8 +85,7 @@ export function RiportForm({ mode, initial, action, orszagok }: RiportFormProps)
   return (
     <form action={formAction} className="flex max-w-3xl flex-col gap-6" noValidate>
       {orszagok && orszagok.length > 1 && (
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="orszag">Ország</Label>
+        <Mezo id="orszag" cimke={C.orszag} errors={errors}>
           <NativeSelect
             id="orszag"
             name="orszag"
@@ -97,18 +100,16 @@ export function RiportForm({ mode, initial, action, orszagok }: RiportFormProps)
               </option>
             ))}
           </NativeSelect>
-          <MezoHiba mezo="orszag" errors={errors} />
-        </div>
+        </Mezo>
       )}
 
       <section className="flex flex-col gap-2">
-        <Label id="kategoria-label">Kategória</Label>
+        <Label id="kategoria-label">{C.kategoria}</Label>
         <KategoriaValaszto value={kategoria} onChange={setKategoria} invalid={Boolean(errors.kategoria)} />
         <MezoHiba mezo="kategoria" errors={errors} />
       </section>
 
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="targy">Tárgy</Label>
+      <Mezo id="targy" cimke={C.targy} errors={errors}>
         <Input
           id="targy"
           name="targy"
@@ -120,11 +121,9 @@ export function RiportForm({ mode, initial, action, orszagok }: RiportFormProps)
           onChange={(e) => setTargy(e.target.value)}
           {...hibaAttr(errors, 'targy')}
         />
-        <MezoHiba mezo="targy" errors={errors} />
-      </div>
+      </Mezo>
 
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="leiras">Vezetői Összefoglaló</Label>
+      <Mezo id="leiras" cimke={C.leiras} errors={errors}>
         <Textarea
           id="leiras"
           name="leiras"
@@ -139,14 +138,9 @@ export function RiportForm({ mode, initial, action, orszagok }: RiportFormProps)
         <p className="text-xs text-muted-foreground">
           {leiras.length}/{LEIRAS_MAX}
         </p>
-        <MezoHiba mezo="leiras" errors={errors} />
-      </div>
+      </Mezo>
 
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="joGyakorlat">
-          Fő üzenet, Mo. számára átvehető jó gyakorlat, javaslat{' '}
-          <span className="font-normal text-muted-foreground">(opcionális)</span>
-        </Label>
+      <Mezo id="joGyakorlat" cimke={C.joGyakorlat} opcionalis errors={errors}>
         <Textarea
           id="joGyakorlat"
           name="joGyakorlat"
@@ -156,16 +150,11 @@ export function RiportForm({ mode, initial, action, orszagok }: RiportFormProps)
           onChange={(e) => setJoGyakorlat(e.target.value)}
           {...hibaAttr(errors, 'joGyakorlat')}
         />
-        <MezoHiba mezo="joGyakorlat" errors={errors} />
-      </div>
+      </Mezo>
 
-      <div className="flex flex-col gap-1.5">
-        <Label id="kulcsszavak-label" htmlFor="kulcsszavak">
-          Kulcsszavak (1–5)
-        </Label>
+      <Mezo id="kulcsszavak" cimke={C.kulcsszavak} errors={errors}>
         <KulcsszoValaszto value={kulcsszavak} onChange={setKulcsszavak} invalid={Boolean(errors.kulcsszavak)} />
-        <MezoHiba mezo="kulcsszavak" errors={errors} />
-      </div>
+      </Mezo>
 
       {datumKotelezo && (
         <EsemenyMezok
@@ -187,8 +176,7 @@ export function RiportForm({ mode, initial, action, orszagok }: RiportFormProps)
             kimaradnának a beküldött FormData-ból – a felhasználó által megadott adat némán
             elveszne. Így a mezők a DOM-ban maradnak (hidden), és beküldésre kerülnek. */}
         <CollapsibleContent keepMounted className="mt-3 flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="kapcsolodoFeladat">Kapcsolódó feladat, kérés</Label>
+          <Mezo id="kapcsolodoFeladat" cimke={C.kapcsolodoFeladat} errors={errors}>
             <Textarea
               id="kapcsolodoFeladat"
               name="kapcsolodoFeladat"
@@ -198,8 +186,7 @@ export function RiportForm({ mode, initial, action, orszagok }: RiportFormProps)
               onChange={(e) => setKapcsolodoFeladat(e.target.value)}
               {...hibaAttr(errors, 'kapcsolodoFeladat')}
             />
-            <MezoHiba mezo="kapcsolodoFeladat" errors={errors} />
-          </div>
+          </Mezo>
           <CsatolmanyMezo
             fajlok={fajlok}
             onFajlok={setFajlok}

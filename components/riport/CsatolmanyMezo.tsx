@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import { CSATOLMANY_ACCEPT, CSATOLMANY_LIMIT, formatMeret } from '../../lib/riport-szotar';
+import { csatolmanyUrl } from '../../lib/routes';
 import type { MezoHibak } from '../../lib/urlap';
 import type { CsatolmanyMeta } from '../../db/queries/riport';
 
@@ -95,7 +96,7 @@ export function CsatolmanyMezo({
                 <li key={m.id} className="flex items-center gap-2">
                   {jelolt && <input type="hidden" name="torlendoCsatolmany" value={m.id} />}
                   <a
-                    href={`/api/jelentes/csatolmany/${m.id}`}
+                    href={csatolmanyUrl(m.id)}
                     className={jelolt ? 'line-through text-muted-foreground' : 'underline underline-offset-2'}
                   >
                     {m.fajlnev}

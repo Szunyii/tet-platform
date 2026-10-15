@@ -24,7 +24,9 @@ import {
 } from '../../../../components/ui/dropdown-menu';
 import type { FelhasznaloSor } from '../../../../db/queries/felhasznalo';
 import type { OrszagTagok } from '../../../../lib/attase-orszag';
-import { banAction, removeFelhasznaloAction, unbanAction, type MuveletState } from '../actions';
+import type { MuveletState } from '../../../../components/form/useMuveletForm';
+import { useNyitas } from '../../../../components/form/useNyitas';
+import { banAction, removeFelhasznaloAction, unbanAction } from '../actions';
 import { JelszoDialog } from './JelszoDialog';
 import { SzerkesztesDialog } from './SzerkesztesDialog';
 
@@ -76,20 +78,13 @@ export function FelhasznaloMuveletek({
   sajat: boolean;
   orszagTagok: OrszagTagok;
 }) {
-  const [szerkesztes, setSzerkesztes] = useState(false);
-  const [jelszo, setJelszo] = useState(false);
-  // Minden dialógus-nyitás új key: a dialógus (és az űrlap állapota) tisztán újraindul.
-  const [nyitas, setNyitas] = useState(0);
+  const szerk = useNyitas();
+  const jelszo = useNyitas();
   const [megerosites, setMegerosites] = useState<Megerosites | null>(null);
   // A szöveg külön state-ben marad, hogy a záró animáció alatt is az utolsó kérdés látsszon
   // (különben a cím és a gomb üresen tűnne el).
   const [szoveg, setSzoveg] = useState<MegerositesLeiras>(MEGEROSITES.tilt);
   const [pending, startTransition] = useTransition();
-
-  function nyit(setter: (v: boolean) => void) {
-    setNyitas((n) => n + 1);
-    setter(true);
-  }
 
   function kerdez(kind: Megerosites) {
     setSzoveg(MEGEROSITES[kind]);
@@ -121,8 +116,8 @@ export function FelhasznaloMuveletek({
           <MoreHorizontalIcon />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => nyit(setSzerkesztes)}>Szerkesztés</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => nyit(setJelszo)}>Jelszó-visszaállítás</DropdownMenuItem>
+          <DropdownMenuItem onClick={szerk.nyit}>Szerkesztés</DropdownMenuItem>
+          <DropdownMenuItem onClick={jelszo.nyit}>Jelszó-visszaállítás</DropdownMenuItem>
           {!sajat && (
             <>
               <DropdownMenuSeparator />
@@ -139,14 +134,18 @@ export function FelhasznaloMuveletek({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <SzerkesztesDialog
-        key={`sz-${nyitas}`}
-        felhasznalo={felhasznalo}
-        orszagTagok={orszagTagok}
-        open={szerkesztes}
-        onOpenChange={setSzerkesztes}
-      />
-      <JelszoDialog key={`j-${nyitas}`} felhasznalo={felhasznalo} sajat={sajat} open={jelszo} onOpenChange={setJelszo} />
+      {szerk.kulcs > 0 && (
+        <SzerkesztesDialog
+          key={szerk.kulcs}
+          felhasznalo={felhasznalo}
+          orszagTagok={orszagTagok}
+          open={szerk.open}
+          onOpenChange={szerk.setOpen}
+        />
+      )}
+      {jelszo.kulcs > 0 && (
+        <JelszoDialog key={jelszo.kulcs} felhasznalo={felhasznalo} sajat={sajat} open={jelszo.open} onOpenChange={jelszo.setOpen} />
+      )}
 
       <AlertDialog
         open={megerosites !== null}

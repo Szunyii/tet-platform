@@ -44,18 +44,17 @@ export function orszagErtekek(orszagok: readonly AttaseOrszag[]): OrszagErtekek 
   };
 }
 
-function OrszagOpciok() {
-  return (
-    <>
-      <option value="">Válassz országot…</option>
-      {ORSZAGOK.map((o) => (
-        <option key={o.kod} value={o.kod}>
-          {o.nev}
-        </option>
-      ))}
-    </>
-  );
-}
+// Modulszintű elem: a 174 opció egyszer épül fel; a változatlan elemet a React nem rendereli újra.
+const ORSZAG_OPCIOK = (
+  <>
+    <option value="">Válassz országot…</option>
+    {ORSZAGOK.map((o) => (
+      <option key={o.kod} value={o.kod}>
+        {o.nev}
+      </option>
+    ))}
+  </>
+);
 
 /**
  * Székhely (ország, poszt városa, részterület, vezető-jelölő) és régiós lefedettség (soronként
@@ -127,7 +126,7 @@ export function OrszagMezok({
               onChange={(e) => setSzekhely({ kod: e.target.value, vezeto: alapVezeto(helyzet(e.target.value)) })}
               {...hibaAttr(errors, 'szekhely.orszag')}
             >
-              <OrszagOpciok />
+              {ORSZAG_OPCIOK}
             </NativeSelect>
           </Mezo>
           <Mezo id="szekhely.varos" cimke="Poszt városa" errors={errors}>
@@ -190,7 +189,7 @@ export function OrszagMezok({
                   onChange={(e) => setSor(r.id, { kod: e.target.value, vezeto: alapVezeto(helyzet(e.target.value)) })}
                   {...hibaAttr(sorHibak, `${p}orszag`)}
                 >
-                  <OrszagOpciok />
+                  {ORSZAG_OPCIOK}
                 </NativeSelect>
                 {r.kod && (
                   <VezetoJelolo

@@ -512,8 +512,9 @@ export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], Me
     },
   },
   programok: {
-    // A megjelenítés sorrendje (űrlap, olvasó nézet): finanszírozási eszközök, nemzeti pályázatok, támogatási programok,
-    // nemzetközi részvétel. A tárolt JSON kulcssorrendje (típus, normalizáló, validátor) szándékosan a régi maradt.
+    // A megjelenítés sorrendje (űrlap, olvasó nézet – `SZOVEGES_MEZOK.programok`): finanszírozási eszközök, nemzeti
+    // pályázatok, támogatási programok, nemzetközi részvétel. A tárolt JSON kulcssorrendje (típus, normalizáló,
+    // validátor) szándékosan a régi maradt.
     finanszirozasiEszkozok: {
       cimke: 'Finanszírozási eszközök',
       magyarazat: 'A pályázaton kívüli finanszírozási eszközök: kockázati tőke, alapok alapja, hitelgarancia, kedvezményes hitel, adókedvezmény.',
@@ -593,6 +594,25 @@ export const MEZO_CIMKEK: { [K in BlokkKulcs]: Record<keyof ProfilBlokkok[K], Me
     },
   },
 };
+
+/**
+ * A csak többsoros szövegmezőkből álló blokkok mezői a megjelenítés sorrendjében: az űrlap (`*Mezok.tsx`)
+ * és az olvasó nézet (`BlokkNezet`) is ebből rajzol. A 4. blokk sorrendje eltér a tárolt JSON
+ * kulcssorrendjétől (a típus, a normalizáló és a validátor kulcssorrendje szándékosan a régi).
+ */
+export const SZOVEGES_MEZOK = {
+  intezmenyek: ['iranyitoSzervek', 'egyetemek', 'kutatokozpontok', 'infrastrukturak'],
+  programok: ['finanszirozasiEszkozok', 'palyazatok', 'tamogatasiProgramok', 'nemzetkoziReszvetel'],
+  nemzetkoziKapcsolatok: ['partnerorszagok', 'euMultilateralis'],
+  magyarErtekeles: ['osszegzes', 'egyuttmukodesiLehetosegek', 'joGyakorlatok', 'diplomaciaiPrioritasok'],
+} as const satisfies { [K in BlokkKulcs]?: readonly (keyof ProfilBlokkok[K])[] };
+
+type SzovegesBlokk = keyof typeof SZOVEGES_MEZOK;
+// Fordítási őr: minden lista a blokk összes mezőjét tartalmazza (egy kimaradt mező az űrlapról és a nézetből is eltűnne).
+const SZOVEGES_TELJES: { [K in SzovegesBlokk]: [Exclude<keyof ProfilBlokkok[K], (typeof SZOVEGES_MEZOK)[K][number]>] extends [never] ? true : never } = {
+  intezmenyek: true, programok: true, nemzetkoziKapcsolatok: true, magyarErtekeles: true,
+};
+void SZOVEGES_TELJES;
 
 /** A rendezvénysorok mezői: nem a `MEZO_CIMKEK` kulcsai, mert a sor a `Rendezvenyek.lista` eleme. */
 export const REND_MEZO_CIMKEK: Record<keyof Rendezveny, MezoCimke> = {

@@ -3,7 +3,8 @@ import { monogram } from '../../../../lib/nev';
 import { PRIORITASOK, STATUSZOK, TIPUSOK, type PrioKulcs, type StatuszKulcs, type TipusKulcs } from '../../../../lib/ticket-szotar';
 import { cn } from '../../../../lib/utils';
 
-// A színek itt, nem a szótárban (mint a riport KategoriaBadge-nél): a szótár framework-mentes marad.
+// A színek itt, nem a szótárban: a ticket-szótár framework-mentes, Tailwind-osztályt nem tárol (a riport-kategóriák
+// színe ezzel szemben a szótárban van, Tailwind-osztályként: `KATEGORIAK[].szin`).
 const STATUSZ_SZIN: Record<StatuszKulcs, string> = {
   nyitott: 'bg-sky-100 text-sky-900',
   valaszra_var: 'bg-amber-100 text-amber-900',

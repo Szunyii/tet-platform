@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { listTerkepAdat } from '../../../db/queries/orszagprofil';
 import { aktualisEv } from '../../../lib/datum';
 import { orszagByKod } from '../../../lib/orszagok';
+import type { SearchParams } from '../../../lib/routes';
 import { requireSession } from '../../../lib/session';
 import { getValasztottEv } from '../../../lib/valasztott-ev';
 import { valasztEvAction } from '../actions';
@@ -11,7 +12,7 @@ export const metadata: Metadata = { title: 'Országprofil' };
 
 export default async function TerkepPage({
   searchParams,
-}: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+}: { searchParams: Promise<SearchParams> }) {
   await requireSession();
   const most = aktualisEv();
   const ev = await getValasztottEv(most);

@@ -1,6 +1,3 @@
-'use client';
-
-import { useEffect, useRef } from 'react';
 import type { FormAction } from '../../../../components/form/useMuveletForm';
 import { Card } from '../../../../components/ui/card';
 import type { TicketDetail } from '../../../../db/queries/ticket';
@@ -9,6 +6,7 @@ import { orszagNev } from '../../../../lib/orszagok';
 import type { UzenetSzerep } from '../../../../lib/ticket-szotar';
 import { cn } from '../../../../lib/utils';
 import { Monogram, StatuszBadge } from './TicketJelzesek';
+import { UzenetLista } from './UzenetLista';
 import { UzenetUrlap } from './UzenetUrlap';
 
 const SZEREP_CIMKE: Record<UzenetSzerep, string> = { admin: 'NIÜ', attase: 'TéT attasé' };
@@ -24,14 +22,6 @@ export function TicketBeszelgetes({
   nezoNev: string;
   kuldesAction: FormAction;
 }) {
-  const lista = useRef<HTMLOListElement>(null);
-  // Új üzenetnél (és ticketváltásnál) az üzenetlista aljára görgetünk – csak a listán belül,
-  // az oldal görgetési pozícióját nem bántjuk.
-  useEffect(() => {
-    const el = lista.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [ticket.id, ticket.uzenetek.length]);
-
   const lezart = ticket.statusz === 'lezart';
   return (
     <Card className="flex min-w-0 flex-col gap-0 py-0">
@@ -45,13 +35,7 @@ export function TicketBeszelgetes({
           {orszagNev(ticket.orszag)} · {ticket.cimzettNev}
         </p>
       </header>
-      {/* Görgethető régió: billentyűzettel is fókuszálható, hogy a nyilakkal olvasható legyen. */}
-      <ol
-        ref={lista}
-        tabIndex={0}
-        aria-label="Üzenetek"
-        className="flex max-h-[46vh] flex-col gap-3 overflow-auto p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-      >
+      <UzenetLista ticketId={ticket.id} darab={ticket.uzenetek.length}>
         {ticket.uzenetek.map((u) => {
           const sajat = u.szerzoSzerep === nezoSzerep;
           return (
@@ -78,7 +62,7 @@ export function TicketBeszelgetes({
             </li>
           );
         })}
-      </ol>
+      </UzenetLista>
       {lezart ? (
         <p className="border-t bg-muted/30 p-3 text-sm text-muted-foreground" role="status">
           {/* A formatDatum kimenete ponttal végződik („2026. 09. 09."), ezért dátum esetén nem teszünk ki még egyet. */}

@@ -3,7 +3,7 @@
 import { unstable_rethrow } from 'next/navigation';
 import { useRef, useState, useTransition } from 'react';
 import { toast } from 'sonner';
-import type { MuveletState } from '../../../../components/form/useMuveletForm';
+import type { MuveletAction } from '../../../../components/form/useMuveletForm';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,8 +16,6 @@ import {
 } from '../../../../components/ui/alert-dialog';
 import { Button } from '../../../../components/ui/button';
 
-type Muvelet = () => Promise<MuveletState>;
-
 /** Lezárás megerősítéssel, újranyitás egy kattintással. A bind-olt action-öket a page adja. */
 export function TicketStatuszGombok({
   lezart,
@@ -27,8 +25,8 @@ export function TicketStatuszGombok({
 }: {
   lezart: boolean;
   targy: string;
-  lezarAction: Muvelet;
-  ujranyitAction: Muvelet;
+  lezarAction: MuveletAction;
+  ujranyitAction: MuveletAction;
 }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -38,7 +36,7 @@ export function TicketStatuszGombok({
 
   // Az action elutasítását (hálózat, elavult action id) nem dobjuk tovább – toast lesz belőle;
   // a Next control-flow kivételeit (redirect/notFound) viszont tovább kell dobni.
-  function futtat(action: Muvelet, siker: string, hiba: string) {
+  function futtat(action: MuveletAction, siker: string, hiba: string) {
     startTransition(async () => {
       try {
         const res = await action();

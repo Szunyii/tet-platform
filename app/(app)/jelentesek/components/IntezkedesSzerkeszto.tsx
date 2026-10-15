@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import { cn } from '../../../../lib/utils';
 import type { FormAction } from '../../../../components/form/useMuveletForm';
+import { useNyitas } from '../../../../components/form/useNyitas';
 import { buttonVariants } from '../../../../components/ui/button';
 import { IntezkedesDialog } from './IntezkedesDialog';
 
@@ -22,13 +22,7 @@ export function IntezkedesSzerkeszto({
   action: FormAction;
   valtozat: 'cella' | 'gomb';
 }) {
-  const [open, setOpen] = useState(false);
-  // Nyitásonként új key: a dialógus mezője és hibái mindig friss állapotból indulnak.
-  const [nyitas, setNyitas] = useState(0);
-  const nyit = () => {
-    setNyitas((n) => n + 1);
-    setOpen(true);
-  };
+  const { open, setOpen, kulcs, nyit } = useNyitas();
   const szovegGomb = valtozat === 'cella' && Boolean(ertek);
 
   return (
@@ -59,9 +53,9 @@ export function IntezkedesSzerkeszto({
         )}
       </button>
       {/* Az első nyitásig nincs mit mountolni (soronként egy dialógus-állapot és useActionState). */}
-      {nyitas > 0 && (
+      {kulcs > 0 && (
         <IntezkedesDialog
-          key={nyitas}
+          key={kulcs}
           targy={targy}
           ertek={ertek}
           action={action}

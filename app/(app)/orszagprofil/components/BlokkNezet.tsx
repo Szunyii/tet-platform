@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Badge } from '../../../../components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../components/ui/card';
 import {
-  blokkCim, MEZO_CIMKEK, rendezvenyTipusCimke, type Agazat, type BlokkKulcs, type ProfilBlokkok,
+  blokkCim, MEZO_CIMKEK, rendezvenyTipusCimke, SZOVEGES_MEZOK, type Agazat, type BlokkKulcs, type ProfilBlokkok,
 } from '../../../../lib/orszagprofil-szotar';
 import { formatSzam } from '../../../../lib/szam';
 import { AgazatBadge } from '../../../../components/orszagprofil/AgazatBadge';
@@ -83,7 +83,7 @@ const NEZETEK: { [K in BlokkKulcs]: (b: ProfilBlokkok[K]) => ReactNode } = {
     const C = MEZO_CIMKEK.intezmenyek;
     return (
       <dl className="flex flex-col gap-3">
-        {(['iranyitoSzervek', 'egyetemek', 'kutatokozpontok', 'infrastrukturak'] as const).map((k) => (
+        {SZOVEGES_MEZOK.intezmenyek.map((k) => (
           <Sor key={k} cimke={C[k].cimke}><Szoveg v={b[k]} /></Sor>
         ))}
       </dl>
@@ -110,7 +110,7 @@ const NEZETEK: { [K in BlokkKulcs]: (b: ProfilBlokkok[K]) => ReactNode } = {
     const C = MEZO_CIMKEK.programok;
     return (
       <dl className="flex flex-col gap-3">
-        {(['finanszirozasiEszkozok', 'palyazatok', 'tamogatasiProgramok', 'nemzetkoziReszvetel'] as const).map((k) => (
+        {SZOVEGES_MEZOK.programok.map((k) => (
           <Sor key={k} cimke={C[k].cimke}><Szoveg v={b[k]} /></Sor>
         ))}
       </dl>
@@ -151,7 +151,7 @@ const NEZETEK: { [K in BlokkKulcs]: (b: ProfilBlokkok[K]) => ReactNode } = {
     const C = MEZO_CIMKEK.nemzetkoziKapcsolatok;
     return (
       <dl className="flex flex-col gap-3">
-        {(['partnerorszagok', 'euMultilateralis'] as const).map((k) => (
+        {SZOVEGES_MEZOK.nemzetkoziKapcsolatok.map((k) => (
           <Sor key={k} cimke={C[k].cimke}><Szoveg v={b[k]} /></Sor>
         ))}
       </dl>
@@ -171,7 +171,7 @@ const NEZETEK: { [K in BlokkKulcs]: (b: ProfilBlokkok[K]) => ReactNode } = {
     const C = MEZO_CIMKEK.magyarErtekeles;
     return (
       <dl className="flex flex-col gap-3">
-        {(['osszegzes', 'egyuttmukodesiLehetosegek', 'joGyakorlatok', 'diplomaciaiPrioritasok'] as const).map((k) => (
+        {SZOVEGES_MEZOK.magyarErtekeles.map((k) => (
           <Sor key={k} cimke={C[k].cimke}><Szoveg v={b[k]} /></Sor>
         ))}
       </dl>

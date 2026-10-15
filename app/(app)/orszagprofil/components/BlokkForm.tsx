@@ -52,13 +52,16 @@ export function BlokkForm({ kod, ev, blokk, mentve, action, children }: BlokkFor
 export type BlokkMezokProps<T> = Omit<BlokkFormProps, 'blokk' | 'children'> & { initial: T };
 
 /**
- * A blokk vezérelt állapota egy objektumban + mezőnkénti setter-gyár (`set('mezo')`). A hívó
- * a már űrlap-alakra hozott objektumot adja (számok `szamStr`-rel, listák '\n'-nel összefűzve).
+ * A blokk vezérelt állapota egy objektumban, mezőnkénti setter-gyár (`set('mezo')`) és prop-építő
+ * (`mezo('mezo')`: `id` = `<blokk>.<mezo>`, `name` = a mezőnév, a vezérelt érték és a setter – a címkéket a
+ * hívó szórja hozzá a `MEZO_CIMKEK`-ből). A hívó a már űrlap-alakra hozott objektumot adja (számok
+ * `szamStr`-rel, listák '\n'-nel összefűzve).
  */
-export function useBlokkAllapot<T extends object>(initial: T) {
+export function useBlokkAllapot<T extends object>(blokk: BlokkKulcs, initial: T) {
   const [e, setE] = useState(initial);
   const set = <K extends keyof T>(k: K) => (v: T[K]) => setE((p) => ({ ...p, [k]: v }));
-  return [e, set] as const;
+  const mezo = <K extends keyof T & string>(k: K) => ({ id: mezoId(blokk, k), name: k, value: e[k], onChange: set(k) });
+  return { e, set, mezo };
 }
 
 /**

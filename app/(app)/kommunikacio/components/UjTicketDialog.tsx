@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { hibaAttr, MezoHiba } from '../../../../components/form/MezoHiba';
+import { CimkesSelect } from '../../../../components/form/CimkesSelect';
+import { Mezo } from '../../../../components/form/Mezo';
+import { hibaAttr } from '../../../../components/form/MezoHiba';
 import { MuveletDialog } from '../../../../components/form/MuveletDialog';
 import { useMuveletForm } from '../../../../components/form/useMuveletForm';
+import { useNyitas } from '../../../../components/form/useNyitas';
 import { Button } from '../../../../components/ui/button';
 import { Input } from '../../../../components/ui/input';
-import { Label } from '../../../../components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
 import { Textarea } from '../../../../components/ui/textarea';
 import {
   isPrioKulcs,
@@ -20,81 +21,23 @@ import {
   type PrioKulcs,
   type TipusKulcs,
 } from '../../../../lib/ticket-szotar';
-import type { MezoHibak } from '../../../../lib/urlap';
 import { createTicketAction } from '../actions';
 import { CimzettValaszto } from './CimzettValaszto';
 
 export function UjTicketDialog({ jeloltek }: { jeloltek: CimzettJelolt[] }) {
-  const [open, setOpen] = useState(false);
-  // Minden nyitás új key: a modal (és benne az űrlap állapota) tisztán újraindul.
-  const [nyitas, setNyitas] = useState(0);
+  const { open, setOpen, kulcs, nyit } = useNyitas();
   return (
     <>
-      <Button
-        className="w-full"
-        onClick={() => {
-          setNyitas((n) => n + 1);
-          setOpen(true);
-        }}
-      >
+      <Button className="w-full" onClick={nyit}>
         Új ticket
       </Button>
-      <UjTicketModal key={nyitas} open={open} onOpenChange={setOpen} jeloltek={jeloltek} />
+      {kulcs > 0 && <UjTicketModal key={kulcs} open={open} onOpenChange={setOpen} jeloltek={jeloltek} />}
     </>
   );
 }
 
-/**
- * Legördülő a form-mintához: a Base UI Select a `name` miatt rejtett inputot rendel, így a
- * FormData-ban megjelenik. A trigger `role=combobox` gomb, ezért aria-labelledby a címke
- * id-jával + a sajátjával. Üres érték = nincs kiválasztva (placeholder).
- */
-function Valaszto({
-  id,
-  cimke,
-  value,
-  onChange,
-  items,
-  placeholder,
-  errors,
-  required = false,
-}: {
-  id: string;
-  cimke: string;
-  value: string;
-  onChange: (v: string) => void;
-  items: Record<string, string>;
-  placeholder: string;
-  errors: MezoHibak;
-  required?: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label id={`${id}-label`} htmlFor={id}>
-        {cimke}
-      </Label>
-      <Select
-        name={id}
-        value={value === '' ? null : value}
-        onValueChange={(v) => onChange(v ?? '')}
-        items={items}
-        required={required}
-      >
-        <SelectTrigger id={id} aria-labelledby={`${id}-label ${id}`} {...hibaAttr(errors, id)} className="w-full">
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-        <SelectContent>
-          {Object.entries(items).map(([k, c]) => (
-            <SelectItem key={k} value={k}>
-              {c}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <MezoHiba mezo={id} errors={errors} />
-    </div>
-  );
-}
+const TIPUS_OPCIOK = Object.entries(TIPUSOK).map(([ertek, cimke]) => ({ ertek, cimke }));
+const PRIO_OPCIOK = Object.entries(PRIORITASOK).map(([ertek, cimke]) => ({ ertek, cimke }));
 
 function UjTicketModal({
   open,
@@ -141,30 +84,33 @@ function UjTicketModal({
         <CimzettValaszto jeloltek={jeloltek} kijelolt={kijelolt} onChange={setKijelolt} errors={errors} />
       )}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Valaszto
+        <CimkesSelect
           id="tipus"
+          name="tipus"
           cimke="Típus"
           value={tipus}
           onChange={(v) => setTipus(isTipusKulcs(v) ? v : '')}
-          items={TIPUSOK}
+          opciok={TIPUS_OPCIOK}
           placeholder="Válassz típust"
           errors={errors}
           required
+          className="w-full"
         />
         {/* A prioritásnak mindig van értéke (alapértelmezés: közepes), így a placeholder sosem látszik. */}
-        <Valaszto
+        <CimkesSelect
           id="prio"
+          name="prio"
           cimke="Prioritás"
           value={prio}
           onChange={(v) => setPrio(isPrioKulcs(v) ? v : 'kozepes')}
-          items={PRIORITASOK}
+          opciok={PRIO_OPCIOK}
           placeholder="Prioritás"
           errors={errors}
           required
+          className="w-full"
         />
       </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="hatarido">Határidő (opcionális)</Label>
+      <Mezo id="hatarido" cimke="Határidő (opcionális)" errors={errors}>
         <Input
           id="hatarido"
           name="hatarido"
@@ -175,10 +121,8 @@ function UjTicketModal({
           onChange={(e) => setHatarido(e.target.value)}
           {...hibaAttr(errors, 'hatarido')}
         />
-        <MezoHiba mezo="hatarido" errors={errors} />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="targy">Tárgy</Label>
+      </Mezo>
+      <Mezo id="targy" cimke="Tárgy" errors={errors}>
         <Input
           id="targy"
           name="targy"
@@ -189,10 +133,8 @@ function UjTicketModal({
           onChange={(e) => setTargy(e.target.value)}
           {...hibaAttr(errors, 'targy')}
         />
-        <MezoHiba mezo="targy" errors={errors} />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="szoveg">Első üzenet</Label>
+      </Mezo>
+      <Mezo id="szoveg" cimke="Első üzenet" errors={errors}>
         <Textarea
           id="szoveg"
           name="szoveg"
@@ -203,8 +145,7 @@ function UjTicketModal({
           onChange={(e) => setSzoveg(e.target.value)}
           {...hibaAttr(errors, 'szoveg')}
         />
-        <MezoHiba mezo="szoveg" errors={errors} />
-      </div>
+      </Mezo>
     </MuveletDialog>
   );
 }

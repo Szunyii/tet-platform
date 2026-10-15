@@ -3,32 +3,26 @@
 import { useState } from 'react';
 import { Button } from '../../../../components/ui/button';
 import { Input } from '../../../../components/ui/input';
-import { Label } from '../../../../components/ui/label';
 import type { OrszagTagok } from '../../../../lib/attase-orszag';
-import { JELSZO_MIN, NEV_MAX, type Szerepkor } from '../../../../lib/felhasznalo-validacio';
+import {
+  JELSZO_MIN, NEV_MAX, SZEREPKOR_OPCIOK, szerepkorbol, type Szerepkor,
+} from '../../../../lib/felhasznalo-validacio';
 import { createFelhasznaloAction } from '../actions';
-import { hibaAttr, MezoHiba } from '../../../../components/form/MezoHiba';
+import { CimkesSelect } from '../../../../components/form/CimkesSelect';
+import { Mezo } from '../../../../components/form/Mezo';
+import { hibaAttr } from '../../../../components/form/MezoHiba';
 import { MuveletDialog } from '../../../../components/form/MuveletDialog';
 import { ElerhetosegMezok, URES_ELERHETOSEG, type ElerhetosegErtekek } from './ElerhetosegMezok';
 import { OrszagMezok, URES_ORSZAGOK, type OrszagErtekek } from './OrszagMezok';
-import { SzerepkorSelect } from './SzerepkorSelect';
 import { useMuveletForm } from '../../../../components/form/useMuveletForm';
+import { useNyitas } from '../../../../components/form/useNyitas';
 
 export function UjFelhasznaloDialog({ orszagTagok }: { orszagTagok: OrszagTagok }) {
-  const [open, setOpen] = useState(false);
-  // Minden nyitás új key: a modal (és benne az űrlap állapota) tisztán újraindul.
-  const [nyitas, setNyitas] = useState(0);
+  const { open, setOpen, kulcs, nyit } = useNyitas();
   return (
     <>
-      <Button
-        onClick={() => {
-          setNyitas((n) => n + 1);
-          setOpen(true);
-        }}
-      >
-        Új felhasználó
-      </Button>
-      <UjFelhasznaloModal key={nyitas} open={open} onOpenChange={setOpen} orszagTagok={orszagTagok} />
+      <Button onClick={nyit}>Új felhasználó</Button>
+      {kulcs > 0 && <UjFelhasznaloModal key={kulcs} open={open} onOpenChange={setOpen} orszagTagok={orszagTagok} />}
     </>
   );
 }
@@ -72,8 +66,7 @@ function UjFelhasznaloModal({
       szeles
     >
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="nev">Név</Label>
+        <Mezo id="nev" cimke="Név" errors={errors}>
           <Input
             id="nev"
             name="nev"
@@ -84,10 +77,8 @@ function UjFelhasznaloModal({
             onChange={(e) => setNev(e.target.value)}
             {...hibaAttr(errors, 'nev')}
           />
-          <MezoHiba mezo="nev" errors={errors} />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="email">E-mail cím (bejelentkezés)</Label>
+        </Mezo>
+        <Mezo id="email" cimke="E-mail cím (bejelentkezés)" errors={errors}>
           <Input
             id="email"
             name="email"
@@ -98,10 +89,8 @@ function UjFelhasznaloModal({
             onChange={(e) => setEmail(e.target.value)}
             {...hibaAttr(errors, 'email')}
           />
-          <MezoHiba mezo="email" errors={errors} />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="jelszo">Kezdő jelszó</Label>
+        </Mezo>
+        <Mezo id="jelszo" cimke="Kezdő jelszó" errors={errors}>
           <Input
             id="jelszo"
             name="jelszo"
@@ -113,13 +102,18 @@ function UjFelhasznaloModal({
             onChange={(e) => setJelszo(e.target.value)}
             {...hibaAttr(errors, 'jelszo')}
           />
-          <MezoHiba mezo="jelszo" errors={errors} />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label id="szerepkor-label" htmlFor="szerepkor">Szerepkör</Label>
-          <SzerepkorSelect value={szerepkor} onChange={setSzerepkor} invalid={Boolean(errors.szerepkor)} />
-          <MezoHiba mezo="szerepkor" errors={errors} />
-        </div>
+        </Mezo>
+        <CimkesSelect
+          id="szerepkor"
+          name="szerepkor"
+          cimke="Szerepkör"
+          value={szerepkor}
+          onChange={(v) => setSzerepkor(szerepkorbol(v))}
+          opciok={SZEREPKOR_OPCIOK}
+          placeholder="Válassz szerepkört"
+          errors={errors}
+          className="w-full"
+        />
       </div>
       <ElerhetosegMezok ertekek={elerhetoseg} onChange={setElerhetoseg} errors={errors} />
       <OrszagMezok

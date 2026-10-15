@@ -7,13 +7,20 @@ import { SugoGomb } from './SugoGomb';
  * nélkül pontosan a puszta `Label` (a többi űrlap kinézete nem változik).
  *
  * Az `id` a címke elem id-ja (a `CimkeValaszto` beviteli mezejének `aria-labelledby`-ja erre mutat).
+ * `opcionalis`: a címke után halvány „(opcionális)” (a `SugoGomb` neve a puszta `cimke` marad).
  */
 export function CimkeSor({
-  id, htmlFor, cimke, magyarazat, pelda, labelClassName,
+  id, htmlFor, cimke, opcionalis, magyarazat, pelda, labelClassName,
 }: {
-  id?: string; htmlFor: string; cimke: string; magyarazat?: string; pelda?: string; labelClassName?: string;
+  id?: string; htmlFor: string; cimke: string; opcionalis?: boolean; magyarazat?: string; pelda?: string;
+  labelClassName?: string;
 }) {
-  const label = <Label id={id} htmlFor={htmlFor} className={labelClassName}>{cimke}</Label>;
+  const label = (
+    <Label id={id} htmlFor={htmlFor} className={labelClassName}>
+      {cimke}
+      {opcionalis && <>{' '}<span className="font-normal text-muted-foreground">(opcionális)</span></>}
+    </Label>
+  );
   if (!magyarazat) return label;
   return (
     <div className="flex items-center gap-1">
