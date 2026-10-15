@@ -262,6 +262,11 @@ viselkedésváltozások” szakasz négy pontja kivételével.
    hozzáadás után a fókusz az új sor nevére, törlés után a „Rendezvény hozzáadása” gombra kerül; a
    törlés a következő beküldésig elrejti a pozícióhoz kötött (más sorra csúszó) sorhibákat.
 
+5. (A 3. task minőségi review-ja nyomán, biztonsági javítás.) A `?next=` a pont-szegmensek
+   normalizálása után protokoll-relatívvá váló célt (`/.//evil.com` → `//evil.com`) is elutasítja –
+   a régi `safeNext` ezt átengedte, ami nyílt átirányítás volt (bejelentkezett felhasználónál a
+   szerver `Location: //evil.com`-ot küldött, belépés után a kliens oda navigált).
+
 Minden más – szöveg, elrendezés, színek, sorrend, jogosultság, lekérdezés-eredmény – változatlan.
 
 ## Hatókörön kívül
