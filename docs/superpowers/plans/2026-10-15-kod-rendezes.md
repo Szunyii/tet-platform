@@ -1918,6 +1918,8 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 `grep -n "AppShell\|NAV\|TITLES\|components/riport/\|SzerepkorSelect\|listOrszagok\|listSzerzok\|ini(\|VS_MAX\|safeNext\|localeCompare" CLAUDE.md` – minden találat a végleges állapotot írja (útvonalak, nevek). A „Projektállapot” bekezdésben (a fájl eleje) nem kell változás.
 
+A `README.md` projektstruktúra-szakasza (kb. a 80–95. sor; az 1. task spec-review-ja jelezte) ugyanígy: a `components/orszagprofil/` már csak a jelvényeket és a `SzerkesztesGomb`-ot tartalmazza (a `BlokkNezet` és az `AttaseLista` az `app/(app)/orszagprofil/components/`-ben), a `components/riport/` a közös űrlap-komponenseket (a lista és a részlet az `app/(app)/jelentesek/components/`-ben), a `components/form/` a `KuldGomb`-ot, `CimkesSelect`-et, `useNyitas`-t is, a shell a `components/app-shell/`-ben van, az útvonaltábla a `lib/navigacio.ts`-ben – minden más, a refaktor óta hamis útvonalat is javíts (`grep -n "AppShell\|components/\|lib/" README.md`).
+
 - [ ] **Step 5: A spec „Megvalósítási eltérések” szakasza**
 
 A spec végére új `## Megvalósítási eltérések` szakasz: amit az implementáció közben a review-k (vagy a fordító) a tervhez képest módosítottak – a tervezéskor pontosított döntések már a spec törzsében vannak. Az „Állapot” sor: „megvalósítva” + dátum.
