@@ -1869,6 +1869,7 @@ export function SzinesBadge({ szin, children }: { szin: string; children: ReactN
 ```
 
   `AgazatBadge`: `return <SzinesBadge szin={AGAZAT_SZINEK[agazat]}>{agazat}</SzinesBadge>;`; `AllapotBadge`: `return <SzinesBadge szin={ALLAPOT_SZINEK[allapot]}>{ALLAPOT_CIMKE[allapot]}{ev ? ` · ${ev}` : ''}</SzinesBadge>;` (a kommentjeik a `SzinesBadge`-be kerültek).
+- `app/(app)/kommunikacio/components/TicketJelzesek.tsx:5` kommentje fordítva állítja a riport-jelvényről, hogy nem a szótárból színez (a `KategoriaBadge` a `kategoriaByKulcs(kulcs).szin`-t használja): „// A színek itt, nem a szótárban: a ticket-szótár framework-mentes, Tailwind-osztályt nem tárol (a riport-kategóriák színe ezzel szemben a szótárban van, hex-ként).” (az 1. task review-ja).
 - Egyargumentumú `cn(buttonVariants(…))` → `buttonVariants(…)`: `RiportTabla.tsx`, `RiportReszlet.tsx`, `app/(app)/orszagprofil/[kod]/page.tsx`, `TicketLista.tsx` (`grep -rn "cn(buttonVariants([^)]*))" app components` – csak a valóban egyargumentumú hívásokat cseréld; a `cn` import kikerül, ha más nem használja).
 
 - [ ] **Step 11: Ellenőrzés**
@@ -1917,6 +1918,8 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 - [ ] **Step 4: CLAUDE.md – záró átnézés**
 
 `grep -n "AppShell\|NAV\|TITLES\|components/riport/\|SzerepkorSelect\|listOrszagok\|listSzerzok\|ini(\|VS_MAX\|safeNext\|localeCompare" CLAUDE.md` – minden találat a végleges állapotot írja (útvonalak, nevek). A „Projektállapot” bekezdésben (a fájl eleje) nem kell változás.
+
+Az „Országprofil” bekezdés útvonal-stílusa egységes legyen: a route-mappán belüli komponensek mindenhol `orszagprofil/components/<Név>` formában (mint a meglévő `BlokkForm`, `NemSzerkeszthetoEv`), nem egyszer teljes `app/(app)/…` útvonallal, egyszer röviden (az 1. task review-ja).
 
 A `README.md` projektstruktúra-szakasza (kb. a 80–95. sor; az 1. task spec-review-ja jelezte) ugyanígy: a `components/orszagprofil/` már csak a jelvényeket és a `SzerkesztesGomb`-ot tartalmazza (a `BlokkNezet` és az `AttaseLista` az `app/(app)/orszagprofil/components/`-ben), a `components/riport/` a közös űrlap-komponenseket (a lista és a részlet az `app/(app)/jelentesek/components/`-ben), a `components/form/` a `KuldGomb`-ot, `CimkesSelect`-et, `useNyitas`-t is, a shell a `components/app-shell/`-ben van, az útvonaltábla a `lib/navigacio.ts`-ben – minden más, a refaktor óta hamis útvonalat is javíts (`grep -n "AppShell\|components/\|lib/" README.md`).
 
