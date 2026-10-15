@@ -91,7 +91,7 @@ cd "app/(app)/jelentesek/components" && sed -i '' -e "s#'\.\./\.\./lib/#'../../.
 cd "app/(app)/orszagprofil/components" && sed -i '' -e "s#'\.\./\.\./lib/#'../../../../lib/#" -e "s#'\.\./ui/#'../../../../components/ui/#" -e "s#'\./AgazatBadge'#'../../../../components/orszagprofil/AgazatBadge'#" BlokkNezet.tsx AttaseLista.tsx && cd -
 ```
 
-A `components/form/KuldGomb.tsx` `'../ui/button'` importja változatlanul jó.
+A `components/form/KuldGomb.tsx` `'../ui/button'` importja változatlanul jó. (megvalósítva: a `KuldGomb` doc-kommentje – `7d217b7` – nem sorolja a hívóit, mert általános `components/form`-komponens.)
 
 - [ ] **Step 3: A hívók**
 
@@ -287,12 +287,11 @@ A `getCsatolmanyMeta` helyére, és mellé az új `getRiportSzerzo`:
 
 ```ts
 /** Letöltés előtti jogosultság-ellenőrzéshez, blob nélkül; a bejegyzés szerzőjével (`canViewRiport`). */
-export function getCsatolmanyMeta(id: string): (CsatolmanyMeta & { riportId: string; szerzoId: string }) | null {
+export function getCsatolmanyMeta(id: string): (CsatolmanyMeta & { szerzoId: string }) | null {
   return (
     db
       .select({
         id: riportCsatolmany.id,
-        riportId: riportCsatolmany.riportId,
         szerzoId: riport.szerzoId,
         fajlnev: riportCsatolmany.fajlnev,
         mime: riportCsatolmany.mime,
@@ -310,6 +309,8 @@ export function getRiportSzerzo(id: string): { szerzoId: string } | null {
   return db.select({ szerzoId: riport.szerzoId }).from(riport).where(eq(riport.id, id)).get() ?? null;
 }
 ```
+
+(megvalósítva: a `getCsatolmanyMeta` a `riportId` **helyett** adja a `szerzoId`-t – a hívónak (`canViewRiport`) csak erre van szüksége –; a záró review nyomán a `getCsatolmany` `riportId`-je is kikerült a select-ből és a visszatérési típusból: `(CsatolmanyMeta & { tartalom: Buffer })`, mert senki sem használta.)
 
 - `app/api/jelentes/csatolmany/[id]/route.ts`: a `getRiport` import és a 33–34. sor helyett `if (!canViewRiport(session, meta)) return new Response(null, { status: 404 });` (közvetlenül a `meta` ellenőrzése után); a 18–22. sori komment „előbb a blob nélküli metaadatot (getCsatolmanyMeta) és a bejegyzést nézzük meg” → „előbb a blob nélküli metaadatot nézzük meg a bejegyzés szerzőjével (getCsatolmanyMeta)”.
 - `app/(app)/jelentesek/actions.ts` `deleteRiportAction`: `const meglevo = getRiportSzerzo(id);` (import), a többi változatlan. Az `updateRiportAction` marad a `getRiport`-on (a csatolmány-id-k kellenek).
@@ -330,8 +331,12 @@ function terkepAlapadatok(a: Alapadatok): TerkepAlapadatok {
   return { fovaros, terulet, penznem, lakossag, gdp, gdpEgyFore, gdpNovekedes, adatEv, forras, tagsagok };
 }
 
-// A mentett blokkok száma SQL-ben, a `BLOKK_KULCSOK`-ból (kimerítő): így a kilenc JSON-oszlopot nem kell beolvasni.
-const MENTETT_DB = sql<number>`${sql.join(BLOKK_KULCSOK.map((k) => sql`(${orszagprofil[k]} is not null)`), sql` + `)}`;
+// A mentett blokkok száma SQL-ben, a `BLOKK_KULCSOK`-ból (kimerítő): a számoláshoz így nem kell mind a kilenc
+// JSON-oszlopot beolvasni. A JSON 'null' szöveg nem számít mentettnek – a Drizzle azt is null-ként olvassa, mint a getProfil.
+const MENTETT_DB = sql<number>`${sql.join(
+  BLOKK_KULCSOK.map((k) => sql`(${orszagprofil[k]} is not null and ${orszagprofil[k]} <> 'null')`),
+  sql` + `,
+)}`;
 ```
 
 A `TerkepOrszag.alapadatok` típusa: `alapadatok: TerkepAlapadatok | null;`. A `listTerkepAdat` törzse (a doc-komment „minden sorát beolvassuk – ezen a skálán rendben van” fél-mondata helyett: „csak a ≤ ev sorok és a térkép által használt oszlopok jönnek”):
@@ -390,7 +395,7 @@ export const listTerkepAdat = cache((ev: number): TerkepOrszag[] => {
 });
 ```
 
-Ha a `normalizalBlokk` paramétertípusa szűkebb a select JSON-oszlopáénál, a fordító megmondja – a `sorbol` ugyanígy hívja (`normalizalBlokk(k, r[k])`). Ha a `type Alapadatok` import csak a `TerkepAlapadatok`-hoz kell, maradjon.
+Ha a `normalizalBlokk` paramétertípusa szűkebb a select JSON-oszlopáénál, a fordító megmondja – a `sorbol` ugyanígy hívja (`normalizalBlokk(k, r[k])`). Ha a `type Alapadatok` import csak a `TerkepAlapadatok`-hoz kell, maradjon. (megvalósítva: a `MENTETT_DB` SQL-ben a JSON `'null'` szöveget sem számolja mentettnek – `col is not null and col <> 'null'` –, így pontosan a régi JS-szabály és a `getProfil` szerint számol, amely a Drizzle-lel a `'null'`-t is `null`-ként olvassa.)
 
 - [ ] **Step 10: Halott exportok**
 
@@ -409,6 +414,7 @@ Run: `npx tsc --noEmit` – exit 0. Run (a vezérlő Task 0 scriptje, új kimene
 - Riportok: `listOrszagok()` → `listRiportOrszagok()`, `listSzerzok()` → `listRiportSzerzok()` (minden előfordulás); „Amire figyelni kell”: a csatolmány-sorrend mondata → „**meta → jog → blob** (`getCsatolmanyMeta` a bejegyzés szerzőjével, `canViewRiport`, csak utána `getCsatolmany`)”.
 - Közös segédek: „`lib/urlap.ts` (`MezoHibak`, `ParseResult<T>` – a validátorok közös eredménytípusa; a jelentés és az új ticket saját, extra mezős típust ad –, `tisztitSzoveg`/`mezo` …)”, és új tétel: „`lib/rendezes.ts` (`huOsszevet`: magyar névsor, modulszintű `Intl.Collator('hu')`; minden JS-oldali névsor-rendezés ezt használja)”.
 - Országprofil, `listTerkepAdat` leírása: „csak a ≤ ev sorok és a térkép által használt oszlopok (alapadatok, kfiRendszer, rendezvenyek, magyarErtekeles; a `mentettDb` SQL-ben) – az `alapadatok` a `TerkepAlapadatok` (10 mező)”.
+- (megvalósítva: a CLAUDE.md régi, téves `signOut`-említése – a `lib/auth-client.ts` nem exportálja – is javítva lett, `48831d2`.)
 
 - [ ] **Step 13: Commit**
 
@@ -477,6 +483,8 @@ export interface Menupont {
   felirat: string;
   /** További útvonal-prefixek, amelyeken a menüpont aktív (pl. /orszagprofil/* → Országprofil). */
   alHrefek?: readonly string[];
+  /** Az olvasatlan ticketek száma megjelenik a menüpont mellett. */
+  olvasatlanSzamlalo?: true;
 }
 
 export interface Utvonal {
@@ -517,7 +525,7 @@ export const UTVONALAK: readonly Utvonal[] = [
     href: '/kommunikacio',
     cim: 'Kommunikáció',
     alcim: 'Ticket + üzenetszál az adminok és a TéT attasék között',
-    menu: { ikon: '✉', felirat: 'Kommunikáció' },
+    menu: { ikon: '✉', felirat: 'Kommunikáció', olvasatlanSzamlalo: true },
   },
   {
     href: '/tudastar',
@@ -543,7 +551,7 @@ export const UTVONALAK: readonly Utvonal[] = [
 const SEMLEGES_CIM: [string, string] = ['TéT Platform', ''];
 
 /** Pontos egyezés vagy alútvonal (pl. /jelentesek/abc → /jelentesek). */
-export function isActive(pathname: string, href: string): boolean {
+function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(href + '/');
 }
 
@@ -568,6 +576,8 @@ export function titleFor(pathname: string, szerep: Szerepkor): [string, string] 
   return talalat ? [talalat.cim, talalat.alcim] : SEMLEGES_CIM;
 }
 ```
+
+(megvalósítva: a `Menupont` kapott egy `olvasatlanSzamlalo?: true` jelzőt – az `Oldalsav` ezzel rajzolja a Kommunikáció olvasatlan-számlálóját, nem a `u.href === '/kommunikacio'` összehasonlítással, így a számláló nincs href-hez drótozva –; az `isActive` belső (nem exportált) függvény, kívülről a `menuAktiv` és a `titleFor` használja.)
 
 - [ ] **Step 4: A shell komponensei**
 
@@ -697,7 +707,7 @@ export function Fejlec({ szerep, ev, evek, valasztEvAction }: {
 }) {
   const [cim, alcim] = titleFor(usePathname(), szerep);
   return (
-    <header className="sticky top-0 z-20 flex items-center gap-5 border-b border-[#dde1e7] bg-white px-[26px] py-[13px]">
+    <header className="sticky top-0 z-20 flex items-center gap-5 border-b border-b-[#dde1e7] bg-white px-[26px] py-[13px]">
       <div className="min-w-0">
         <h1 className="text-[16px] font-semibold tracking-[-.01em]">{cim}</h1>
         <div className="mt-0.5 text-[11.5px] text-[#6b7684]">{alcim}</div>
@@ -731,7 +741,7 @@ function szerepFelirat(user: AppSession): string {
   if (user.role === 'admin') return 'NIÜ admin';
   const szekhely = szekhelyKod(user.orszagok);
   const tovabbi = user.orszagok.length - (szekhely ? 1 : 0);
-  return `TéT attasé${szekhely ? ' · ' + orszagNev(szekhely) : ''}${tovabbi > 0 ? ` +${tovabbi}` : ''}`;
+  return `TéT attasé${szekhely ? ' · ' + orszagNev(szekhely) : ''}${tovabbi > 0 ? `\u00a0+${tovabbi}` : ''}`;
 }
 
 /**
@@ -748,7 +758,7 @@ export function Oldalsav({ user, olvasatlan, oldalsavAlja, logoutAction }: {
   const pathname = usePathname();
   return (
     <aside className="sticky top-0 flex h-screen w-[238px] flex-[0_0_238px] flex-col overflow-y-auto bg-sidebar text-sidebar-foreground">
-      <div className="border-b border-sidebar-border px-[18px] pt-[18px] pb-4">
+      <div className="border-b border-b-sidebar-border px-[18px] pt-[18px] pb-4">
         <div className="text-[13.5px] font-bold tracking-[.02em]">NIÜ · TéT Platform</div>
         <div className="mt-[3px] text-[11px] text-sidebar-halvany">Belső munkakörnyezet</div>
       </div>
@@ -767,7 +777,7 @@ export function Oldalsav({ user, olvasatlan, oldalsavAlja, logoutAction }: {
             >
               <span className="w-4 text-center text-[13px]">{u.menu.ikon}</span>
               {u.menu.felirat}
-              {u.href === '/kommunikacio' && olvasatlan > 0 && (
+              {u.menu.olvasatlanSzamlalo && olvasatlan > 0 && (
                 <>
                   <span aria-hidden className="ml-auto rounded-[9px] bg-sidebar-szamlalo px-1.5 py-px text-[10px] font-semibold text-white">
                     {olvasatlan}
@@ -781,11 +791,11 @@ export function Oldalsav({ user, olvasatlan, oldalsavAlja, logoutAction }: {
       </nav>
       <div className="mt-auto">
         {oldalsavAlja}
-        <div className="border-t border-sidebar-border px-[18px] py-3.5">
+        <div className="border-t border-t-sidebar-border px-[18px] py-3.5">
           <div className="flex items-center gap-[9px]">
             <div
               aria-hidden
-              className="flex size-[29px] flex-[0_0_29px] items-center justify-center rounded-full bg-sidebar-primary text-[11px] font-semibold text-sidebar-primary-foreground"
+              className="flex size-[29px] flex-[0_0_29px] items-center justify-center rounded-[50%] bg-sidebar-primary text-[11px] font-semibold text-sidebar-primary-foreground"
             >
               {monogram(user.name)}
             </div>
@@ -862,6 +872,8 @@ export default function AppShell({
 }
 ```
 
+(megvalósítva: a fenti `Fejlec` és `Oldalsav` a végleges kód. Pixel-egyezés miatt eltér a terv eredeti kódjától: `rounded-[50%]` a `rounded-full` helyett (a régi inline `50%`), és egyoldali keretszín – `border-b border-b-sidebar-border`, `border-t border-t-sidebar-border`, a fejlécben `border-b border-b-[#dde1e7]` –, mert a régi inline `borderBottom`/`borderTop` csak azt az oldalt színezte; a „+N” előtti nem törő szóköz `\u00a0` escape-pel áll; a számlálót a menüpont `olvasatlanSzamlalo` jelzője vezérli, lásd a 3. lépést.)
+
 - [ ] **Step 5: A `useApp` importálói és a layout**
 
 - `useApp` import → `components/app-shell/AppContext`: `app/(app)/terkep/components/TerkepNezet.tsx`, `TerkepPanel.tsx` (`'../../../../components/app-shell/AppContext'`), `app/(app)/monitoring/page.tsx` (`'../../../components/app-shell/AppContext'`), `app/(app)/kommunikacio/components/OlvasatlanSzinkron.tsx` (`'../../../../components/app-shell/AppContext'`).
@@ -892,6 +904,8 @@ export function ciklusEvek(szerep: Szerepkor, most: number, ev: number, profilEv
 - Attasé-`Link`: `className="flex flex-col py-0.5 text-sidebar-halvany no-underline"`; első span: `className="flex items-baseline gap-2 text-sidebar-cim"`; második: `className="flex flex-wrap gap-x-1.5 pl-4"`; művelet: `className="ml-auto font-medium whitespace-nowrap text-sidebar-menu"`.
 - A fájl fejkommentjének színes mondata: „A pötty színe a térképpel közös szótárból jön (ALLAPOT_SZINEK, inline style); a többi szín az oldalsáv `--sidebar*` tokenjeiből (app/globals.css). Az AllapotBadge szándékosan nincs újrahasználva, az világos háttérre van hangolva.”
 
+(megvalósítva: pixel-egyezés miatt a `Potty` `rounded-[50%]`, a `Keret` gyökér pedig `border-t border-t-sidebar-border` – egyoldali keretszín, mint a 4. lépésben.)
+
 - [ ] **Step 7: Login `?next=` – `lib/routes.ts`**
 
 A fájl elejének kommentje: „Központi útvonal-konstansok. Az útvonaltábla (lib/navigacio.ts) a menüé és a fejlécé, ez a kód által használt fix célpontoké.” A `loginUtvonal` után:
@@ -900,9 +914,10 @@ A fájl elejének kommentje: „Központi útvonal-konstansok. Az útvonaltábla
 /**
  * A login utáni cél (?next=) ellenőrzése, a nyílt átirányítás ellen. A böngészővel azonos URL-parserrel
  * értelmezzük, mert a regex kijátszható (pl. "/<TAB>/evil.com" → "//evil.com"): csak akkor fogadjuk el, ha a
- * bázis-originre mutat, nem a /login maga (önhurok), nem API-útvonal (oda nem navigálunk), és nem hosszabb
- * `NEXT_MAX_LENGTH`-nél (a Location fejléc ne nőjön proxy-limit fölé). A visszaadott útvonal normalizált
- * (vezérlőkarakterek nélkül), így a Location fejlécbe is biztonságos; minden más esetben `HOME_ROUTE`.
+ * bázis-originre mutat, nem a /login maga (önhurok), nem API-útvonal (oda nem navigálunk), nem hosszabb
+ * `NEXT_MAX_LENGTH`-nél (a Location fejléc ne nőjön proxy-limit fölé), és a normalizált útvonal nem
+ * protokoll-relatív (`//`). A visszaadott útvonal normalizált (vezérlőkarakterek nélkül), így a Location
+ * fejlécbe is biztonságos; minden más esetben `HOME_ROUTE`.
  */
 export function biztonsagosNext(raw: string | string[] | undefined): string {
   const v = Array.isArray(raw) ? raw[0] : raw;
@@ -915,12 +930,16 @@ export function biztonsagosNext(raw: string | string[] | undefined): string {
   }
   if (u.origin !== 'http://n.invalid') return HOME_ROUTE;
   const path = u.pathname + u.search;
+  // A pont-szegmensek normalizálása protokoll-relatív utat adhat ("/.//evil.com" → "//evil.com"): azt a böngésző külső címként követné.
+  if (path.startsWith('//')) return HOME_ROUTE;
   if (path.length > NEXT_MAX_LENGTH) return HOME_ROUTE;
   if (path === LOGIN_ROUTE || path.startsWith(`${LOGIN_ROUTE}/`) || path.startsWith(`${LOGIN_ROUTE}?`)) return HOME_ROUTE;
   if (path === '/api' || path.startsWith('/api/')) return HOME_ROUTE;
   return path;
 }
 ```
+
+(megvalósítva: a minőségi review nyomán a függvény a pont-szegmensek normalizálása után keletkező protokoll-relatív célt is elutasítja – `if (path.startsWith('//')) return HOME_ROUTE;`, pl. `/.//evil.com` → `//evil.com` –; ez a spec 5. szándékos viselkedésváltozása.)
 
 `app/login/page.tsx`: a `safeNext` függvény és a kommentje törlése, `const next = biztonsagosNext((await searchParams).next);`, import `{ biztonsagosNext } from '../../lib/routes'` (a `HOME_ROUTE` import kikerül, ha már nem kell).
 
@@ -964,7 +983,8 @@ import { geoGraticule10, geoNaturalEarth1, geoPath } from 'd3-geo';
 import { zoomIdentity, type ZoomTransform } from 'd3-zoom';
 
 // A térkép vetülete és koordinátarendszere (viewBox) – modulszinten, mert rögzített: a poligonok
-// path-jai (useVilagAtlasz) és a régió-keretek (regioTranszform) is ebből számolnak.
+// path-jai (useVilagAtlasz), a pinek helye (`proj` a TerkepRetegek-ben) és a régió-keretek
+// (regioTranszform) is ebből számolnak.
 
 export const W = 960;
 export const H = 505;
@@ -972,13 +992,54 @@ export const ZOOM_MAX = 8;
 export const PIN_R = 5.5;
 export const PIN_BELSO_R = 1.8;
 
+/**
+ * A számszerű mutató érték nélküli országainak sraffozása: a VilagTerkep `<pattern>`-jének id-ja (a
+ * TerkepRetegek `url(#…)`-tal hivatkozik rá).
+ */
+export const SRAFF_ID = 'terkep-sraff';
+
+// A TerkepRetegek a `data-pinek`, `data-pin`, `data-pin-belso` attribútumokat rendereli, a useTerkepZoom
+// ezekkel keresi meg és méretezi át a pineket.
+export const PIN_RETEG_SEL = '[data-pinek]';
+export const PIN_SEL = 'circle[data-pin]';
+export const PIN_BELSO_SEL = 'circle[data-pin-belso]';
+
 export const proj = geoNaturalEarth1().fitExtent([[6, 6], [W - 6, H - 6]], { type: 'Sphere' });
 export const path = geoPath(proj);
 export const GOMB_D = path({ type: 'Sphere' }) ?? '';
 export const RACS_D = path(geoGraticule10()) ?? '';
+
+/**
+ * A régió bbox-ának vetített befoglaló téglalapjára illesztett transzformáció. A `zoom.transform`
+ * NEM alkalmazza a d3 constrain-jét és a scaleExtent-et, ezért a k ≥ 1 és a translateExtent
+ * ([[0, 0], [W, H]]) korlátját itt tartjuk be – különben a nézet lelógna a térképről, és az első
+ * húzásnál ugrana.
+ */
+export function regioTranszform(bbox: [[number, number], [number, number]]): ZoomTransform {
+  const [[ny, d], [k, e]] = bbox;
+  const pontok: [number, number][] = [
+    [ny, d], [k, d], [ny, e], [k, e], [(ny + k) / 2, d], [(ny + k) / 2, e], [ny, (d + e) / 2], [k, (d + e) / 2],
+  ];
+  let x0 = Infinity;
+  let y0 = Infinity;
+  let x1 = -Infinity;
+  let y1 = -Infinity;
+  for (const p of pontok) {
+    const q = proj(p);
+    if (!q) continue;
+    x0 = Math.min(x0, q[0]);
+    y0 = Math.min(y0, q[1]);
+    x1 = Math.max(x1, q[0]);
+    y1 = Math.max(y1, q[1]);
+  }
+  const kk = Math.min(ZOOM_MAX, Math.max(1, 0.9 / Math.max((x1 - x0) / W, (y1 - y0) / H)));
+  const tx = Math.min(0, Math.max(W - kk * W, W / 2 - (kk * (x0 + x1)) / 2));
+  const ty = Math.min(0, Math.max(H - kk * H, H / 2 - (kk * (y0 + y1)) / 2));
+  return zoomIdentity.translate(tx, ty).scale(kk);
+}
 ```
 
-és utána a `regioTranszform` (a doc-kommentjével) **változatlanul** a mai `VilagTerkep.tsx:46-73`-ból, `export function`-ként.
+(megvalósítva: a fenti a fájl teljes végleges tartalma, benne a `regioTranszform`-mal – a mai `VilagTerkep.tsx:46-73`-ból, változatlanul, `export function`-ként. A terven túl a `SRAFF_ID` és a pin DOM-szelektorok (`PIN_RETEG_SEL`, `PIN_SEL`, `PIN_BELSO_SEL`) is itt vannak: a térkép három fájljának – `TerkepRetegek`, `useTerkepZoom`, `VilagTerkep` – DOM-szerződése egy helyen.)
 
 - [ ] **Step 2: `useVilagAtlasz.ts` – a path-ok egyszer készülnek**
 
@@ -986,7 +1047,6 @@ export const RACS_D = path(geoGraticule10()) ?? '';
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { Feature, Geometry } from 'geojson';
 import type { GeometryCollection, Topology } from 'topojson-specification';
 import { path } from './vetulet';
 
@@ -1005,8 +1065,7 @@ function betolt(): Promise<Poligon[]> {
     atlaszPromise = Promise.all([import('world-atlas/countries-110m.json'), import('topojson-client')])
       .then(([topo, tc]) => {
         const t = topo.default as unknown as Atlasz;
-        const feats = tc.feature(t, t.objects.countries).features as Feature<Geometry, { name: string }>[];
-        return feats.map((f) => ({ nev: f.properties.name, d: path(f) ?? '' }));
+        return tc.feature(t, t.objects.countries).features.map((f) => ({ nev: f.properties.name, d: path(f) ?? '' }));
       });
     atlaszPromise.catch(() => { atlaszPromise = null; });
   }
@@ -1032,7 +1091,7 @@ export function useVilagAtlasz(): { poligonok: Poligon[] | null; hiba: boolean }
 }
 ```
 
-(Ha a `tc.feature(...).features` típusa már `Feature<Geometry, { name: string }>[]`, a `as` elhagyható – a fordító dönt.)
+(Ha a `tc.feature(...).features` típusa már `Feature<Geometry, { name: string }>[]`, a `as` elhagyható – a fordító dönt.) (megvalósítva: nem kellett cast, ezért a `Feature`/`Geometry` import sem.)
 
 - [ ] **Step 3: `TerkepRetegek.tsx`**
 
@@ -1044,15 +1103,12 @@ import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { geoNev } from '../../../../lib/orszagok';
 import { TERKEP_SZINEK } from '../../../../lib/terkep-mutatok';
 import type { Poligon } from './useVilagAtlasz';
-import { PIN_BELSO_R, PIN_R, proj } from './vetulet';
-
-/** A számszerű mutató érték nélküli országainak sraffozása: a VilagTerkep `<pattern>`-jének id-ja. */
-export const SRAFF_ID = 'terkep-sraff';
+import { PIN_BELSO_R, PIN_R, proj, SRAFF_ID } from './vetulet';
 
 export type HoverFn = (e: ReactPointerEvent<SVGElement>, nev: string, o: TerkepOrszag | null) => void;
 ```
 
-és utána a `TerkepRetegek` memo-komponens **változatlanul** a mai `VilagTerkep.tsx:81-153`-ból, `export const`-ként.
+és utána a `TerkepRetegek` memo-komponens **változatlanul** a mai `VilagTerkep.tsx:81-153`-ból, `export const`-ként. (megvalósítva: a `SRAFF_ID` nem itt, hanem a `vetulet.ts`-ben van, a `TerkepRetegek` onnan importálja; a pin-réteg kommentje a `vetulet.ts` DOM-szerződésére hivatkozik.)
 
 - [ ] **Step 4: `useTerkepZoom.ts`**
 
@@ -1065,28 +1121,30 @@ import { zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior } from 'd3-zoom
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { REGIOK } from '../../../../lib/terkep-mutatok';
-import { H, PIN_BELSO_R, PIN_R, regioTranszform, W, ZOOM_MAX } from './vetulet';
+import {
+  H, PIN_BELSO_R, PIN_BELSO_SEL, PIN_R, PIN_RETEG_SEL, PIN_SEL, regioTranszform, W, ZOOM_MAX,
+} from './vetulet';
 
 /** A pin-réteg (külön `<g data-pinek>`, hogy csak ezt kelljen pásztázni). */
 function pinReteg(g: SVGGElement | null): SVGGElement | null {
-  return g?.querySelector<SVGGElement>('[data-pinek]') ?? null;
+  return g?.querySelector<SVGGElement>(PIN_RETEG_SEL) ?? null;
 }
 
 /** A pin-réteg köreinek sugarát a nagyítás reciprokával állítja, hogy a pin képernyőn állandó méretű maradjon. */
 function pinSugar(pinek: SVGGElement, k: number) {
-  pinek.querySelectorAll<SVGCircleElement>('circle[data-pin]').forEach((c) => c.setAttribute('r', String(PIN_R / k)));
-  pinek.querySelectorAll<SVGCircleElement>('circle[data-pin-belso]').forEach((c) => c.setAttribute('r', String(PIN_BELSO_R / k)));
+  pinek.querySelectorAll<SVGCircleElement>(PIN_SEL).forEach((c) => c.setAttribute('r', String(PIN_R / k)));
+  pinek.querySelectorAll<SVGCircleElement>(PIN_BELSO_SEL).forEach((c) => c.setAttribute('r', String(PIN_BELSO_R / k)));
 }
 
 /**
  * A térkép nagyítása (d3-zoom az `<svg>`-n). A zoom-esemény közvetlenül a DOM-on dolgozik – a `<g>`
  * transformja, a pinek sugara és a sraffozás csempéje –, nem React-állapoton át, hogy görgetésenként ne
  * renderelődjön újra ~180 path. Kézi zoom/mozgatás (sourceEvent van) után egyik régió-gomb sem aktív. A
- * clickDistance(4) miatt az apró egérmozgás nem nyeli el a kattintást. `kesz`: az SVG mountolva van (a
- * poligonok betöltődtek); új `adatok`-nál (évváltás) az újonnan mountolt pinek sugara igazodik az aktuális
+ * clickDistance(4) miatt az apró egérmozgás nem nyeli el a kattintást. `svgMountolva`: a poligonok
+ * betöltődtek, az `<svg>` mountolva van; új `adatok`-nál (évváltás) az újonnan mountolt pinek sugara igazodik az aktuális
  * nagyításhoz. A `nagyit` és a `regioValaszt` stabil (useCallback), a memo-zott gombok nem renderelődnek újra.
  */
-export function useTerkepZoom(kesz: boolean, adatok: readonly TerkepOrszag[]) {
+export function useTerkepZoom(svgMountolva: boolean, adatok: readonly TerkepOrszag[]) {
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
   const patternRef = useRef<SVGPatternElement>(null);
@@ -1097,7 +1155,7 @@ export function useTerkepZoom(kesz: boolean, adatok: readonly TerkepOrszag[]) {
   useEffect(() => {
     const svg = svgRef.current;
     const g = gRef.current;
-    if (!kesz || !svg || !g) return;
+    if (!svgMountolva || !svg || !g) return;
     const z = zoom<SVGSVGElement, unknown>()
       .scaleExtent([1, ZOOM_MAX])
       .translateExtent([[0, 0], [W, H]])
@@ -1118,7 +1176,7 @@ export function useTerkepZoom(kesz: boolean, adatok: readonly TerkepOrszag[]) {
       select(svg).on('.zoom', null);
       zoomRef.current = null;
     };
-  }, [kesz]);
+  }, [svgMountolva]);
 
   useEffect(() => {
     const pinek = pinReteg(gRef.current);
@@ -1146,6 +1204,8 @@ export function useTerkepZoom(kesz: boolean, adatok: readonly TerkepOrszag[]) {
 }
 ```
 
+(megvalósítva: a hook első paramétere `svgMountolva` (a `kesz` helyett), és a pin-réteg DOM-szelektorait a `vetulet.ts` adja – `PIN_RETEG_SEL`, `PIN_SEL`, `PIN_BELSO_SEL` –, nem sztring-literálok a hookban.)
+
 - [ ] **Step 5: `VilagTerkep.tsx` – csak az összerakás**
 
 A fájl új tartalma: a fejkomment marad (a „A zoom (d3-zoom) közvetlenül a DOM-on…” rész helyett: „A zoom a `useTerkepZoom`-ban, a vetület a `vetulet.ts`-ben, a poligon- és pin-réteg a `TerkepRetegek` memo-komponensben van – a tooltip (hover-állapot) frissülése így nem rendereli újra őket.”), az `ARANY` konstans marad, és:
@@ -1162,14 +1222,14 @@ import {
 } from '../../../../lib/terkep-mutatok';
 import { Jelmagyarazat } from './Jelmagyarazat';
 import { RegioGombok } from './RegioGombok';
-import { SRAFF_ID, TerkepRetegek, type HoverFn } from './TerkepRetegek';
+import { TerkepRetegek, type HoverFn } from './TerkepRetegek';
 import { TerkepTooltip, type HoverAllapot } from './TerkepTooltip';
 import { useTerkepZoom } from './useTerkepZoom';
 import { useVilagAtlasz } from './useVilagAtlasz';
-import { GOMB_D, H, RACS_D, W } from './vetulet';
+import { GOMB_D, H, RACS_D, SRAFF_ID, W } from './vetulet';
 ```
 
-A komponensben: `const { poligonok, hiba } = useVilagAtlasz();`, `const { svgRef, gRef, patternRef, regio, nagyit, regioValaszt } = useTerkepZoom(poligonok !== null, adatok);`, a `wrapRef`, a `hover` állapot, a `rekordGeo`/`szinek` memo és az `onHover` változatlan; a `poligonok` memo, a zoom-effektek, a `pinReteg`, a `nagyit` és a `regioValaszt` törlődik (a hookban vannak). A JSX betűre a mostani.
+A komponensben: `const { poligonok, hiba } = useVilagAtlasz();`, `const { svgRef, gRef, patternRef, regio, nagyit, regioValaszt } = useTerkepZoom(poligonok !== null, adatok);`, a `wrapRef`, a `hover` állapot, a `rekordGeo`/`szinek` memo és az `onHover` változatlan; a `poligonok` memo, a zoom-effektek, a `pinReteg`, a `nagyit` és a `regioValaszt` törlődik (a hookban vannak). A JSX betűre a mostani. (megvalósítva: a `SRAFF_ID` a `./vetulet`-ből jön, nem a `./TerkepRetegek`-ből.)
 
 - [ ] **Step 6: Memo – `Jelmagyarazat`, `RegioGombok`, `OsszehasonlitasPanel`**
 
@@ -1201,6 +1261,8 @@ export function csoportKulcs(cs: Csoport): string {
   return cs.kategoria ?? '__nincs';
 }
 ```
+
+(megvalósítva: az `IPARAG_CIMKEK` `export const IPARAG_CIMKEK: Readonly<Record<string, string>>`; a `szures` is belső lett – az `export` törölve –, mellé jött a `kiemeli()`, amelyet a `szures` és az `orszagSzin` is hív.)
 
 A `RangsorPanel.tsx:117` és a `Jelmagyarazat.tsx:70` `key={cs.kategoria ?? '__nincs'}` → `key={csoportKulcs(cs)}`.
 
@@ -1343,8 +1405,9 @@ export function TerkepNezet({
   // Magyarország mindig viszonyítási alap, ezért a „+ Ország" jelöltjei között sincs.
   const jeloltLista = useMemo(() => jeloltek(adatok, [...vs, HAZAI_KOD], mutato), [adatok, vs, mutato]);
   const szamlalo = szamlaloSzoveg(adatok, rangsor, iparag, ev);
-  // A Szerkesztés-gomb jogát a nézett (ev) és az aktuális (most) évre számoljuk; egyszer kötjük meg, a
-  // fejléc, a panel és a kivonat csak az országot és a feliratokat adja hozzá.
+  // A Szerkesztés-gomb jogát a nézett (ev) és az aktuális (most) évre számoljuk; egyszer kötjük meg: a
+  // fejléc („Saját országprofil”) és a ProfilKivonat hívja az országgal és a feliratokkal, a TerkepPanel
+  // csak továbbadja.
   const szerkesztesGomb = useCallback<SzerkesztesGombFn>(
     (kod, opciok) => (
       <SzerkesztesGomb
@@ -1405,7 +1468,7 @@ export function TerkepNezet({
           hazai={allapot.hazai}
           jeloltek={jeloltLista}
           mutato={mutato}
-          tele={allapot.vsTele}
+          vsTele={allapot.vsTele}
           onKivalaszt={allapot.kivalaszt}
           onKivesz={allapot.vsKivesz}
           onHozzaad={allapot.vsHozzaad}
@@ -1434,6 +1497,8 @@ export function vsKiveszElem(v: readonly VsElem[], kod: string): readonly VsElem
 
 `OsszehasonlitasPanel.tsx`: új prop `tele: boolean` (doc ugyanúgy), továbbadva az `OsszehasonlitasFejlec`-nek. `OsszehasonlitasFejlec.tsx`: új prop `tele: boolean`, `const plusz = !tele && jeloltek.length > 0;`, a `VS_MAX` import törlése.
 
+(megvalósítva: a tele-jelző mindenhol `vsTele` néven fut – a `TerkepAllapot.vsTele`, valamint az `OsszehasonlitasCsik`, az `OsszehasonlitasPanel` és az `OsszehasonlitasFejlec` propja; a `TerkepNezet` is `vsTele={allapot.vsTele}`-t ad át, a fenti `tele` helyett.)
+
 - [ ] **Step 10: Apróságok**
 
 - `lib/terkep-mutatok.ts` `ertekEsHely`: visszatérési típus `{ szoveg: string; helyezett: boolean } | null`, a sikeres ág `return { szoveg: `…ugyanaz a sablon…`, helyezett: !!sor };`, a doc-komment kiegészül: „`helyezett`: az ország a (szűrt) rangsorban van”. `TerkepTooltip.tsx:23`: `${ertekEsHely(o, mutato, rangsor)?.szoveg ?? 'nincs adat'}`. `ProfilKivonat.tsx`: a `helyezett` számítás (47. sor) törlése; `ertek.helyezett` a `title`-ben, `{ertek.szoveg}` a szövegben.
@@ -1447,13 +1512,13 @@ export function vezetoJelzes(attasek: readonly OrszagAttase[], a: OrszagAttase):
 ```
 
   és a `TerkepTooltip.tsx` (`tobb && a.vezeto` → `vezetoJelzes(o.attasek, a)`, a `tobb` változó törlése), a `ProfilKivonat.tsx:61` és az `app/(app)/orszagprofil/components/AttaseLista.tsx:33` (`tobb && a.vezeto` → `vezetoJelzes(attasek, a)`; a `tobb` a címhez marad) ezt hívja.
-- `ProfilKivonat.tsx` `<dl>`: fájlszintű `function Sor({ cimke, children }: { cimke: string; children: ReactNode }) { return <><dt className="text-muted-foreground">{cimke}</dt><dd>{children}</dd></>; }`, és a 10 `<dt …>…</dt><dd>…</dd>` pár ezzel (a feltételek változatlanok). A két `cn(buttonVariants({ variant: 'outline' }))` → `buttonVariants({ variant: 'outline' })`, a `cn` import törlése, ha más nem használja.
+- `ProfilKivonat.tsx` `<dl>`: fájlszintű `function Sor({ cimke, children }: { cimke: string; children: ReactNode }) { return <><dt className="text-muted-foreground">{cimke}</dt><dd>{children}</dd></>; }`, és a 10 `<dt …>…</dt><dd>…</dd>` pár ezzel (a feltételek változatlanok). A két `cn(buttonVariants({ variant: 'outline' }))` → `buttonVariants({ variant: 'outline' })`, a `cn` import törlése, ha más nem használja. (megvalósítva: a `cn(buttonVariants(…))` **marad** – a tailwind-merge oldja fel az alap `border-transparent` és az outline `border-border` ütközését, nélküle az outline keret eltűnik –, ezért a `ProfilKivonat` két linkje is `cn`-nel építi a `className`-t, egy magyarázó kommenttel; lásd az 5. task „Elvetve” pontját. A `<dl>` végül 9 – nem 10 – `<dt>/<dd>` párt tartalmaz.)
 - `OsszehasonlitasFejlec.tsx`: fájlszintű `function AttaseEsAllapot({ o }: { o: TerkepOrszag })` a két ismétlődő sorral (attasé-sor + `AllapotBadge`), az országkártyák és a magyar kártya ezt rendereli.
 - A `TerkepTooltip` kategorikus ága (`mutatoSor` 27–28. sor) **marad**: a jövőbeli kategorikus mutatókat általánosan kezeli (a spec-ben elvetett pont).
 
 - [ ] **Step 11: Ellenőrzés**
 
-Run: `npx tsc --noEmit` – exit 0. Run: `grep -n "d3-zoom\|d3-geo\|useEffect" "app/(app)/terkep/components/VilagTerkep.tsx"` – Expected: nincs találat. Run: `grep -rn "VS_MAX" "app/(app)/terkep"` – Expected: csak import a `lib/osszehasonlitas`-ból és kommentek.
+Run: `npx tsc --noEmit` – exit 0. Run: `grep -n "d3-zoom\|d3-geo\|useEffect" "app/(app)/terkep/components/VilagTerkep.tsx"` – Expected: nincs találat (megvalósítva: egyetlen találat van, a fejkomment „a d3-geo csak a vetületet és a path-okat adja” mondata; import és használat nincs). Run: `grep -rn "VS_MAX" "app/(app)/terkep"` – Expected: csak import a `lib/osszehasonlitas`-ból és kommentek (megvalósítva: két használat is van – az `OsszehasonlitasCsik` „Legfeljebb ${VS_MAX} ország” szövege és a `useTerkepAllapot` `vsTele`-je –, mert mindkettő a szótár-konstansból számol).
 
 - [ ] **Step 12: CLAUDE.md**
 
@@ -1538,7 +1603,8 @@ export interface SelectOpcio {
  * `<label for>` nem minden AT-nél számít névnek, ezért `aria-labelledby`: a címke id-ja + a sajátja (a név
  * így „címke + aktuális érték”). `name` megadásával a Base UI rejtett inputot renderel, így az érték a
  * FormData-ban is megjelenik. Üres `value` = nincs kiválasztva (a `placeholder` látszik). A hiba kulcsa az
- * `id`; `errors` nélkül nincs hibasor. A `children` a hibasor alá kerül (pl. megjegyzés).
+ * `id`; `errors: null` (pl. szűrők) = nincs hibasor. A `children` a hibasor alá kerül (pl. megjegyzés).
+ * Nem azonos a `CimkeValaszto`-val (címke-chipek fix listából): ez címkés legördülő.
  */
 export function CimkesSelect({
   id, cimke, value, onChange, opciok, name, placeholder, required, errors, className, children,
@@ -1551,7 +1617,7 @@ export function CimkesSelect({
   name?: string;
   placeholder?: string;
   required?: boolean;
-  errors?: MezoHibak;
+  errors: MezoHibak | null;
   /** A trigger osztályai (pl. szélesség). */
   className?: string;
   children?: ReactNode;
@@ -1582,6 +1648,42 @@ export function CimkesSelect({
 ```
 
 - `app/(app)/jelentesek/components/RiportSzurok.tsx`: a `SzuroSelect` és a `SzuroOpcio` törlése; a hívóhelyeken `<CimkesSelect id=… cimke=… value={ertek || MIND} onChange={(v) => onChange(szuroErtek(v))} opciok={[{ ertek: MIND, cimke: 'Mind' }, ...opciok]} className=… />` (a `KATEGORIA_OPCIOK`/`KULCSSZO_OPCIOK` típusa `SelectOpcio[]`; a `MIND` és a `szuroErtek` marad). A „Mind” a mai sorrendben az első opció.
+
+(megvalósítva: a hívóhelyek nem közvetlenül a `CimkesSelect`-et hívják: egy helyi `SzuroSelect` burok fogja össze a „Mind” őrszemet és a `szuroErtek`-átalakítást a `CimkesSelect` körül – a „Mind” az első opció –, és `errors={null}`-t ad, mert a `CimkesSelect` `errors`-a kötelező (`MezoHibak | null`). Ezért a `function SzuroSelect` szándékosan megmaradt a fájlban (a `SzuroOpcio` helyett a `SelectOpcio` típussal):
+
+```tsx
+const MIND_OPCIO: SelectOpcio = { ertek: MIND, cimke: 'Mind' };
+
+/** Szűrő-legördülő: a „Mind” az első opció; az üres `ertek` (és a „Mind” választása) = nincs szűrő. */
+function SzuroSelect({
+  id,
+  cimke,
+  ertek,
+  opciok,
+  onChange,
+  className,
+}: {
+  id: string;
+  cimke: string;
+  ertek: string;
+  opciok: readonly SelectOpcio[];
+  onChange: (v: string) => void;
+  className?: string;
+}) {
+  return (
+    <CimkesSelect
+      id={id}
+      cimke={cimke}
+      value={ertek || MIND}
+      opciok={[MIND_OPCIO, ...opciok]}
+      onChange={(v) => onChange(szuroErtek(v))}
+      className={className}
+      errors={null}
+    />
+  );
+}
+```
+
 - `app/(app)/kommunikacio/components/UjTicketDialog.tsx`: a `Valaszto` törlése; modulszintű `const TIPUS_OPCIOK = Object.entries(TIPUSOK).map(([ertek, cimke]) => ({ ertek, cimke }));` és `PRIO_OPCIOK` ugyanígy; `<CimkesSelect id="tipus" name="tipus" cimke="Típus" value={tipus} onChange={(v) => setTipus(isTipusKulcs(v) ? v : '')} opciok={TIPUS_OPCIOK} placeholder="Válassz típust" errors={errors} required className="w-full" />`, a prioritásnál ugyanígy (a kommentje marad).
 - `app/(app)/felhasznalok/components/UjFelhasznaloDialog.tsx`, `SzerkesztesDialog.tsx`: a `Label id="szerepkor-label"` + `SzerepkorSelect` + `MezoHiba` blokk helyett `<CimkesSelect id="szerepkor" name="szerepkor" cimke="Szerepkör" value={szerepkor} onChange={(v) => setSzerepkor(szerepkorbol(v))} opciok={SZEREPKOR_OPCIOK} placeholder="Válassz szerepkört" errors={errors} className="w-full" />` – a `SzerkesztesDialog`-ban a „Adminra váltva…” megjegyzés a `children`. A `SZEREPKOR_OPCIOK` a `lib/felhasznalo-validacio.ts`-ben (a `SZEREPKOR_CIMKE` után): `export const SZEREPKOR_OPCIOK = SZEREPKOROK.map((k) => ({ ertek: k, cimke: SZEREPKOR_CIMKE[k] }));`. A `SzerepkorSelect.tsx` törlése (`git rm`).
 
@@ -1617,7 +1719,7 @@ export function useNyitas() {
 - `components/form/useMuveletForm.ts`: a `FormAction` után `/** Paraméter nélküli (bind-olt) server action, pl. törlés vagy státuszváltás. */ export type MuveletAction = () => Promise<MuveletState>;`. A `() => Promise<MuveletState>` alak helyett ez: `RiportReszlet.tsx:24`, `RiportTorles.tsx:19`, `TicketAdatlap.tsx:39-40`, `TicketStatuszGombok.tsx:19`.
 - A `RiportFormState` (`app/(app)/jelentesek/actions.ts`, `app/(app)/uj-jelentes/actions.ts`) és a `TicketFormState` (`app/(app)/kommunikacio/actions.ts`) alias törlése, helyettük `MuveletState`. Előbb: `grep -rn "RiportFormState\|TicketFormState" app components` – a hívók is.
 - `app/(app)/felhasznalok/actions.ts`: az `export type { MuveletState };` sor törlése (az egyetlen importáló, a `FelhasznaloMuveletek`, az 5. lépésben átállt).
-- `SearchParams` egy helyen: a típus `lib/riport-szuro.ts`-ből → `lib/routes.ts` (`export type SearchParams = Record<string, string | string[] | undefined>;`), a `riport-szuro.ts` onnan importálja és továbbra is a saját aláírásában használja; `app/(app)/kommunikacio/page.tsx` saját deklarációja helyett import; a `grep -rn "string | string\[\] | undefined" app` többi page-típusa (pl. `app/login/page.tsx`, `app/(app)/jelentesek/page.tsx`) is ezt importálja.
+- `SearchParams` egy helyen: a típus `lib/riport-szuro.ts`-ből → `lib/routes.ts` (`export type SearchParams = Record<string, string | string[] | undefined>;`), a `riport-szuro.ts` onnan importálja és továbbra is a saját aláírásában használja; `app/(app)/kommunikacio/page.tsx` saját deklarációja helyett import; a `grep -rn "string | string\[\] | undefined" app` többi page-típusa (pl. `app/login/page.tsx`, `app/(app)/jelentesek/page.tsx`) is ezt importálja. (megvalósítva: a `riport-szuro.ts` nem exportálja tovább, és a `/terkep` page is a `lib/routes.ts`-ből importálja.)
 
 - [ ] **Step 7: Országprofil-blokkok – `mezo(k)`, közös mezősor, kimerítő szerkesztő-tábla**
 
@@ -1638,7 +1740,7 @@ export function useBlokkAllapot<T extends object>(blokk: BlokkKulcs, initial: T)
 }
 ```
 
-A 9 `mezok/*Mezok.tsx`: `const [e, set] = useBlokkAllapot(initial…)` → `const { mezo } = useBlokkAllapot(B, initial…)` (ahol `e`/`set` is kell – `RendezvenyekMezok` –, azt is destrukturáld); minden mező `id={mezoId(B, 'x')} name="x" {...C.x} value={e.x} onChange={set('x')}` → `{...mezo('x')} {...C.x}`; az `egyeb={{ id: mezoId(B, 'y'), name: 'y', ...C.y, value: e.y, onChange: set('y'), max: ROVID_MAX }}` → `egyeb={{ ...mezo('y'), ...C.y, max: ROVID_MAX }}`. A fölöslegessé vált `mezoId` importok kikerülnek.
+A 9 `mezok/*Mezok.tsx`: `const [e, set] = useBlokkAllapot(initial…)` → `const { mezo } = useBlokkAllapot(B, initial…)` (ahol `e`/`set` is kell – `RendezvenyekMezok` –, azt is destrukturáld); minden mező `id={mezoId(B, 'x')} name="x" {...C.x} value={e.x} onChange={set('x')}` → `{...mezo('x')} {...C.x}`; az `egyeb={{ id: mezoId(B, 'y'), name: 'y', ...C.y, value: e.y, onChange: set('y'), max: ROVID_MAX }}` → `egyeb={{ ...mezo('y'), ...C.y, max: ROVID_MAX }}`. A fölöslegessé vált `mezoId` importok kikerülnek. (megvalósítva: a hook nem tuple-t, hanem `{ e, set, mezo }` objektumot ad; a rendezvénysorok kezdőértéke a `kezdoRendezvenySorok()`, lásd a 8. lépést.)
 
 `lib/orszagprofil-szotar.ts`, a `MEZO_CIMKEK` után:
 
@@ -1656,14 +1758,29 @@ export const SZOVEGES_MEZOK = {
 } as const satisfies { [K in BlokkKulcs]?: readonly (keyof ProfilBlokkok[K])[] };
 
 type SzovegesBlokk = keyof typeof SZOVEGES_MEZOK;
-// Fordítási őr: minden lista a blokk összes mezőjét tartalmazza (egy kimaradt mező az űrlapról és a nézetből is eltűnne).
-const SZOVEGES_TELJES: { [K in SzovegesBlokk]: [Exclude<keyof ProfilBlokkok[K], (typeof SZOVEGES_MEZOK)[K][number]>] extends [never] ? true : never } = {
-  intezmenyek: true, programok: true, nemzetkoziKapcsolatok: true, magyarErtekeles: true,
-};
-void SZOVEGES_TELJES;
+/** A `SZOVEGES_MEZOK` listáiból kimaradt mezőnevek (minden blokkból együtt); `never`, ha mind teljes. */
+type Hianyzo = { [K in SzovegesBlokk]: Exclude<keyof ProfilBlokkok[K], (typeof SZOVEGES_MEZOK)[K][number]> }[SzovegesBlokk];
+type Csak<T extends true> = T;
+/**
+ * Fordítási őr: minden lista a blokk összes mezőjét tartalmazza (egy kimaradt mező az űrlapról és a nézetből is
+ * eltűnne); hiánynál a hibaüzenet a hiányzó mezőnevet mutatja. Csak típus, futásidőben nincs nyoma.
+ */
+export type SzovegesMezokTeljesek = Csak<[Hianyzo] extends [never] ? true : Hianyzo>;
 ```
 
+(megvalósítva: a teljességi őr tisztán típusszintű – `SzovegesMezokTeljesek` –, nincs futásidejű `SZOVEGES_TELJES` objektum; ha egy lista kihagy egy mezőt, a fordítási hiba megnevezi a hiányzó mezőt.)
+
 A négy blokk űrlapja (`IntezmenyekMezok`, `ProgramokMezok`, `NemzetkoziKapcsolatokMezok`, `MagyarErtekelesMezok`): `{(errors) => SZOVEGES_MEZOK[B].map((k) => <SzovegMezo key={k} {...mezo(k)} {...C[k]} max={SZOVEG_MAX} errors={errors} />)}`. A `BlokkNezet` négy `(['…'] as const).map(...)` listája → `SZOVEGES_MEZOK.<blokk>.map(...)` (a `magyarKapcsolatok` listája marad – ott a `egyezmeny` `RovidMezo`).
+
+(megvalósítva: a `MagyarErtekelesMezok` az összegzés mezőjének megtartja a saját korlátját (`OSSZEGZES_MAX`, 3 sor) – a 7. blokk összegzése a térkép panelén is megjelenik –, explicit propokkal:
+
+```tsx
+      {(errors) => SZOVEGES_MEZOK[B].map((k) => (
+        // Az összegzés a térkép panelén is megjelenik: rövidebb korlát, kisebb mező.
+        <SzovegMezo key={k} {...mezo(k)} {...C[k]} max={k === 'osszegzes' ? OSSZEGZES_MAX : SZOVEG_MAX}
+          sorok={k === 'osszegzes' ? 3 : undefined} errors={errors} />
+      ))}
+```
 
 `app/(app)/orszagprofil/[kod]/szerkesztes/page.tsx`: a 9 kézi sor helyett modulszintű, kimerítő tábla és iteráció (a `BLOKK_KULCSOK` sorrendje azonos a mai kézi sorrenddel – ellenőrizd):
 
@@ -1710,6 +1827,7 @@ import type { MezoHibak } from '../../../../lib/urlap';
 import {
   REND_MEZO_CIMKEK, RENDEZVENY_MAX, RENDEZVENY_TIPUSOK, ROVID_MAX, rendezvenyTipus, type Rendezveny,
 } from '../../../../lib/orszagprofil-szotar';
+import { mezoId } from './BlokkForm';
 
 /** Egy rendezvénysor az űrlapon; az `id` stabil kliens-kulcs (a sorok törölhetők, a pozíció változik), a mentésbe nem kerül. */
 export interface RendezvenySor extends Rendezveny {
@@ -1719,7 +1837,7 @@ export interface RendezvenySor extends Rendezveny {
 const R = REND_MEZO_CIMKEK;
 
 /** Az űrlap kezdősorai a mentett listából. */
-export function rendezvenySorok(lista: readonly Rendezveny[]): RendezvenySor[] {
+export function kezdoRendezvenySorok(lista: readonly Rendezveny[]): RendezvenySor[] {
   return lista.map((r, i) => ({ ...r, id: i + 1 }));
 }
 
@@ -1738,7 +1856,7 @@ export function RendezvenySorok({
   const [elavultHibak, setElavultHibak] = useState<MezoHibak | null>(null);
   const hibak = elavultHibak === errors ? {} : errors;
   const set = (id: number, patch: Partial<Rendezveny>) => onChange(value.map((r) => (r.id === id ? { ...r, ...patch } : r)));
-  const mezoId = (i: number, m: keyof Rendezveny) => `rendezvenyek.rendezveny.${i}.${m}`;
+  const sorId = (i: number, m: keyof Rendezveny) => mezoId('rendezvenyek', `rendezveny.${i}.${m}`);
   const ujSor = () => {
     flushSync(() => {
       onChange([
@@ -1746,7 +1864,7 @@ export function RendezvenySorok({
         { id: Math.max(0, ...value.map((r) => r.id)) + 1, nev: '', tipus: RENDEZVENY_TIPUSOK[0].kulcs, idopont: '', megjegyzes: '' },
       ]);
     });
-    document.getElementById(mezoId(value.length, 'nev'))?.focus();
+    document.getElementById(sorId(value.length, 'nev'))?.focus();
   };
   const torolSor = (id: number) => {
     flushSync(() => {
@@ -1760,17 +1878,17 @@ export function RendezvenySorok({
       {value.map((r, i) => (
         <fieldset key={r.id} className="grid gap-3 rounded-md border border-border p-3 sm:grid-cols-2">
           <legend className="px-1 text-xs text-muted-foreground">{i + 1}. rendezvény</legend>
-          <RovidMezo id={mezoId(i, 'nev')} name={`rendezveny.${i}.nev`} {...R.nev} value={r.nev}
+          <RovidMezo id={sorId(i, 'nev')} name={`rendezveny.${i}.nev`} {...R.nev} value={r.nev}
             onChange={(v) => set(r.id, { nev: v })} max={ROVID_MAX} errors={hibak} />
-          <Mezo id={mezoId(i, 'tipus')} {...R.tipus} errors={hibak}>
-            <NativeSelect id={mezoId(i, 'tipus')} name={`rendezveny.${i}.tipus`} value={r.tipus}
+          <Mezo id={sorId(i, 'tipus')} {...R.tipus} errors={hibak}>
+            <NativeSelect id={sorId(i, 'tipus')} name={`rendezveny.${i}.tipus`} value={r.tipus}
               onChange={(e) => set(r.id, { tipus: rendezvenyTipus(e.target.value) })}>
               {RENDEZVENY_TIPUSOK.map((t) => <option key={t.kulcs} value={t.kulcs}>{t.cimke}</option>)}
             </NativeSelect>
           </Mezo>
-          <RovidMezo id={mezoId(i, 'idopont')} name={`rendezveny.${i}.idopont`} {...R.idopont} value={r.idopont}
+          <RovidMezo id={sorId(i, 'idopont')} name={`rendezveny.${i}.idopont`} {...R.idopont} value={r.idopont}
             onChange={(v) => set(r.id, { idopont: v })} max={ROVID_MAX} errors={hibak} />
-          <RovidMezo id={mezoId(i, 'megjegyzes')} name={`rendezveny.${i}.megjegyzes`} {...R.megjegyzes} value={r.megjegyzes}
+          <RovidMezo id={sorId(i, 'megjegyzes')} name={`rendezveny.${i}.megjegyzes`} {...R.megjegyzes} value={r.megjegyzes}
             onChange={(v) => set(r.id, { megjegyzes: v })} max={ROVID_MAX} errors={hibak} />
           <div className="sm:col-span-2">
             <Button type="button" variant="outline" size="sm" aria-label={`${i + 1}. rendezvény törlése`} onClick={() => torolSor(r.id)}>
@@ -1790,7 +1908,7 @@ export function RendezvenySorok({
 }
 ```
 
-Ha a shadcn `Button` nem adja tovább a `ref`-et (React 19-ben a `ref` sima prop, a Base UI Button továbbítja – az `OrszagMezok` hozzáadás-gombja ugyanígy használja), a fordító szól. `RendezvenyekMezok.tsx`: `useBlokkAllapot(B, { ...initial, lista: rendezvenySorok(initial.lista) })`. A `RovidMezo` az `autoComplete="off"`-ot maga adja; a `Mezo` a tipus-sorhoz `MezoHiba`-t is renderel (a tipusra nincs hiba, üresen marad).
+Ha a shadcn `Button` nem adja tovább a `ref`-et (React 19-ben a `ref` sima prop, a Base UI Button továbbítja – az `OrszagMezok` hozzáadás-gombja ugyanígy használja), a fordító szól. `RendezvenyekMezok.tsx`: `useBlokkAllapot(B, { ...initial, lista: kezdoRendezvenySorok(initial.lista) })` (megvalósítva: a függvény neve `kezdoRendezvenySorok`, és a sorok mező-id-ját a `BlokkForm` közös `mezoId`-ja képezi – `sorId` –, nem külön sablon-sztring). A `RovidMezo` az `autoComplete="off"`-ot maga adja; a `Mezo` a tipus-sorhoz `MezoHiba`-t is renderel (a tipusra nincs hiba, üresen marad).
 
 - [ ] **Step 9: Teljesítmény-apróságok**
 
@@ -1869,12 +1987,12 @@ export function SzinesBadge({ szin, children }: { szin: string; children: ReactN
 ```
 
   `AgazatBadge`: `return <SzinesBadge szin={AGAZAT_SZINEK[agazat]}>{agazat}</SzinesBadge>;`; `AllapotBadge`: `return <SzinesBadge szin={ALLAPOT_SZINEK[allapot]}>{ALLAPOT_CIMKE[allapot]}{ev ? ` · ${ev}` : ''}</SzinesBadge>;` (a kommentjeik a `SzinesBadge`-be kerültek).
-- `app/(app)/kommunikacio/components/TicketJelzesek.tsx:5` kommentje fordítva állítja a riport-jelvényről, hogy nem a szótárból színez (a `KategoriaBadge` a `kategoriaByKulcs(kulcs).szin`-t használja): „// A színek itt, nem a szótárban: a ticket-szótár framework-mentes, Tailwind-osztályt nem tárol (a riport-kategóriák színe ezzel szemben a szótárban van, hex-ként).” (az 1. task review-ja).
-- **Elvetve (a 4. task tanulsága):** az egyargumentumú `cn(buttonVariants(…))` **nem** fölösleges – a tailwind-merge oldja fel az alap `border-transparent` és a variáns (pl. outline `border-border`) ütközését; a build CSS-ében a `.border-transparent` a későbbi, `cn` nélkül az outline keret eltűnik. Ezért a `cn` marad mindenhol. Helyette: `app/(app)/orszagprofil/components/NemSzerkeszthetoEv.tsx:37` „profil megtekintése” linkje `cn` nélkül kapja a `buttonVariants({ variant: 'outline' })`-t (valószínűleg ma is keret nélküli) → `className={cn(buttonVariants({ variant: 'outline' }))}` (import `cn` a `lib/utils`-ból); `grep -rn "buttonVariants(" app components | grep -v "cn("` – a maradék találat csak `cn(...)`-be ágyazott feltételes ág lehet (pl. `IntezkedesSzerkeszto`). A CLAUDE.md „Link gombként” pontjába: „a `buttonVariants()` kimenete mindig `cn()`-nel kerüljön a `className`-be (a tailwind-merge oldja fel az alap `border-transparent` és a variáns keretszín ütközését; nélküle az outline keret eltűnik)”.
+- `app/(app)/kommunikacio/components/TicketJelzesek.tsx:5` kommentje fordítva állítja a riport-jelvényről, hogy nem a szótárból színez (a `KategoriaBadge` a `kategoriaByKulcs(kulcs).szin`-t használja): „// A színek itt, nem a szótárban: a ticket-szótár framework-mentes, Tailwind-osztályt nem tárol (a riport-kategóriák színe ezzel szemben a szótárban van, hex-ként).” (az 1. task review-ja). (megvalósítva: a végleges komment szerint a riport-kategóriák színe a szótárban Tailwind-osztály, nem hex: „…a szótárban van, Tailwind-osztályként: `KATEGORIAK[].szin`”.)
+- **Elvetve (a 4. task tanulsága):** az egyargumentumú `cn(buttonVariants(…))` **nem** fölösleges – a tailwind-merge oldja fel az alap `border-transparent` és a variáns (pl. outline `border-border`) ütközését; a build CSS-ében a `.border-transparent` a későbbi, `cn` nélkül az outline keret eltűnik. Ezért a `cn` marad mindenhol. Helyette: `app/(app)/orszagprofil/components/NemSzerkeszthetoEv.tsx:37` „profil megtekintése” linkje `cn` nélkül kapja a `buttonVariants({ variant: 'outline' })`-t (valószínűleg ma is keret nélküli) → `className={cn(buttonVariants({ variant: 'outline' }))}` (import `cn` a `lib/utils`-ból); `grep -rn "buttonVariants(" app components | grep -v "cn("` – a maradék találat csak `cn(...)`-be ágyazott feltételes ág lehet (pl. `IntezkedesSzerkeszto`). A CLAUDE.md „Link gombként” pontjába: „a `buttonVariants()` kimenete mindig `cn()`-nel kerüljön a `className`-be (a tailwind-merge oldja fel az alap `border-transparent` és a variáns keretszín ütközését; nélküle az outline keret eltűnik)”. (megvalósítva: így is lett; a `NemSzerkeszthetoEv` linkje megkapta a `cn`-t – a spec 7. szándékos változása.)
 
 - [ ] **Step 11: Ellenőrzés**
 
-Run: `npx tsc --noEmit` – exit 0. Run: `grep -rn "SzerepkorSelect\|function Valaszto\|function SzuroSelect\|RiportFormState\|TicketFormState" app components` – Expected: nincs találat.
+Run: `npx tsc --noEmit` – exit 0. Run: `grep -rn "SzerepkorSelect\|function Valaszto\|function SzuroSelect\|RiportFormState\|TicketFormState" app components` – Expected: nincs találat (megvalósítva: egyetlen találat van, a `RiportSzurok` szándékosan megtartott helyi `function SzuroSelect` burka, lásd a 4. lépést).
 
 - [ ] **Step 12: CLAUDE.md**
 
@@ -1907,7 +2025,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 - [ ] **Step 2: `lib/score.ts`**
 
-- `avg`: `for (let i = 1; i <= CRITERIA.length; i++)` és `return s / CRITERIA.length;`.
+- `avg`: `for (let i = 1; i <= CRITERIA.length; i++)` és `return s / CRITERIA.length;`. (megvalósítva, `655c87f`: az `avg` a szempontok id-jain megy végig, mint a `catAvg` – `CRITERIA.reduce((s, c) => s + sc(p, c.id), 0) / CRITERIA.length` –, értékre azonos.)
 - `PILL_COLORS`: csak a `Magas`, `Közepes`, `Alacsony` kulcs marad (`grep -rn "pill(" app` – csak a monitoring gyakoriság-pillje).
 
 - [ ] **Step 3: `app/(app)/monitoring/page.tsx`**
@@ -1925,7 +2043,7 @@ A `README.md` projektstruktúra-szakasza (kb. a 80–95. sor; az 1. task spec-re
 
 - [ ] **Step 5: A spec „Megvalósítási eltérések” szakasza**
 
-A spec végére új `## Megvalósítási eltérések` szakasz: amit az implementáció közben a review-k (vagy a fordító) a tervhez képest módosítottak – a tervezéskor pontosított döntések már a spec törzsében vannak. Az „Állapot” sor: „megvalósítva” + dátum.
+A spec végére új `## Megvalósítási eltérések` szakasz: amit az implementáció közben a review-k (vagy a fordító) a tervhez képest módosítottak – a tervezéskor pontosított döntések már a spec törzsében vannak. Az „Állapot” sor: „megvalósítva” + dátum. (megvalósítva: a szakaszt – az „Állapot” sorral, a „Mérések” és az „Ismert korlátok, follow-upok” alszakasszal és a szándékos viselkedésváltozások 6–7. pontjával együtt – a vezérlő írta meg a 7. task után, a `36c6ba6` docs-commitban, nem a 6. task implementere.)
 
 - [ ] **Step 6: Ellenőrzés és commit**
 
@@ -1953,3 +2071,5 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 - [ ] **Step 5: Funkcionális QA (gstack, a futó dev szerveren)** – térkép: hover-tooltip pinen és poligonon, zoom (+/−/görgetés), régió-gombok, mutatóváltás, iparág-szűrő, összehasonlítás felvétele/kivétele (4-es korlát szövege), „Saját országprofil” (vezető attasé), kivonat „Szerkesztés” gombja múltbeli évnél „Szerkesztés (2026)”; profil-szerkesztő: egy blokk mentése, hibás szám hibaüzenete és fókusza, rendezvénysor hozzáadása (fókusz az új sor nevén) és törlése (fókusz a hozzáadás-gombon); új jelentés hibás (üres) és helyes beküldése, „(opcionális)” felirat; jelentés-részlet csatolmány-letöltése; Jelentések szűrők (kategória, kulcsszó, admin ország/attasé); új ticket dialógus (típus/prioritás select, hibás beküldés), ticket-válasz és a lista görgetése; felhasználók: dialógusok megnyitása, hibás mentés, szerepkör-váltás megjegyzése, lapcím; kijelentkezés és `/login?next=/jelentesek` visszairányítás, valamint egy 600 karakteres `?next=` → `/terkep`. A QA végén kijelentkezés; a `data/tet.db`-t nem commitoljuk (a gstack-belépés session-sort ír).
 
 - [ ] **Step 6: Záró review** – egy teljes ág-review (spec-megfelelés + minőség) a `main..kod-rendezes` tartományra; a talált hibák javítása; utána a terv kódblokkjainak szinkronizálása a végleges fájlokhoz külön docs-commitban; végül `superpowers:finishing-a-development-branch` (a felhasználó eddig a lokális fast-forward merge-et választotta).
+
+(megvalósítva – hatókörön kívüli javítás: a böngészős QA (5. lépés) feltárta, hogy a csatolmány nélküli jelentés-beadás hibás volt: az üres file-input 0 bájtos helykitöltőt küld, amely a React 19.2 server actionben `blob` nevű. Javítva a `c412cc4`-ben: a `CsatolmanyMezo` rejtett inputja csak kiválasztott fájlnál kap `name`-et, a `valodiFajlok` a `'blob'` nevű helykitöltőt is kiszűri (spec: 6. szándékos viselkedésváltozás). Ez nem része a kódrendezésnek: a hiba a `main`-ben is megvolt. A mérések eredménye és az ismert korlátok a spec „Megvalósítási eltérések” szakaszában vannak.)
