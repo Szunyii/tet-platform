@@ -239,7 +239,10 @@ viselkedésváltozások” szakasz négy pontja kivételével.
   `Mezo` megtartja, az `OrszagMezok` használja); a `RendezvenySorok` stabil sor-azonosítót kap az
   index-kulcs helyett; a `/felhasznalok` lapcímet kap; a csatolmány-URL egy `csatolmanyUrl(id)`
   segéd a `lib/routes.ts`-ben (`CsatolmanyMezo`, `RiportReszlet`); az `AgazatBadge` és
-  `AllapotBadge` közös inline színstílusa egy `SzinesBadge` komponens; az egyargumentumú `cn(...)` hívások egyszerűsödnek.
+  `AllapotBadge` közös inline színstílusa egy `SzinesBadge` komponens. (Az egyargumentumú
+  `cn(buttonVariants(…))` hívások **maradnak**: a 4. task kimutatta, hogy a tailwind-merge oldja fel
+  az alap `border-transparent` és az outline `border-border` ütközését; a `NemSzerkeszthetoEv` `cn`
+  nélküli outline linkje ezért kapja meg a `cn`-t.)
 
 ### 6. Demóadat-maradék és dokumentáció
 
