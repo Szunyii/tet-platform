@@ -93,8 +93,12 @@ function terkepAlapadatok(a: Alapadatok): TerkepAlapadatok {
   return { fovaros, terulet, penznem, lakossag, gdp, gdpEgyFore, gdpNovekedes, adatEv, forras, tagsagok };
 }
 
-// A mentett blokkok száma SQL-ben, a `BLOKK_KULCSOK`-ból (kimerítő): így a kilenc JSON-oszlopot nem kell beolvasni.
-const MENTETT_DB = sql<number>`${sql.join(BLOKK_KULCSOK.map((k) => sql`(${orszagprofil[k]} is not null)`), sql` + `)}`;
+// A mentett blokkok száma SQL-ben, a `BLOKK_KULCSOK`-ból (kimerítő): a számoláshoz így nem kell mind a kilenc
+// JSON-oszlopot beolvasni. A JSON 'null' szöveg nem számít mentettnek – a Drizzle azt is null-ként olvassa, mint a getProfil.
+const MENTETT_DB = sql<number>`${sql.join(
+  BLOKK_KULCSOK.map((k) => sql`(${orszagprofil[k]} is not null and ${orszagprofil[k]} <> 'null')`),
+  sql` + `,
+)}`;
 
 export interface TerkepOrszag {
   kod: string;

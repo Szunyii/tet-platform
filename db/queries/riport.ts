@@ -248,12 +248,11 @@ export function getCsatolmany(id: string): (CsatolmanyMeta & { riportId: string;
 }
 
 /** Letöltés előtti jogosultság-ellenőrzéshez, blob nélkül; a bejegyzés szerzőjével (`canViewRiport`). */
-export function getCsatolmanyMeta(id: string): (CsatolmanyMeta & { riportId: string; szerzoId: string }) | null {
+export function getCsatolmanyMeta(id: string): (CsatolmanyMeta & { szerzoId: string }) | null {
   return (
     db
       .select({
         id: riportCsatolmany.id,
-        riportId: riportCsatolmany.riportId,
         szerzoId: riport.szerzoId,
         fajlnev: riportCsatolmany.fajlnev,
         mime: riportCsatolmany.mime,
