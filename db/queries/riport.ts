@@ -230,12 +230,11 @@ export function deleteRiport(id: string): void {
 }
 
 /** Letöltéshez, blobbal. */
-export function getCsatolmany(id: string): (CsatolmanyMeta & { riportId: string; tartalom: Buffer }) | null {
+export function getCsatolmany(id: string): (CsatolmanyMeta & { tartalom: Buffer }) | null {
   return (
     db
       .select({
         id: riportCsatolmany.id,
-        riportId: riportCsatolmany.riportId,
         fajlnev: riportCsatolmany.fajlnev,
         mime: riportCsatolmany.mime,
         meret: riportCsatolmany.meret,

@@ -32,7 +32,7 @@ function Szakasz({ cim, jelmagyarazat, children }: { cim: string; jelmagyarazat?
  * Az összehasonlítás a térkép alatt, teljes szélességben (a keskeny jobb panelen nem férne el): fejléc
  * (országkártyák, „+ Ország", Magyarország), számszerű mutatónként egy kártya, és a listák mátrixa.
  * Minden ország saját színt kap (`szinek`); Magyarország – ha legfeljebb a nézett évig van profilja –
- * mindig viszonyítási alap. Címsor-szintek: a panel címe 2-es szintű (az AppShell lapcíme a `h1`), a
+ * mindig viszonyítási alap. Címsor-szintek: a panel címe 2-es szintű (a `Fejlec` lapcíme a `h1`), a
  * szakaszok `h3`, a kártyák `h4`. memo: minden propja stabil (useMemo/useCallback a TerkepNezetben és a
  * useTerkepAllapotban), így a kijelölés vagy az iparág-szűrő változása nem rendereli újra a kártyákat és
  * a mátrixokat.

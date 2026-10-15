@@ -79,7 +79,7 @@ export const UTVONALAK: readonly Utvonal[] = [
 const SEMLEGES_CIM: [string, string] = ['TéT Platform', ''];
 
 /** Pontos egyezés vagy alútvonal (pl. /jelentesek/abc → /jelentesek). */
-export function isActive(pathname: string, href: string): boolean {
+function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(href + '/');
 }
 

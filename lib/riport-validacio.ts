@@ -95,7 +95,7 @@ const HELYKITOLTO_NEVEK: ReadonlySet<string> = new Set(['', 'undefined', 'blob']
  * action kódolása után a neve a régebbi Reactben a `"undefined"` string, a React 19.2-ben a
  * névtelen blob alapneve, `"blob"`. Ezeket nem tekintjük fájlnak (a `CsatolmanyMezo` üres
  * listánál nevet sem ad a rejtett inputnak, így ott be sem kerül). Következmény: egy valódi,
- * pontosan `blob` nevű 0 bájtos fájl hiba helyett némán kimarad – tartalma úgysincs. A más
+ * pontosan `blob` nevű 0 bájtos fájl hiba helyett némán kimarad – a szerveren; a kliens-előellenőrzés ezt is jelzi – tartalma úgysincs. A más
  * nevű 0 bájtos fájlt a `parseFajlok` továbbra is elutasítja („Üres fájl”).
  */
 function valodiFajlok(fd: FormData, key: string): File[] {
