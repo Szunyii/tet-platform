@@ -79,13 +79,16 @@ viselkedésváltozások” szakasz négy pontja kivételével.
   a `szerzoId`), nem a teljes `getRiport`-tal.
 - **Közös szabályok egy helyen:**
   - `lib/felhasznalo-tiltas.ts`: `aktivAttaseE(u, most)` (nem admin és nem tiltott) – a
-    `db/queries/attase-orszag.ts` és a `db/queries/ticket.ts` ezt hívja; `szerepkorbol(role)`
-    (`'admin' | 'attase'`) – a `lib/session.ts` és a `db/queries/felhasznalo.ts` ezt hívja.
+    `db/queries/attase-orszag.ts` és a `db/queries/ticket.ts` ezt hívja. `szerepkorbol(role)`
+    (`'admin' | 'attase'`) a `lib/felhasznalo-validacio.ts`-ben, a `Szerepkor` típus mellett (az
+    `AppRole` ennek aliasa) – a `lib/session.ts`, a `db/queries/felhasznalo.ts` és a szerepkör-select
+    ezt hívja.
   - Magyar névsor: `lib/rendezes.ts` `huOsszevet(a, b)` – egy modulszintű `Intl.Collator('hu')`
     `compare`-je (ugyanazt a sorrendet adja, mint a `localeCompare(…, 'hu')`); a `db/queries` 10
     `localeCompare(…, 'hu')` hívása ezt használja. A
     `listTicketek`, `listCimzettJeloltek`, `listKorlevelTagok` azonos rendezése így szerkezetileg
-    biztosított.
+    biztosított. (A tervezéskor: a `lib/attase-orszag.ts` három és a `lib/terkep-mutatok.ts` egy
+    hívása is ezt használja – összesen 12.)
   - Korlátok: `JELSZO_MIN`, `JELSZO_MAX`, `NEV_MAX` a `lib/felhasznalo-validacio.ts`-ben (a meglévő
     `EMAIL_MAX`, `TELEFON_MAX` mellett); a `scripts/demo-attasek.ts`, `scripts/seed.ts`, a
     `felhasznalok/actions.ts` üzenete és a dialógusok `minLength`/`maxLength`-je ezt használja.
@@ -111,7 +114,7 @@ viselkedésváltozások” szakasz négy pontja kivételével.
   `RiportErrors` (a fájlon belül a `MezoHibak` veszi át); `lib/auth-client.ts` `useSession`. A csak
   saját fájlban használt exportok (`LATHATATLAN_RE`, `VEZERLO_RE`, `kiterjesztes`, `FAJLNEV_MAX`,
   `jeloltRegioi`, `regioJeloltjei`) export nélküli belső konstansok lesznek. A `NEXT_MAX_LENGTH`
-  marad exportálva: a 3. task a login page-ből is használja.
+  marad exportálva (a CLAUDE.md közös helperként hivatkozik rá).
 
 ### 3. Shell
 
@@ -127,18 +130,19 @@ viselkedésváltozások” szakasz négy pontja kivételével.
   - `AppShell.tsx`: összerakás, az olvasatlan-számláló állapota (render-közbeni igazítás) marad itt.
   - A `useApp` négy importálója (`TerkepNezet`, `TerkepPanel`, `monitoring/page.tsx`,
     `OlvasatlanSzinkron`) az új útvonalra vált.
-- **Egyetlen útvonaltábla** `lib/navigacio.ts`-ben: `ROUTES` (href, ikon, menü-felirat, cím,
-  alcím, `adminOnly`, `alHrefek`, `menuben`), belőle a menü, a `titleFor` és az `isActive`. A `NAV`
-  és a `TITLES` megszűnik; új oldalnál egy sort kell felvenni. Az `/orszagprofil` sor csak címet ad
-  (nem menüpont). A menü-feliratok szó szerint maradnak (a „Tudástár ??” és a „Monitoring és
+- **Egyetlen útvonaltábla** `lib/navigacio.ts`-ben: `UTVONALAK` (href, cím, alcím, `adminOnly`,
+  opcionális `menu`: ikon, felirat, `alHrefek`), belőle a menü (`menupontok`, `menuAktiv`), a
+  `titleFor` és az `isActive`. A `NAV` és a `TITLES` megszűnik; új oldalnál egy sort kell felvenni.
+  Az `/orszagprofil` sor csak címet ad (nincs `menu`-je). A menü-feliratok szó szerint maradnak (a „Tudástár ??” és a „Monitoring és
   értékelés ??” is).
 - **`LogoutState`:** a megosztott komponens ne importáljon route-fájlból. A
   `components/app-shell/LogoutForm.tsx` maga deklarálja a szerződést, amit vár
   (`type LogoutAction = (prev: { error?: string }) => Promise<{ error?: string }>`); az
   `app/(app)/actions.ts` `logoutAction`-je strukturálisan megfelel neki, a `LogoutState` ott marad.
 - **Monogram:** `lib/nev.ts` `monogram(nev)`: a „.”-ra végződő szavakat (pl. „dr.”) kihagyja, üres
-  névre üres stringet ad. Az `AppShell` ezt hívja, nem a `lib/score` `ini`-jét; az `ini` törlődik
-  (más használója nincs). A `FIELDS`/`FIELD_COLORS` (csak a tudástár) a `lib/knowledge.ts`-be
+  névre üres stringet ad. Az oldalsáv ezt hívja, nem a `lib/score` `ini`-jét; az `ini` törlődik
+  (más használója nincs). A ticket-buborékok saját `Monogram`-ja (`TicketJelzesek.tsx`, ugyanaz a
+  „dr.”-hiba) is a `monogram()`-ot hívja, üres eredményre „?”-lel. A `FIELDS`/`FIELD_COLORS` (csak a tudástár) a `lib/knowledge.ts`-be
   költözik. Eredmény: a `lib/data` és a `lib/score` csak a `/monitoring` bundle-jében van, nem
   minden oldal közös chunkjában.
 - **Stílus:** Tailwind osztályok a mai értékekkel (pl. `text-[12.5px]`, `w-[238px]`), a színek
@@ -185,20 +189,22 @@ viselkedésváltozások” szakasz négy pontja kivételével.
 - **Összehasonlítás-halmaz:** a `VS_MAX` a `lib/osszehasonlitas.ts`-be kerül (a `VS_SZINEK.length`-
   ből), új `vsKiveszElem` a hozzáadás párjaként; a `vsTele`-t a hook adja a `OsszehasonlitasCsik`-
   nak és a `OsszehasonlitasFejlec`-nek is, nem számolják újra.
-- **Apróságok:** az `ertekEsHely` a helyezést is visszaadja (`{ szoveg, hely }`), a `ProfilKivonat`
-  nem keresi újra a rangsorban; a „vezetőt jelöljük-e” szabály (`attasek.length > 1 && a.vezeto`)
+- **Apróságok:** az `ertekEsHely` azt is visszaadja, hogy az ország a rangsorban van-e
+  (`{ szoveg, helyezett }`), a `ProfilKivonat` nem keresi újra a rangsorban; a „vezetőt jelöljük-e” szabály (`attasek.length > 1 && a.vezeto`)
   egy `lib/attase-orszag.ts`-beli segéd, a tooltip, a kivonat és az `AttaseLista` ezt hívja; a
   `ProfilKivonat` `<dl>`-je `Sor` segédkomponenssel; a `'__nincs'` kulcs egy konstans; a
-  `MUTATO_KULCSOK` export nélküli; a duplikált iparág-tagság-ellenőrzés egy függvény; a
-  `TerkepTooltip` elérhetetlen kategorikus ága törlődik; az `OsszehasonlitasFejlec` magyar kártyája
-  a közös kártyatestet használja.
+  `MUTATO_KULCSOK` export nélküli; a duplikált iparág-tagság-ellenőrzés egy függvény; az
+  `OsszehasonlitasFejlec` magyar kártyája a közös kártyatestet használja. A `TerkepTooltip`
+  kategorikus ága (ma egyik mutató sem éri el) **marad**: a jövőbeli kategorikus mutatókat
+  általánosan kezeli, a törlése egy új mutatónál néma hiányt okozna.
 
 ### 5. Űrlapok, jelentések, kommunikáció, felhasználók
 
 - **`Mezo` a kézzel írt mezőblokkok helyett** (kb. 24 blokk: `RiportForm`, `EsemenyMezok`,
   `IntezkedesDialog`, `UjTicketDialog`, `UjFelhasznaloDialog`, `SzerkesztesDialog`, `JelszoDialog`,
-  `RendezvenySorok`). A `Mezo`/`CimkeSor` `cimke` propja `ReactNode` lesz (a „(opcionális)” span
-  miatt). A `RendezvenySorok` három szövegmezője `RovidMezo`. Az aria-attribútumok nem változnak
+  `RendezvenySorok`). A `Mezo`/`CimkeSor` új `opcionalis` propja adja a halvány „(opcionális)”
+  utótagot (a `cimke` string marad, mert a `SugoGomb` felugrójának neve). A `RendezvenySorok` három
+  szövegmezője `RovidMezo`. Az aria-attribútumok nem változnak
   (`leiroAttr` súgó nélkül = `hibaAttr`).
 - **Jelentés-feliratok egy helyen:** `RIPORT_MEZO_CIMKEK` a `lib/riport-szotar.ts`-ben („Vezetői
   Összefoglaló”, „Fő üzenet, Mo. számára átvehető jó gyakorlat, javaslat”, „Kapcsolódó feladat,
@@ -208,10 +214,12 @@ viselkedésváltozások” szakasz négy pontja kivételével.
   `aria-labelledby="<id>-label <id>"`) a `SzuroSelect` (`RiportSzurok`), a `Valaszto`
   (`UjTicketDialog`) és a `SzerepkorSelect` helyett.
 - **Országprofil-blokkok:** a `useBlokkAllapot` egy `mezo(k)` prop-építőt is ad (`id`, `name`,
-  címke-szórás, `value`, `onChange` egy kulcsból), a 8 `*Mezok.tsx` ezt használja; a csak
-  szöveges blokkok (Intézmények, Programok, Nemzetközi kapcsolatok, Magyar értékelés) mezősorrend-
-  listája egy közös konstans a `lib/orszagprofil-szotar.ts`-ben, amelyet az űrlap és a `BlokkNezet`
-  is használ (a tárolt JSON kulcssorrendje nem változik).
+  `value`, `onChange` egy kulcsból; a címkéket a hívó szórja hozzá), a `*Mezok.tsx`-ek ezt
+  használják; a csak szöveges blokkok (Intézmények, Programok, Nemzetközi kapcsolatok, Magyar
+  értékelés) mezősorrend-listája egy közös `SZOVEGES_MEZOK` konstans a
+  `lib/orszagprofil-szotar.ts`-ben (fordítási őrrel a teljességre), amelyet az űrlap és a
+  `BlokkNezet` is használ (a tárolt JSON kulcssorrendje nem változik; a 6.2 blokk – benne egy
+  egysoros mező – kimarad).
 - **Szerkesztő blokklista:** a `[kod]/szerkesztes/page.tsx` kézi 9 sora helyett kimerítő tábla
   (`{ [K in BlokkKulcs]: ComponentType<BlokkMezokProps<ProfilBlokkok[K]>> }`), a `BLOKK_KULCSOK`-on
   iterálva, korrelált generikussal; a kimaradt blokk fordítási hiba lesz. A `<Fragment key={ev}>`
@@ -219,19 +227,19 @@ viselkedésváltozások” szakasz négy pontja kivételével.
 - **Dialógusok:** a `FelhasznaloMuveletek` a `SzerkesztesDialog`-ot és a `JelszoDialog`-ot csak az
   első nyitástól mountolja (mint az `IntezkedesSzerkeszto`); a „nyitásonként új `key`” minta
   (`UjFelhasznaloDialog`, `UjTicketDialog`, `IntezkedesSzerkeszto`, `FelhasznaloMuveletek`) közös
-  hook (`components/form/useNyitasKulcs.ts`).
+  hook (`components/form/useNyitas.ts`); mind az első nyitásig nincs mountolva.
 - **Teljesítmény-apróságok:** az `OrszagMezok` ország-opciói modulszintű elem (ma minden
   billentyűleütésre 174 `<option>` épül újra selectenként); a `TicketBeszelgetes` Server Component
   lesz, csak a görgetést végző `<ol>` marad kliens-burok.
 - **Típusok:** a kétszer deklarált `RiportFormState` egy helyen; a `() => Promise<MuveletState>`
   alak `MuveletAction` néven a `FormAction` mellé; a fölösleges `export type { MuveletState }`
-  re-exportok (`orszagprofil/actions.ts`, `felhasznalok/actions.ts`) törlődnek; a
-  `kommunikacio/page.tsx` saját `SearchParams`-a a `lib/riport-szuro.ts`-belit használja.
+  re-exportok (`orszagprofil/actions.ts`, `felhasznalok/actions.ts`) törlődnek; a `SearchParams`
+  típus a `lib/routes.ts`-be kerül, a `lib/riport-szuro.ts` és a page-ek onnan importálják.
 - **Apróságok:** halott `sugo` prop a `SzovegMezo`/`RovidMezo`/`SzamMezo`/`CimkeValaszto`-n (a
   `Mezo` megtartja, az `OrszagMezok` használja); a `RendezvenySorok` stabil sor-azonosítót kap az
   index-kulcs helyett; a `/felhasznalok` lapcímet kap; a csatolmány-URL egy `csatolmanyUrl(id)`
-  segéd (`CsatolmanyMezo`, `RiportReszlet`); az `AgazatBadge` és `AllapotBadge` közös inline
-  színstílusa egy segéd; az egyargumentumú `cn(...)` hívások egyszerűsödnek.
+  segéd a `lib/routes.ts`-ben (`CsatolmanyMezo`, `RiportReszlet`); az `AgazatBadge` és
+  `AllapotBadge` közös inline színstílusa egy `SzinesBadge` komponens; az egyargumentumú `cn(...)` hívások egyszerűsödnek.
 
 ### 6. Demóadat-maradék és dokumentáció
 
@@ -245,12 +253,14 @@ viselkedésváltozások” szakasz négy pontja kivételével.
 
 ## Szándékos viselkedésváltozások
 
-1. A monogram a „.”-ra végződő szavakat kihagyja: „dr. Gurza László” → „GL” (ma „DG”).
+1. A monogram a „.”-ra végződő szavakat kihagyja: „dr. Gurza László” → „GL” (ma „DG”) – az
+   oldalsávban és a ticket-buborékokban is.
 2. A `?next=` paraméter `NEXT_MAX_LENGTH`-nél hosszabb értékkel a kezdőlapra visz (ma tetszőleges
    hosszú Location fejlécet adna).
 3. A `/felhasznalok` lapcímet kap (ma az alapértelmezett cím látszik).
-4. A rendezvénysor törlése után a többi sor fókusza és állapota a helyén marad (index-kulcs
-   helyett stabil kulcs).
+4. Rendezvénysorok (a régiós országsorok mintájára): stabil sor-kulcs az index helyett;
+   hozzáadás után a fókusz az új sor nevére, törlés után a „Rendezvény hozzáadása” gombra kerül; a
+   törlés a következő beküldésig elrejti a pozícióhoz kötött (más sorra csúszó) sorhibákat.
 
 Minden más – szöveg, elrendezés, színek, sorrend, jogosultság, lekérdezés-eredmény – változatlan.
 
