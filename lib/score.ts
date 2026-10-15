@@ -7,9 +7,7 @@ export function sc(p: Post, i: number): number {
 }
 
 export function avg(p: Post): number {
-  let s = 0;
-  for (let i = 1; i <= CRITERIA.length; i++) s += sc(p, i);
-  return s / CRITERIA.length;
+  return CRITERIA.reduce((s, c) => s + sc(p, c.id), 0) / CRITERIA.length;
 }
 
 export function catAvg(p: Post, kat: number): number {
