@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { RiportSzurok } from '../../../components/riport/RiportSzurok';
-import { RiportTabla } from '../../../components/riport/RiportTabla';
+import { RiportSzurok } from './components/RiportSzurok';
+import { RiportTabla } from './components/RiportTabla';
 import { buttonVariants } from '../../../components/ui/button';
 import { listOrszagok, listRiportok, listSzerzok } from '../../../db/queries/riport';
 import { canIntezkedni } from '../../../lib/riport-jog';

@@ -1,6 +1,6 @@
-import { kategoriaByKulcs, type KategoriaKulcs } from '../../lib/riport-szotar';
-import { cn } from '../../lib/utils';
-import { Badge } from '../ui/badge';
+import { kategoriaByKulcs, type KategoriaKulcs } from '../../../../lib/riport-szotar';
+import { cn } from '../../../../lib/utils';
+import { Badge } from '../../../../components/ui/badge';
 
 /** A kategória színes címkéje. A lista és a részletnézet is ezt használja. */
 export function KategoriaBadge({ kulcs }: { kulcs: KategoriaKulcs }) {

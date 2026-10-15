@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react';
-import { Badge } from '../ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Badge } from '../../../../components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../components/ui/card';
 import {
   blokkCim, MEZO_CIMKEK, rendezvenyTipusCimke, type Agazat, type BlokkKulcs, type ProfilBlokkok,
-} from '../../lib/orszagprofil-szotar';
-import { formatSzam } from '../../lib/szam';
-import { AgazatBadge } from './AgazatBadge';
+} from '../../../../lib/orszagprofil-szotar';
+import { formatSzam } from '../../../../lib/szam';
+import { AgazatBadge } from '../../../../components/orszagprofil/AgazatBadge';
 
 function Ures() {
   return <span className="text-muted-foreground">–</span>;

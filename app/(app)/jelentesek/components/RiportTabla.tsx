@@ -1,13 +1,13 @@
 import { PaperclipIcon } from 'lucide-react';
 import Link from 'next/link';
-import type { RiportListItem } from '../../db/queries/riport';
-import { formatDatum, formatNaptariDatum } from '../../lib/datum';
-import { orszagNev } from '../../lib/orszagok';
-import { cn } from '../../lib/utils';
-import type { FormAction } from '../form/useMuveletForm';
-import { Badge } from '../ui/badge';
-import { buttonVariants } from '../ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import type { RiportListItem } from '../../../../db/queries/riport';
+import { formatDatum, formatNaptariDatum } from '../../../../lib/datum';
+import { orszagNev } from '../../../../lib/orszagok';
+import { cn } from '../../../../lib/utils';
+import type { FormAction } from '../../../../components/form/useMuveletForm';
+import { Badge } from '../../../../components/ui/badge';
+import { buttonVariants } from '../../../../components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../components/ui/table';
 import { IntezkedesSzerkeszto } from './IntezkedesSzerkeszto';
 import { KategoriaBadge } from './KategoriaBadge';
 

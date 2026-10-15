@@ -2,14 +2,14 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
-import type { RiportSzerzo } from '../../db/queries/riport';
-import { orszagNev } from '../../lib/orszagok';
-import { KATEGORIAK, KULCSSZAVAK } from '../../lib/riport-szotar';
-import type { SzuroErtekek } from '../../lib/riport-szuro';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import type { RiportSzerzo } from '../../../../db/queries/riport';
+import { orszagNev } from '../../../../lib/orszagok';
+import { KATEGORIAK, KULCSSZAVAK } from '../../../../lib/riport-szotar';
+import type { SzuroErtekek } from '../../../../lib/riport-szuro';
+import { Button } from '../../../../components/ui/button';
+import { Input } from '../../../../components/ui/input';
+import { Label } from '../../../../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
 
 /** A „Mind" opció értéke: a Base UI Select üres stringet nem tud választható értékként kezelni. */
 const MIND = '__mind';

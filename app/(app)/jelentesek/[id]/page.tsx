@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { RiportReszlet } from '../../../../components/riport/RiportReszlet';
+import { RiportReszlet } from '../components/RiportReszlet';
 import { getRiport } from '../../../../db/queries/riport';
 import { canEditRiport, canIntezkedni, canViewRiport } from '../../../../lib/riport-jog';
 import { requireSession } from '../../../../lib/session';

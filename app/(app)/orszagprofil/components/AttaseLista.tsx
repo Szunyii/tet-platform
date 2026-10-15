@@ -1,6 +1,6 @@
-import { attaseHely, type OrszagAttase } from '../../lib/attase-orszag';
-import { hazaiE } from '../../lib/orszagok';
-import { Badge } from '../ui/badge';
+import { attaseHely, type OrszagAttase } from '../../../../lib/attase-orszag';
+import { hazaiE } from '../../../../lib/orszagok';
+import { Badge } from '../../../../components/ui/badge';
 
 /**
  * Az ország aktív attaséi a profil fejléce alatt, a `listOrszagAttasek` sorrendjében (vezető elöl):

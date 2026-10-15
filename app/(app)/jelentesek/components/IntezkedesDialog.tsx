@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { INTEZKEDES_MAX } from '../../lib/riport-szotar';
-import { hibaAttr, MezoHiba } from '../form/MezoHiba';
-import { MuveletDialog } from '../form/MuveletDialog';
-import { useMuveletForm, type FormAction } from '../form/useMuveletForm';
-import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
+import { INTEZKEDES_MAX } from '../../../../lib/riport-szotar';
+import { hibaAttr, MezoHiba } from '../../../../components/form/MezoHiba';
+import { MuveletDialog } from '../../../../components/form/MuveletDialog';
+import { useMuveletForm, type FormAction } from '../../../../components/form/useMuveletForm';
+import { Label } from '../../../../components/ui/label';
+import { Textarea } from '../../../../components/ui/textarea';
 
 /**
  * A központ „Megtett intézkedés” szövegének felugró űrlapja. A hívó (IntezkedesSzerkeszto)

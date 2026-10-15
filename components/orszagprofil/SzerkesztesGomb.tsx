@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { buttonVariants } from '../ui/button';
 import { cn } from '../../lib/utils';
-import { KuldGomb } from './KuldGomb';
+import { KuldGomb } from '../form/KuldGomb';
 
 /**
  * Az országprofil szerkesztőjére vivő gomb a térkép panelén, a profil oldalon és a szerkesztő

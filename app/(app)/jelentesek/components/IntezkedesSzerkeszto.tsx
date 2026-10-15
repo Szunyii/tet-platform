@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { cn } from '../../lib/utils';
-import type { FormAction } from '../form/useMuveletForm';
-import { buttonVariants } from '../ui/button';
+import { cn } from '../../../../lib/utils';
+import type { FormAction } from '../../../../components/form/useMuveletForm';
+import { buttonVariants } from '../../../../components/ui/button';
 import { IntezkedesDialog } from './IntezkedesDialog';
 
 /**
