@@ -1,4 +1,4 @@
-import { attaseHely, type OrszagAttase } from '../../../../lib/attase-orszag';
+import { attaseHely, vezetoJelzes, type OrszagAttase } from '../../../../lib/attase-orszag';
 import { hazaiE } from '../../../../lib/orszagok';
 import { Badge } from '../../../../components/ui/badge';
 
@@ -30,7 +30,7 @@ export function AttaseLista({ kod, attasek }: { kod: string; attasek: readonly O
             <li key={a.userId}>
               <span className="font-medium">{a.nev}</span>
               {h && <span className="text-muted-foreground"> · {h}</span>}
-              {tobb && a.vezeto && (
+              {vezetoJelzes(attasek, a) && (
                 <Badge variant="outline" className="ml-2 bg-background align-middle">Relációs vezető</Badge>
               )}
               {a.reszterulet && (

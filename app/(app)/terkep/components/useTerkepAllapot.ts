@@ -2,11 +2,8 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
-import { hazaiRekord, VS_SZINEK, vsHozzaadElem, type VsElem } from '../../../../lib/osszehasonlitas';
+import { hazaiRekord, VS_MAX, VS_SZINEK, vsHozzaadElem, vsKiveszElem, type VsElem } from '../../../../lib/osszehasonlitas';
 import { ALAP_MUTATO, mutatoByKulcs, type Mutato, type MutatoKulcs } from '../../../../lib/terkep-mutatok';
-
-/** Legfeljebb ennyi ország lehet az összehasonlításban: ahány színe van (`VS_SZINEK`). */
-export const VS_MAX = VS_SZINEK.length;
 
 export interface TerkepAllapot {
   /** Egyes kijelölés (a kivonat országa). */
@@ -83,12 +80,9 @@ export function useTerkepAllapot(adatok: TerkepOrszag[], kezdoKod: string | null
   const bezar = useCallback(() => setKod(null), []);
   const setMutatoKulcs = useCallback((k: string) => setMutatoKulcsState(mutatoByKulcs(k).kulcs), []);
   const vsHozzaad = useCallback((k: string) => setVsElemek((v) => vsHozzaadElem(v, k)), []);
-  const vsKivesz = useCallback(
-    (k: string) => setVsElemek((v) => (v.some((e) => e.kod === k) ? v.filter((e) => e.kod !== k) : v)),
-    [],
-  );
+  const vsKivesz = useCallback((k: string) => setVsElemek((v) => vsKiveszElem(v, k)), []);
   const vsValt = useCallback(
-    (k: string) => setVsElemek((v) => (v.some((e) => e.kod === k) ? v.filter((e) => e.kod !== k) : vsHozzaadElem(v, k))),
+    (k: string) => setVsElemek((v) => (v.some((e) => e.kod === k) ? vsKiveszElem(v, k) : vsHozzaadElem(v, k))),
     [],
   );
   // Üres halmaznál ugyanaz a példány marad: a `vs` csak tényleges változásnál új.

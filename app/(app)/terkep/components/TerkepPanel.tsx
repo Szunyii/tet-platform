@@ -1,11 +1,9 @@
 'use client';
 
-import { useApp } from '../../../../components/app-shell/AppContext';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
-import { canEditProfil } from '../../../../lib/orszagprofil-jog';
 import type { Csoport, Rangsor, Tartomany } from '../../../../lib/terkep-mutatok';
 import { OsszehasonlitasCsik } from './OsszehasonlitasCsik';
-import { ProfilKivonat } from './ProfilKivonat';
+import { ProfilKivonat, type SzerkesztesGombFn } from './ProfilKivonat';
 import { RangsorPanel } from './RangsorPanel';
 import type { TerkepAllapot } from './useTerkepAllapot';
 
@@ -14,7 +12,7 @@ import type { TerkepAllapot } from './useTerkepAllapot';
  * halmaz nem üres. Az összehasonlítás nem itt, hanem a térkép alatt, teljes szélességben van
  * (TerkepNezet): a kártyák és a mátrixok a keskeny panelen nem férnének el.
  */
-export function TerkepPanel({ adatok, allapot, vsOrszagok, rangsor, csoportok, tartomany, szamlalo, ev, most, valasztEvAction }: {
+export function TerkepPanel({ adatok, allapot, vsOrszagok, rangsor, csoportok, tartomany, szamlalo, szerkesztesGomb }: {
   adatok: TerkepOrszag[];
   allapot: TerkepAllapot;
   /** A halmaz rekordjai a hozzáadás sorrendjében (a TerkepNezet számolja, az összehasonlításnak is kell). */
@@ -23,26 +21,21 @@ export function TerkepPanel({ adatok, allapot, vsOrszagok, rangsor, csoportok, t
   csoportok: Csoport[];
   tartomany: Tartomany | null;
   szamlalo: string;
-  ev: number;
-  most: number;
-  valasztEvAction: (formData: FormData) => Promise<void>;
+  /** A Szerkesztés-gomb (a TerkepNezet köti meg a joggal és az évekkel). */
+  szerkesztesGomb: SzerkesztesGombFn;
 }) {
-  const { user } = useApp();
   const { kod, vs, vsTele, mutato } = allapot;
   const sel = kod ? adatok.find((o) => o.kod === kod) ?? null : null;
 
   return (
     <>
       {vsOrszagok.length > 0 && (
-        <OsszehasonlitasCsik orszagok={vsOrszagok} szinek={allapot.vsSzinek} minimum={allapot.vsMin} onKivesz={allapot.vsKivesz} />
+        <OsszehasonlitasCsik orszagok={vsOrszagok} szinek={allapot.vsSzinek} minimum={allapot.vsMin} tele={vsTele} onKivesz={allapot.vsKivesz} />
       )}
       {sel ? (
         <ProfilKivonat
           o={sel}
-          szerkeszthetEv={canEditProfil(user, sel.kod, ev, most)}
-          szerkeszthetMost={canEditProfil(user, sel.kod, most, most)}
-          most={most}
-          valasztEvAction={valasztEvAction}
+          szerkesztesGomb={szerkesztesGomb}
           onClose={allapot.bezar}
           mutato={mutato}
           rangsor={rangsor}

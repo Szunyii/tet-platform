@@ -6,7 +6,9 @@ import { Button } from '../../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../components/ui/card';
 import { hazaiE } from '../../../../lib/orszagok';
 import { formatSzam } from '../../../../lib/szam';
-import { arany, SKALA_SZINEK, type Csoport, type Mutato, type Rangsor, type Tartomany } from '../../../../lib/terkep-mutatok';
+import {
+  arany, csoportKulcs, SKALA_SZINEK, type Csoport, type Mutato, type Rangsor, type Tartomany,
+} from '../../../../lib/terkep-mutatok';
 
 const SAV_SZIN = SKALA_SZINEK[3];
 /** A legkisebb érték sávja se tűnjön el: a térképen a minimum is kap (a legvilágosabb) színt. */
@@ -114,7 +116,7 @@ export function RangsorPanel({ mutato, rangsor, csoportok, tartomany, szamlalo, 
           nincsTalalat
         ) : (
           csoportok.map((cs) => (
-            <div key={cs.kategoria ?? '__nincs'}>
+            <div key={csoportKulcs(cs)}>
               <p className="mb-1 flex items-center gap-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
                 {/* Inline style szándékosan: a szín a térképpel közös szótárból jön. */}
                 <span className="size-2.5 shrink-0 rounded-sm" style={{ background: cs.szin }} />

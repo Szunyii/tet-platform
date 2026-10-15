@@ -1,7 +1,7 @@
 'use client';
 
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
-import { attaseFelirat, attaseNelkulFelirat } from '../../../../lib/attase-orszag';
+import { attaseFelirat, attaseNelkulFelirat, vezetoJelzes } from '../../../../lib/attase-orszag';
 import { ALLAPOT_CIMKE } from '../../../../lib/orszagprofil-szotar';
 import { ertekEsHely, type Mutato, type Rangsor } from '../../../../lib/terkep-mutatok';
 
@@ -20,7 +20,7 @@ export interface HoverAllapot { nev: string; o: TerkepOrszag | null; x: number; 
 /** A mutató sora: számszerűnél érték + helyezés (ha a rangsorban van), kategorikusnál a kategória. */
 function mutatoSor(o: TerkepOrszag, mutato: Mutato, rangsor: Rangsor | null): string | null {
   if (mutato.tipus === 'szam') {
-    return `${mutato.cimke}: ${ertekEsHely(o, mutato, rangsor) ?? 'nincs adat'}`;
+    return `${mutato.cimke}: ${ertekEsHely(o, mutato, rangsor)?.szoveg ?? 'nincs adat'}`;
   }
   // Az állapot- és az iparág-sor úgyis ott van a tooltipben (az iparág mutató az első kiemelt iparágat írná ki mégegyszer).
   if (mutato.kulcs === 'allapot' || mutato.kulcs === 'iparag') return null;
@@ -35,7 +35,6 @@ function mutatoSor(o: TerkepOrszag, mutato: Mutato, rangsor: Rangsor | null): st
  */
 function AttaseSorok({ o }: { o: TerkepOrszag }) {
   if (o.attasek.length === 0) return <p className="text-background/70">{attaseNelkulFelirat(o.kod)}</p>;
-  const tobb = o.attasek.length > 1;
   const rejtett = o.attasek.length - ATTASE_MAX;
   return (
     <ul className="mt-0.5 mb-1 flex flex-col gap-1">
@@ -43,7 +42,7 @@ function AttaseSorok({ o }: { o: TerkepOrszag }) {
         <li key={a.userId}>
           <p>
             {attaseFelirat(a, o.kod)}
-            {tobb && a.vezeto && (
+            {vezetoJelzes(o.attasek, a) && (
               <>
                 {' '}
                 <span className="ml-1 rounded-sm bg-background/20 px-1 text-[10px] font-medium whitespace-nowrap">relációs vezető</span>

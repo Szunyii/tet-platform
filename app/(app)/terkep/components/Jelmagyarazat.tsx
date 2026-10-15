@@ -1,7 +1,10 @@
 'use client';
 
+import { memo } from 'react';
 import { formatSzam } from '../../../../lib/szam';
-import { SKALA_SZINEK, TERKEP_SZINEK, type Csoport, type Mutato, type Tartomany } from '../../../../lib/terkep-mutatok';
+import {
+  csoportKulcs, SKALA_SZINEK, TERKEP_SZINEK, type Csoport, type Mutato, type Tartomany,
+} from '../../../../lib/terkep-mutatok';
 
 // Inline style szándékosan: a színek a térképpel közös szótárból (TERKEP_SZINEK, SKALA_SZINEK) jönnek.
 // A sraffozás iránya és sűrűsége a térkép <pattern>-jével azonos: 2 px csík 6 px-enként, „/" irányban.
@@ -23,9 +26,10 @@ function Negyzet({ szin, sraff, keret }: { szin?: string; sraff?: boolean; keret
 
 /**
  * Jelmagyarázat a térkép alatt, normál folyásban (nem lebegő kártya, hogy ne takarja a térkép
- * bal alsó sarkát): gradiens + min/max (számszerű) vagy kategória-lista.
+ * bal alsó sarkát): gradiens + min/max (számszerű) vagy kategória-lista. memo: a térkép minden
+ * hover-eseménynél renderel, ez a rész nem változik vele.
  */
-export function Jelmagyarazat({ mutato, tartomany, csoportok, iparag }: {
+export const Jelmagyarazat = memo(function Jelmagyarazat({ mutato, tartomany, csoportok, iparag }: {
   mutato: Mutato;
   /** Csak számszerű mutatónál; null, ha egyetlen ország sem ad értéket. */
   tartomany: Tartomany | null;
@@ -67,11 +71,11 @@ export function Jelmagyarazat({ mutato, tartomany, csoportok, iparag }: {
         <>
           <span className="font-semibold text-foreground">{mutato.cimke}</span>
           {csoportok.map((cs) => (
-            <span key={cs.kategoria ?? '__nincs'} className="flex items-center gap-1.5"><Negyzet szin={cs.szin} /> {cs.cimke}</span>
+            <span key={csoportKulcs(cs)} className="flex items-center gap-1.5"><Negyzet szin={cs.szin} /> {cs.cimke}</span>
           ))}
           {kozos}
         </>
       )}
     </div>
   );
-}
+});

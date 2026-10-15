@@ -1,10 +1,14 @@
 'use client';
 
+import { memo } from 'react';
 import { Button } from '../../../../components/ui/button';
 import { REGIOK } from '../../../../lib/terkep-mutatok';
 
-/** Régió-gyorsválasztó a térkép bal felső sarkában; az aktív gomb `aria-pressed`. */
-export function RegioGombok({ aktiv, onValaszt }: { aktiv: string | null; onValaszt: (kulcs: string) => void }) {
+/**
+ * Régió-gyorsválasztó a térkép bal felső sarkában; az aktív gomb `aria-pressed`. memo: a térkép minden
+ * hover-eseménynél renderel, ez a rész nem változik vele.
+ */
+export const RegioGombok = memo(function RegioGombok({ aktiv, onValaszt }: { aktiv: string | null; onValaszt: (kulcs: string) => void }) {
   return (
     <div className="flex flex-wrap gap-1" role="group" aria-label="Régió">
       {REGIOK.map((r) => (
@@ -21,4 +25,4 @@ export function RegioGombok({ aktiv, onValaszt }: { aktiv: string | null; onVala
       ))}
     </div>
   );
-}
+});

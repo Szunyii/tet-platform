@@ -72,6 +72,11 @@ export function attaseFelirat(a: OrszagAttase, kod: string): string {
   return a.varos ? `${a.nev} · ${a.varos}` : a.nev;
 }
 
+/** A „relációs vezető” jelzés csak több attasénál látszik: egyszemélyes országban a vezetőség automatikus. */
+export function vezetoJelzes(attasek: readonly OrszagAttase[], a: OrszagAttase): boolean {
+  return attasek.length > 1 && a.vezeto;
+}
+
 /** A profil fejlécének hely-felirata: „Város”, régiósnál „regionálisan, székhely: Város, Ország” (város nélkül csak az ország). */
 export function attaseHely(a: OrszagAttase, kod: string): string {
   if (regionalisE(a, kod)) {

@@ -2,30 +2,35 @@
 
 import { Check, Plus, X } from 'lucide-react';
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { AllapotBadge } from '../../../../components/orszagprofil/AllapotBadge';
 import { AgazatBadge } from '../../../../components/orszagprofil/AgazatBadge';
-import { SzerkesztesGomb } from '../../../../components/orszagprofil/SzerkesztesGomb';
 import { Badge } from '../../../../components/ui/badge';
 import { Button, buttonVariants } from '../../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../../../components/ui/card';
-import { attaseFelirat, attaseNelkulFelirat } from '../../../../lib/attase-orszag';
+import { attaseFelirat, attaseNelkulFelirat, vezetoJelzes } from '../../../../lib/attase-orszag';
 import { hazaiE } from '../../../../lib/orszagok';
 import { BLOKK_KULCSOK, MEZO_CIMKEK } from '../../../../lib/orszagprofil-szotar';
 import { formatSzam as sz } from '../../../../lib/szam';
 import { ertekEsHely, SKALA_SZINEK, type Mutato, type Rangsor } from '../../../../lib/terkep-mutatok';
 import { cn } from '../../../../lib/utils';
 
+/** A Szerkesztés-gomb előállítója: a TerkepNezet köti meg a joggal (canEditProfil) és az évekkel; a hívó az országot és a feliratokat adja. */
+export type SzerkesztesGombFn = (kod: string, opciok: { felirat: string; feliratMost?: string; className?: string }) => ReactNode;
+
+/** Az Alapadatok egy sora: címke és érték. */
+function Sor({ cimke, children }: { cimke: string; children: ReactNode }) {
+  return <><dt className="text-muted-foreground">{cimke}</dt><dd>{children}</dd></>;
+}
+
 /** A kiválasztott ország profil-kivonata a térkép mellett. */
 export function ProfilKivonat({
-  o, szerkeszthetEv, szerkeszthetMost, most, valasztEvAction, onClose,
+  o, szerkesztesGomb, onClose,
   mutato, rangsor, benneVs, vsTele, onVs, viszonyitasiAlap,
 }: {
   o: TerkepOrszag;
-  szerkeszthetEv: boolean;
-  szerkeszthetMost: boolean;
-  most: number;
-  valasztEvAction: (formData: FormData) => Promise<void>;
+  szerkesztesGomb: SzerkesztesGombFn;
   onClose: () => void;
   /** A térképen választott mutató; számszerűnél egy sor az értékkel és a helyezéssel. */
   mutato: Mutato;
@@ -41,10 +46,9 @@ export function ProfilKivonat({
 }) {
   const a = o.alapadatok;
   const C = MEZO_CIMKEK.alapadatok;
-  // A térképen választott számszerű mutató értéke és helyezése (a szűrt rangsorban); undefined = kategorikus mutató.
+  // A térképen választott számszerű mutató értéke és helyezése (a szűrt rangsorban); undefined = kategorikus
+  // mutató. A szűrő által kizárt ország nincs a rangsorban (`helyezett` hamis), de értéke lehet.
   const ertek = mutato.tipus === 'szam' ? ertekEsHely(o, mutato, rangsor) : undefined;
-  // Van-e helyezése (a szűrő által kizárt ország nincs a rangsorban, de értéke lehet).
-  const helyezett = !!rangsor?.sorok.some((s) => s.o.kod === o.kod);
   return (
     <Card>
       <CardHeader>
@@ -58,7 +62,7 @@ export function ProfilKivonat({
                 o.attasek.map((at) => (
                   <span key={at.userId}>
                     {attaseFelirat(at, o.kod)}
-                    {o.attasek.length > 1 && at.vezeto ? ' · relációs vezető' : ''}
+                    {vezetoJelzes(o.attasek, at) ? ' · relációs vezető' : ''}
                     {/* A teljes részterület (a tooltip csak 2 sort mutat); a beírt sortörések megmaradnak, mint a profil oldalán. */}
                     {at.reszterulet && (
                       <span className="block text-xs break-words whitespace-pre-wrap">{at.reszterulet}</span>
@@ -91,9 +95,9 @@ export function ProfilKivonat({
             ) : (
               <span
                 className="font-mono font-medium"
-                title={helyezett ? 'Érték és helyezés a jelenlegi szűrés szerinti rangsorban' : 'Érték – a szűrés miatt az ország nincs a rangsorban'}
+                title={ertek.helyezett ? 'Érték és helyezés a jelenlegi szűrés szerinti rangsorban' : 'Érték – a szűrés miatt az ország nincs a rangsorban'}
               >
-                {ertek}
+                {ertek.szoveg}
               </span>
             )}
           </p>
@@ -104,25 +108,15 @@ export function ProfilKivonat({
           <>
             {a && (
               <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
-                {a.fovaros && (
-                  <><dt className="text-muted-foreground">{C.fovaros.cimke}</dt><dd>{a.fovaros}</dd></>
-                )}
-                {a.terulet != null && (
-                  <><dt className="text-muted-foreground">{C.terulet.cimke}</dt><dd>{sz(a.terulet)}</dd></>
-                )}
-                {a.penznem && (
-                  <><dt className="text-muted-foreground">{C.penznem.cimke}</dt><dd>{a.penznem}</dd></>
-                )}
-                <dt className="text-muted-foreground">{C.lakossag.cimke}</dt><dd>{sz(a.lakossag)}</dd>
-                <dt className="text-muted-foreground">{C.gdp.cimke}</dt><dd>{sz(a.gdp)}</dd>
-                <dt className="text-muted-foreground">{C.gdpEgyFore.cimke}</dt><dd>{sz(a.gdpEgyFore)}</dd>
-                <dt className="text-muted-foreground">{C.gdpNovekedes.cimke}</dt><dd>{sz(a.gdpNovekedes, ' %')}</dd>
-                {a.adatEv != null && (
-                  <><dt className="text-muted-foreground">{C.adatEv.cimke}</dt><dd>{a.adatEv}{a.forras ? ` · ${a.forras}` : ''}</dd></>
-                )}
-                {a.tagsagok.length > 0 && (
-                  <><dt className="text-muted-foreground">{C.tagsagok.cimke}</dt><dd>{a.tagsagok.join(', ')}</dd></>
-                )}
+                {a.fovaros && <Sor cimke={C.fovaros.cimke}>{a.fovaros}</Sor>}
+                {a.terulet != null && <Sor cimke={C.terulet.cimke}>{sz(a.terulet)}</Sor>}
+                {a.penznem && <Sor cimke={C.penznem.cimke}>{a.penznem}</Sor>}
+                <Sor cimke={C.lakossag.cimke}>{sz(a.lakossag)}</Sor>
+                <Sor cimke={C.gdp.cimke}>{sz(a.gdp)}</Sor>
+                <Sor cimke={C.gdpEgyFore.cimke}>{sz(a.gdpEgyFore)}</Sor>
+                <Sor cimke={C.gdpNovekedes.cimke}>{sz(a.gdpNovekedes, ' %')}</Sor>
+                {a.adatEv != null && <Sor cimke={C.adatEv.cimke}>{a.adatEv}{a.forras ? ` · ${a.forras}` : ''}</Sor>}
+                {a.tagsagok.length > 0 && <Sor cimke={C.tagsagok.cimke}>{a.tagsagok.join(', ')}</Sor>}
               </dl>
             )}
             {o.iparagak.length > 0 && (
@@ -141,6 +135,8 @@ export function ProfilKivonat({
         )}
       </CardContent>
       <CardFooter className="flex flex-wrap gap-2">
+        {/* A cn() nem fölösleges: a tailwind-merge kiveszi az alap `border-transparent`-et, ami a CSS-ben a
+            `border-border` után áll, így nélküle az outline link kerete eltűnne. */}
         <Link href={`/orszagprofil/${o.kod}`} className={cn(buttonVariants({ variant: 'outline' }))}>Teljes profil</Link>
         {/* Attasé nélkül (pl. a hazai profilnál) nincs poszt, akinek írni lehetne. */}
         {o.attasek.length > 0 && (
@@ -164,16 +160,9 @@ export function ProfilKivonat({
             {benneVs ? <><Check /> Összehasonlításban</> : <><Plus /> Összehasonlítás</>}
           </Button>
         )}
-        <SzerkesztesGomb
-          kod={o.kod}
-          most={most}
-          szerkeszthetEv={szerkeszthetEv}
-          szerkeszthetMost={szerkeszthetMost}
-          action={valasztEvAction}
-          felirat={o.allapot === 'nincs' ? 'Profil kitöltése' : 'Szerkesztés'}
-          feliratMost="Szerkesztés"
-          className="ml-auto"
-        />
+        {szerkesztesGomb(o.kod, {
+          felirat: o.allapot === 'nincs' ? 'Profil kitöltése' : 'Szerkesztés', feliratMost: 'Szerkesztés', className: 'ml-auto',
+        })}
       </CardFooter>
     </Card>
   );

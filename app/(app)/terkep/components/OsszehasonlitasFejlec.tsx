@@ -11,7 +11,6 @@ import { HAZAI_SZIN } from '../../../../lib/osszehasonlitas';
 import { formatSzam } from '../../../../lib/szam';
 import type { Mutato } from '../../../../lib/terkep-mutatok';
 import { cn } from '../../../../lib/utils';
-import { VS_MAX } from './useTerkepAllapot';
 
 /** A fejléc-kártyák közös kerete; balra a színcsík (`Csik`) helye. */
 const KARTYA = 'relative flex flex-col items-start gap-1.5 overflow-hidden rounded-lg border py-2.5 pr-2.5 pl-4';
@@ -35,12 +34,22 @@ function NevGomb({ o, onKivalaszt }: { o: TerkepOrszag; onKivalaszt: (kod: strin
   );
 }
 
+/** A kártya alsó két sora: az attasé(k) röviden (vagy az attasé nélküli felirat) és a profil állapota. */
+function AttaseEsAllapot({ o }: { o: TerkepOrszag }) {
+  return (
+    <>
+      <span className="text-xs text-muted-foreground">{attasekRovid(o.attasek, o.kod) ?? attaseNelkulFelirat(o.kod)}</span>
+      <AllapotBadge allapot={o.allapot} ev={o.ev} />
+    </>
+  );
+}
+
 /**
  * Az összehasonlítás fejléce: országonként egy kártya (név → kivonat; a kód a saját színben – ez köti a
  * mátrix oszlopfejlécéhez –; kivétel; attasé; állapot), utána a „+ Ország" választó, ha van még hely és
  * jelölt, végül Magyarország viszonyítási kártyája (kivétel-gomb nélkül).
  */
-export function OsszehasonlitasFejlec({ orszagok, szinek, hazai, jeloltek, mutato, onKivalaszt, onKivesz, onHozzaad }: {
+export function OsszehasonlitasFejlec({ orszagok, szinek, hazai, jeloltek, mutato, tele, onKivalaszt, onKivesz, onHozzaad }: {
   /** A halmaz rekordjai a hozzáadás sorrendjében (Magyarország nélkül). */
   orszagok: readonly TerkepOrszag[];
   /** Kód → az ország színe az összehasonlításban. */
@@ -51,11 +60,13 @@ export function OsszehasonlitasFejlec({ orszagok, szinek, hazai, jeloltek, mutat
   jeloltek: readonly TerkepOrszag[];
   /** A térkép mutatója: számszerűnél a „+ Ország" opciói az értéket is mutatják. */
   mutato: Mutato;
+  /** A halmaz tele (`TerkepAllapot.vsTele`). */
+  tele: boolean;
   onKivalaszt: (kod: string) => void;
   onKivesz: (kod: string) => void;
   onHozzaad: (kod: string) => void;
 }) {
-  const plusz = orszagok.length < VS_MAX && jeloltek.length > 0;
+  const plusz = !tele && jeloltek.length > 0;
   const felirat = (o: TerkepOrszag) =>
     mutato.tipus === 'szam' ? `${o.nev} · ${formatSzam(mutato.ertek(o), mutato.utotag)}` : o.nev;
   return (
@@ -78,8 +89,7 @@ export function OsszehasonlitasFejlec({ orszagok, szinek, hazai, jeloltek, mutat
               <X />
             </Button>
           </span>
-          <span className="text-xs text-muted-foreground">{attasekRovid(o.attasek, o.kod) ?? attaseNelkulFelirat(o.kod)}</span>
-          <AllapotBadge allapot={o.allapot} ev={o.ev} />
+          <AttaseEsAllapot o={o} />
         </div>
       ))}
       {plusz && (
@@ -103,8 +113,7 @@ export function OsszehasonlitasFejlec({ orszagok, szinek, hazai, jeloltek, mutat
             <NevGomb o={hazai} onKivalaszt={onKivalaszt} />
             <Badge variant="secondary" className="ml-auto">viszonyítási alap</Badge>
           </span>
-          <span className="text-xs text-muted-foreground">{attasekRovid(hazai.attasek, hazai.kod) ?? attaseNelkulFelirat(hazai.kod)}</span>
-          <AllapotBadge allapot={hazai.allapot} ev={hazai.ev} />
+          <AttaseEsAllapot o={hazai} />
         </div>
       )}
     </div>

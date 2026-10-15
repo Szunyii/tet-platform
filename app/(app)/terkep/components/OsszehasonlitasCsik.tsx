@@ -3,23 +3,24 @@
 import { X } from 'lucide-react';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { Badge } from '../../../../components/ui/badge';
-import { VS_MAX } from './useTerkepAllapot';
+import { VS_MAX } from '../../../../lib/osszehasonlitas';
 
 /**
  * A panel tetején: az összehasonlítás-halmaz chipjei az országok színével (a térkép mellett ez a
  * jelmagyarázat) és egy állapotszöveg. Az összehasonlítás magától megjelenik a térkép alatt, amint
  * `minimum` ország van a halmazban, ezért itt nincs gomb.
  */
-export function OsszehasonlitasCsik({ orszagok, szinek, minimum, onKivesz }: {
+export function OsszehasonlitasCsik({ orszagok, szinek, minimum, tele, onKivesz }: {
   /** A halmaz rekordjai a hozzáadás sorrendjében. */
   orszagok: TerkepOrszag[];
   /** Kód → az ország színe az összehasonlításban. */
   szinek: Readonly<Record<string, string>>;
   /** Ennyi országtól látszik az összehasonlítás (`TerkepAllapot.vsMin`: magyar profil mellett 1, különben 2). */
   minimum: number;
+  /** A halmaz tele (`TerkepAllapot.vsTele`). */
+  tele: boolean;
   onKivesz: (kod: string) => void;
 }) {
-  const tele = orszagok.length >= VS_MAX;
   // A „+" gombok letiltva, ha tele; a letiltott gombon a title nem jelenik meg, ezért itt a felirat.
   const allapot = tele
     ? `Legfeljebb ${VS_MAX} ország`

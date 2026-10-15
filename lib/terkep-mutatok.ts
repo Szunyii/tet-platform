@@ -12,7 +12,7 @@ import { huOsszevet } from './rendezes';
 import type { TerkepOrszag } from '../db/queries/orszagprofil';
 import { AGAZATOK, AGAZAT_SZINEK, ALLAPOTOK, ALLAPOT_CIMKE, ALLAPOT_SZINEK, BLOKK_KULCSOK } from './orszagprofil-szotar';
 
-export const MUTATO_KULCSOK = [
+const MUTATO_KULCSOK = [
   'iparag', 'allapot',
   'gdpEgyFore', 'gdp', 'gdpNovekedes', 'lakossag', 'gerd', 'kitoltottseg', 'rendezvenyDb',
 ] as const;
@@ -52,7 +52,7 @@ export interface KategoriaMutato {
 export type Mutato = SzamMutato | KategoriaMutato;
 
 /** Az iparágnál a kategória neve maga a felirat; az egységes `cimkek` mező kedvéért azonosság-térkép. */
-const IPARAG_CIMKEK: Record<string, string> = Object.fromEntries(AGAZATOK.map((i) => [i, i]));
+export const IPARAG_CIMKEK: Record<string, string> = Object.fromEntries(AGAZATOK.map((i) => [i, i]));
 
 /** Kulcsonként egy mutató; a kimerítő kulcs-térkép miatt egy kihagyott kulcs fordítási hiba. */
 const MUTATO_TABLA: { [K in MutatoKulcs]: Mutato & { kulcs: K } } = {
@@ -102,9 +102,14 @@ export function mutatoByKulcs(k: string): Mutato {
 
 const nevSzerint = (a: TerkepOrszag, b: TerkepOrszag) => huOsszevet(a.nev, b.nev);
 
+/** Kiemeli-e az ország az iparágat (az iparág-szűrő feltétele). */
+function kiemeli(o: TerkepOrszag, iparag: string): boolean {
+  return (o.iparagak as readonly string[]).includes(iparag);
+}
+
 /** Az iparág-szűrő: '' = nincs szűrő; a kiemelt iparágak listájában keres. Új tömböt ad. */
 export function szures(adatok: readonly TerkepOrszag[], iparag: string): TerkepOrszag[] {
-  return iparag ? adatok.filter((o) => (o.iparagak as readonly string[]).includes(iparag)) : [...adatok];
+  return iparag ? adatok.filter((o) => kiemeli(o, iparag)) : [...adatok];
 }
 
 export interface RangsorSor { o: TerkepOrszag; ertek: number; hely: number }
@@ -133,13 +138,14 @@ export function rangsor(adatok: readonly TerkepOrszag[], m: SzamMutato, iparag: 
 
 /**
  * „3,3 % · 1./14": az érték az utótaggal, mellette a helyezés, ha az ország a (szűrt) rangsorban
- * szerepel; null = nincs érték. A térkép tooltipje és a kivonat ugyanezt írja.
+ * szerepel; null = nincs érték. A térkép tooltipje és a kivonat ugyanezt írja. `helyezett`: az ország a
+ * (szűrt) rangsorban van.
  */
-export function ertekEsHely(o: TerkepOrszag, m: SzamMutato, r: Rangsor | null): string | null {
+export function ertekEsHely(o: TerkepOrszag, m: SzamMutato, r: Rangsor | null): { szoveg: string; helyezett: boolean } | null {
   const v = m.ertek(o);
   if (v === null) return null;
   const sor = r?.sorok.find((s) => s.o.kod === o.kod);
-  return `${formatSzam(v, m.utotag)}${sor && r ? ` · ${sor.hely}./${r.sorok.length}` : ''}`;
+  return { szoveg: `${formatSzam(v, m.utotag)}${sor && r ? ` · ${sor.hely}./${r.sorok.length}` : ''}`, helyezett: !!sor };
 }
 
 export interface Csoport { kategoria: string | null; cimke: string; szin: string; orszagok: TerkepOrszag[] }
@@ -200,6 +206,18 @@ export function jeloltek(adatok: readonly TerkepOrszag[], kizart: readonly strin
   });
 }
 
+/** A rangsor-panel alcíme: számszerű mutatónál az adattal / adat nélküli országok, iparág-szűrőnél a találatok, különben az országok és az adott évi profilok száma. */
+export function szamlaloSzoveg(adatok: readonly TerkepOrszag[], r: Rangsor | null, iparag: string, ev: number): string {
+  if (r) return `${r.sorok.length} ország adattal · ${r.adatNelkul.length} adat nélkül`;
+  if (iparag) return `${szures(adatok, iparag).length} ország emeli ki ezt az iparágat`;
+  return `${adatok.length} ország · ${adatok.filter((o) => o.allapot === 'friss').length} profil (${ev})`;
+}
+
+/** A csoport React-kulcsa (a kategória nélküli csoporté fix). */
+export function csoportKulcs(cs: Csoport): string {
+  return cs.kategoria ?? '__nincs';
+}
+
 /**
  * Az érték 0–1 helye a tartományon belül a mutató skálája szerint (lineáris vagy symlog),
  * a tartományra vágva; min === max esetén mindenre 0,5. A szín (`szinSkala`) és a rangsor
@@ -246,7 +264,7 @@ export const TERKEP_SZINEK = {
  * ha nincs tartomány.
  */
 export function orszagSzin(o: TerkepOrszag, m: Mutato, iparag: string, skala: ((v: number) => string) | null): string | null {
-  if (iparag && !(o.iparagak as readonly string[]).includes(iparag)) return TERKEP_SZINEK.halvany;
+  if (iparag && !kiemeli(o, iparag)) return TERKEP_SZINEK.halvany;
   if (m.tipus === 'kategoria') {
     const k = m.kategoria(o);
     return k === null ? TERKEP_SZINEK.semleges : (m.szinek[k] ?? TERKEP_SZINEK.semleges);

@@ -1,31 +1,23 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useApp } from '../../../../components/app-shell/AppContext';
 import { SzerkesztesGomb } from '../../../../components/orszagprofil/SzerkesztesGomb';
 import { Card, CardContent, CardHeader } from '../../../../components/ui/card';
-import { Label } from '../../../../components/ui/label';
-import {
-  Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,
-} from '../../../../components/ui/select';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { elsoVezetettKod } from '../../../../lib/attase-orszag';
 import { HAZAI_KOD } from '../../../../lib/orszagok';
 import { canEditProfil } from '../../../../lib/orszagprofil-jog';
-import { AGAZATOK } from '../../../../lib/orszagprofil-szotar';
 import {
-  csoportok as szamolCsoportok, jeloltek, KATEGORIA_MUTATOK, MUTATOK, rangsor as szamolRangsor, szures, SZAM_MUTATOK,
-  tartomany as szamolTartomany,
+  csoportok as szamolCsoportok, jeloltek, rangsor as szamolRangsor, szamlaloSzoveg, tartomany as szamolTartomany,
 } from '../../../../lib/terkep-mutatok';
+import { IparagSzuro } from './IparagSzuro';
+import { MutatoValaszto } from './MutatoValaszto';
 import { OsszehasonlitasPanel } from './OsszehasonlitasPanel';
+import type { SzerkesztesGombFn } from './ProfilKivonat';
 import { TerkepPanel } from './TerkepPanel';
 import { useTerkepAllapot } from './useTerkepAllapot';
 import { VilagTerkep } from './VilagTerkep';
-
-/** A „Mind" opció értéke: a Base UI Select üres stringet nem tud választható értékként kezelni. */
-const MIND = '__mind';
-const MUTATO_ITEMS: Record<string, string> = Object.fromEntries(MUTATOK.map((m) => [m.kulcs, m.cimke]));
-const IPARAG_ITEMS: Record<string, string> = { [MIND]: 'Mind', ...Object.fromEntries(AGAZATOK.map((i) => [i, i])) };
 
 export function TerkepNezet({
   adatok, ev, most, kezdoKod, valasztEvAction,
@@ -56,60 +48,32 @@ export function TerkepNezet({
   );
   // Magyarország mindig viszonyítási alap, ezért a „+ Ország" jelöltjei között sincs.
   const jeloltLista = useMemo(() => jeloltek(adatok, [...vs, HAZAI_KOD], mutato), [adatok, vs, mutato]);
-  const szamlalo = rangsor
-    ? `${rangsor.sorok.length} ország adattal · ${rangsor.adatNelkul.length} adat nélkül`
-    : iparag
-      ? `${szures(adatok, iparag).length} ország emeli ki ezt az iparágat`
-      : `${adatok.length} ország · ${adatok.filter((o) => o.allapot === 'friss').length} profil (${ev})`;
+  const szamlalo = szamlaloSzoveg(adatok, rangsor, iparag, ev);
+  // A Szerkesztés-gomb jogát a nézett (ev) és az aktuális (most) évre számoljuk; egyszer kötjük meg, a
+  // fejléc, a panel és a kivonat csak az országot és a feliratokat adja hozzá.
+  const szerkesztesGomb = useCallback<SzerkesztesGombFn>(
+    (kod, opciok) => (
+      <SzerkesztesGomb
+        kod={kod}
+        most={most}
+        szerkeszthetEv={canEditProfil(user, kod, ev, most)}
+        szerkeszthetMost={canEditProfil(user, kod, most, most)}
+        action={valasztEvAction}
+        {...opciok}
+      />
+    ),
+    [user, ev, most, valasztEvAction],
+  );
 
   return (
     <div className="flex max-w-[1600px] flex-col gap-4">
       <div className="flex flex-wrap items-start gap-4">
         <Card className="min-w-0 flex-[1_1_560px] overflow-hidden">
           <CardHeader className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2">
-              <Label id="mutato-label" htmlFor="mutato">Mutató</Label>
-              <Select value={mutato.kulcs} onValueChange={(v) => allapot.setMutatoKulcs(v ?? '')} items={MUTATO_ITEMS}>
-                <SelectTrigger id="mutato" aria-labelledby="mutato-label mutato" className="w-64">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Kategória</SelectLabel>
-                    {KATEGORIA_MUTATOK.map((m) => <SelectItem key={m.kulcs} value={m.kulcs}>{m.cimke}</SelectItem>)}
-                  </SelectGroup>
-                  <SelectGroup>
-                    <SelectLabel>Számszerű</SelectLabel>
-                    {SZAM_MUTATOK.map((m) => <SelectItem key={m.kulcs} value={m.kulcs}>{m.cimke}</SelectItem>)}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <Label id="iparag-szuro-label" htmlFor="iparag-szuro">Iparág</Label>
-              {/* A Select onValueChange null-t is adhat (törlés); a „Mind" és a null egyaránt „nincs szűrő". */}
-              <Select value={iparag || MIND} onValueChange={(v) => allapot.setIparag(!v || v === MIND ? '' : v)} items={IPARAG_ITEMS}>
-                <SelectTrigger id="iparag-szuro" aria-labelledby="iparag-szuro-label iparag-szuro" className="w-64">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={MIND}>Mind</SelectItem>
-                  {AGAZATOK.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+            <MutatoValaszto mutato={mutato} onChange={allapot.setMutatoKulcs} />
+            <IparagSzuro iparag={iparag} onChange={allapot.setIparag} />
             {/* A számláló szöveg a rangsor-panel alcíme (nem duplázzuk a fejlécben). */}
-            {sajatKod && (
-              <SzerkesztesGomb
-                kod={sajatKod}
-                most={most}
-                szerkeszthetEv={canEditProfil(user, sajatKod, ev, most)}
-                szerkeszthetMost={canEditProfil(user, sajatKod, most, most)}
-                action={valasztEvAction}
-                felirat="Saját országprofil"
-                className="ml-auto"
-              />
-            )}
+            {sajatKod && szerkesztesGomb(sajatKod, { felirat: 'Saját országprofil', className: 'ml-auto' })}
           </CardHeader>
           <CardContent className="p-0">
             <VilagTerkep
@@ -134,9 +98,7 @@ export function TerkepNezet({
             csoportok={csoportok}
             tartomany={tartomany}
             szamlalo={szamlalo}
-            ev={ev}
-            most={most}
-            valasztEvAction={valasztEvAction}
+            szerkesztesGomb={szerkesztesGomb}
           />
         </div>
       </div>
@@ -149,6 +111,7 @@ export function TerkepNezet({
           hazai={allapot.hazai}
           jeloltek={jeloltLista}
           mutato={mutato}
+          tele={allapot.vsTele}
           onKivalaszt={allapot.kivalaszt}
           onKivesz={allapot.vsKivesz}
           onHozzaad={allapot.vsHozzaad}

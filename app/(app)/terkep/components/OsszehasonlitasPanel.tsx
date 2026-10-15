@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { Button } from '../../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../components/ui/card';
@@ -33,9 +33,13 @@ function Szakasz({ cim, jelmagyarazat, children }: { cim: string; jelmagyarazat?
  * (országkártyák, „+ Ország", Magyarország), számszerű mutatónként egy kártya, és a listák mátrixa.
  * Minden ország saját színt kap (`szinek`); Magyarország – ha legfeljebb a nézett évig van profilja –
  * mindig viszonyítási alap. Címsor-szintek: a panel címe 2-es szintű (az AppShell lapcíme a `h1`), a
- * szakaszok `h3`, a kártyák `h4`.
+ * szakaszok `h3`, a kártyák `h4`. memo: minden propja stabil (useMemo/useCallback a TerkepNezetben és a
+ * useTerkepAllapotban), így a kijelölés vagy az iparág-szűrő változása nem rendereli újra a kártyákat és
+ * a mátrixokat.
  */
-export function OsszehasonlitasPanel({ orszagok, szinek, hazai, jeloltek, mutato, onKivalaszt, onKivesz, onHozzaad, onTorol }: {
+export const OsszehasonlitasPanel = memo(function OsszehasonlitasPanel({
+  orszagok, szinek, hazai, jeloltek, mutato, tele, onKivalaszt, onKivesz, onHozzaad, onTorol,
+}: {
   /** A halmaz rekordjai a hozzáadás sorrendjében (Magyarország nélkül). */
   orszagok: TerkepOrszag[];
   /** Kód → az ország színe az összehasonlításban. */
@@ -45,6 +49,8 @@ export function OsszehasonlitasPanel({ orszagok, szinek, hazai, jeloltek, mutato
   /** A „+ Ország" lista (a halmazban nem lévők, Magyarország nélkül; a hívó rendezi). */
   jeloltek: TerkepOrszag[];
   mutato: Mutato;
+  /** A halmaz tele (`TerkepAllapot.vsTele`). */
+  tele: boolean;
   onKivalaszt: (kod: string) => void;
   onKivesz: (kod: string) => void;
   onHozzaad: (kod: string) => void;
@@ -68,6 +74,7 @@ export function OsszehasonlitasPanel({ orszagok, szinek, hazai, jeloltek, mutato
           {...kozos}
           jeloltek={jeloltek}
           mutato={mutato}
+          tele={tele}
           onKivalaszt={onKivalaszt}
           onKivesz={onKivesz}
           onHozzaad={onHozzaad}
@@ -108,4 +115,4 @@ export function OsszehasonlitasPanel({ orszagok, szinek, hazai, jeloltek, mutato
       </CardContent>
     </Card>
   );
-}
+});

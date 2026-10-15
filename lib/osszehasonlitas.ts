@@ -14,6 +14,8 @@ import { TERKEP_SZINEK } from './terkep-mutatok';
  * legfeljebb 4 elemre épül. Fehér alapon mind legalább 4,5:1, a kis kódfeliratokhoz is.
  */
 export const VS_SZINEK = ['#2563eb', '#c2410c', '#9333ea', '#be185d'] as const;
+/** Legfeljebb ennyi ország lehet az összehasonlításban: ahány színe van. */
+export const VS_MAX = VS_SZINEK.length;
 /** Magyarország (a viszonyítási alap) jelölője, rombusza és kártyacsíkja: a térkép kontúrszíne. */
 export const HAZAI_SZIN = TERKEP_SZINEK.kontur;
 /** A magyar sáv: semleges szürke, a `bg-muted` sávháttérrel kb. 3,4:1 (grafikus elemnél legalább 3:1 kell). */
@@ -37,13 +39,18 @@ export interface VsElem {
 /**
  * Hozzáadás a halmazhoz a legkisebb szabad színnel; a többi elem színe nem változik. Ugyanazt a
  * példányt adja vissza Magyarországnál (mindig viszonyítási alap, a halmazba nem kerül), a már
- * benne lévőnél és a tele (`VS_SZINEK.length` elemű) halmaznál.
+ * benne lévőnél és a tele (`VS_MAX` elemű) halmaznál.
  */
 export function vsHozzaadElem(v: readonly VsElem[], kod: string): readonly VsElem[] {
-  if (hazaiE(kod) || v.some((e) => e.kod === kod) || v.length >= VS_SZINEK.length) return v;
+  if (hazaiE(kod) || v.some((e) => e.kod === kod) || v.length >= VS_MAX) return v;
   let szin = 0;
   while (v.some((e) => e.szin === szin)) szin++;
   return [...v, { kod, szin }];
+}
+
+/** Kivétel a halmazból; a többi elem színe marad. Ha az ország nincs benne, ugyanazt a példányt adja. */
+export function vsKiveszElem(v: readonly VsElem[], kod: string): readonly VsElem[] {
+  return v.some((e) => e.kod === kod) ? v.filter((e) => e.kod !== kod) : v;
 }
 
 /** Egy mutató sávjainak közös skálája; mindig tartalmazza a nullát. */
