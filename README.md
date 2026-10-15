@@ -81,17 +81,19 @@ A `data/tet.db` demó-adatbázis a repóban van (felhasználókkal és az attas�
 - `lib/orszagok.ts` – országszótár (ISO-kód, magyar név, world-atlas térképnév, főváros koordinátája, régió)
 - `lib/attase-orszag.ts` – attasé–ország hozzárendelés: típusok, vezető-szabályok tiszta segédei (a DB-oldal `db/queries/attase-orszag.ts`)
 - `lib/orszagprofil-szotar.ts` – az országprofil blokkjai, opciólistái, címkéi és korlátai
-- `components/orszagprofil/` – a profil olvasó nézet komponensei (`BlokkNezet`, jelvények)
-- `app/(app)/orszagprofil/components/` – a blokkonkénti szerkesztő űrlapok
+- `components/orszagprofil/` – az országprofil jelvényei (`AllapotBadge`, `AgazatBadge`, közös színstílusuk a `SzinesBadge`) és a `SzerkesztesGomb` – a profil oldal és a térkép is használja
+- `app/(app)/orszagprofil/components/` – a profil olvasó nézete (`BlokkNezet`, `AttaseLista`) és a szerkesztő blokkonkénti űrlapjai (`BlokkForm`, `mezok/`, `RendezvenySorok`; nem szerkeszthető évre a `NemSzerkeszthetoEv` kártya)
 - `lib/knowledge.ts` – tudástár demóadatok: 6 program, 6 ökoszisztéma-elem, 5 együttműködési forma
 - `lib/score.ts` – determinisztikus dummy pontszámok a monitoringhoz (a doksi logikája szerint)
 - `lib/riport-szotar.ts` – kategóriák, kulcsszavak, csatolmány-limit
 - `lib/ticket-szotar.ts` – ticket típusok, prioritások, státuszok, szűrők, a lista szűrős URL-je (`listaUrl`)
 - `lib/ticket-cimzettek.ts` – a címzett-jelöltek régió-csoportjai az új ticket dialógushoz (`regioCsoportok`)
-- `components/riport/` – a bejegyzés űrlap, lista és részlet komponensei
+- `components/riport/` – a bejegyzés-űrlap közös komponensei (`RiportForm` és mezői; az új jelentés és a szerkesztés is használja)
+- `app/(app)/jelentesek/components/` – a bejegyzés-lista, a szűrők, a részletoldal, a törlés és a „Megtett intézkedés” szerkesztője
 - `app/(app)/kommunikacio/components/` – a ticketlista, beszélgetés, adatlap és új-ticket dialógus
-- `components/form/` – megosztott form-minta (`useMuveletForm`, `MezoHiba`, `MuveletDialog`, `Mezo`, `SzamMezo`, `CimkeValaszto`, `NativeSelect`)
-- `components/AppShell.tsx` – sidebar (menü, országprofil-állapot kártya, bejelentkezett felhasználó, kijelentkezés), fejléc (oldalcím, ciklusválasztó – a választott év `tet-ev` cookie-ban; a térkép, az országprofil és a szerkesztő is ezt az évet mutatja)
+- `components/form/` – megosztott form-minta (`useMuveletForm`, `useNyitas`, `MezoHiba`, `MuveletDialog`, `Mezo`, `SzamMezo`, `CimkeValaszto`, `CimkesSelect`, `NativeSelect`, `KuldGomb`)
+- `components/app-shell/` – a shell: sidebar (`Oldalsav`: menü, országprofil-állapot kártya, bejelentkezett felhasználó, kijelentkezés), fejléc (`Fejlec`: oldalcím, ciklusválasztó – a választott év `tet-ev` cookie-ban; a térkép, az országprofil és a szerkesztő is ezt az évet mutatja), az összerakás és a context (`AppShell`, `AppContext`)
+- `lib/navigacio.ts` – az útvonaltábla (`UTVONALAK`): a menüpontok és a fejléc címei egy helyen
 - `app/(app)/components/OldalsavAllapot.tsx` – az oldalsáv állapot-kártyája (attasé: a saját országai, admin: darabszámok a választott ciklusra)
 - `lib/terkep-mutatok.ts` – a térkép mutatói (színezés, rangsor, összehasonlítás), színskála, régiók
 - `app/(app)/terkep/components/` – a térkép (`VilagTerkep`, d3-geo + world-atlas npm-ből), a rangsor-, kivonat- és összehasonlító panel

@@ -17,16 +17,14 @@ export default function MonitoringPage() {
       <div className="card">
         <div className="card-h">
           <h3>Hálózati rangsor · {ev}</h3>
-          <span className="card-sub">14 szempont, 3 kategória · küszöb {fmt(SCORE_THRESHOLD)}</span>
+          <span className="card-sub">{CRITERIA.length} szempont, {CATS.length} kategória · küszöb {fmt(SCORE_THRESHOLD)}</span>
         </div>
         <div style={{ overflow: 'auto' }}>
           <table className="tbl" style={{ minWidth: 760 }}>
             <thead>
               <tr>
                 <th style={{ paddingLeft: 15 }}>Attasé / poszt</th>
-                <th className="r">1. Együttműködés</th>
-                <th className="r">2. XPAND</th>
-                <th className="r">3. Információ</th>
+                {CATS.map((c) => <th key={c.n} className="r">{c.n}. {c.rovid}</th>)}
                 <th className="r">Összesített</th>
                 <th style={{ paddingLeft: 15, width: 190 }}>Eloszlás</th>
               </tr>
@@ -71,7 +69,7 @@ export default function MonitoringPage() {
         <div className="card-h" style={{ padding: '13px 15px' }}>
           <div>
             <h3 style={{ fontSize: 14 }}>{mon.attase} · {mon.orszag}</h3>
-            <div className="card-sub" style={{ marginTop: 2 }}>14 szempont részletes értékelése · adatforrás és gyakoriság szerint</div>
+            <div className="card-sub" style={{ marginTop: 2 }}>{CRITERIA.length} szempont részletes értékelése · adatforrás és gyakoriság szerint</div>
           </div>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
             <span className="muted">Összesített</span>

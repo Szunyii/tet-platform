@@ -8,8 +8,8 @@ export function sc(p: Post, i: number): number {
 
 export function avg(p: Post): number {
   let s = 0;
-  for (let i = 1; i <= 14; i++) s += sc(p, i);
-  return s / 14;
+  for (let i = 1; i <= CRITERIA.length; i++) s += sc(p, i);
+  return s / CRITERIA.length;
 }
 
 export function catAvg(p: Post, kat: number): number {
@@ -28,11 +28,6 @@ export function col(v: number): string {
 }
 
 const PILL_COLORS: Record<string, [string, string]> = {
-  Beadva: ['#e8f1ee', '#0f7a68'], Elfogadva: ['#e8f1ee', '#0f7a68'],
-  Hiányos: ['#fdf0e6', '#a86a00'], Vázlat: ['#f0f2f5', '#6b7684'],
-  Visszaküldve: ['#fbeae9', '#b3261e'], 'Nem adta le': ['#fbeae9', '#b3261e'],
-  Nyitott: ['#fbeae9', '#b3261e'], Folyamatban: ['#fdf0e6', '#a86a00'],
-  'Válaszra vár': ['#e9eef8', '#1f4e9c'], Lezárt: ['#f0f2f5', '#6b7684'],
   Magas: ['#fbeae9', '#b3261e'], Közepes: ['#fdf0e6', '#a86a00'], Alacsony: ['#f0f2f5', '#6b7684'],
 };
 
