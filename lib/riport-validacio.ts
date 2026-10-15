@@ -87,15 +87,21 @@ function parseKulcsszavak(raw: string, errors: MezoHibak): Kulcsszo[] {
   return egyedi as Kulcsszo[];
 }
 
+/** Az üres file-input helykitöltő File-jának lehetséges nevei (lásd `valodiFajlok`). */
+const HELYKITOLTO_NEVEK: ReadonlySet<string> = new Set(['', 'undefined', 'blob']);
+
 /**
- * A böngésző üres file-inputnál helykitöltő File-t küld: üres névvel és 0 mérettel (a React
- * server action kódolásában a neve a `"undefined"` string). Ezt nem tekintjük fájlnak. A
- * valódi, névvel rendelkező 0 bájtos fájlt a `parseFajlok` utasítja el külön hibaüzenettel.
+ * A böngésző üres file-inputnál helykitöltő File-t küld: üres névvel és 0 mérettel. A server
+ * action kódolása után a neve a régebbi Reactben a `"undefined"` string, a React 19.2-ben a
+ * névtelen blob alapneve, `"blob"`. Ezeket nem tekintjük fájlnak (a `CsatolmanyMezo` üres
+ * listánál nevet sem ad a rejtett inputnak, így ott be sem kerül). Következmény: egy valódi,
+ * pontosan `blob` nevű 0 bájtos fájl hiba helyett némán kimarad – tartalma úgysincs. A más
+ * nevű 0 bájtos fájlt a `parseFajlok` továbbra is elutasítja („Üres fájl”).
  */
 function valodiFajlok(fd: FormData, key: string): File[] {
   return fd
     .getAll(key)
-    .filter((v): v is File => v instanceof File && !(v.size === 0 && (v.name === '' || v.name === 'undefined')));
+    .filter((v): v is File => v instanceof File && !(v.size === 0 && HELYKITOLTO_NEVEK.has(v.name)));
 }
 
 /** Hibaüzenetbe való, max. ~80 karakterre vágott fájlnév. */

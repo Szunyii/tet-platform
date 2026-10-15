@@ -43,6 +43,10 @@ export function CsatolmanyMezo({
   // A rejtett file-inputot minden render után újratöltjük: a React a <form action> beküldése
   // után form.reset()-et hív, ami a files listát kiüríti, a `fajlok` referencia viszont
   // változatlan – egy [fajlok] dependency nem elég. Legfeljebb 5 elem, olcsó művelet.
+  // A `name`-et csak akkor kapja meg, ha van fájl: az üres file-input a böngésző FormData-jába
+  // egy üres, 0 bájtos helykitöltő File-t tenne, amelyet a React 19.2 server action "blob"
+  // néven juttat el a szerverre (a validátor ezt is kiszűri, de így be sem kerül). A töltéshez
+  // a név nem kell, a szerkesztés rejtett mezői (`torlendoCsatolmany`) ettől függetlenek.
   useEffect(() => {
     if (!rejtett.current) return;
     const dt = new DataTransfer();
@@ -59,7 +63,15 @@ export function CsatolmanyMezo({
         Csatolmány (max. {CSATOLMANY_LIMIT.maxDarab} fájl, egyenként {formatMeret(CSATOLMANY_LIMIT.maxMeret)}; PDF, Word,
         Excel, PowerPoint, PNG, JPG)
       </Label>
-      <input ref={rejtett} type="file" name="csatolmany" multiple hidden tabIndex={-1} aria-hidden />
+      <input
+        ref={rejtett}
+        type="file"
+        name={fajlok.length > 0 ? 'csatolmany' : undefined}
+        multiple
+        hidden
+        tabIndex={-1}
+        aria-hidden
+      />
       <input
         ref={valaszto}
         id="csatolmany-valaszto"
