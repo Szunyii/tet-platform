@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useApp } from '../../../components/AppShell';
+import { useApp } from '../../../components/app-shell/AppContext';
 import { CATS, CRITERIA, POSTS, SCORE_THRESHOLD } from '../../../lib/data';
 import { avg, catAvg, col, fmt, pill, sc } from '../../../lib/score';
 

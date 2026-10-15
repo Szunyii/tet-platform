@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useApp } from '../../../../components/AppShell';
+import { useApp } from '../../../../components/app-shell/AppContext';
 import { SzerkesztesGomb } from '../../../../components/orszagprofil/SzerkesztesGomb';
 import { Card, CardContent, CardHeader } from '../../../../components/ui/card';
 import { Label } from '../../../../components/ui/label';

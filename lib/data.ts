@@ -1,31 +1,5 @@
 // Demóadatok a TéT Platform doksiból (14 poszt, 3 kategória, 14 szempont)
 
-export const FIELDS = [
-  'Mesterséges intelligencia',
-  'Kvantumtechnológia',
-  'Biotechnológia és élettudomány',
-  'Félvezetők és mikroelektronika',
-  'Energetika és fenntarthatóság',
-  'Űrtechnológia',
-  'Agrár- és élelmiszertechnológia',
-  'Digitális egészségügy',
-  'Anyagtudomány',
-  'Mobilitás és autonóm rendszerek',
-] as const;
-
-export const FIELD_COLORS: Record<string, string> = {
-  'Mesterséges intelligencia': '#1f4e9c',
-  'Kvantumtechnológia': '#6b46c1',
-  'Biotechnológia és élettudomány': '#0f7a68',
-  'Félvezetők és mikroelektronika': '#b45309',
-  'Energetika és fenntarthatóság': '#2f7d32',
-  'Űrtechnológia': '#0e7490',
-  'Agrár- és élelmiszertechnológia': '#8a6d1f',
-  'Digitális egészségügy': '#a8326f',
-  'Anyagtudomány': '#525c6b',
-  'Mobilitás és autonóm rendszerek': '#9a3412',
-};
-
 export interface Cat { n: number; nev: string; rovid: string; color: string }
 export const CATS: Cat[] = [
   { n: 1, nev: '1. Általános együttműködés', rovid: 'Együttműködés', color: '#1f4e9c' },

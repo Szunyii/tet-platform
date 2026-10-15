@@ -27,11 +27,6 @@ export function col(v: number): string {
   return v >= 4 ? '#0f7a68' : v >= SCORE_THRESHOLD ? '#454f5e' : '#b3261e';
 }
 
-export function ini(n: string): string {
-  const p = n.split(' ');
-  return (p[0][0] + (p[1] ? p[1][0] : '')).toUpperCase();
-}
-
 const PILL_COLORS: Record<string, [string, string]> = {
   Beadva: ['#e8f1ee', '#0f7a68'], Elfogadva: ['#e8f1ee', '#0f7a68'],
   Hiányos: ['#fdf0e6', '#a86a00'], Vázlat: ['#f0f2f5', '#6b7684'],

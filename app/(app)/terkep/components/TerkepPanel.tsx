@@ -1,6 +1,6 @@
 'use client';
 
-import { useApp } from '../../../../components/AppShell';
+import { useApp } from '../../../../components/app-shell/AppContext';
 import type { TerkepOrszag } from '../../../../db/queries/orszagprofil';
 import { canEditProfil } from '../../../../lib/orszagprofil-jog';
 import type { Csoport, Rangsor, Tartomany } from '../../../../lib/terkep-mutatok';

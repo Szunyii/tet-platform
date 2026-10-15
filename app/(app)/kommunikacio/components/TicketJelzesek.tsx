@@ -1,4 +1,5 @@
 import { Badge } from '../../../../components/ui/badge';
+import { monogram } from '../../../../lib/nev';
 import { PRIORITASOK, STATUSZOK, TIPUSOK, type PrioKulcs, type StatuszKulcs, type TipusKulcs } from '../../../../lib/ticket-szotar';
 import { cn } from '../../../../lib/utils';
 
@@ -42,8 +43,7 @@ export function prioSzegely(prio: PrioKulcs): string {
 
 /** Monogram-kör az üzenetbuborékhoz. */
 export function Monogram({ nev, sajat }: { nev: string; sajat: boolean }) {
-  const reszek = nev.trim().split(/\s+/);
-  const betuk = ((reszek[0]?.[0] ?? '') + (reszek[1]?.[0] ?? '')).toUpperCase() || '?';
+  const betuk = monogram(nev) || '?';
   return (
     <span
       aria-hidden

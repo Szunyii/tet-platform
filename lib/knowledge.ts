@@ -1,6 +1,32 @@
 // Tudástár demóadatok: Magyarországról ajánlható programok, partnerek és együttműködési formák.
 // Minden tartalom dummy demóadat, a lib/data.ts-hez hasonlóan.
 
+export const FIELDS = [
+  'Mesterséges intelligencia',
+  'Kvantumtechnológia',
+  'Biotechnológia és élettudomány',
+  'Félvezetők és mikroelektronika',
+  'Energetika és fenntarthatóság',
+  'Űrtechnológia',
+  'Agrár- és élelmiszertechnológia',
+  'Digitális egészségügy',
+  'Anyagtudomány',
+  'Mobilitás és autonóm rendszerek',
+] as const;
+
+export const FIELD_COLORS: Record<string, string> = {
+  'Mesterséges intelligencia': '#1f4e9c',
+  'Kvantumtechnológia': '#6b46c1',
+  'Biotechnológia és élettudomány': '#0f7a68',
+  'Félvezetők és mikroelektronika': '#b45309',
+  'Energetika és fenntarthatóság': '#2f7d32',
+  'Űrtechnológia': '#0e7490',
+  'Agrár- és élelmiszertechnológia': '#8a6d1f',
+  'Digitális egészségügy': '#a8326f',
+  'Anyagtudomány': '#525c6b',
+  'Mobilitás és autonóm rendszerek': '#9a3412',
+};
+
 export type KbSection = 'program' | 'okoszisztema' | 'egyuttmukodes';
 
 export interface KbSectionMeta {

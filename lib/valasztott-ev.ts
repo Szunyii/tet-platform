@@ -1,6 +1,7 @@
 import 'server-only';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
+import type { Szerepkor } from './felhasznalo-validacio';
 import { EV_MIN } from './orszagprofil-szotar';
 
 // Next-függő szerver-oldali segéd (mint a lib/session.ts): a CLAUDE.md lib/ szabályának tudatos kivétele.
@@ -26,3 +27,15 @@ export const getValasztottEv = cache(async (most: number): Promise<number> => {
   const ev = parseEv((await cookies()).get(EV_COOKIE)?.value);
   return ervenyesValasztottEv(ev, most) ? ev : most;
 });
+
+/**
+ * A fejléc ciklusválasztójának évei, csökkenő sorrendben. Admin: minden év EV_MIN-től az aktuálisig (új év
+ * profilját is létre kell tudnia hozni, a szerkesztőnek nincs saját évválasztója). Attasé: a DB-ben létező
+ * profil-évek + az aktuális év, az EV_MIN..most tartományra szűrve, hogy csak olyan évet ajánljunk fel, amit a
+ * valasztEvAction is elfogadna. A választott év mindig benne van (ev már validált, most mindig szerepel), hogy
+ * a select konzisztens legyen. A profil-éveket (`profilEvek`) csak attasénál kéri le.
+ */
+export function ciklusEvek(szerep: Szerepkor, most: number, ev: number, profilEvek: () => readonly number[]): number[] {
+  if (szerep === 'admin') return Array.from({ length: Math.max(0, most - EV_MIN + 1) }, (_, i) => most - i);
+  return [...new Set([most, ev, ...profilEvek().filter((e) => e >= EV_MIN && e <= most)])].sort((a, b) => b - a);
+}

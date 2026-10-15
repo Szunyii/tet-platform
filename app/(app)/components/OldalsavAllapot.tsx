@@ -7,8 +7,9 @@ import type { AppSession } from '../../../lib/session';
 
 // Az oldalsáv alján megjelenő állapot-kártya. Server Component: a layout rendereli és
 // ReactNode-ként adja az AppShell `oldalsavAlja` propjának, így a DB-lekérdezés nem kerül
-// a kliens-komponensbe. A színek a térképpel közös szótárból jönnek (ALLAPOT_SZINEK), inline
-// style-lal; az AllapotBadge szándékosan nincs újrahasználva, az világos háttérre van hangolva.
+// a kliens-komponensbe. A pötty színe a térképpel közös szótárból jön (ALLAPOT_SZINEK, inline style);
+// a többi szín az oldalsáv `--sidebar*` tokenjeiből (app/globals.css). Az AllapotBadge szándékosan
+// nincs újrahasználva, az világos háttérre van hangolva.
 // Attasé: országonként egy sor (székhely elöl); a sor a szerkesztőre visz, ha az attasé az ország
 // relációs vezetője és az év szerkeszthető (canEditProfil), különben az olvasó nézetre. Az állapot és
 // a művelet két külön elem (flex-wrap): keskeny sorban – pl. „Elavult profil · 2025” mellett – a művelet
@@ -18,26 +19,23 @@ import type { AppSession } from '../../../lib/session';
 // revalidatePath('/', 'layout')-ot hívnak; kliens-oldali navigációnál a layout nem fut újra
 // (ugyanaz az elfogadott késés, mint az olvasatlan-számlálónál).
 
-const SZOVEG = '#8d97a5';
-const CIM = '#c3cbd6';
-const LINK = '#a3adbb';
-
 function Potty({ allapot }: { allapot: Allapot }) {
   return (
-    <span aria-hidden style={{
-      display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
-      background: ALLAPOT_SZINEK[allapot], flex: '0 0 8px',
-    }} />
+    <span
+      aria-hidden
+      className="inline-block size-2 flex-[0_0_8px] rounded-[50%]"
+      style={{ background: ALLAPOT_SZINEK[allapot] }}
+    />
   );
 }
 
 function Keret({ cim, link, children }: { cim: string; link?: { href: string; felirat: string }; children: React.ReactNode }) {
   return (
-    <div style={{ padding: '14px 18px', borderTop: '1px solid #232c39', fontSize: 11.5, color: SZOVEG, lineHeight: 1.6 }}>
-      <div style={{ color: CIM, fontWeight: 600 }}>{cim}</div>
-      <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>{children}</div>
+    <div className="border-t border-t-sidebar-border px-[18px] py-3.5 text-[11.5px] leading-[1.6] text-sidebar-halvany">
+      <div className="font-semibold text-sidebar-cim">{cim}</div>
+      <div className="mt-1 flex flex-col gap-0.5">{children}</div>
       {link && (
-        <Link href={link.href} style={{ display: 'inline-block', marginTop: 6, color: LINK, textDecoration: 'none', fontWeight: 500 }}>
+        <Link href={link.href} className="mt-1.5 inline-block font-medium text-sidebar-menu no-underline">
           {link.felirat} <span aria-hidden>→</span>
         </Link>
       )}
@@ -52,10 +50,10 @@ export default function OldalsavAllapot({ session, ev, most }: { session: AppSes
     return (
       <Keret cim={`Országprofilok · ${ev}`} link={{ href: '/terkep', felirat: 'Térkép' }}>
         {ALLAPOTOK.map((a) => (
-          <div key={a} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div key={a} className="flex items-center gap-2">
             <Potty allapot={a} />
             <span>{ALLAPOT_CIMKE[a]}</span>
-            <span style={{ marginLeft: 'auto', color: CIM, fontVariantNumeric: 'tabular-nums' }}>{szamok[a]}</span>
+            <span className="ml-auto text-sidebar-cim tabular-nums">{szamok[a]}</span>
           </div>
         ))}
       </Keret>
@@ -73,16 +71,16 @@ export default function OldalsavAllapot({ session, ev, most }: { session: AppSes
           <Link
             key={o.kod}
             href={szerkesztheto ? `/orszagprofil/${o.kod}/szerkesztes` : `/orszagprofil/${o.kod}`}
-            style={{ display: 'flex', flexDirection: 'column', padding: '2px 0', color: SZOVEG, textDecoration: 'none' }}
+            className="flex flex-col py-0.5 text-sidebar-halvany no-underline"
           >
-            <span style={{ display: 'flex', alignItems: 'baseline', gap: 8, color: CIM }}>
+            <span className="flex items-baseline gap-2 text-sidebar-cim">
               <Potty allapot={allapot} />
               {orszagNev(o.kod)}
               <span className="sr-only">: </span>
             </span>
-            <span style={{ display: 'flex', flexWrap: 'wrap', columnGap: 6, paddingLeft: 16 }}>
+            <span className="flex flex-wrap gap-x-1.5 pl-4">
               <span>{ALLAPOT_CIMKE[allapot]}{allapot === 'elavult' && utolsoEv ? ` · ${utolsoEv}` : ''}</span>
-              <span style={{ marginLeft: 'auto', color: LINK, fontWeight: 500, whiteSpace: 'nowrap' }}>
+              <span className="ml-auto font-medium whitespace-nowrap text-sidebar-menu">
                 {szerkesztheto ? 'Szerkesztés' : 'Megnyitás'} <span aria-hidden>→</span>
               </span>
             </span>

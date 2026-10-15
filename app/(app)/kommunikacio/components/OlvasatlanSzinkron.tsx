@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useApp } from '../../../../components/AppShell';
+import { useApp } from '../../../../components/app-shell/AppContext';
 
 /**
  * A menü olvasatlan-számlálóját szinkronban tartja az oldallal. A page a megtekintés
