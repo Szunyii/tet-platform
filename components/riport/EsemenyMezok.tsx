@@ -22,7 +22,7 @@ export function EsemenyMezok({
   errors: MezoHibak;
 }) {
   return (
-    <fieldset className="grid gap-3 rounded-xl border border-border bg-muted/30 p-3 animate-in fade-in-0 sm:grid-cols-2">
+    <fieldset className="grid gap-3 rounded-xl border border-input bg-muted/30 p-3 animate-in fade-in-0 sm:grid-cols-2">
       <legend className="px-1 text-xs font-medium text-muted-foreground">{C.esemeny}</legend>
       <Mezo id="esemenyDatum" cimke={C.esemenyDatum} errors={errors}>
         <Input

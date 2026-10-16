@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
 import { RiportForm } from '../../../components/riport/RiportForm';
+import { listSajatRiportok } from '../../../db/queries/riport';
 import { orszagNev } from '../../../lib/orszagok';
 import { requireSession } from '../../../lib/session';
 import { createRiportAction } from './actions';
+import { KORABBI_LIMIT, KorabbiBejegyzesek } from './components/KorabbiBejegyzesek';
 
 export const metadata: Metadata = { title: 'Új bejegyzés' };
 
@@ -28,6 +30,7 @@ export default async function UjRiportPage() {
   }
   // A választható országok a session sorrendjében (székhely elöl), magyar névvel.
   const orszagok = session.orszagok.map((o) => ({ kod: o.kod, nev: orszagNev(o.kod) }));
+  const korabbi = listSajatRiportok(session.userId, KORABBI_LIMIT);
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">
@@ -40,7 +43,16 @@ export default async function UjRiportPage() {
           'A bejegyzés a lent választott országhoz kerül, a te neveddel.'
         )}
       </p>
-      <RiportForm mode="create" action={createRiportAction} orszagok={orszagok.length > 1 ? orszagok : undefined} />
+      {/* items-start: a panel nem nyúlik a form magasságára, így tud ragadni (sticky). */}
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,48rem)_minmax(15rem,18rem)]">
+        <RiportForm mode="create" action={createRiportAction} orszagok={orszagok.length > 1 ? orszagok : undefined} />
+        {/* Az ország akkor is kell, ha a beadó ma már egy országos, de a bejegyzései több országról szólnak. */}
+        <KorabbiBejegyzesek
+          sorok={korabbi.sorok}
+          osszes={korabbi.osszes}
+          tobbOrszag={orszagok.length > 1 || new Set(korabbi.sorok.map((r) => r.orszag)).size > 1}
+        />
+      </div>
     </div>
   );
 }

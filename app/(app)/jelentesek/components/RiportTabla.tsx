@@ -8,8 +8,8 @@ import type { FormAction } from '../../../../components/form/useMuveletForm';
 import { Badge } from '../../../../components/ui/badge';
 import { buttonVariants } from '../../../../components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../components/ui/table';
+import { KategoriaBadge } from '../../../../components/riport/KategoriaBadge';
 import { IntezkedesSzerkeszto } from './IntezkedesSzerkeszto';
-import { KategoriaBadge } from './KategoriaBadge';
 
 export function RiportTabla({
   sorok,

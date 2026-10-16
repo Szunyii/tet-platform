@@ -72,8 +72,8 @@ export function KategoriaValaszto({
             onClick={() => onChange(k.kulcs)}
             onKeyDown={(e) => onKeyDown(e, i)}
             className={cn(
-              'flex items-start gap-3 rounded-xl border p-3 text-left transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
-              on ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border bg-card hover:bg-muted/50',
+              'flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-left transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+              on ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-input bg-card hover:bg-muted/50',
               invalid && !on && 'border-destructive/40',
             )}
           >

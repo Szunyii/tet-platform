@@ -7,11 +7,11 @@ import { formatMeret, kategoriaByKulcs, RIPORT_MEZO_CIMKEK } from '../../../../l
 import { csatolmanyUrl } from '../../../../lib/routes';
 import { cn } from '../../../../lib/utils';
 import type { FormAction, MuveletAction } from '../../../../components/form/useMuveletForm';
+import { KategoriaBadge } from '../../../../components/riport/KategoriaBadge';
 import { Badge } from '../../../../components/ui/badge';
 import { buttonVariants } from '../../../../components/ui/button';
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '../../../../components/ui/card';
 import { IntezkedesSzerkeszto } from './IntezkedesSzerkeszto';
-import { KategoriaBadge } from './KategoriaBadge';
 import { RiportTorles } from './RiportTorles';
 
 export function RiportReszlet({

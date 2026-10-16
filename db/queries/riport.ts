@@ -32,6 +32,15 @@ export interface RiportListItem {
   createdAt: Date;
 }
 
+/** Az új bejegyzés oldal „Korábbi bejegyzéseid” paneljének egy sora. */
+export interface SajatRiport {
+  id: string;
+  kategoria: KategoriaKulcs;
+  targy: string;
+  orszag: string;
+  createdAt: Date;
+}
+
 /** Az admin attasé-szűrőjének egy opciója: egy bejegyzéssel rendelkező szerző. */
 export interface RiportSzerzo {
   id: string;
@@ -113,6 +122,33 @@ export function listRiportok(filter: RiportFilter = {}): RiportListItem[] {
     .orderBy(desc(riport.createdAt))
     .all()
     .map((r) => ({ ...r, kategoria: r.kategoria as KategoriaKulcs }));
+}
+
+/**
+ * A szerző legutóbbi `limit` bejegyzése (legújabb elöl) és az összes bejegyzésének száma, egy
+ * olvasó tranzakcióban, hogy a kettő egymáshoz illjen. Csak a szerző saját sorai: a hívó a
+ * session saját id-ját adja, ezért külön jog-ellenőrzés nem kell.
+ */
+export function listSajatRiportok(szerzoId: string, limit: number): { sorok: SajatRiport[]; osszes: number } {
+  return db.transaction((tx) => {
+    const sorok = tx
+      .select({
+        id: riport.id,
+        kategoria: riport.kategoria,
+        targy: riport.targy,
+        orszag: riport.orszag,
+        createdAt: riport.createdAt,
+      })
+      .from(riport)
+      .where(eq(riport.szerzoId, szerzoId))
+      .orderBy(desc(riport.createdAt))
+      .limit(limit)
+      .all()
+      .map((r) => ({ ...r, kategoria: r.kategoria as KategoriaKulcs }));
+    const osszes =
+      tx.select({ db: sql<number>`count(*)` }).from(riport).where(eq(riport.szerzoId, szerzoId)).get()?.db ?? 0;
+    return { sorok, osszes };
+  });
 }
 
 export function getRiport(id: string): RiportDetail | null {

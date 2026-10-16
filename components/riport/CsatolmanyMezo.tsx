@@ -92,7 +92,7 @@ export function CsatolmanyMezo({
         tabIndex={-1}
         aria-invalid={hiba ? true : undefined}
         aria-describedby={hiba ? 'csatolmany-hiba' : undefined}
-        className="rounded-xl border border-dashed border-border p-3 outline-none"
+        className="rounded-xl border border-dashed border-input p-3 outline-none"
       >
         <Button type="button" variant="outline" size="sm" onClick={() => valaszto.current?.click()}>
           <PaperclipIcon /> Fájl hozzáadása
