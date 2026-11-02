@@ -859,6 +859,14 @@ for (let i = 0; i < 151; i++) tulSok.append(`sorok.${i}.nev`, `S${i}`);
 const ketLista = validalKartya(tulSok, 'lista');
 assert.ok(!ketLista.ok && ketLista.errors.form === 'Legfeljebb 20 link adható meg. Legfeljebb 150 sor adható meg.', 'mindkét túllépés látszik');
 
+const sortores = validalKartya(
+  fd({ kategoria: 'egyetemek', nev: 'Első\nmásodik', osszefoglalo: 'Egy\n\nkettő', 'sorok.0.nev': 'BME', 'sorok.0.megjegyzes': 'a\nb' }),
+  'lista',
+);
+assert.ok(sortores.ok);
+assert.equal(sortores.data.nev, 'Első második', 'egysoros mezőben a sortörés szóköz');
+assert.equal(sortores.data.osszefoglalo, 'Egy\n\nkettő', 'a többsoros mező megtartja');
+assert.equal(sortores.data.tipus === 'lista' && sortores.data.tartalom.sorok[0].megjegyzes, 'a b');
 console.log('tudástár validátor: minden ellenőrzés rendben');
 ```
 
@@ -913,8 +921,15 @@ function formHiba(errors: MezoHibak, uzenet: string): void {
   errors.form = errors.form ? `${errors.form} ${uzenet}` : uzenet;
 }
 
-/** Szöveges érték ellenőrzése: kötelezőség és hossz; a hibát az `errors`-ba írja, az értéket visszaadja. */
-function szoveg(v: string, id: string, cimke: string, max: number, kotelezo: boolean, errors: MezoHibak): string {
+/**
+ * Szöveges érték ellenőrzése: kötelezőség és hossz; a hibát az `errors`-ba írja, az értéket visszaadja. Az
+ * egysoros mezőben (`tobbsoros` nélkül) a sortörés szóköz lesz: a szerkesztő `<input>`-ja a következő mentéskor
+ * szóköz nélkül dobná el, és a szavak egybefolynának.
+ */
+function szoveg(
+  nyers: string, id: string, cimke: string, max: number, kotelezo: boolean, errors: MezoHibak, tobbsoros = false,
+): string {
+  const v = tobbsoros ? nyers : nyers.replace(/\s*\n\s*/g, ' ');
   if (kotelezo && !v) errors[id] = `${nevelovel(cimke)} kötelező.`;
   else if (v.length > max) errors[id] = `${nevelovel(cimke)} legfeljebb ${max} karakter.`;
   return v;
@@ -963,7 +978,9 @@ function sorok<L extends SorLista>(fd: FormData, lista: L, errors: MezoHibak): S
     const sor: Record<string, string> = {};
     for (const { kulcs, sz, v } of ertekek) {
       const id = `${lista}.${i}.${kulcs}`;
-      sor[kulcs] = sz.url ? webcim(v, id, sz.cimke, sz.max, Boolean(sz.kotelezo), errors) : szoveg(v, id, sz.cimke, sz.max, Boolean(sz.kotelezo), errors);
+      sor[kulcs] = sz.url
+        ? webcim(v, id, sz.cimke, sz.max, Boolean(sz.kotelezo), errors)
+        : szoveg(v, id, sz.cimke, sz.max, Boolean(sz.kotelezo), errors, Boolean(sz.tobbsoros));
     }
     // A `SOR_MEZOK` a sortípus minden mezőjét kimerítően felsorolja, ezért a sor teljes.
     eredmeny.push(sor as unknown as SorTipusok[L]);
@@ -979,7 +996,7 @@ export function validalKartya(fd: FormData, tipus: KartyaTipus): ParseResult<Kar
   if (!isKategoriaSlug(kategoria)) errors.kategoria = 'Válassz kategóriát.';
   const nev = szoveg(mezo(fd, 'nev'), 'nev', NEV_CIMKE[tipus], NEV_MAX, true, errors);
   const rovidites = szoveg(mezo(fd, 'rovidites'), 'rovidites', C.rovidites, ROVIDITES_MAX, false, errors);
-  const osszefoglalo = szoveg(mezo(fd, 'osszefoglalo'), 'osszefoglalo', OSSZEFOGLALO_CIMKE[tipus], OSSZEFOGLALO_MAX, true, errors);
+  const osszefoglalo = szoveg(mezo(fd, 'osszefoglalo'), 'osszefoglalo', OSSZEFOGLALO_CIMKE[tipus], OSSZEFOGLALO_MAX, true, errors, true);
   const honlap = webcim(mezo(fd, 'honlap'), 'honlap', C.honlap, URL_MAX, false, errors);
   const linkek = sorok(fd, 'linkek', errors);
 
@@ -990,8 +1007,8 @@ export function validalKartya(fd: FormData, tipus: KartyaTipus): ParseResult<Kar
     torzs = {
       tipus,
       tartalom: {
-        profil: szoveg(mezo(fd, 'profil'), 'profil', C.profil, SZOVEG_MAX, false, errors),
-        tevekenyseg: szoveg(mezo(fd, 'tevekenyseg'), 'tevekenyseg', C.tevekenyseg, SZOVEG_MAX, false, errors),
+        profil: szoveg(mezo(fd, 'profil'), 'profil', C.profil, SZOVEG_MAX, false, errors, true),
+        tevekenyseg: szoveg(mezo(fd, 'tevekenyseg'), 'tevekenyseg', C.tevekenyseg, SZOVEG_MAX, false, errors, true),
         kapcsolat: {
           email,
           telefon: szoveg(mezo(fd, 'telefon'), 'telefon', C.telefon, TELEFON_MAX, false, errors),
@@ -2464,6 +2481,7 @@ export function KartyaMezo({
       {szamlalo && (
         <p id={szamlaloId} className="text-right text-xs text-muted-foreground tabular-nums">
           {value.length}/{max}
+          <span className="sr-only"> karakter</span>
         </p>
       )}
     </Mezo>
@@ -2694,8 +2712,10 @@ export function KartyaTorles({ nev, action, tiltva = false }: { nev: string; act
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={pending}>Mégse</AlertDialogCancel>
-            {/* focusableWhenDisabled: törlés közben a fókusz a gombon marad (különben a body-ra esne). */}
-            <AlertDialogAction variant="destructive" disabled={pending} focusableWhenDisabled onClick={torol}>
+            {/* focusableWhenDisabled: törlés közben a fókusz a gombon marad (különben a body-ra esne). Ilyenkor natív
+                disabled nincs, csak aria-disabled, ezért a letiltott kinézetet az aria-disabled: osztályok adják. */}
+            <AlertDialogAction variant="destructive" disabled={pending} focusableWhenDisabled onClick={torol}
+              className="aria-disabled:pointer-events-none aria-disabled:opacity-50">
               {pending ? 'Törlés…' : 'Törlés'}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -3272,7 +3292,9 @@ import { existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { SLUG_MAX, SLUG_RE } from '../lib/slug';
-import { FOGLALT_SLUGOK, SOR_MEZOK, TUDASTAR_KATEGORIAK, isKartyaTipus, type KartyaAdat } from '../lib/tudastar-szotar';
+import {
+  FOGLALT_SLUGOK, SOR_MEZOK, TUDASTAR_KATEGORIAK, isKartyaTipus, type KartyaAdat, type SorMezoSzabaly,
+} from '../lib/tudastar-szotar';
 import { normalizalUrl, validalKartya } from '../lib/tudastar-validacio';
 import { tisztitSzoveg } from '../lib/urlap';
 import { kartyaFormData, type ForrasKartya, type ForrasKategoria } from './tudastar-tartalom/tipusok';
@@ -3313,6 +3335,14 @@ function szovegek(v: unknown, ut: string): [string, string][] {
   return [];
 }
 
+/** Többsoros-e a mező (útvonal pl. `profil`, `szakaszok[1].szoveg`): ott a sortörés értékes, máshol a validátor szóközre cseréli. */
+function tobbsorosE(ut: string): boolean {
+  if (['osszefoglalo', 'profil', 'tevekenyseg'].includes(ut)) return true;
+  const m = /^(\w+)\[\d+\]\.(\w+)$/.exec(ut);
+  const szabalyok = m ? (SOR_MEZOK as Record<string, Record<string, SorMezoSzabaly>>)[m[1]] : undefined;
+  return Boolean(m && szabalyok?.[m[2]]?.tobbsoros);
+}
+
 function szigoruHibak(k: ForrasKartya): string[] {
   const hibak: string[] = [];
   if (!isKartyaTipus(k.tipus)) return [`tipus: 'intezmeny' vagy 'lista' kell (${String(k.tipus)})`];
@@ -3331,6 +3361,7 @@ function szigoruHibak(k: ForrasKartya): string[] {
   }
   for (const [ut, v] of szovegek(k, '')) {
     if (tisztitSzoveg(v) !== v) hibak.push(`${ut}: a szöveg szélén szóköz vagy láthatatlan karakter áll`);
+    if (v.includes('\n') && !tobbsorosE(ut)) hibak.push(`${ut}: egysoros mezőben sortörés áll (a validátor szóközre cserélné)`);
     if (/(^|\.)url$|^honlap$/.test(ut.replace(/\[\d+\]/g, '')) && v && normalizalUrl(v) !== v) {
       hibak.push(`${ut}: nem kanonikus URL (${v} → ${normalizalUrl(v) ?? 'érvénytelen'})`);
     }
@@ -3688,3 +3719,4 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 22. **Revalidálás:** minden tudástár-action `revalidatePath('/', 'layout')`-ot hív (a kódbázis konvenciója); a spec `revalidatePath('/tudastar', 'layout')`-ja a `(app)` route group miatt egyetlen oldalra sem illeszkedne (a tag `/(app)/tudastar/…`), csak a Next mostani durva server-action-revalidálása miatt működne.
 23. **A jobb menü `xl`-től:** a 238 px-es oldalsáv mellett `lg`-n a tartalomnak ~450 px maradna, ezért a menü `xl` fölött jelenik meg (alatta a kategória-választó); a Profil/Kapcsolat két hasábja is `xl`-től. A menü kiemelése fehér háttér + keret (a szürke lapon a `bg-muted` nem látszik), a kategória-oldali kártya-linkek sima `<a>` horgonyok.
 24. **A szerkesztő apróságai:** a Mentés sima `Button` a `useMuveletForm` pendingjével (a `BlokkForm`/`RiportForm` mintája, nem `KuldGomb`); a formázási súgósor a közös `Mezo` szerint a mező fölött áll; az Alapadatokban a honlap az összefoglaló előtt, a Programok és Sorok mezőiben a webcím a leírás/megjegyzés előtt áll (`SOR_MEZOK` sorrendje); a hozzáadás-gomb felirata listánként „+ Új szakasz / program / link / sor”.
+25. **Sortörés egysoros mezőben:** a validátor szóközre cseréli (a szerkesztő `<input>`-ja szóköz nélkül dobná el), a tartalom-futtató hibának veszi; többsoros mező: az összefoglaló/bevezető, a profil, a tevékenység és a szakasz szövege.
