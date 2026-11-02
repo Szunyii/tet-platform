@@ -4,13 +4,22 @@
  * Források (lekérve: 2026-11-02):
  * - HUN-REN TKI kutatócsoportjai: https://www.tki-office.hu/a-hun-ren-tki-tamogatott-kutatocsoportjai/ – 101 csoport; a befogadó
  *   egyetemenkénti darabszám saját számlálás a csoportnevek alapján (csak az önálló befogadók)
- * - NKFIH Nemzeti Laboratóriumok aloldalai (konzorciumvezetők, partnerek): https://www.nemzetilaborok.nkfih.gov.hu/temateruletek
+ * - NKFIH Nemzeti Laboratóriumok aloldalai (az első ciklus konzorciumvezetői, partnerei): https://www.nemzetilaborok.nkfih.gov.hu/temateruletek
+ * - NKFIH, Misszióvezérelt Nemzeti Laboratóriumok továbbfejlesztése (2026-4.1.1-MISSZIÓK, mód. 2026. 08. 27.):
+ *   https://nkfih.gov.hu/palyazoknak/nkfi-alap/missziovezerelt-nemzeti-laboratoriumok-tovabbfejlesztese-2026-411-missziok
+ *   – a 14 támogatott projekt nyertes intézménye (SZTE, SE, BME ×2, ELTE, PPKE, MATE stb.), döntés 2026. 08. 27.
  * - NKFIH, minősített kutatási infrastruktúrák (2024. 11. 13., mód. 2026. 03. 10.):
  *   https://nkfih.gov.hu/hivatalrol/hivatal-hirei/nemzeti-kutatasi-infrastruktura-2023-2024 – a 2024-ben kiváló / kiváló hálózat
- *   minősítést kapott egyetemi infrastruktúrák
+ *   minősítést kapott egyetemi infrastruktúrák (mind a 28), és a 2021-es TOP-listából öt egyetemi „kiváló” tétel (DE Euro-BioImaging
+ *   Node, SZTE Anyagtudományi Műszerközpont, SE BBMRI Magyar Csomópont, PTE 4-es biológiai biztonsági szintű virológiai központ,
+ *   SZE Járműipari Kutatóközpont)
  * - NKFIH, TTC-pályázat (meghirdetve 2026. 03. 18.):
  *   https://nkfih.gov.hu/palyazoknak/nkfi-alap/technologia-transzfer-vallalatok-halozatanak-fejlesztese-2026-112-ttc – cél, 6 Mrd Ft,
  *   100%-os egyetemi / HUN-REN-tulajdonú TTC-k, a NIÜ 2023-as kísérleti TTC-projektje
+ * - NIÜ, TTC-projekt: https://niu.hu/project/technology-transfer-company-ttc-projekt – 500 M Ft (2023) öt egyetemnek (DE, ÓE, SE,
+ *   SZE, SZTE) a TTC létrehozására és 3 évi (2024–2026) működtetésére; a NIÜ szakmailag támogatja és monitorozza
+ * - Uni Inno Zrt.: https://uni-inno.sze.hu/ – „A Széchenyi István Egyetem hasznosító vállalkozása”; 2018-ban Kft.-ként alakult,
+ *   2024-ben a TTC-modell kialakításával Zrt.-vé alakult; szolgáltatások, innovációs parkok
  * - NIÜ, „Bemutatkoznak a TTC-vezetők” sorozat (1–13. rész, 2026): https://niu.hu/news/bemutatkoznak-a-ttc-vezetok-szegedi-ttc-zrt,
  *   …-ud-catapult-nonprofit-kft, …-pte-inno-capital-kft, …-pe-innosquare-ttc, …-technologia-es-tudastranszfer-kft,
  *   …-vet-inno-ttc-kft, …-innome-ttc-kft, …-tf-inno-ttc-kft, …-semmelweis-technologia-transzfer-kozpont-zrt,
@@ -20,13 +29,13 @@
  *   https://www.semmelweisttc.com/, https://ecotech.hu/, https://mome.hu/en/tudastranszfer-es-innovaciomenedzsment,
  *   https://innolab.bme.hu/, https://initium.uni-obuda.hu/, https://hunrentech.hu/
  * - BME InnoLab Zrt. (2025. 11. 11.): https://www.bme.hu/hirek/251111/bme-innolab-zrt-technologia-transzfer-koncepcio – 100%-os
- *   egyetemi tulajdon, PoC: 3 év, 350 M Ft, 20–25 projekt
+ *   egyetemi tulajdon, PoC: 3 év, 350 M Ft, „20-25 projekt van a radarunkon” (jelöltek, nem előszűrés)
  * - BME InnoLab megfelelőségértékelés (2026. 10. 28.):
  *   https://epito.bme.hu/hirek/Megfelelosegertekelesi_uzletag_elindult_a_BME_InnoLab_uj_szolgaltatasa
  * - BME KFI – FIEK: https://innovacio.bme.hu/ – feladatok, 2025-ös átszervezés, Z10 (2020), kompetenciaközpontok;
  *   https://competence.bme.hu/, https://kompetenciakozpont.bme.hu/, https://zkk.bme.hu/
  * - ELTE Innovációs Központ: https://www.elte.hu/innovacio – feladat, e-mail; https://www.elte.hu/innovacio/spinoff (14 spin-off,
- *   2023. 10. 24.); https://www.elte.hu/innovacio/kompetenciakozpontok (DOKK); https://www.inf.elte.hu/innovacios-labor; https://kkic.elte.hu/
+ *   2023. 10. 24.); https://www.inf.elte.hu/innovacios-labor; https://kkic.elte.hu/
  * - DE Innovációs Ökoszisztéma Központ: https://innovacio.unideb.hu/ – elérhetőség, menü;
  *   https://innovacio.unideb.hu/kutatashasznositas-es-technologiatranszfer, https://innovacio.unideb.hu/hasznositas-spin-alapitas,
  *   https://innovacio.unideb.hu/mit-nyujt-az-impactlab
@@ -34,13 +43,17 @@
  *   SZTE TTC Zrt.; https://sztettc.hu/egyetemi-kozossegnek/projektek/ (20+ projekt)
  * - PTE Innovációmenedzsment és Gazdaságkapcsolati Igazgatóság: https://innovacio.pte.hu/hu,
  *   https://innovacio.pte.hu/index.php/hu/technologia-ajanlatok
- * - Semmelweis Egyetem: https://semmelweis.hu/hirek/2024/02/23/paradigmavaltas-tortenik-a-szellemi-tulajdon-hasznositasaban-a-semmelweis-egyetemen/
+ * - Semmelweis Egyetem: https://semmelweis.hu/tudrh/ – a Tudományos és Innovációs Rektorhelyettesi és Üzletfejlesztési Központ (TÜK)
+ *   hivatalos oldala, a Rektori Kabinet része; https://semmelweis.hu/hirek/2024/02/23/paradigmavaltas-tortenik-a-szellemi-tulajdon-hasznositasaban-a-semmelweis-egyetemen/
  *   (TÜK, Egyetemi Innovációs Bizottság); https://semmelweis.hu/hirek/2024/12/04/a-semmelweis-egyetem-egeszet-kepviselne-a-kfi-hasznositasban-az-uj-technologiai-transzfer-kozpont/
  *   (TTC, kizárólagos hasznosítás); https://semmelweis.hu/hirek/2026/04/02/piackepes-otletek-egyetemi-laborbol-itt-a-poc-program/ (PoC 2026)
- * - NIÜ Science Park projekt: https://niu.hu/project/science-park-projekt – hat egyetem, 500 M Ft (2023), NIÜ szerepe
+ * - NIÜ Science Park projekt: https://niu.hu/project/science-park-projekt – hat egyetem, 500 M Ft (2023), a Neumann János Program
+ *   része; a NIÜ „szakmailag támogatja” és „monitorozza” a koncepció megvalósulását
  * - Győri Science Park: https://sciencepark.sze.hu/a-projektrol; Science Park Szeged (2020. 02. 11.):
  *   https://u-szeged.hu/sztemagazin/2020/tudomanyos-park-epul-eli
  * - NKFIH, FIEK-központok (2018. 06. 27.): https://nkfih.gov.hu/hivatalrol/hivatal-hirei/hol-tartanak-fiek
+ * - MATE, gazdálkodási információk: https://uni-mate.hu/gazd%C3%A1lkod%C3%A1si-inform%C3%A1ci%C3%B3k – a Szent István Egyetem
+ *   2021. 02. 01-től Magyar Agrár- és Élettudományi Egyetem néven működik tovább
  * - ELTE humán- és társadalomtudományi kutatóközpontok: https://www.elte.hu/human-es-tarsadalomtudomanyi-kutatokozpontok
  * - Egyetemi honlapok (név, elérhetőség): https://unideb.hu/, https://u-szeged.hu/, https://www.elte.hu/, https://semmelweis.hu/,
  *   https://www.bme.hu/, https://pte.hu/hu, https://uni-pannon.hu/, https://univet.hu/hu/, https://uni.sze.hu/, https://www.uni-miskolc.hu/,
@@ -50,19 +63,28 @@
  * - Hatályos, hivatalos „kutatóegyetem”-minősítési listát a talált források nem adnak (a 2010-es kutatóegyetemi címekről csak régi
  *   sajtóhírek szólnak); a „Kutatásintenzív egyetemek” lista ezért ellenőrizhető mutatók szerint válogat. A 2026-os kormányváltás
  *   utáni felsőoktatás-irányítási változások nem ellenőrzöttek.
- * - A NIÜ 2023-as kísérleti TTC-projektjének öt eredeti egyetemét hivatalos forrás név szerint nem sorolja fel; a TTC-lista a NIÜ
- *   2026-os bemutatósorozatán alapul, és bővülhet (a 2026-1.1.2-TTC pályázat eredménye nem ismert).
+ * - A Semmelweis (oldalcím: „Kutató – Elitegyetem”) és a PPKE („KIEMELT EGYETEM”) honlapja hivatalos minősítésre utaló címet
+ *   használ: van-e hatályos Nftv.-alapú kategória; ha van, a „Hatályos, hivatalos kutatóegyetem-lista nincs” állítás módosítandó.
+ * - A TTC-lista a NIÜ 2026-os bemutatósorozatán és a NIÜ TTC-projektjének öt egyetemén (DE, ÓE, SE, SZE, SZTE) alapul, és
+ *   bővülhet: a 2026-1.1.2-TTC felhívásnak (határidő 2026. 04. 16., az oldal utolsó módosítása 2026. 07. 29.) nincs közzétett
+ *   eredménye (2026. november 2-i állapot).
+ * - A Széchenyi István Egyetem TTC-je a NIÜ-sorozatban nem szerepel; a listán az egyetem hasznosító vállalkozása, az Uni Inno Zrt.
+ *   áll (a honlapja szerint 2024 óta TTC-modellben) – tulajdonosi szerkezetét a honlap nem írja ki.
  * - A Science Park-projekt hat egyeteme közül csak a győri park (SZE) és a szegedi park (SZTE, 2020-as cikk) oldala ellenőrzött; a
  *   szegedi park 2026-os állapota, a DE, az ÓE, a PE és a SE parkjának neve és oldala nem.
  * - A FIEK-központokról szóló NKFIH-összefoglaló 2018-as; a központok 2026-os működése egyetemenként eltérhet.
  * - Az ELTE spin-off-listája 2023. októberi; a DE és a SZTE TTC spin-off-portfóliója nyilvánosan nem számszerűsített.
- * - A Semmelweis Egyetem innovációs szervezete (TÜK) 2026-os neve és elérhetősége; a szellemitulajdon-hasznosítás 2024-es leírása.
+ * - A Semmelweis TÜK nevét a hivatalos oldala (semmelweis.hu/tudrh) megerősíti; a szellemitulajdon-ügyintézésről és az Egyetemi
+ *   Innovációs Bizottság szerepéről viszont csak a 2024-es hír szól.
  * - A BME Z10 Innovációs és Inkubációs Központ önálló oldala nem volt ellenőrizhető.
  * - A PTE oldalai a kutatás során időszakosan 500-as hibát adtak (később működtek); a PTE Inno-Capital NIÜ által linkelt
  *   oldala (it.pte.hu) 403-at adott, ezért az innovacio.pte.hu aloldala szerepel.
  * - A Hunrentech a „Kutatóhálózat” kategóriában is szerepel.
  */
 import type { ForrasKategoria } from './tipusok';
+
+const MISSZIO_URL =
+  'https://nkfih.gov.hu/palyazoknak/nkfi-alap/missziovezerelt-nemzeti-laboratoriumok-tovabbfejlesztese-2026-411-missziok';
 
 const kategoria: ForrasKategoria = {
   leiras: 'Kutatásintenzív egyetemek, innovációs igazgatóságok, technológiatranszfer-cégek, science parkok, spin-offok.',
@@ -80,7 +102,8 @@ const kategoria: ForrasKategoria = {
       nev: 'Kutatásintenzív egyetemek',
       osszefoglalo:
         'A kutatásban és a hasznosításban legaktívabb hazai egyetemek, ellenőrizhető mutatókkal: a HUN-REN támogatott ' +
-        'kutatócsoportjai (önálló befogadóként), a nemzeti laboratóriumokban betöltött szerep, a technológiatranszfer-cég és a ' +
+        'kutatócsoportjai (önálló befogadóként), a nemzeti laboratóriumokban betöltött szerep (az első ciklus laborjai és a 2026-ban ' +
+        'támogatott misszióvezérelt laborok), a technológiatranszfer-cég és a ' +
         'kiváló minősítésű kutatási infrastruktúra. Hivatalos kutatóegyetemi rangsort a lista nem helyettesít.',
       sorok: [
         {
@@ -90,22 +113,22 @@ const kategoria: ForrasKategoria = {
         },
         {
           nev: 'Szegedi Tudományegyetem',
-          megjegyzes: '15 HUN-REN kutatócsoport; az Egészségbiztonság Nemzeti Laboratórium konzorciumvezetője; SZTE TTC Zrt.; Science Park Szeged.',
+          megjegyzes: '15 HUN-REN kutatócsoport; az Egészségbiztonság NL vezetője, a Szén-dioxid Hasznosítás Misszióvezérelt NL (2026) nyertese; SZTE TTC Zrt.; Science Park-projekt.',
           url: 'https://u-szeged.hu/',
         },
         {
           nev: 'Eötvös Loránd Tudományegyetem',
-          megjegyzes: '14 HUN-REN kutatócsoport; a Digitális Örökség és a Társadalmi Innovációs NL vezetője; 2025 óta négy humán- és társadalomtudományi kutatóközpont.',
+          megjegyzes: '14 HUN-REN kutatócsoport; a Digitális Örökség és a Társadalmi Innovációs NL vezetője, a Kármán Tódor Űrtudományi Misszióvezérelt NL (2026) nyertese; 2025 óta négy kutatóközpont.',
           url: 'https://www.elte.hu/',
         },
         {
           nev: 'Semmelweis Egyetem',
-          megjegyzes: '11 HUN-REN kutatócsoport; a Nemzeti Kardiovaszkuláris Laboratórium konzorciumvezetője; Semmelweis TTC.',
+          megjegyzes: '11 HUN-REN kutatócsoport; a Nemzeti Kardiovaszkuláris Laboratórium konzorciumvezetője és a Misszióvezérelt Nemzeti Kardióvaszkuláris Laboratórium (2026) nyertese; Semmelweis TTC.',
           url: 'https://semmelweis.hu/',
         },
         {
           nev: 'Budapesti Műszaki és Gazdaságtudományi Egyetem',
-          megjegyzes: '10 HUN-REN kutatócsoport; számos nemzeti laboratórium partnere; BME InnoLab Zrt.',
+          megjegyzes: '10 HUN-REN kutatócsoport; számos nemzeti laboratórium partnere, két Misszióvezérelt NL (űrtechnológia, MI a biztonságban, 2026) nyertese; BME InnoLab Zrt.',
           url: 'https://www.bme.hu/',
         },
         {
@@ -125,7 +148,7 @@ const kategoria: ForrasKategoria = {
         },
         {
           nev: 'Széchenyi István Egyetem',
-          megjegyzes: 'Győri Tudományos és Innovációs Park; a Győri Innovációs Park kiváló kutatási infrastruktúra (NKFIH, 2024).',
+          megjegyzes: 'Győri Tudományos és Innovációs Park; a Győri Innovációs Park kiváló kutatási infrastruktúra (NKFIH, 2024); a NIÜ TTC- és Science Park-projektjének egyeteme.',
           url: 'https://uni.sze.hu/',
         },
         {
@@ -140,18 +163,19 @@ const kategoria: ForrasKategoria = {
         },
         {
           nev: 'Magyar Agrár- és Élettudományi Egyetem',
-          megjegyzes: 'Agrár- és Élelmiszerbiztonsági Kutatási Infrastruktúra (kiváló KI-hálózat, 2024); agrár nemzeti laboratóriumok partnere.',
+          megjegyzes: 'Agrár- és Élelmiszerbiztonsági Kutatási Infrastruktúra (kiváló KI-hálózat, 2024); agrár NL-ek partnere; klímaadaptációs Misszióvezérelt NL (2026) nyertese.',
           url: 'https://uni-mate.hu/',
         },
         {
           nev: 'Pázmány Péter Katolikus Egyetem',
-          megjegyzes: 'PPKE ITK Jedlik laboratóriumok: kiváló kutatási infrastruktúra (NKFIH, 2024).',
+          megjegyzes: 'PPKE ITK Jedlik laboratóriumok: kiváló kutatási infrastruktúra (NKFIH, 2024); a humanoid robotikai Misszióvezérelt NL (2026) nyertese.',
           url: 'https://ppke.hu/',
         },
       ],
       linkek: [
         { felirat: 'HUN-REN támogatott kutatócsoportok listája', url: 'https://www.tki-office.hu/a-hun-ren-tki-tamogatott-kutatocsoportjai/' },
-        { felirat: 'Nemzeti Laboratóriumok', url: 'https://www.nemzetilaborok.nkfih.gov.hu/temateruletek' },
+        { felirat: 'Misszióvezérelt Nemzeti Laboratóriumok – támogatott projektek (NKFIH, 2026)', url: MISSZIO_URL },
+        { felirat: 'Nemzeti Laboratóriumok – az első ciklus laborjai', url: 'https://www.nemzetilaborok.nkfih.gov.hu/temateruletek' },
       ],
     },
     {
@@ -190,8 +214,8 @@ const kategoria: ForrasKategoria = {
         },
         {
           nev: 'Semmelweis Egyetem – Tudományos és Innovációs Rektorhelyettesi és Üzletfejlesztési Központ (TÜK)',
-          megjegyzes: 'Szellemitulajdon-ügyintézés; a hasznosításról az Egyetemi Innovációs Bizottság dönt, a hasznosítást a TTC végzi.',
-          url: 'https://semmelweis.hu/hirek/2024/02/23/paradigmavaltas-tortenik-a-szellemi-tulajdon-hasznositasaban-a-semmelweis-egyetemen/',
+          megjegyzes: 'A Rektori Kabinet része; szellemitulajdon-ügyintézés; a hasznosításról az Egyetemi Innovációs Bizottság dönt, a hasznosítást a TTC végzi.',
+          url: 'https://semmelweis.hu/tudrh/',
         },
       ],
     },
@@ -202,8 +226,8 @@ const kategoria: ForrasKategoria = {
       osszefoglalo:
         'Az egyetemek – és a HUN-REN – 100%-os tulajdonában álló technológiatranszfer-cégek: szellemi tulajdon hasznosítása, ' +
         'licenc, proof of concept és spin-off-alapítás. A modell a Nemzeti Innovációs Ügynökség 2023-ban indított kísérleti ' +
-        'TTC-projektjéből nőtt ki; a hálózat fejlesztésére az NKFI Alap 2026-ban 6 milliárd forintos pályázatot hirdetett ' +
-        '(2026-1.1.2-TTC). Külföldi ipari partner licenc- vagy együttműködési ügyben elsőként a TTC-t keresse.',
+        'TTC-projektjéből nőtt ki (DE, ÓE, SE, SZE, SZTE); a hálózat fejlesztésére az NKFI Alap 2026-ban 6 milliárd forintos ' +
+        'pályázatot hirdetett (2026-1.1.2-TTC). Külföldi ipari partner licenc- vagy együttműködési ügyben elsőként a TTC-t keresse.',
       sorok: [
         {
           nev: 'SZTE TTC Zrt.',
@@ -250,6 +274,11 @@ const kategoria: ForrasKategoria = {
           url: 'https://innolab.bme.hu/',
         },
         { nev: 'Initium Venture Labs Zrt.', megjegyzes: 'Óbudai Egyetem.', url: 'https://initium.uni-obuda.hu/' },
+        {
+          nev: 'Uni Inno Zrt.',
+          megjegyzes: 'Széchenyi István Egyetem; a hasznosító vállalkozás 2024 óta TTC-modellben: szellemi tulajdon, licenc, spin-off, innovációs parkok.',
+          url: 'https://uni-inno.sze.hu/',
+        },
         { nev: 'Hunrentech Kft.', megjegyzes: 'A HUN-REN Magyar Kutatási Hálózat technológiatranszfer-cége.', url: 'https://hunrentech.hu/' },
       ],
       linkek: [
@@ -257,6 +286,7 @@ const kategoria: ForrasKategoria = {
           felirat: 'NKFIH: TTC-hálózat fejlesztése (2026-1.1.2-TTC)',
           url: 'https://nkfih.gov.hu/palyazoknak/nkfi-alap/technologia-transzfer-vallalatok-halozatanak-fejlesztese-2026-112-ttc',
         },
+        { felirat: 'NIÜ: Technology Transfer Company (TTC) projekt', url: 'https://niu.hu/project/technology-transfer-company-ttc-projekt' },
         { felirat: 'NIÜ: Bemutatkoznak a TTC-vezetők (sorozat, 1. rész)', url: 'https://niu.hu/news/bemutatkoznak-a-ttc-vezetok-szegedi-ttc-zrt' },
       ],
     },
@@ -265,9 +295,9 @@ const kategoria: ForrasKategoria = {
       tipus: 'lista',
       nev: 'Egyetemi inkubátorok, kompetenciaközpontok és science parkok',
       osszefoglalo:
-        'Összevont lista, mert ezekről a típusokról kevés az egységes, hivatalos adat. A Science Park-projektet a Neumann János ' +
-        'Program keretében a Nemzeti Innovációs Ügynökség koordinálja hat egyetemen; a kompetenciaközpontok egy része a 2017-ben ' +
-        'indult Felsőoktatási és Ipari Együttműködési Központok (FIEK) programjából nőtt ki.',
+        'Összevont lista, mert ezekről a típusokról kevés az egységes, hivatalos adat. A Science Park-projektet (a Neumann János ' +
+        'Program része) a Nemzeti Innovációs Ügynökség szakmailag támogatja és monitorozza hat egyetemen; a kompetenciaközpontok ' +
+        'egy része a 2017-ben indult Felsőoktatási és Ipari Együttműködési Központok (FIEK) programjából nőtt ki.',
       sorok: [
         {
           nev: 'Science Park projekt (Nemzeti Innovációs Ügynökség)',
@@ -297,16 +327,11 @@ const kategoria: ForrasKategoria = {
         },
         {
           nev: 'Felsőoktatási és Ipari Együttműködési Központok (FIEK)',
-          megjegyzes: 'NKFIH-program: 2017-ben öt uniós forrású központ (Győr, Kaposvár, Miskolc, Kecskemét, Debrecen) és három közép-magyarországi konzorcium (BME, ELTE, SZIE).',
+          megjegyzes: 'NKFIH-program: 2017-ben öt uniós forrású központ (Győr, Kaposvár, Miskolc, Kecskemét, Debrecen) és három közép-magyarországi konzorcium (BME, ELTE, SZIE – ma MATE) indult (2018-as összefoglaló).',
           url: 'https://nkfih.gov.hu/hivatalrol/hivatal-hirei/hol-tartanak-fiek',
         },
         { nev: 'BME FIEK Biztonságtudományi és Technológiai Kompetencia Központ', url: 'https://kompetenciakozpont.bme.hu/' },
         { nev: 'BME Zéró Karbon Központ', url: 'https://zkk.bme.hu/' },
-        {
-          nev: 'ELTE Digitális Oktatásfejlesztési Kompetencia Központ (DOKK)',
-          megjegyzes: 'ELTE vezette konzorcium: digitális oktatásfejlesztés, kompetenciamérés a felsőoktatásban.',
-          url: 'https://www.dokk.elte.hu/',
-        },
       ],
     },
     {
@@ -314,52 +339,60 @@ const kategoria: ForrasKategoria = {
       tipus: 'lista',
       nev: 'Egyetemi kutatási infrastruktúrák',
       osszefoglalo:
-        'Egyetemi kutatási infrastruktúrák, amelyek az NKFIH 2023–2024-es felmérésében „kiváló” vagy „kiváló hálózat” minősítést ' +
-        'kaptak (2024). A teljes, tématerületenkénti lista – a 2021-es minősítésekkel együtt – az NKFIH oldalán érhető el; az ' +
-        'igénybevétel feltételeiről a befogadó egyetem ad tájékoztatást.',
+        'Egyetemi kutatási infrastruktúrák az NKFIH minősítéseiből: a 2023–2024-es felmérésben „kiváló” vagy „kiváló hálózat” ' +
+        'minősítést kapott (2024) tételek, valamint válogatás a 2021-ben „kiváló” minősítést szerzett egyetemi zászlóshajókból. A ' +
+        'teljes, tématerületenkénti lista az NKFIH oldalán érhető el; az igénybevétel feltételeiről a befogadó egyetem ad tájékoztatást.',
       sorok: [
-        { nev: 'Egészségipari Multidiszciplináris Kutató Központ', megjegyzes: 'Debreceni Egyetem · kiváló' },
-        { nev: 'Molekuláris Orvostudományi Elektrofiziológiai Kutatási Infrastruktúra', megjegyzes: 'Debreceni Egyetem · kiváló' },
-        { nev: 'Ipari Biotechnológiai Kiváló Kutatási Infrastruktúra', megjegyzes: 'Debreceni Egyetem · kiváló' },
-        { nev: 'Vegyipari kutatás-fejlesztési kísérleti üzem', megjegyzes: 'Debreceni Egyetem · kiváló' },
+        { nev: 'Egészségipari Multidiszciplináris Kutató Központ', megjegyzes: 'Debreceni Egyetem · kiváló (2024)' },
+        { nev: 'Molekuláris Orvostudományi Elektrofiziológiai Kutatási Infrastruktúra', megjegyzes: 'Debreceni Egyetem · kiváló (2024)' },
+        { nev: 'Ipari Biotechnológiai Kiváló Kutatási Infrastruktúra', megjegyzes: 'Debreceni Egyetem · kiváló (2024)' },
+        { nev: 'Vegyipari kutatás-fejlesztési kísérleti üzem', megjegyzes: 'Debreceni Egyetem · kiváló (2024)' },
+        {
+          nev: 'I. Magyar Celluláris Képalkotó Euro-BioImaging Node, illetve II. Magyar Orvosi és Preklinikai Képalkotó Euro-BioImaging Node',
+          megjegyzes: 'Debreceni Egyetem · kiváló (2021)',
+        },
+        { nev: 'Szegedi Tudományegyetem Anyagtudományi Műszerközpont', megjegyzes: 'Szegedi Tudományegyetem · kiváló (2021)' },
         {
           nev: 'ELTE TTK Központi Kutató és Ipari Kapcsolatok Centrum (KKIC)',
-          megjegyzes: 'Eötvös Loránd Tudományegyetem · kiváló',
+          megjegyzes: 'Eötvös Loránd Tudományegyetem · kiváló (2024)',
           url: 'https://kkic.elte.hu/',
         },
-        { nev: 'Intelligens ipari és infokommunikációs infrastruktúra (4i)', megjegyzes: 'Eötvös Loránd Tudományegyetem · kiváló' },
+        { nev: 'Intelligens ipari és infokommunikációs infrastruktúra (4i)', megjegyzes: 'Eötvös Loránd Tudományegyetem · kiváló (2024)' },
         {
           nev: 'MOoVIH – Mesoscale Organ(oid) Vizualizációs Kutatási Infrastruktúra Hálózat',
-          megjegyzes: 'Eötvös Loránd Tudományegyetem · kiváló hálózat',
+          megjegyzes: 'Eötvös Loránd Tudományegyetem · kiváló hálózat (2024)',
         },
-        { nev: 'Kutatási Infrastruktúra Hálózat a Nyílt Tudományért (KINYIT)', megjegyzes: 'Eötvös Loránd Tudományegyetem · kiváló hálózat' },
-        { nev: 'EtnoLab', megjegyzes: 'ELTE Bölcsészettudományi Kutatóközpont · kiváló hálózat' },
-        { nev: 'Nagyfeszültségű Laboratórium', megjegyzes: 'Budapesti Műszaki és Gazdaságtudományi Egyetem · kiváló' },
-        { nev: 'Funkcionális anyagok és kémiai analízis kutatólaboratórium', megjegyzes: 'Budapesti Műszaki és Gazdaságtudományi Egyetem · kiváló' },
-        { nev: 'Gabonatudományi Infrastruktúra Hálózat', megjegyzes: 'Budapesti Műszaki és Gazdaságtudományi Egyetem · kiváló hálózat' },
+        { nev: 'Kutatási Infrastruktúra Hálózat a Nyílt Tudományért (KINYIT)', megjegyzes: 'Eötvös Loránd Tudományegyetem · kiváló hálózat (2024)' },
+        { nev: 'EtnoLab', megjegyzes: 'ELTE Humán Tudományok Kutatóközpontja (az NKFIH-listán: ELTE Bölcsészettudományi Kutatóközpont) · kiváló hálózat (2024)' },
+        { nev: 'Nagyfeszültségű Laboratórium', megjegyzes: 'Budapesti Műszaki és Gazdaságtudományi Egyetem · kiváló (2024)' },
+        { nev: 'Funkcionális anyagok és kémiai analízis kutatólaboratórium', megjegyzes: 'Budapesti Műszaki és Gazdaságtudományi Egyetem · kiváló (2024)' },
+        { nev: 'Gabonatudományi Infrastruktúra Hálózat', megjegyzes: 'Budapesti Műszaki és Gazdaságtudományi Egyetem · kiváló hálózat (2024)' },
         {
           nev: 'BME-GPK-PE-MK Fenntartható energetika és katalízis labor',
-          megjegyzes: 'Budapesti Műszaki és Gazdaságtudományi Egyetem · kiváló hálózat',
+          megjegyzes: 'Budapesti Műszaki és Gazdaságtudományi Egyetem · kiváló hálózat (2024)',
         },
-        { nev: 'Békésy György Biofizikai Kutatóközpont', megjegyzes: 'Semmelweis Egyetem · kiváló' },
-        { nev: 'Farmakológiai és Gyógyszerkutatás-fejlesztési Központ', megjegyzes: 'Semmelweis Egyetem · kiváló hálózat' },
-        { nev: 'Humán Reprodukciós Nemzeti Laboratórium', megjegyzes: 'Pécsi Tudományegyetem · kiváló' },
-        { nev: 'Innovatív Orvosi Technológiák Központja (IOTEK)', megjegyzes: 'Pécsi Tudományegyetem · kiváló' },
-        { nev: 'Nemzeti Sporttudományi és Életmód Kutatási Infrastruktúra Hálózat', megjegyzes: 'Pécsi Tudományegyetem · kiváló hálózat' },
-        { nev: 'Hulladékgazdálkodási Kompetencia Központ', megjegyzes: 'Pannon Egyetem · kiváló' },
-        { nev: 'Emberközpontú digitalizációs megoldások Ipar 5.0 laboratórium', megjegyzes: 'Pannon Egyetem · kiváló' },
-        { nev: 'Víztudományi, Vízminőségi és Víziökológiai Kutatóhálózat', megjegyzes: 'Pannon Egyetem · kiváló hálózat' },
-        { nev: 'Széchenyi István Egyetem – Győri Innovációs Park', megjegyzes: 'Széchenyi István Egyetem · kiváló' },
-        { nev: 'PPKE ITK Jedlik laboratóriumok', megjegyzes: 'Pázmány Péter Katolikus Egyetem · kiváló' },
-        { nev: 'Agrár- és Élelmiszerbiztonsági Kutatási Infrastruktúra', megjegyzes: 'Magyar Agrár- és Élettudományi Egyetem · kiváló hálózat' },
-        { nev: 'Állategészségügyi omikai, képalkotó és adattó infrastruktúra', megjegyzes: 'Állatorvostudományi Egyetem · kiváló' },
-        { nev: 'Erdészeti és Faipari Innovációs Központ', megjegyzes: 'Soproni Egyetem · kiváló' },
-        { nev: 'Szőlészeti, Környezetkutatási és Biotechnológiai Laboratóriumok', megjegyzes: 'Eszterházy Károly Katolikus Egyetem · kiváló' },
-        { nev: 'Innovatív Járművek és Anyagok Tanszék', megjegyzes: 'Neumann János Egyetem · kiváló' },
+        { nev: 'Békésy György Biofizikai Kutatóközpont', megjegyzes: 'Semmelweis Egyetem · kiváló (2024)' },
+        { nev: 'Farmakológiai és Gyógyszerkutatás-fejlesztési Központ', megjegyzes: 'Semmelweis Egyetem · kiváló hálózat (2024)' },
+        { nev: 'BBMRI Magyar Csomópont', megjegyzes: 'Semmelweis Egyetem · kiváló (2021)' },
+        { nev: 'Humán Reprodukciós Nemzeti Laboratórium', megjegyzes: 'Pécsi Tudományegyetem · kiváló (2024)' },
+        { nev: 'Innovatív Orvosi Technológiák Központja (IOTEK)', megjegyzes: 'Pécsi Tudományegyetem · kiváló (2024)' },
+        { nev: 'Nemzeti Sporttudományi és Életmód Kutatási Infrastruktúra Hálózat', megjegyzes: 'Pécsi Tudományegyetem · kiváló hálózat (2024)' },
+        { nev: '4-es Biológiai Biztonsági Szintű Virológiai Kutatási és Oktatási Központ', megjegyzes: 'Pécsi Tudományegyetem · kiváló (2021)' },
+        { nev: 'Hulladékgazdálkodási Kompetencia Központ', megjegyzes: 'Pannon Egyetem · kiváló (2024)' },
+        { nev: 'Emberközpontú digitalizációs megoldások Ipar 5.0 laboratórium', megjegyzes: 'Pannon Egyetem · kiváló (2024)' },
+        { nev: 'Víztudományi, Vízminőségi és Víziökológiai Kutatóhálózat', megjegyzes: 'Pannon Egyetem · kiváló hálózat (2024)' },
+        { nev: 'Széchenyi István Egyetem – Győri Innovációs Park', megjegyzes: 'Széchenyi István Egyetem · kiváló (2024)' },
+        { nev: 'Széchenyi István Egyetem Járműipari Kutatóközpont', megjegyzes: 'Széchenyi István Egyetem · kiváló (2021)' },
+        { nev: 'PPKE ITK Jedlik laboratóriumok', megjegyzes: 'Pázmány Péter Katolikus Egyetem · kiváló (2024)' },
+        { nev: 'Agrár- és Élelmiszerbiztonsági Kutatási Infrastruktúra', megjegyzes: 'Magyar Agrár- és Élettudományi Egyetem · kiváló hálózat (2024)' },
+        { nev: 'Állategészségügyi omikai, képalkotó és adattó infrastruktúra', megjegyzes: 'Állatorvostudományi Egyetem · kiváló (2024)' },
+        { nev: 'Erdészeti és Faipari Innovációs Központ', megjegyzes: 'Soproni Egyetem · kiváló (2024)' },
+        { nev: 'Szőlészeti, Környezetkutatási és Biotechnológiai Laboratóriumok', megjegyzes: 'Eszterházy Károly Katolikus Egyetem · kiváló (2024)' },
+        { nev: 'Innovatív Járművek és Anyagok Tanszék', megjegyzes: 'Neumann János Egyetem · kiváló (2024)' },
       ],
       linkek: [
         {
-          felirat: 'NKFIH: minősített kutatási infrastruktúrák 2023–2024',
+          felirat: 'NKFIH: minősített kutatási infrastruktúrák 2023–2024 (a 2021-es listával)',
           url: 'https://nkfih.gov.hu/hivatalrol/hivatal-hirei/nemzeti-kutatasi-infrastruktura-2023-2024',
         },
       ],
@@ -390,7 +423,7 @@ const kategoria: ForrasKategoria = {
         { nev: 'BME Competence Map', megjegyzes: 'A BME kutatási kompetenciáinak kereshető térképe.', url: 'https://competence.bme.hu/' },
         {
           nev: 'BME InnoLab – proof of concept program',
-          megjegyzes: 'Az NKFIH PoC-támogatásából három év alatt 350 millió Ft; 20–25 projekt előszűrése (2025. november).',
+          megjegyzes: 'Az NKFIH PoC-támogatásából három év alatt 350 millió Ft; 2025 novemberében 20–25 jelölt projekt volt látókörben.',
           url: 'https://www.bme.hu/hirek/251111/bme-innolab-zrt-technologia-transzfer-koncepcio',
         },
         {

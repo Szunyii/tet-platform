@@ -4,25 +4,35 @@
  * Források (lekérve: 2026-11-02):
  * - 90/2026. (V. 13.) Korm. rendelet a Kormány tagjainak feladat- és hatásköréről (hatályos szöveg, a 383/2026. (X. 29.)
  *   Korm. rendelettel módosítva): https://njt.jog.gov.hu/jogszabaly/2026-90-20-22 – 17. alcím, 168–178. § (TTM), 8. alcím,
- *   75–82. § (GEM, az atomenergia-ipar innovációja is), 12. alcím, 120. § (2) m) (KÜM, tudománydiplomácia), 124. és 127. §
- *   (OGYM), 6. alcím (EüM), 4. alcím (AEM), 9. alcím (HM, védelmi innováció), 106. § (KBM, uniós források), 197/A. §
- *   (Fejlesztési Kabinet), 1. melléklet 15. pont (NKFIH: TTM irányítás)
+ *   75. §, 86. § h) és 88. § (2) c) (GEM: külgazdasági diplomata-hálózat, az atomenergia-ipar innovációja), 12. alcím,
+ *   120. § (2) m) és q) (KÜM: tudománydiplomácia, Stipendium Hungaricum), 124. és 127. § (OGYM), 6. alcím, 58. § (2) l) és
+ *   58/A. § (EüM: egészségügyi innováció, orvostudományi kutatások), 4. alcím (AEM), 9. alcím (HM, védelmi innováció),
+ *   106. § m) (KBM, uniós források), 18. alcím, 179. § 3. pont és 184. § (1) k)–m) (VTM: uniós források felhasználása,
+ *   közvetlen uniós források, önerő- és előkészítésiköltség-támogatási mechanizmus), 197/A. § (Fejlesztési Kabinet),
+ *   1. melléklet 15. pont (NKFIH: TTM irányítás)
  * - 2/2026. (IX. 21.) TTM utasítás a TTM Szervezeti és Működési Szabályzatáról: https://njt.jog.gov.hu/jogszabaly/2026-2-B0-9N –
  *   alapadatok (1. §), tudománypolitikai és innovációs államtitkár (27–30. §: KFI-stratégia 2026–2034, NKFI Alap, startup,
- *   technológiatranszfer, Science Park, NTTIT és KKT), helyettes államtitkárok (31. §), TéT Attasé Hálózat Koordinációjáért
- *   Felelős Főosztály és Tudományos Nemzetközi Kapcsolatok Főosztály (1. függelék), szervezeti egységek (2. függelék),
- *   irányítási és felügyeleti jogok (4. függelék: NKFIH irányítás, NIÜ szakmai felügyelet)
+ *   technológiatranszfer, Science Park, NTTIT és KKT), helyettes államtitkárok (31. §), innovációs és technológiai helyettes
+ *   államtitkár (57. § 25–26. pont: kiemelt technológiák platformjai, félvezető-ökoszisztéma), TéT Attasé Hálózat
+ *   Koordinációjáért Felelős Főosztály (egyezmények, munkatervek, vegyes bizottsági képviselet) és Tudományos Nemzetközi
+ *   Kapcsolatok Főosztály, Tudománypolitikai és Innovációs Államtitkári Kabinet (az NTTIT titkársága) (1. függelék),
+ *   szervezeti egységek (2. függelék), irányítási és felügyeleti jogok (4. függelék: NKFIH irányítás, NIÜ szakmai felügyelet)
  * - 2014. évi LXXVI. törvény (KFI tv.), hatályos szöveg: https://njt.jog.gov.hu/jogszabaly/2014-76-00-00 – 4. § (1), 10/A–10/D. §
- *   (Nemzeti Tudománypolitikai Tanács, Kutatási Kiválósági Tanács)
+ *   (Nemzeti Tudománypolitikai Tanács – 10/C. §: titkárságát a Kormány által kijelölt szerv látja el –, Kutatási Kiválósági
+ *   Tanács)
  * - kormany.hu, TTM oldala: https://kormany.hu/kormanyzat/tudomanyos-es-technologiai-miniszterium – elérhetőségek, hírek
  * - kormany.hu, kormányzati elérhetőségek: https://kormany.hu/kormanyzati-elerhetosegek – minisztériumok címe, e-mail-címe
  * - kormany.hu, minisztériumi oldalak (GEM, OGYM, KÜM, AEM, EüM, HM, KBM): https://kormany.hu/kormanyzat
+ * - kormany.hu, Vidék- és Településfejlesztési Minisztérium: https://kormany.hu/kormanyzat/videk-es-telepulesfejlesztesi-miniszterium
  * - kormany.hu, „Új program a doktoranduszoknak” (TTM, 2026. 08. 31.): https://kormany.hu/hirek/uj-program-a-doktoranduszoknak –
- *   az NKFI Alap tervezett bővítése, innovációs oktatás, brüsszeli tudományos és technológiai iroda terve
+ *   az államtitkár a tudományos és innovációs tervekről: az NKFI Alap tervezett bővítése, innovációs oktatás, brüsszeli
+ *   tudományos és technológiai iroda terve
  * - kormany.hu, „Magyar érdekek a nemzetközi technológiai innovációban” (TTM, 2026. 09. 23.):
  *   https://kormany.hu/hirek/magyar-erdekek-a-nemzetkozi-technologiai-innovacioban
  * - NKFIH, Kutatási Kiválósági Tanács: https://nkfih.gov.hu/hivatalrol/testuletek-bizottsagok/kutatasi-kivalosagi-tanacs
  * - NKFIH, 2026. évi programstratégia: https://nkfih.gov.hu/hivatalrol/kfi-szakpolitika/programstrategia-2026
+ * - NKFIH, „Megszűnt a korlátozás” (mód. 2026. 11. 02.): https://nkfih.gov.hu/hivatalrol/hivatal-hirei/megszunt-korlatozas –
+ *   új Önerő Alap-felhívás csak a 2027. évi költségvetési törvény és az NKFI Alap 2027. évi programstratégiája elfogadása után
  * - MTA (testületek, ERC-pont, kapcsolat): https://mta.hu/ ; HUN-REN: https://hun-ren.hu/ ; MRK: https://mrk.hu/
  *
  * ELLENŐRIZENDŐ:
@@ -30,11 +40,19 @@
  *   szövegét nem találtam; a „Prioritások” szakasz ezért az SZMSZ feladatköreiből és a TTM közleményeiből épül.
  * - A TTM SZMSZ-ében szereplő „Nemzeti Tudománypolitikai, Technológiai és Innovációs Tanács” és a KFI tv. (2025. 12. 17-i
  *   hatályos szöveg) szerinti Nemzeti Tudománypolitikai Tanács viszonya (átnevezés vagy új testület), összetétele, honlapja.
+ *   A titkárság is ellentmondásos: a KFI tv. 10/C. §-a szerint a Kormány által kijelölt szerv látja el, az NKFIH 2026.
+ *   januári (a kormányváltás előtti) SZMSZ-e az NKFI Hivatalt, a TTM 2026. szeptemberi SZMSZ-e a TTM Tudománypolitikai és
+ *   Innovációs Államtitkári Kabinetjét nevezi meg; a kártya az utóbbit közli.
  * - A TTM központi telefonszáma és önálló honlapja (a kormany.hu csak e-mail-címet és székhelyet közöl; a levelezési
  *   domain ttm.gov.hu, de önálló honlapot nem találtam).
- * - Az NKFI Alap forrásainak a TTM által bejelentett növelése (három év alatt kb. 225 Mrd Ft) a 2027-es költségvetési
- *   törvényjavaslatban.
+ * - Az NKFI Alap forrásainak a TTM által bejelentett növelése (három év alatt kb. 225 Mrd Ft): továbbra is csak bejelentés;
+ *   az NKFIH 2026. november 2-i közlése szerint a 2027. évi költségvetési törvény és az NKFI Alap 2027. évi
+ *   programstratégiája elfogadása még hátravan (az új Önerő Alap-felhívás ezek után jelenhet meg).
  * - A bejelentett brüsszeli tudományos és technológiai iroda megnyitásának állapota.
+ * - A Neumann János Program (az NKFI Alap 2026. évi programstratégiájának viszonyítási kerete, még a kormányváltás előtt)
+ *   2026 utáni státusza.
+ * - A VTM „közvetlen európai uniós források önerő és előkészítési költségének támogatási mechanizmusa”: milyen eszköz, és
+ *   hogyan viszonyul az NKFI Hivatal által kezelt Kormányzati Önerő Alaphoz.
  */
 import type { ForrasKategoria } from './tipusok';
 
@@ -79,7 +97,7 @@ const kategoria: ForrasKategoria = {
             '- a kormányzati tudománypolitikát a miniszter az MTA elnökének közreműködésével dolgozza ki;\n' +
             '- az államtitkár koordinálja az uniós és hazai KFI-források stratégiai felhasználását, és kidolgozza az uniós programozási időszakok KFI-vonatkozású programrészeinek koncepcióját;\n' +
             '- a stratégiai célok egyik fő eszköze az NKFI Alap, amelynek éves programstratégiája határozza meg a meghirdetendő pályázatokat.\n\n' +
-            'Az NKFI Alap 2026. évi, még 2025 végén elfogadott programstratégiája (mintegy 120 Mrd Ft) a Neumann János Program céljaihoz igazodik; az új KFI-stratégia elfogadott szövegét a tartalom összeállításakor nem találtuk.',
+            'Az NKFI Alap 2026. évi, még 2025 végén, a kormányváltás előtt elfogadott programstratégiája (mintegy 120 Mrd Ft) a Neumann János Program céljaihoz igazodik; az új KFI-stratégia elfogadott szövegét a tartalom összeállításakor nem találtuk.',
         },
         {
           cim: 'Prioritások',
@@ -92,7 +110,7 @@ const kategoria: ForrasKategoria = {
             '- a technológiatranszfer szabályozási és intézményi keretei, az egyetem–ipar–állam együttműködés;\n' +
             '- az inkubációs és akcelerációs intézményrendszer, valamint a Tudományos és Innovációs Parkok (Science Park) kialakítása;\n' +
             '- az innovációs és szellemitulajdon-védelmi tudatosság erősítése, innovációs képzések.\n\n' +
-            'A TTM 2026. augusztus 31-i közleménye szerint a kormány három év alatt megduplázná az NKFI Alap forrásait (így azok elérhetik a 225 Mrd Ft-ot), egyszerűsítené a cégalapítást, a 2026/2027-es tanévtől a középiskolákban is elindítja az innovációs oktatást, és a magyar uniós részvétel erősítésére tudományos és technológiai irodát nyit Brüsszelben.',
+            'A TTM 2026. augusztus 31-i közleménye szerint a kormány három év alatt megduplázná az NKFI Alap forrásait (így azok elérhetnék a 225 Mrd Ft-ot), egyszerűsítené a cégalapítást, a 2026/2027-es tanévtől a középiskolákban is elindítaná az innovációs oktatást, és a magyar uniós részvétel erősítésére tudományos és technológiai irodát nyitna Brüsszelben. Ezek a közleményben bejelentett tervek.',
         },
         {
           cim: 'Kiemelt ágazatok',
@@ -102,6 +120,7 @@ const kategoria: ForrasKategoria = {
             '- űripar és űrtechnológiák: űripari stratégia, nemzetközi képviselet, az Európai Űrügynökséggel (ESA) kapcsolatos feladatok, HUNOR Magyar Űrhajós Program;\n' +
             '- élettudományi és egészségipari technológiák;\n' +
             '- autonóm és intelligens rendszerek, robotika;\n' +
+            '- félvezető-ökoszisztéma (stratégia és zászlóshajó projektek), valamint az 5G-, drón-, blokklánc- és Ipar 4.0-technológiák platformjai;\n' +
             '- feltörekvő technológiák;\n' +
             '- digitális állam, adatgazdaság és kiberbiztonság.\n\n' +
             'Az ágazati innováció egy része más tárcáknál van: az egészségügyi innováció az Egészségügyi Minisztériumnál, az agrár-KFI az Agrár- és Élelmiszergazdaságért Felelős Minisztériumnál, a védelmi innováció a Honvédelmi Minisztériumnál, az iparügyek és az atomenergia-ipar innovációs feladatai a Gazdasági és Energetikai Minisztériumnál.',
@@ -112,6 +131,8 @@ const kategoria: ForrasKategoria = {
             'A minisztériumban a nemzetközi és európai uniós helyettes államtitkár a digitalizációs államtitkárral és a tudománypolitikai és innovációs államtitkárral együttműködve koordinálja a tudományos és technológiai attasék munkáját.\n\n' +
             'A Tudományos és Technológiai Attasé Hálózat Koordinációjáért Felelős Főosztály:\n' +
             '- előkészíti a két- és többoldalú kormányközi TéT-egyezményeket és a kétoldalú TéT-munkaterveket, gondoskodik végrehajtásukról;\n' +
+            '- a kétoldalú kormányközi TéT-tárgyalásokon és a vegyes bizottsági üléseken ellátja a magyar képviseletet; a közös TéT-pályázatokat az NKFI Hivatal írja ki;\n' +
+            '- az NKFI Hivatallal együttműködve ellátja a Svájci Finanszírozási Mechanizmus kétoldalú kutatási együttműködéseivel kapcsolatos feladatokat;\n' +
             '- a Külügyminisztérium útján tartja a kapcsolatot a külképviseletekkel, és a Külügyminisztériummal együttműködve részt vesz a hálózat szakmai irányításában;\n' +
             '- az NKFI Hivatallal együttműködve látja el a szakdiplomata-hálózat kialakításával, működtetésével és szakmai irányításával kapcsolatos minisztériumi feladatokat.\n\n' +
             'A nemzetközi tudományos és innovációs együttműködések szakmai gazdája a Tudományos Nemzetközi Kapcsolatok Főosztály.',
@@ -122,7 +143,7 @@ const kategoria: ForrasKategoria = {
         { felirat: 'A Kormány tagjainak feladat- és hatásköre (90/2026. (V. 13.) Korm. rendelet)', url: 'https://njt.jog.gov.hu/jogszabaly/2026-90-20-22' },
         { felirat: 'A KFI-törvény (2014. évi LXXVI. törvény)', url: 'https://njt.jog.gov.hu/jogszabaly/2014-76-00-00' },
         { felirat: 'Kormányzati elérhetőségek', url: 'https://kormany.hu/kormanyzati-elerhetosegek' },
-        { felirat: 'A TTM 2026. augusztusi közleménye a tudományos és innovációs stratégiáról', url: 'https://kormany.hu/hirek/uj-program-a-doktoranduszoknak' },
+        { felirat: 'Új program a doktoranduszoknak – az államtitkár a tudományos és innovációs tervekről (TTM, 2026. 08. 31.)', url: 'https://kormany.hu/hirek/uj-program-a-doktoranduszoknak' },
       ],
     },
     {
@@ -134,7 +155,7 @@ const kategoria: ForrasKategoria = {
       sorok: [
         {
           nev: 'Gazdasági és Energetikai Minisztérium (GEM)',
-          megjegyzes: 'Gazdaságfejlesztés, iparügyek, vállalkozásfejlesztés, külgazdaság; az atomenergia-ipar innovációja. A startup-ökoszisztéma irányait a TTM-mel közösen alakítja.',
+          megjegyzes: 'Gazdaságfejlesztés, iparügyek, vállalkozásfejlesztés, külgazdaság (a külgazdasági diplomata-hálózat is); az atomenergia-ipar innovációja. A startup-ökoszisztéma irányait a TTM-mel közösen alakítja.',
           url: 'https://kormany.hu/kormanyzat/gazdasagi-es-energetikai-miniszterium',
         },
         {
@@ -144,7 +165,7 @@ const kategoria: ForrasKategoria = {
         },
         {
           nev: 'Külügyminisztérium (KÜM)',
-          megjegyzes: 'Az érintett miniszterrel együttműködve irányítja a tudománydiplomáciai tevékenységet; a TéT-attasé hálózat szakmai irányításában a TTM-mel működik együtt.',
+          megjegyzes: 'Az érintett miniszterrel együtt irányítja a tudománydiplomáciát, ellátja a Stipendium Hungaricum működtetési feladatait; a TéT-attasé hálózat szakmai irányításában a TTM-mel működik együtt.',
           url: 'https://kormany.hu/kormanyzat/kulugyminiszter',
         },
         {
@@ -154,7 +175,7 @@ const kategoria: ForrasKategoria = {
         },
         {
           nev: 'Egészségügyi Minisztérium (EüM)',
-          megjegyzes: 'Az egészségügyi innováció; a gyógyszerpolitika, a gyógyászati segédeszközök és az orvostechnikai eszközök.',
+          megjegyzes: 'Az egészségügyi innováció és az emberen végzett orvostudományi kutatások; a gyógyszerpolitika, a gyógyászati segédeszközök és az orvostechnikai eszközök.',
           url: 'https://kormany.hu/kormanyzat/egeszsegugyi-miniszterium',
         },
         {
@@ -166,6 +187,11 @@ const kategoria: ForrasKategoria = {
           nev: 'Közlekedési és Beruházási Minisztérium (KBM)',
           megjegyzes: 'Az európai uniós források hazahozatalának és felhasználásának koordinációja.',
           url: 'https://kormany.hu/kormanyzat/kozlekedesi-es-beruhazasi-miniszterium',
+        },
+        {
+          nev: 'Vidék- és Településfejlesztési Minisztérium (VTM)',
+          megjegyzes: 'Az uniós források felhasználásáért felelős tárca: koordinálja a közvetlen uniós forrásokat, ösztönzi lehívásukat, és működteti az önerő- és előkészítésiköltség-támogatási mechanizmust.',
+          url: 'https://kormany.hu/kormanyzat/videk-es-telepulesfejlesztesi-miniszterium',
         },
       ],
       linkek: [
@@ -182,7 +208,7 @@ const kategoria: ForrasKategoria = {
       sorok: [
         {
           nev: 'Nemzeti Tudománypolitikai Tanács (NTT)',
-          megjegyzes: 'KFI tv. 10/A. §: 12 tagú véleményező testület, elnöke a TTM minisztere. A TTM SZMSZ-e Nemzeti Tudománypolitikai, Technológiai és Innovációs Tanácsként említi.',
+          megjegyzes: 'KFI tv. 10/A. §: 12 tagú véleményező testület, elnöke a TTM minisztere. A TTM SZMSZ-e Nemzeti Tudománypolitikai, Technológiai és Innovációs Tanácsként említi; titkársági feladatait a TTM látja el.',
           url: 'https://njt.jog.gov.hu/jogszabaly/2014-76-00-00',
         },
         {

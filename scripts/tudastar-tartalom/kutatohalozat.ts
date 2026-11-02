@@ -2,16 +2,28 @@
  * 4. Kutatóhálózat és kutatóintézetek – a TéT Tudástár kezdő tartalma (kutatott vázlat).
  *
  * Források (lekérve: 2026-11-02):
- * - HUN-REN, kezdőlap: https://hun-ren.hu/ – menü, intézetlista a láblécben, HUN-REN Központ címe
+ * - HUN-REN, kezdőlap: https://hun-ren.hu/ – menü, intézetlista a láblécben, HUN-REN Központ címe; a korábbi elnök és vezérigazgató
+ *   elköszönő üzenete (2026. 10. 21.)
+ * - HUN-REN, „Változás a HUN-REN Rényi élén” (2026. 10. 26.): https://hun-ren.hu/szakmai-hirek/valtozas-a-hun-ren-renyi-elen-110420
+ *   – az új elnököt az Irányító Testület 2026. 10. 12-én választotta, 10. 22-től hivatalban; megbízatása átmeneti, „a HUN-REN-t
+ *   szabályozó törvény tervezett módosításáig és a nyílt pályázati eljárás lezárásáig szól”
+ * - HUN-REN, Elnöki köszöntő (2026. 10. 22.): https://hun-ren.hu/szakmai-hirek/elnoki-koszonto-110418 – új teljesítményértékelési
+ *   rendszer közös kialakítása, egyeztetések a Magyar Tudományos Akadémiával és a döntéshozókkal
+ * - 2024. évi XCI. törvény (HUN-REN-törvény): https://njt.jog.gov.hu/jogszabaly/2024-91-00-00 – 1. § (3) „sajátos magánjogi jogalany”,
+ *   2. § (1) „sajátos jogállású jogi személy”; az állam nevében a tudománypolitika koordinációjáért felelős miniszter jár el
+ *   (3. § (2): az alapításkor, 20. § (4): a közfeladat-finanszírozási megállapodásnál)
+ * - 90/2026. (V. 13.) Korm. rendelet (2026. 11. 01-jei állapot): https://njt.jog.gov.hu/jogszabaly/2026-90-20-22 – 168. § 13. pont,
+ *   170. § (2) c): a tudománypolitika koordinációjáért a tudományos és technológiai miniszter felel, ő tart kapcsolatot a HUN-REN-nel
  * - HUN-REN, rólunk: https://hun-ren.hu/hunren/rolunk-110031 – 2024. évi XCI. törvény, 2025-ös megújulás, 15 intézmény önálló jogi
  *   személyként, 2 gazdálkodó szervezet, >5000 munkatárs / ~3400 kutató, 25 éves keretmegállapodás, 18 teljesítménymutató,
  *   az intézetvezetők kinevezése
  * - HUN-REN, kutatási hálózat: https://hun-ren.hu/kutatasi-halozat – a 15 intézmény és a 2 gazdálkodó szervezet neve, honlapja
  * - HUN-REN, Irányító Testület: https://hun-ren.hu/iranyito-testulet – a testület feladatai
- * - HUN-REN, szervezet (közérdekű adatok): https://hun-ren.hu/kozerdeku-adatok-tajekoztato/szervezet-109868 – cím, telefon, e-mail,
- *   Irányító Testület, Felügyelőbizottság
+ * - HUN-REN, szervezet (közérdekű adatok): https://hun-ren.hu/kozerdeku-adatok-tajekoztato/szervezet-109868 – a hálózat általános
+ *   elérhetősége (cím, +36 30 155 9978, media@hun-ren.hu), a Nemzetközi Igazgatóság (nemzetkozikabinet@hun-ren.hu) és az Innovációs
+ *   Igazgatóság (innovacio@hun-ren.hu) címe, Irányító Testület, Felügyelőbizottság
  * - HUN-REN, impresszum: https://hun-ren.hu/kommunikacios-foosztaly/impresszum-107683 – cím, e-mail
- * - HUN-REN, küldetés: https://hun-ren.hu/kuldetes – a Neumann János Program négy témaköre
+ * - HUN-REN, küldetés: https://hun-ren.hu/kuldetes – a négy kiemelt kutatási terület, „a Neumann János Programmal összhangban”
  * - HUN-REN, Kutatóinknak: https://hun-ren.hu/kutatoinknak – pályázatkereső, adatrepozitórium, HUN-REN Cloud, AI-technológiák,
  *   proof of concept, iparjogvédelem (ötletek, oltalmak)
  * - HUN-REN Cloud: https://hun-ren.hu/nyilt-tudomany/hun-ren-cloud-107538 és https://science-cloud.hu/ – üzemeltetők (SZTAKI, Wigner), EOSC
@@ -19,8 +31,9 @@
  * - HUN-REN hosszú távú megállapodás (2025. 12. 15.): https://hun-ren.hu/szervezeti_hirek/hun-ren-hosszu-tavu-megallapodas-jovo-kfsz-109815
  *   – 25 éves keretmegállapodás, 2026–2031-es szerződés, 523 Mrd Ft, éves célok
  * - HUN-REN, TKCS megújítása (2024. 06. 28.): https://hun-ren.hu/szervezeti_hirek/megujul-a-tamogatott-kutatocsoportok-program-106336
- * - HUN-REN TKI: https://www.tki-office.hu/ és https://www.tki-office.hu/a-hun-ren-tki-tamogatott-kutatocsoportjai/ – >100 csoport;
- *   a 101 csoport befogadók szerinti számlálása saját, a lista alapján
+ * - HUN-REN TKI: https://www.tki-office.hu/ és https://www.tki-office.hu/a-hun-ren-tki-tamogatott-kutatocsoportjai/ – >100 csoport,
+ *   főként egyetemeken (néhány HUN-REN-intézetnél, az Országos Onkológiai Intézetnél és az OSZK-nál); a 101 csoport befogadók
+ *   szerinti számlálása saját, a lista alapján
  * - Hunrentech: https://hunrentech.hu/ – a HUN-REN technológiatranszfer-cége, szolgáltatások
  * - Intézeti honlapok (székhely, profil): https://atk.hun-ren.hu/hu/, https://www.blki.hun-ren.hu/, https://epss.hun-ren.hu/,
  *   https://koki.hun-ren.hu/, https://www.renyi.hu/, https://sztaki.hun-ren.hu/, https://www.brc.hu/hu/, https://wigner.hu/,
@@ -28,53 +41,66 @@
  *   https://www.ttk.hun-ren.hu/ (intézetei), https://www.ek.hun-ren.hu/ (Budapesti Kutatóreaktor mint szervezeti egység)
  * - MTA Lendület: https://mta.hu/lendulet, https://mta.hu/lendulet/lendulet-program-105403,
  *   https://mta.hu/lendulet/az-mta-lendulet-kutatocsoport-halozata-105402 – program, 2026-ban 14 új csoport
+ * - NKFIH, Misszióvezérelt Nemzeti Laboratóriumok továbbfejlesztése (2026-4.1.1-MISSZIÓK, mód. 2026. 08. 27.):
+ *   https://nkfih.gov.hu/palyazoknak/nkfi-alap/missziovezerelt-nemzeti-laboratoriumok-tovabbfejlesztese-2026-411-missziok
+ *   – Támogató: Tudományos és Technológiai Minisztérium, döntés 2026. 08. 27., 14 projekt, 20,92 Mrd Ft, fókuszterületek (egészség,
+ *   energia, technológia), a nyertesek és a projektcímek (a 7. projekt címében a forrás elírását – „Misszióvezérel” – javítva);
+ *   a felhívás a Nemzeti Laboratóriumok Program és a Tématerületi Kiválósági Program eredményeire épül
+ * - MI Nemzeti Laboratórium, „Előadásokkal zárult a Mesterséges Intelligencia Nemzeti Laboratórium projekt” (2026. 03. 30.):
+ *   https://mi.nemzetilabor.hu/hu/hirek/eloadasokkal-zarult-mesterseges-intelligencia-nemzeti-laboratorium-projekt – az ötéves projekt zárása
  * - NKFIH Nemzeti Laboratóriumok: https://www.nemzetilaborok.nkfih.gov.hu/ és https://www.nemzetilaborok.nkfih.gov.hu/temateruletek
- *   – 25 labor, tématerület; konzorciumvezető / megvalósító a 25 labor saját NKFIH-aloldaláról (utolsó módosítás: 2024. aug–szept.)
+ *   – az első ciklus 25 laborja, tématerület; az intézet-sorok első ciklusú NL-szerepe a labor saját NKFIH-aloldaláról (utolsó
+ *   módosításuk 2024 augusztusa és 2026 májusa között, pl. Kooperatív Technológiák: 2025. 09. 01., Gyógyszerkutatási és Társadalmi
+ *   Innovációs: 2025. 08. 28., Kardiovaszkuláris: 2026. 05. 07.)
  * - NKFIH, minősített kutatási infrastruktúrák (2024. 11. 13., mód. 2026. 03. 10.):
- *   https://nkfih.gov.hu/hivatalrol/hivatal-hirei/nemzeti-kutatasi-infrastruktura-2023-2024 – 111 minősített KI, kiváló tételek
+ *   https://nkfih.gov.hu/hivatalrol/hivatal-hirei/nemzeti-kutatasi-infrastruktura-2023-2024 – 111 minősített KI, kiváló tételek;
+ *   a 2021-es TOP KI-listán: „Budapest Neutron Centrum | HUN-REN Energiatudományi Kutatóközpont | kiváló”; a 2024-es listán:
+ *   „Gabonakutató Nonprofit Közhasznú Kft.”
  * - NKFIH, Nemzeti Kutatási Infrastruktúra Útiterv: https://nkfih.gov.hu/hivatalrol/strategia-alkotas/nemzeti-kutatasi-infrastruktura-utiterv
- * - NKFIH, nemzetközi kutatási infrastruktúrák tagdíjai:
- *   https://nkfih.gov.hu/hivatalrol/nemzetkozi-szervezetek/kutatasi-infrastrukturak/nemzetkozi-kutatasi-infrastrukturak-attekintese
  * - ELI ALPS: https://www.eli-alps.hu/ – ELI-HU Nonprofit Kft., Szeged, ELI ERIC felhasználói pályázatok
- * - Budapesti Neutroncentrum: https://bnc.hu/ – KFKI-telephely, nyalábidő-pályázat, TNA és CERIC-ERIC hívások
- * - HPC Kompetencia Központ: https://ncc.dkf.hu/ – DKF üzemelteti 2025. 01. 01-től, Komondor
+ * - Budapest Neutron Centrum: https://bnc.hu/ – KFKI-telephely, a HUN-REN Energiatudományi Kutatóközpont része; 2026-ban három
+ *   nyalábidő-pályázati kör (a harmadik 2026. 11. 15-ig nyitott), TNA és CERIC-ERIC hívások
+ * - HPC Kompetencia Központ: https://ncc.dkf.hu/ – DKF üzemelteti 2025. 01. 01-től, Komondor; a projektigényléseket a HPC KK
+ *   szakértői bírálják
  * - ELTE humán- és társadalomtudományi kutatóközpontok: https://www.elte.hu/human-es-tarsadalomtudomanyi-kutatokozpontok
  *   – 2025. 08. 01-től az ELTE-n, a HUN-REN-kutatóközpontok jogutódjai
  * - HCEMM: https://www.hcemm.eu/ – alapítók, EMBL-partnerség
  * - TECHTRA: https://techtra.hu/ – profil, a Széchenyi István Egyetem ökoszisztémája
- * - HungaroMet: https://www.met.hu/ – a cég neve (oldalcím)
- * - Egyéb honlapok (név, elérhetőség): https://onkol.hu/, https://gokvi.hu/, https://cmf.hu/, https://www.gabonakutato.hu/,
- *   https://www.nhmus.hu/, https://mnm.hu/, https://www.abtk.hu/, https://krtk.elte.hu/, https://nytud.hu/, https://tk.elte.hu/
+ * - Egyéb honlapok (név, elérhetőség): https://mta.hu/, https://onkol.hu/, https://gokvi.hu/, https://cmf.hu/,
+ *   https://www.gabonakutato.hu/ (a cég teljes neve a honlapon), https://www.abtk.hu/, https://krtk.elte.hu/,
+ *   https://nytud.hu/, https://tk.elte.hu/
  *
  * ELLENŐRIZENDŐ:
- * - A HUN-REN felügyeletét ellátó minisztérium a 2026-os kormányváltás után: a hun-ren.hu nem nevezi meg; a 2025. decemberi
- *   keretmegállapodást még a kultúráért és innovációért felelős miniszter írta alá. Érvényes-e változatlanul a 2026–2031-es
- *   finanszírozási szerződés és az éves célszámok.
- * - 2026-ban vezetőváltás volt a HUN-REN élén (a honlap új elnököt és a korábbi vezetők búcsúját mutatja); a stratégia és az
- *   Irányító Testület összetétele változhatott.
- * - A HUN-REN Központ általános e-mail-címe: a közérdekű adatoknál és az impresszumban a media@hun-ren.hu szerepel, más általános
- *   cím nem volt ellenőrizhető.
- * - A Nemzeti Laboratóriumok aloldalai 2024. augusztus–szeptemberi állapotot mutatnak; a program 2026-os folytatása, finanszírozása
- *   és a konzorciumok összetétele nem ellenőrzött.
- * - A Budapesti Neutroncentrum üzemeltetői köre (a bnc.hu kezdőlapjának szövege csonka volt) és a Budapesti Kutatóreaktor 2026-os
- *   üzemállapota.
- * - A Komondor melletti további (pl. EuroHPC) szuperszámítógépek: az ncc.dkf.hu kezdőlapja nem nevezi meg őket.
+ * - A HUN-REN-törvény tervezett módosításának állása, és érvényben marad-e a 2026–2031-es közfeladat-finanszírozási szerződés és a
+ *   célszámrendszer (a 2025. decemberi megállapodást még a kultúráért és innovációért felelős miniszter írta alá; miniszteri
+ *   felügyelet nincs, az állam nevében ma a tudományos és technológiai miniszter jár el). Az Irányító Testület összetétele a
+ *   2026. októberi vezetőváltás után.
+ * - Az első ciklus 25 laborjából melyik fut még 2026 után, és viseli-e még a „Nemzeti Laboratórium” címet (az intézet-sorok
+ *   ezért az első ciklusú szerepet „az első ciklusban” jelzővel írják).
+ * - A Neumann János Program (a 2026 előtti kormányzati KFI-stratégia) 2026 utáni státusza: a hun-ren.hu/kuldetes ma is erre
+ *   hivatkozik, a kártya ezért a küldetésnyilatkozatra hivatkozva írja.
+ * - A Budapesti Kutatóreaktor 2026-os üzemállapota (a BNC 2026-ban három nyalábidő-kört hirdetett, de a reaktor üzemét külön nem
+ *   ellenőriztük).
  * - Az Állatorvostudományi Kutatóintézet, a CSFK, az Ökológiai Kutatóközpont, a TTK és az EK székhelye: a kezdőlapjukon nem szerepel,
  *   ezért a lista nem írja ki.
  * - A Science Park-, TTC- és egyetemi adatok az „Egyetemek és technológiatranszfer” kategóriában vannak; a két kategória között a
- *   Hunrentech mindkét helyen szerepel.
+ *   Hunrentech mindkét helyen szerepel. A nemzetközi kutatási infrastruktúrák magyar tagságai a „Nemzetközi programok magyar
+ *   kapcsolódási pontjai” kategóriában.
  */
 import type { ForrasKategoria } from './tipusok';
+
+const MISSZIO_URL =
+  'https://nkfih.gov.hu/palyazoknak/nkfi-alap/missziovezerelt-nemzeti-laboratoriumok-tovabbfejlesztese-2026-411-missziok';
 
 const kategoria: ForrasKategoria = {
   leiras: 'A HUN-REN és intézetei, támogatott kutatócsoportok, nemzeti laboratóriumok, kutatási infrastruktúrák.',
   bevezeto:
-    'A közfinanszírozott magyar kutatás intézményi gerince: a HUN-REN Magyar Kutatási Hálózat 15 kutatóintézménye, az egyetemeken ' +
-    'működő támogatott kutatócsoportok, a Nemzeti Laboratóriumok, a nagy kutatási infrastruktúrák (ELI ALPS, Budapesti ' +
-    'Neutroncentrum, HUN-REN Cloud, Komondor), valamint a hálózaton kívüli állami és nonprofit kutatóhelyek. Az attasé itt ' +
-    'találja meg, melyik intézet melyik területen erős, és hová irányítsa a külföldi partnert közös kutatás, ' +
-    'infrastruktúra-hozzáférés vagy laborlátogatás ügyében. A korábbi akadémiai bölcsészet- és társadalomtudományi ' +
-    'kutatóközpontok 2025. augusztus 1. óta az ELTE-hez tartoznak.',
+    'A közfinanszírozott magyar kutatás intézményi gerince: a HUN-REN Magyar Kutatási Hálózat 15 kutatóintézménye, a főként ' +
+    'egyetemeken működő támogatott kutatócsoportok, a 2026-ban támogatott Misszióvezérelt Nemzeti Laboratóriumok, a nagy ' +
+    'kutatási infrastruktúrák (ELI ALPS, Budapest Neutron Centrum, HUN-REN Cloud, Komondor), valamint a hálózaton kívüli állami ' +
+    'és nonprofit kutatóhelyek. Az attasé itt találja meg, melyik intézet melyik területen erős, és hová irányítsa a külföldi ' +
+    'partnert közös kutatás, infrastruktúra-hozzáférés vagy laborlátogatás ügyében. A korábbi akadémiai bölcsészet- és ' +
+    'társadalomtudományi kutatóközpontok 2025. augusztus 1. óta az ELTE-hez tartoznak.',
   kartyak: [
     {
       slug: 'hun-ren',
@@ -82,13 +108,15 @@ const kategoria: ForrasKategoria = {
       nev: 'HUN-REN Magyar Kutatási Hálózat',
       rovidites: 'HUN-REN',
       osszefoglalo:
-        'Magyarország meghatározó állami kutatóhálózata: 15 önálló jogi személyiségű kutatóintézmény és két gazdálkodó szervezet, ' +
-        'több mint 5000 munkatárs, köztük mintegy 3400 kutató. A 2024. évi XCI. törvény alapján 2025-ben megújult hálózat a ' +
-        'Magyar Tudományos Akadémia egykori kutatóintézeteit fogja egységes keretbe. Szakmai együttműködésnél a szakterület ' +
-        'szerinti intézet, hálózati szintű ügyekben a HUN-REN Központ a kapcsolat.',
+        'Magyarország meghatározó közfinanszírozott kutatóhálózata: 15 önálló jogi személyiségű kutatóintézmény és két gazdálkodó ' +
+        'szervezet, több mint 5000 munkatárs, köztük mintegy 3400 kutató. A 2024. évi XCI. törvény alapján 2025-ben megújult ' +
+        'hálózat a Magyar Tudományos Akadémia egykori kutatóintézeteit fogja egységes keretbe; irányításának átalakítása 2026-ban ' +
+        'napirenden van. Szakmai együttműködésnél a szakterület szerinti intézet, hálózati szintű ügyekben a HUN-REN Központ a kapcsolat.',
       honlap: 'https://hun-ren.hu/',
       profil:
-        'A HUN-REN jogállását a 2024 decemberében elfogadott HUN-REN-törvény (2024. évi XCI. törvény) rendezi, belső működését ' +
+        'A HUN-REN jogállását a 2024 decemberében elfogadott HUN-REN-törvény (2024. évi XCI. törvény) rendezi: sajátos jogállású ' +
+        'jogi személy, miniszteri felügyelet alatt nem áll; az állam nevében – például a finanszírozási megállapodásoknál – a ' +
+        'tudománypolitika koordinációjáért felelős miniszter, 2026-ban a tudományos és technológiai miniszter jár el. Belső működését ' +
         'az alapító okirat és a szervezeti és működési szabályzat. A megújult hálózat 2025-ben jött létre, és egységes nemzeti ' +
         'keretbe foglalta a Magyar Tudományos Akadémia nagy múltú kutatóintézeteit.\n\n' +
         'A hálózathoz 15 kutatóintézmény tartozik – mindegyik önálló jogi személy –, valamint két gazdálkodó szervezet: a Bay ' +
@@ -98,10 +126,13 @@ const kategoria: ForrasKategoria = {
         'az elnököt, jóváhagyja az üzleti tervet és a költségvetést, intézetet hoz létre, alakít át vagy szüntet meg.\n' +
         '- Elnök: az intézetek vezetőit nemzetközi kiválasztás után, az Irányító Testület egyetértésével nevezi ki.\n' +
         '- Felügyelőbizottság és Nemzetközi Tudományos Tanácsadó Testület.\n' +
-        '- HUN-REN Központ: a hálózat központi szervezete, többek közt a hálózati pályázatok kiírója.',
+        '- HUN-REN Központ: a hálózat központi szervezete, többek közt a hálózati pályázatok kiírója.\n\n' +
+        'Átalakulás 2026-ban: a hálózat elnöke és vezérigazgatója 2026 októberében távozott. Az Irányító Testület által választott ' +
+        'új elnök megbízatása átmeneti: a HUN-REN-t szabályozó törvény tervezett módosításáig és a nyílt pályázati eljárás ' +
+        'lezárásáig szól. A hálózat irányítása és teljesítményértékelése ezért változhat.',
       tevekenyseg:
-        'Kutatás: a kiemelt területeket a Neumann János Program jelöli ki (egészséges élet, digitális átmenet, energia- és ' +
-        'környezetbiztonság, biztonság és védelem).\n\n' +
+        'Kutatás: a küldetésnyilatkozat szerint a kiemelt területek – a Neumann János Programmal összhangban – az egészséges élet, ' +
+        'a digitális átmenet, az energia- és környezetbiztonság, valamint a biztonság és védelem.\n\n' +
         'Hasznosítás: a Hunrentech Kft. a hálózat technológiatranszfer-cége (szellemi tulajdon, termékfejlesztés, ' +
         'spin-off-menedzsment, ipari és befektetői kapcsolatok). A HUN-REN Központ iparjogvédelmi szolgáltatásokat (ötletbejelentés, ' +
         'újdonságkutatás, szabadalom, használati minta, növényfajta-oltalom, védjegy) és proof of concept pályázatokat kínál a ' +
@@ -117,13 +148,16 @@ const kategoria: ForrasKategoria = {
             '- Szakmai partnert keres a külföldi intézmény: a „HUN-REN kutatóközpontok és -intézetek” listán szereplő intézet a ' +
             'közvetlen kapcsolat.\n' +
             '- Ipari hasznosítás, licenc vagy spin-off: a Hunrentech Kft.\n' +
+            '- Nemzetközi együttműködés, intézményközi megállapodás: a HUN-REN Központ Nemzetközi Igazgatósága ' +
+            '(nemzetkozikabinet@hun-ren.hu); hasznosítási ügyben az Innovációs Igazgatóság (innovacio@hun-ren.hu).\n' +
             '- Hálózati szintű megállapodás, intézményi és sajtóügyek: a HUN-REN Központ.\n' +
             '- Felhőalapú számítási kapacitás, MI-eszközök: a HUN-REN Cloud és az AISZK.',
         },
         {
           cim: 'Kiemelt kutatási területek',
           szoveg:
-            'A Neumann János Programhoz igazodva a HUN-REN négy témakört kezel kiemelten:\n\n' +
+            'A HUN-REN küldetésnyilatkozata – a Neumann János Programmal összhangban – négy témakört nevez meg kiemelt kutatási ' +
+            'területként:\n\n' +
             '- egészséges élet,\n' +
             '- digitális átmenet,\n' +
             '- energia- és környezetbiztonság,\n' +
@@ -135,11 +169,14 @@ const kategoria: ForrasKategoria = {
             'A HUN-REN és az állam 2025. december 15-én 25 éves keretmegállapodást és a 2026–2031-es időszakra közfeladat-' +
             'finanszírozási szerződést kötött; a hat évre szóló keret 523 milliárd forint. A finanszírozás teljesítményelvű, ' +
             '18 mutatóhoz (publikációk, nemzetközi együttműködés, diákok és doktoranduszok bevonása, szabadalmak, spin-offok) kötött.\n\n' +
-            'Éves célok a megállapodás szerint:\n' +
+            'Az aláíráskor rögzített éves célok:\n' +
             '- 140 szabadalom,\n' +
             '- legalább 20 cég,\n' +
             '- 10 milliárd forint külső bevétel,\n' +
-            '- 3500 középiskolás és 600 doktorandusz bevonása.',
+            '- 3500 középiskolás és 600 doktorandusz bevonása.\n\n' +
+            'A 2026 októberében hivatalba lépett elnök a tudományterületek sajátosságait figyelembe vevő új teljesítményértékelési ' +
+            'rendszer közös kialakítását tűzte ki célul, a HUN-REN-törvény módosítása pedig tervezett: a fenti keretek és célszámok ' +
+            'változhatnak.',
         },
       ],
       programok: [
@@ -205,7 +242,7 @@ const kategoria: ForrasKategoria = {
         },
         {
           nev: 'HUN-REN Energiatudományi Kutatóközpont',
-          megjegyzes: 'Energetika és nukleáris kutatás; szervezeti egysége a Budapesti Kutatóreaktor.',
+          megjegyzes: 'Energetika és nukleáris kutatás; szervezeti egysége a Budapesti Kutatóreaktor; a LOHC Misszióvezérelt NL (2026) nyertese.',
           url: 'https://www.ek.hun-ren.hu/',
         },
         {
@@ -226,27 +263,27 @@ const kategoria: ForrasKategoria = {
         { nev: 'HUN-REN Rényi Alfréd Matematikai Kutatóintézet', megjegyzes: 'Budapest; matematika.', url: 'https://www.renyi.hu/' },
         {
           nev: 'HUN-REN Számítástechnikai és Automatizálási Kutatóintézet (SZTAKI)',
-          megjegyzes: 'Budapest; informatika és automatizálás; a Mesterséges Intelligencia és az Autonóm Rendszerek Nemzeti Laboratórium konzorciumvezetője.',
+          megjegyzes: 'Budapest; informatika és automatizálás; két Misszióvezérelt NL (2026) nyertese; az első ciklusban a Mesterséges Intelligencia és az Autonóm Rendszerek NL konzorciumvezetője.',
           url: 'https://sztaki.hun-ren.hu/',
         },
         {
           nev: 'HUN-REN Szegedi Biológiai Kutatóközpont',
-          megjegyzes: 'Szeged; élettudományok; a Biotechnológiai Nemzeti Laboratórium megvalósítója.',
+          megjegyzes: 'Szeged; élettudományok; két Misszióvezérelt NL (2026) nyertese; az első ciklusban a Biotechnológiai Nemzeti Laboratórium megvalósítója.',
           url: 'https://www.brc.hu/hu/',
         },
         {
           nev: 'HUN-REN Támogatott Kutatócsoportok Irodája (TKI)',
-          megjegyzes: 'Több mint 100, egyetemeken működő támogatott kutatócsoport irodája.',
+          megjegyzes: 'Több mint 100, főként egyetemeken működő támogatott kutatócsoport irodája; részletesen a „Támogatott kutatócsoportok” listán.',
           url: 'https://www.tki-office.hu/',
         },
         {
           nev: 'HUN-REN Természettudományi Kutatóközpont (TTK)',
-          megjegyzes: 'Kémia, molekuláris élettudomány, kognitív idegtudomány; a Nemzeti Gyógyszerkutatási és Fejlesztési Laboratórium konzorciumvezetője.',
+          megjegyzes: 'Kémia, molekuláris élettudomány, kognitív idegtudomány; az első ciklusban a Nemzeti Gyógyszerkutatási és Fejlesztési Laboratórium konzorciumvezetője.',
           url: 'https://www.ttk.hun-ren.hu/',
         },
         {
           nev: 'HUN-REN Wigner Fizikai Kutatóközpont',
-          megjegyzes: 'Budapest; fizika; a Kvantuminformatika Nemzeti Laboratórium konzorciumvezetője.',
+          megjegyzes: 'Budapest; fizika; az első ciklusban a Kvantuminformatika Nemzeti Laboratórium konzorciumvezetője.',
           url: 'https://wigner.hu/',
         },
         {
@@ -268,7 +305,7 @@ const kategoria: ForrasKategoria = {
       sorok: [
         {
           nev: 'HUN-REN Támogatott Kutatócsoportok Irodája (TKI)',
-          megjegyzes: 'Több mint 100 kutatócsoport a hazai egyetemeken, a tudomány minden területén.',
+          megjegyzes: 'Több mint 100 kutatócsoport, főként a hazai egyetemeken, a tudomány minden területén.',
           url: 'https://www.tki-office.hu/',
         },
         {
@@ -299,150 +336,76 @@ const kategoria: ForrasKategoria = {
       tipus: 'lista',
       nev: 'Nemzeti laboratóriumok',
       osszefoglalo:
-        'Az NKFIH által gondozott Nemzeti Laboratóriumok Program 25 laboratóriuma négy tématerületen: biztonság és védelem; ' +
-        'egészséges élet; gazdaság és társadalom digitális átállása; zöld átállás. A laborok egyetemek, kutatóintézetek és ' +
-        'vállalatok konzorciumai; a megjegyzés a konzorciumvezetőt vagy a megvalósítót és a tématerületet adja.',
+        'Az NKFIH által gondozott Nemzeti Laboratóriumok Program első ciklusában 25 labor működött négy tématerületen; projektjeik ' +
+        'lezárulnak (a Mesterséges Intelligencia Nemzeti Laboratóriumé 2026 márciusában zárult). Erre és a Tématerületi ' +
+        'Kiválósági Program eredményeire építve a Tudományos és Technológiai Minisztérium 2026. augusztus 27-én 14 Misszióvezérelt ' +
+        'Nemzeti Laboratóriumot támogatott, összesen 20,92 milliárd forinttal, az egészség, az energia és a technológia ' +
+        'fókuszterületen. A megjegyzés a nyertes intézményt és a fókuszterületet adja; az első ciklus laborjai a linkeken érhetők el.',
       sorok: [
+        { nev: 'Misszióvezérelt Nemzeti Onkológiai Laboratórium', megjegyzes: 'Országos Onkológiai Intézet · Egészség' },
+        { nev: 'Misszióvezérelt Nemzeti Kardióvaszkuláris Laboratórium', megjegyzes: 'Semmelweis Egyetem · Egészség' },
         {
-          nev: 'Agrár-biotechnológia és precíziós nemesítés az élelmiszerbiztonságért Nemzeti Laboratórium',
-          megjegyzes: 'Konzorciumvezető: HUN-REN Agrártudományi Kutatóközpont · Zöld átállás',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/agrar-biotechnologiai-es-precizios-nemesites-az-elelmiszerbiztonsagert-nemzeti-laboratorium/laboratorium-bemutatasa',
+          nev: 'Antibiotikum-rezisztencia és mikrobiális egészség Misszióvezérelt Nemzeti Laboratórium',
+          megjegyzes: 'HUN-REN Szegedi Biológiai Kutatóközpont · Egészség',
+        },
+        { nev: 'Szén-dioxid Hasznosítás Misszióvezérelt Nemzeti Laboratórium', megjegyzes: 'Szegedi Tudományegyetem · Energia' },
+        { nev: 'LOHC Misszióvezérelt Nemzeti Laboratórium', megjegyzes: 'HUN-REN Energiatudományi Kutatóközpont · Energia' },
+        {
+          nev: 'Kaszkád Faanyaghasznosítási Misszióvezérelt Nemzeti Laboratórium (KaszkádFaLab)',
+          megjegyzes: 'Soproni Egyetem · Energia',
         },
         {
-          nev: 'Agrártechnológiai Nemzeti Laboratórium',
-          megjegyzes: 'Konzorciumvezető: Nemzeti Élelmiszerlánc-biztonsági Hivatal · Zöld átállás',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/agrartechnologiai-nemzeti-laboratorium/laboratorium-bemutatasa',
+          nev:
+            'Egysejtszintű multiomikai atlasz és kutatási platform a precíziós orvoslás szolgálatában Misszióvezérelt Nemzeti ' +
+            'Laboratórium',
+          megjegyzes: 'HUN-REN Szegedi Biológiai Kutatóközpont · Technológia',
         },
         {
-          nev: 'Autonóm Rendszerek Nemzeti Laboratórium',
-          megjegyzes: 'Konzorciumvezető: HUN-REN Számítástechnikai és Automatizálási Kutatóintézet · Digitális átállás',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/autonom-rendszerek-nemzeti-laboratorium/laboratorium-bemutatasa',
+          nev:
+            'Humanoid robotika: szenzorika, MI és skálázható gyártás ipari és rehabilitációs célokra – Misszióvezérelt Nemzeti ' +
+            'Laboratórium',
+          megjegyzes: 'Pázmány Péter Katolikus Egyetem · Technológia',
         },
         {
-          nev: 'Biotechnológiai Nemzeti Laboratórium',
-          megjegyzes: 'Megvalósító: HUN-REN Szegedi Biológiai Kutatóközpont · Egészséges élet',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/biotechnologiai-nemzeti-laboratorium/laboratorium-bemutatasa',
+          nev: 'Kooperatív és Robusztus Autonóm Mobil Rendszerek Misszióvezérelt Nemzeti Laboratórium',
+          megjegyzes: 'HUN-REN Számítástechnikai és Automatizálási Kutatóintézet · Technológia',
         },
         {
-          nev: 'Digitális Örökség Nemzeti Laboratórium',
-          megjegyzes: 'Konzorciumvezető: Eötvös Loránd Tudományegyetem · Digitális átállás',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/digitalis-orokseg-nemzeti-laboratorium/laboratorium-bemutatasa',
+          nev: 'Misszióvezérelt Nemzeti Laboratórium – Ágens alapú mesterséges intelligencia az egészségügy és a gyártás területein',
+          megjegyzes: 'HUN-REN Számítástechnikai és Automatizálási Kutatóintézet · Technológia',
         },
         {
-          nev: 'Egészségbiztonság Nemzeti Laboratórium',
-          megjegyzes: 'Konzorciumvezető: Szegedi Tudományegyetem · Egészséges élet',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/egeszsegbiztonsag-nemzeti-laboratorium/laboratorium-bemutatasa',
+          nev: 'Űrtechnológiával a Rezilienciáért Misszióvezérelt Nemzeti Laboratórium',
+          megjegyzes: 'Budapesti Műszaki és Gazdaságtudományi Egyetem · Technológia',
         },
         {
-          nev: 'Éghajlatváltozás Multidiszciplináris Nemzeti Laboratórium',
-          megjegyzes: 'Konzorciumvezető: Pannon Egyetem · Zöld átállás',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/eghajlatvaltozas-multidiszciplinaris-nemzeti-laboratorium/laboratorium-bemutatasa',
+          nev: 'A mesterséges intelligencia új alkalmazásai a biztonságban Misszióvezérelt Nemzeti Laboratórium (MIBIZ)',
+          megjegyzes: 'Budapesti Műszaki és Gazdaságtudományi Egyetem · Technológia',
         },
+        { nev: 'Kármán Tódor Űrtudományi Misszióvezérelt Nemzeti Laboratórium', megjegyzes: 'Eötvös Loránd Tudományegyetem · Technológia' },
         {
-          nev: 'Fertőző állatbetegségek, antimikrobiális rezisztencia, állatorvosi közegészségügy és élelmiszerlánc-biztonság Nemzeti Laboratóriuma',
-          megjegyzes: 'Konzorciumvezető: Állatorvostudományi Egyetem · Egészséges élet',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/fertozo-allatbetegsegek-nemzeti-laboratoriuma/labor-bemutatasa',
-        },
-        {
-          nev: 'HCEMM Teaming Nemzeti Laboratórium',
-          megjegyzes: 'Megvalósító: HCEMM Nonprofit Kft. · Egészséges élet',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/hcemm-teaming-nemzeti-laboratorium/laboratorium-bemutatasa',
-        },
-        {
-          nev: 'Humán Reprodukciós Nemzeti Laboratórium',
-          megjegyzes: 'Megvalósító: Pécsi Tudományegyetem · Egészséges élet',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/human-reprodukcios-nemzeti-laboratorium/laboratorium-bemutatasa',
-        },
-        {
-          nev: 'Infokommunikációs és Információtechnológiai Nemzeti Laboratórium',
-          megjegyzes: 'Konzorciumvezető: Nemzetbiztonsági Szakszolgálat · Biztonság és védelem',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/infokommunikacios-informaciotechnologiai-nemzeti-laboratorium/laboratorium-bemutatasa',
-        },
-        {
-          nev: 'Kooperatív Technológiák Nemzeti Laboratóriuma',
-          megjegyzes: 'Konzorciumvezető: TECHTRA Technológiai Transzfer Intézet Közhasznú Nonprofit Zrt. · Biztonság és védelem',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/kooperativ-technologiak-nemzeti-laboratoriuma/laboratorium-bemutatasa',
-        },
-        {
-          nev: 'Kvantuminformatika Nemzeti Laboratórium',
-          megjegyzes: 'Konzorciumvezető: HUN-REN Wigner Fizikai Kutatóközpont · Digitális átállás',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/kvantuminformatika-nemzeti-laboratorium/laboratorium-bemutatasa',
-        },
-        {
-          nev: 'Megújuló Energiák Nemzeti Laboratórium',
-          megjegyzes: 'Konzorciumvezető: Pécsi Tudományegyetem · Zöld átállás',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/megujulo-energiak-nemzeti-laboratorium/laboratorium-bemutatasa',
-        },
-        {
-          nev: 'Mesterséges Intelligencia Nemzeti Laboratórium',
-          megjegyzes: 'Konzorciumvezető: HUN-REN Számítástechnikai és Automatizálási Kutatóintézet · Digitális átállás',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/mesterseges-intelligencia-nemzeti-laboratorium/laboratorium-bemutatasa',
-        },
-        {
-          nev: 'Molekuláris- Ujjlenyomat Kutató Nemzeti Laboratórium',
-          megjegyzes: 'Megvalósítók: Molekuláris- Ujjlenyomat Kutató Központ Nonprofit Kft., Szegedi Tudományegyetem · Egészséges élet',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/molekularis-ujjlenyomat-kutato-nemzeti-laboratorium/laboratorium-bemutatasa',
-        },
-        {
-          nev: 'Nanoplazmonikus Lézeres Fúzió Kutatólaboratórium',
-          megjegyzes: 'Megvalósító: HUN-REN Wigner Fizikai Kutatóközpont · Zöld átállás',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/nanoplazmonikus-lezeres-fuzio-kutatolaboratorium/laboratorium-bemutatasa',
-        },
-        {
-          nev: 'Nemzeti Gyógyszerkutatási és Fejlesztési Laboratórium',
-          megjegyzes: 'Konzorciumvezető: HUN-REN Természettudományi Kutatóközpont · Egészséges élet',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/nemzeti-gyogyszerkutatasi-es-fejlesztesi-laboratorium/laboratorium-bemutatasa',
-        },
-        {
-          nev: 'Nemzeti Kardiovaszkuláris Laboratórium',
-          megjegyzes: 'Konzorciumvezető: Semmelweis Egyetem · Egészséges élet',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/nemzeti-kardiovaszkularis-laboratorium/laboratorium-bemutatasa',
-        },
-        {
-          nev: 'Nemzeti Lézeres Transzmutációs Laboratórium',
-          megjegyzes: 'Megvalósító: Szegedi Tudományegyetem · Zöld átállás',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/nemzeti-lezeres-transzmutacios-laboratorium/laboratorium-bemutatasa',
-        },
-        {
-          nev: 'Nemzeti Tumorbiológiai Laboratórium',
-          megjegyzes: 'Megvalósító: Országos Onkológiai Intézet · Egészséges élet',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/nemzeti-tumorbiologiai-laboratorium/laboratorium-bemutatasa',
-        },
-        {
-          nev: 'Társadalmi Innovációs Nemzeti Laboratórium',
-          megjegyzes: 'Konzorciumvezető: Eötvös Loránd Tudományegyetem · Digitális átállás',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/tarsadalmi-innovacios-nemzeti-laboratorium/laboratorium-bemutatasa',
-        },
-        {
-          nev: 'Transzlációs Idegtudományi Nemzeti Laboratórium',
-          megjegyzes: 'Konzorciumvezető: Pécsi Tudományegyetem · Egészséges élet',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/transzlacios-idegtudomanyi-nemzeti-laboratorium/laboratorium-bemutatasa',
-        },
-        {
-          nev: 'Virológiai Nemzeti Laboratórium',
-          megjegyzes: 'Megvalósító: Pécsi Tudományegyetem · Egészséges élet',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/virologiai-nemzeti-laboratorium/laboratorium-bemutatasa',
-        },
-        {
-          nev: 'Víztudományi és Vízbiztonsági Nemzeti Laboratórium',
-          megjegyzes: 'Konzorciumvezető: Pannon Egyetem · Zöld átállás',
-          url: 'https://www.nemzetilaborok.nkfih.gov.hu/viztudomanyi-es-vizbiztonsagi-nemzeti-laboratorium/laboratorium-bemutatasa',
+          nev:
+            'Misszióvezérelt Nemzeti Laboratórium: Versenyképes klímaadaptáció és stabilitás a növénytermesztésben AI-alapú ' +
+            'támogatással',
+          megjegyzes: 'Magyar Agrár- és Élettudományi Egyetem · Technológia',
         },
       ],
       linkek: [
-        { felirat: 'Nemzeti Laboratóriumok – összes labor', url: 'https://www.nemzetilaborok.nkfih.gov.hu/temateruletek' },
+        { felirat: 'Misszióvezérelt Nemzeti Laboratóriumok – támogatott projektek (NKFIH, 2026)', url: MISSZIO_URL },
+        { felirat: 'Az első ciklus 25 laborja (NKFIH)', url: 'https://www.nemzetilaborok.nkfih.gov.hu/temateruletek' },
         { felirat: 'A Nemzeti Laboratóriumok honlapja (NKFIH)', url: 'https://www.nemzetilaborok.nkfih.gov.hu/' },
       ],
     },
     {
       slug: 'hazai-kutatasi-infrastrukturak',
       tipus: 'lista',
-      nev: 'Kutatási infrastruktúrák',
+      nev: 'Hazai kutatási infrastruktúrák',
       osszefoglalo:
-        'A hazai nagy kutatási infrastruktúrák és nyilvántartásaik. Az NKFIH minősítése szerint 2024-től 111 minősített kutatási ' +
-        'infrastruktúra működik Magyarországon; itt a nem egyetemi tételek szerepelnek, az egyetemieket az „Egyetemek és ' +
-        'technológiatranszfer” kategória sorolja fel. A nemzetközi infrastruktúrákban (CERN, ELI ERIC, EMBL stb.) való magyar ' +
-        'részvételt az NKFIH finanszírozza és tartja nyilván.',
+        'A hazai nagy kutatási infrastruktúrák válogatása és nyilvántartásaik. Az NKFIH minősítése szerint 2024-től 111 minősített ' +
+        'kutatási infrastruktúra működik Magyarországon; itt a nem egyetemi tételek közül a külső felhasználók előtt is nyitott ' +
+        'nagy berendezések és e-infrastruktúrák szerepelnek, az egyetemiek válogatását az „Egyetemek és technológiatranszfer” ' +
+        'kategória adja. A nemzetközi infrastruktúrákban (CERN, ELI ERIC, EMBL stb.) való magyar részvételt a „Nemzetközi ' +
+        'programok magyar kapcsolódási pontjai” kategória mutatja be.',
       sorok: [
         {
           nev: 'ELI ALPS (ELI-HU Nonprofit Kft.)',
@@ -450,8 +413,10 @@ const kategoria: ForrasKategoria = {
           url: 'https://www.eli-alps.hu/',
         },
         {
-          nev: 'Budapesti Neutroncentrum (BNC)',
-          megjegyzes: 'Neutronkutatás a KFKI-telephelyen; nyalábidő pályázat útján, nyílt hozzáférési (TNA) és CERIC-ERIC hívásokban is.',
+          nev: 'Budapest Neutron Centrum (BNC)',
+          megjegyzes:
+            'Neutronkutatás a KFKI-telephelyen, a HUN-REN Energiatudományi Kutatóközpont infrastruktúrája; nyalábidő évente több ' +
+            'pályázati körben, nyílt hozzáférési (TNA) és CERIC-ERIC hívásokban is.',
           url: 'https://bnc.hu/',
         },
         {
@@ -461,24 +426,10 @@ const kategoria: ForrasKategoria = {
         },
         {
           nev: 'HPC Kompetencia Központ (Komondor szuperszámítógép)',
-          megjegyzes: 'A nemzeti HPC-infrastruktúra üzemeltetője 2025-től a Digitális Kormányzati Fejlesztés és Projektmenedzsment Kft.; gépidő projektpályázattal.',
+          megjegyzes:
+            'A nemzeti HPC-infrastruktúra üzemeltetője 2025-től a Digitális Kormányzati Fejlesztés és Projektmenedzsment Kft.; ' +
+            'gépidő projektigényléssel, szakértői bírálat után.',
           url: 'https://ncc.dkf.hu/',
-        },
-        {
-          nev: 'Kvantumtechnológia Nemzeti Kutatási Infrastruktúra Hálózat',
-          megjegyzes: 'HUN-REN Wigner Fizikai Kutatóközpont · kiváló KI-hálózat (NKFIH, 2024)',
-        },
-        { nev: 'Magyar Nemzeti Szeizmológiai Hálózat', megjegyzes: 'HUN-REN Földfizikai és Űrtudományi Kutatóintézet · kiváló KI (NKFIH, 2024)' },
-        {
-          nev: 'HUN-REN CSFK GEOLAB Földtudományi Kutatási Infrastruktúra',
-          megjegyzes: 'HUN-REN Csillagászati és Földtudományi Kutatóközpont · kiváló KI (NKFIH, 2024)',
-        },
-        { nev: 'Nukleáris Anyagok Laboratórium', megjegyzes: 'HUN-REN Energiatudományi Kutatóközpont · kiváló KI (NKFIH, 2024)' },
-        { nev: 'Mikro- és Nanotechnológiai Kutatólaboratórium', megjegyzes: 'HUN-REN Energiatudományi Kutatóközpont · kiváló KI (NKFIH, 2024)' },
-        { nev: 'Űrkémiai Kutatóhálózat', megjegyzes: 'HUN-REN Atommagkutató Intézet · kiváló KI-hálózat (NKFIH, 2024)' },
-        {
-          nev: 'Komplex Molekuláris és Sejtbiológiai Centrum',
-          megjegyzes: 'HUN-REN Szegedi Biológiai Kutatóközpont · kiváló KI (NKFIH, 2024)',
         },
         {
           nev: 'Nemzeti Kutatási Infrastruktúra Útiterv (NKFIH)',
@@ -487,13 +438,10 @@ const kategoria: ForrasKategoria = {
         },
         {
           nev: 'Minősített kutatási infrastruktúrák 2023–2024 (NKFIH)',
-          megjegyzes: '111 minősített KI 2024-től; tématerületenkénti táblázatok kiváló, kiváló hálózat és ígéretes minősítéssel.',
+          megjegyzes:
+            '111 minősített KI 2024-től; tématerületenkénti táblázatok kiváló, kiváló hálózat és ígéretes minősítéssel, a 2021-es ' +
+            'TOP-listával együtt.',
           url: 'https://nkfih.gov.hu/hivatalrol/hivatal-hirei/nemzeti-kutatasi-infrastruktura-2023-2024',
-        },
-        {
-          nev: 'Nemzetközi kutatási infrastruktúrák – magyar tagságok (NKFIH)',
-          megjegyzes: 'Az NKFIH által finanszírozott tagságok, köztük CERN, ELI ERIC, EMBL, ELIXIR, ICOS ERIC, BBMRI ERIC, CERIC ERIC.',
-          url: 'https://nkfih.gov.hu/hivatalrol/nemzetkozi-szervezetek/kutatasi-infrastrukturak/nemzetkozi-kutatasi-infrastrukturak-attekintese',
         },
       ],
     },
@@ -503,8 +451,8 @@ const kategoria: ForrasKategoria = {
       nev: 'Önálló állami és nonprofit kutatóhelyek',
       osszefoglalo:
         'A HUN-REN-en kívüli kutatóhelyek válogatása: a 2025-ben az ELTE-hez került humán- és társadalomtudományi kutatóközpontok, ' +
-        'a nemzeti laboratóriumokat vezető vagy megvalósító állami és nonprofit intézmények, valamint minősített kutatási ' +
-        'infrastruktúrát működtető közgyűjtemények. A lista nem teljes; az egyetemek a következő kategóriában szerepelnek.',
+        'a Magyar Tudományos Akadémia, valamint nemzeti laboratóriumot vezető vagy megvalósító, illetve minősített kutatási ' +
+        'infrastruktúrát működtető állami és nonprofit intézmények. A lista nem teljes; az egyetemek a következő kategóriában szerepelnek.',
       sorok: [
         {
           nev: 'ELTE Humán Tudományok Kutatóközpontja (ELTE HTK)',
@@ -522,13 +470,25 @@ const kategoria: ForrasKategoria = {
           megjegyzes: 'Társadalomtudományok; 2025. augusztus 1. óta az ELTE-n.',
           url: 'https://tk.elte.hu/',
         },
-        { nev: 'Magyar Tudományos Akadémia (MTA)', megjegyzes: 'Az MTA Lendület Program és más akadémiai pályázatok kiírója.', url: 'https://mta.hu/' },
+        {
+          nev: 'Magyar Tudományos Akadémia (MTA)',
+          megjegyzes:
+            'Köztestület; a Lendület Program és más akadémiai pályázatok kiírója, a kutatóhálózat jövőjéről folyó 2026-os egyeztetések ' +
+            'szereplője.',
+          url: 'https://mta.hu/',
+        },
         {
           nev: 'HCEMM Nonprofit Kft.',
           megjegyzes: 'Szeged; molekuláris orvostudományi kiválósági központ (alapítók: HUN-REN SZBK, Semmelweis Egyetem, SZTE); fejlett partnere az EMBL.',
           url: 'https://www.hcemm.eu/',
         },
-        { nev: 'Országos Onkológiai Intézet', megjegyzes: 'A Nemzeti Tumorbiológiai Laboratórium megvalósító intézménye.', url: 'https://onkol.hu/' },
+        {
+          nev: 'Országos Onkológiai Intézet',
+          megjegyzes:
+            'A Misszióvezérelt Nemzeti Onkológiai Laboratórium (2026) nyertese; az első ciklusban a Nemzeti Tumorbiológiai ' +
+            'Laboratórium megvalósítója.',
+          url: 'https://onkol.hu/',
+        },
         {
           nev: 'Gottsegen György Országos Kardiovaszkuláris Intézet',
           megjegyzes: 'Gottsegen Nemzeti Kardiovaszkuláris Regiszterek: kiváló kutatási infrastruktúra (NKFIH, 2024).',
@@ -536,11 +496,11 @@ const kategoria: ForrasKategoria = {
         },
         {
           nev: 'Molekuláris- Ujjlenyomat Kutató Központ Nonprofit Kft.',
-          megjegyzes: 'A Molekuláris- Ujjlenyomat Kutató Nemzeti Laboratórium megvalósítója a Szegedi Tudományegyetemmel.',
+          megjegyzes: 'Az első ciklusban a Molekuláris- Ujjlenyomat Kutató Nemzeti Laboratórium megvalósítója a Szegedi Tudományegyetemmel.',
           url: 'https://cmf.hu/',
         },
         {
-          nev: 'Gabonakutató Nonprofit Kft.',
+          nev: 'Gabonakutató Nonprofit Közhasznú Kft.',
           megjegyzes: 'Szántóföldi növények nemesítése: kiváló kutatási infrastruktúra (NKFIH, 2024).',
           url: 'https://www.gabonakutato.hu/',
         },
@@ -549,17 +509,6 @@ const kategoria: ForrasKategoria = {
           megjegyzes: 'A Széchenyi István Egyetem ökoszisztémájához tartozik; MI, autonóm rendszerek, védelmi és kettős felhasználású technológiák.',
           url: 'https://techtra.hu/',
         },
-        {
-          nev: 'HungaroMet Magyar Meteorológiai Szolgáltató Nonprofit Zrt.',
-          megjegyzes: 'Az Éghajlatváltozás Multidiszciplináris Nemzeti Laboratórium partnere (a labor oldalán Országos Meteorológiai Szolgálat néven).',
-          url: 'https://www.met.hu/',
-        },
-        {
-          nev: 'Magyar Természettudományi Múzeum',
-          megjegyzes: 'HUN-REN támogatott kutatócsoportok befogadója (az ELTE-vel közösen).',
-          url: 'https://www.nhmus.hu/',
-        },
-        { nev: 'Magyar Nemzeti Múzeum', megjegyzes: 'Archeometriai Labor: kiváló kutatási infrastruktúra (NKFIH, 2024).', url: 'https://mnm.hu/' },
       ],
       linkek: [
         { felirat: 'Az ELTE humán- és társadalomtudományi kutatóközpontjai', url: 'https://www.elte.hu/human-es-tarsadalomtudomanyi-kutatokozpontok' },

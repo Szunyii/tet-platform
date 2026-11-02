@@ -4,7 +4,13 @@
  * Források (lekérve: 2026-11-02):
  * - SZTNH, kezdőlap és menü: https://sztnh.gov.hu/ – oltalmi formák, szolgáltatások, IPFORM, angol oldal, 130 éves évforduló
  * - SZTNH, rólunk (mód. 2026. 06. 12.): https://sztnh.gov.hu/kezdooldal/rolunk – kormányzati főhivatal, Szt. 115/G. § szerinti
- *   feladatok, felügyelet, kinevezés, saját bevételből való működés
+ *   feladatok, kinevezés, saját bevételből való működés
+ * - 90/2026. (V. 13.) Korm. rendelet (a Kormány tagjainak feladat- és hatásköréről; 2026. 11. 01-jei állapot):
+ *   https://njt.jog.gov.hu/jogszabaly/2026-90-20-22 – 1. melléklet: SZTNH – igazságügyi miniszter, „felügyelet”; NAH – gazdasági és
+ *   energetikai miniszter, „irányítás”; 75. § 15. pont: a vállalkozásfejlesztés a gazdasági és energetikai miniszteré „a 168/A. §-ban
+ *   foglalt kivétellel”; 168/A. § (a 139/2026. (VIII. 31.) Korm. rendelet 72. §-a iktatta be): „A miniszter [a tudományos és
+ *   technológiai miniszter] a mesterséges intelligenciával kapcsolatos vállalkozásfejlesztési feladatok tekintetében a Kormány
+ *   vállalkozásfejlesztésért felelős tagja.”
  * - SZTNH, kapcsolat: https://sztnh.gov.hu/kezdooldal/kapcsolat – székhely, levélcím, telefon, e-mail, ügyfélszolgálat és nyitvatartás
  * - SZTNH, szabadalmi szolgáltatások: https://sztnh.gov.hu/szabadalmi-szolgaltatasok – újdonságkutatás, szabadalmazhatósági vélemény,
  *   jogérvényességi, szabadalomtisztasági és témakutatás, PCT, PPH, európai bejelentés, SPC, topográfia
@@ -14,9 +20,12 @@
  *   tanúsítás
  * - EA tagjegyzék: https://european-accreditation.org/ea-members/directory-of-ea-members-and-mla-signatories/ – NAH: MLA-aláíró
  * - 344/2025. (X. 31.) Korm. rendelet (hatályos állapot: 2026. 10. 02.): https://njt.jog.gov.hu/jogszabaly/2025-344-20-22 – bejelentő
- *   hatóság: NAH; MI piacfelügyeleti hatóság és egyedüli kapcsolattartó pont: a vállalkozásfejlesztésért felelős miniszter
+ *   hatóság: NAH; MI piacfelügyeleti hatóság és egyedüli kapcsolattartó pont: a vállalkozásfejlesztésért felelős miniszter (MI-ügyekben
+ *   a 90/2026. Korm. rendelet 168/A. §-a szerint a tudományos és technológiai miniszter)
  * - 2025. évi LXXV. törvény és indokolása: https://njt.jog.gov.hu/jogszabaly/2025-75-00-00, https://njt.jog.gov.hu/jogszabaly/2025-75-K0-00
- *   – az MI szabályozói tesztkörnyezetet 2026 augusztusától az MI piacfelügyeleti hatóság működteti; pénzügyi szolgáltatásokban az MNB
+ *   – 10. §: az MI piacfelügyeleti hatóság MI szabályozói tesztkörnyezetet alakít ki és működtet; 12. § (2): „A 3. § (2) bekezdés és a
+ *   10. § 2026. augusztus 2-án lép hatályba.”; 11. § (3): a részletes szabályokat miniszteri rendelet állapítja meg; pénzügyi
+ *   szolgáltatásokban az MNB
  * - Európai Bizottság, notifikált szervezetek: https://single-market-economy.ec.europa.eu/single-market/goods/building-blocks/notified-bodies_en
  *   – fogalom, NANDO: https://ec.europa.eu/growth/tools-databases/nando
  * - BME InnoLab megfelelőségértékelés (2026. 10. 28.):
@@ -27,10 +36,11 @@
  *   géntechnológia); NNGYK: https://nngyk.gov.hu/hu/ – népegészségügyi szakterületek
  * - OAH, feladatok: https://www.haea.hu/web/v3/OAHPortal.nsf/web?OpenAgent=&menu=02&submenu=2_0 – nukleáris biztonsági és védettségi
  *   felügyelet, szakhatóság a nukleáris és nukleáris kettős felhasználású termékek exportjának és importjának engedélyezésében
- * - Nébih: https://portal.nebih.gov.hu/ (oldalcím); NAIH: https://naih.hu/ (oldalcím); NMHH: https://nmhh.hu/ (oldalcím);
+ * - Nébih: https://portal.nebih.gov.hu/ (oldalcím); első ciklusú NL-szerepe az Agrártechnológiai Nemzeti Laboratórium NKFIH-aloldaláról
+ *   (https://www.nemzetilaborok.nkfih.gov.hu/agrartechnologiai-nemzeti-laboratorium/laboratorium-bemutatasa); NAIH: https://naih.hu/ (oldalcím); NMHH: https://nmhh.hu/ (oldalcím);
  *   GVH: https://www.gvh.hu/ (oldalcím); MNB: https://www.mnb.hu/web/fooldal
  * - MNB Regulatory Sandbox és Innovation Hub: https://www.mnb.hu/innovation-hub/regulatory-sandbox, https://www.mnb.hu/innovation-hub
- *   – feltételek, mentességek, folyamat, innovationhub@mnb.hu
+ *   – feltételek, „ideiglenes felmentést kaphatsz a szabályozói előírások alól”, folyamat, innovationhub@mnb.hu
  * - NKFIH, Kutatásbiztonság (mód. 2026. 09. 03.): https://nkfih.gov.hu/hivatalrol/nemzetkozi-kapcsolatok/kutatasbiztonsag – fogalom,
  *   C/2024/3510 tanácsi ajánlás, aloldalak
  * - Európai Bizottság, gazdasági és kutatásbiztonság:
@@ -45,12 +55,11 @@
  * - Alkotmányvédelmi Hivatal: https://www.ah.gov.hu/ – rendeltetés, iparbiztonsági és nemzetbiztonsági ellenőrzés
  *
  * ELLENŐRIZENDŐ:
- * - Az SZTNH felügyeletét ellátó miniszter: a „Rólunk” oldal (mód. 2026. 06. 12.) szó szerint „igazsági minisztert” ír – a kártya
- *   igazságügyi miniszterként adja vissza; a 2026-os kormányváltás utáni hatáskör-elosztás nem ellenőrzött.
- * - A NAH honlapja JavaScript-alkalmazás, saját szövege automatikusan nem volt kiolvasható: jogállását az EA tagjegyzéke és a
- *   344/2025. Korm. rendelet alapján írja a kártya; a felügyelő minisztérium 2026-ban nem ellenőrzött.
- * - Az MI piacfelügyeleti hatóság – a 344/2025. Korm. rendelet szerint „a vállalkozásfejlesztésért felelős miniszter” – konkrét
- *   tárcája 2026-ban, és az MI szabályozói tesztkörnyezet tényleges indulása.
+ * - A NAH honlapja JavaScript-alkalmazás, saját szövege automatikusan nem volt kiolvasható: jogállását az EA tagjegyzéke, a
+ *   344/2025. és a 90/2026. Korm. rendelet alapján írja a kártya.
+ * - Az MI szabályozói tesztkörnyezet tényleges indulása (jogi hatálya 2026. 08. 02.); megjelent-e a részletes szabályairól szóló
+ *   miniszteri rendelet (2025. évi LXXV. tv. 11. § (3)), és van-e a Tudományos és Technológiai Minisztériumnak MI-hatósági
+ *   tájékoztató oldala.
  * - A nemzeti metrológiai (mérésügyi) feladatok ellátója 2026-ban: hivatalos forrással nem volt megerősíthető, ezért nem szerepel.
  * - A külföldi befektetések szűrésének (FDI-screening) hazai hatósága és uniós kapcsolattartó pontja: nem volt hivatalos forrással
  *   megerősíthető, ezért nem szerepel.
@@ -86,8 +95,9 @@ const kategoria: ForrasKategoria = {
       profil:
         'Az SZTNH 130 éve foglalkozik a szellemi alkotások védelmével; a köznyelv régi nevén Szabadalmi Hivatalként is emlegeti. ' +
         'A szabadalmi törvény (1995. évi XXXIII. törvény) szerint a szellemi tulajdon védelméért felelős kormányzati főhivatal. ' +
-        'Elnökét a miniszterelnök nevezi ki, három helyettesét az elnök javaslatára a felügyeletet ellátó miniszter; a felügyeletet ' +
-        'a honlap szerint az igazságügyi miniszter látja el. Működését saját bevételeiből fedezi, azokkal önállóan gazdálkodik.\n\n' +
+        'Elnökét a miniszterelnök nevezi ki, három helyettesét az elnök javaslatára a felügyeletet ellátó miniszter; felügyeletét ' +
+        'az igazságügyi miniszter látja el (90/2026. (V. 13.) Korm. rendelet 1. melléklet). Működését saját bevételeiből fedezi, ' +
+        'azokkal önállóan gazdálkodik.\n\n' +
         'Feladat- és hatásköre (Szt. 115/G. §):\n' +
         '- iparjogvédelmi hatósági vizsgálatok és eljárások;\n' +
         '- a szerzői és a szerzői joghoz kapcsolódó jogokkal összefüggő egyes feladatok;\n' +
@@ -211,7 +221,7 @@ const kategoria: ForrasKategoria = {
       sorok: [
         {
           nev: 'Nemzeti Akkreditáló Hatóság (NAH)',
-          megjegyzes: 'Nemzeti akkreditáló szerv, EA MLA-aláíró (kalibrálás, vizsgálat, tanúsítás, ellenőrzés stb.); az uniós MI-rendelet szerinti bejelentő hatóság.',
+          megjegyzes: 'Nemzeti akkreditáló szerv, EA MLA-aláíró (kalibrálás, vizsgálat, tanúsítás, ellenőrzés stb.); az uniós MI-rendelet szerinti bejelentő hatóság; irányítója a gazdasági és energetikai miniszter.',
           url: 'https://www.nah.gov.hu/',
         },
         {
@@ -267,7 +277,7 @@ const kategoria: ForrasKategoria = {
         },
         {
           nev: 'Nemzeti Élelmiszerlánc-biztonsági Hivatal (Nébih)',
-          megjegyzes: 'Élelmiszerlánc-biztonság; az Agrártechnológiai Nemzeti Laboratórium konzorciumvezetője.',
+          megjegyzes: 'Élelmiszerlánc-biztonság; az első ciklusban az Agrártechnológiai Nemzeti Laboratórium konzorciumvezetője.',
           url: 'https://portal.nebih.gov.hu/',
         },
         {
@@ -297,11 +307,12 @@ const kategoria: ForrasKategoria = {
       osszefoglalo:
         'Szabályozói tesztkörnyezet (regulatory sandbox): felügyelt keretben, korlátozott ideig, egyes előírások alóli mentességgel ' +
         'kipróbálható innováció. A pénzügyi szektorban az MNB működtet ilyet; az uniós MI-rendelet hazai végrehajtásáról szóló ' +
-        'törvény szerint 2026 augusztusától az MI piacfelügyeleti hatóság működtet MI-tesztkörnyezetet.',
+        'törvény szerint 2026. augusztus 2-tól az MI piacfelügyeleti hatóság – MI-ügyekben a tudományos és technológiai miniszter – ' +
+        'működtet MI-tesztkörnyezetet.',
       sorok: [
         {
           nev: 'MNB Regulatory Sandbox',
-          megjegyzes: 'Pénzügyi innováció tesztelése valós ügyfelekkel, korlátozott ideig, egyes MNB-előírások alóli mentességgel; innovationhub@mnb.hu.',
+          megjegyzes: 'Pénzügyi innováció tesztelése valós ügyfelekkel, korlátozott ideig, egyes szabályozói előírások alóli ideiglenes felmentéssel; innovationhub@mnb.hu.',
           url: 'https://www.mnb.hu/innovation-hub/regulatory-sandbox',
         },
         {
@@ -311,12 +322,12 @@ const kategoria: ForrasKategoria = {
         },
         {
           nev: 'MI szabályozói tesztkörnyezet – 2025. évi LXXV. törvény',
-          megjegyzes: 'Az uniós MI-rendelet hazai végrehajtása: a tesztkörnyezetet 2026 augusztusától az MI piacfelügyeleti hatóság működteti.',
+          megjegyzes: 'Az uniós MI-rendelet hazai végrehajtása: a tesztkörnyezetet 2026. augusztus 2-tól az MI piacfelügyeleti hatóság – MI-ügyekben a tudományos és technológiai miniszter – működteti.',
           url: 'https://njt.jog.gov.hu/jogszabaly/2025-75-00-00',
         },
         {
           nev: '344/2025. (X. 31.) Korm. rendelet – MI-hatóságok kijelölése',
-          megjegyzes: 'Bejelentő hatóság: NAH; MI piacfelügyeleti hatóság és egyedüli kapcsolattartó pont: a vállalkozásfejlesztésért felelős miniszter.',
+          megjegyzes: 'Bejelentő hatóság: NAH; MI piacfelügyeleti hatóság és egyedüli kapcsolattartó pont: a vállalkozásfejlesztésért felelős miniszter, MI-ügyekben a tudományos és technológiai miniszter.',
           url: 'https://njt.jog.gov.hu/jogszabaly/2025-344-20-22',
         },
       ],

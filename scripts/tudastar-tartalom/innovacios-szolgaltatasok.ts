@@ -4,42 +4,51 @@
  * Források (lekérve: 2026-11-02):
  * - NIÜ, főoldal (kiemelt szolgáltatások, hírek, elérhetőségek): https://niu.hu/
  * - NIÜ, Misszió: https://niu.hu/pages/rolunk ; Impresszum: https://niu.hu/pages/impresszum
- * - NIÜ, szolgáltatásoldalak: https://niu.hu/service/xpand-program, …/enterprise-horizon, …/hsup-doctorate,
- *   …/hsup-growth-fund, …/startup-rendezvenyek-tamogatasa-rendezvenytamogatasi-program-2026, …/innovacios-voucher-program,
- *   …/mentoralasi-szolgaltatas, …/projektfejlesztesi-szolgaltatas, …/minositett-innovacios-tanacsadok,
- *   …/teruleti-innovacios-platform, …/innovacios-trening
- * - NIÜ, projektoldalak: https://niu.hu/project/hungarian-startup-university-program, …/science-park-projekt,
- *   …/technology-transfer-company-ttc-projekt, …/kfi-okoszisztema-fejlesztese,
+ * - NIÜ, szolgáltatásoldalak: https://niu.hu/service/xpand-program (a nemzetközi akcelerátorprogramokba jutás segítése is),
+ *   …/enterprise-horizon, …/hsup-doctorate, …/hsup-growth-fund (határidő 2026. 01. 09. 16:00),
+ *   …/startup-rendezvenyek-tamogatasa-rendezvenytamogatasi-program-2026 (beadás 2026. 05. 29-ig, rendezvények 2026. 08. 01. –
+ *   11. 30.), …/innovacios-voucher-program, …/mentoralasi-szolgaltatas, …/projektfejlesztesi-szolgaltatas,
+ *   …/minositett-innovacios-tanacsadok, …/teruleti-innovacios-platform, …/innovacios-trening ; célcsoportonként:
+ *   https://niu.hu/services
+ * - NIÜ, projektoldalak: https://niu.hu/project/hungarian-startup-university-program, …/science-park-projekt (hat egyetem
+ *   „által létrehozandó” Tudományos és Innovációs Park), …/technology-transfer-company-ttc-projekt, …/kfi-okoszisztema-fejlesztese,
  *   …/vallalkozasok-innovacios-tevekenysegenek-tamogatasa-2024-1-3-1-ak-innov-2024-00002
  * - NIÜ, Hungarian Startup Ecosystem portál: https://startup.niu.hu/
  * - NKFIH, A NIÜ bemutatása: https://nkfih.gov.hu/palyazoknak/innovacios-okoszisztema/nemzeti-innovacios-ugynokseg/ugynokseg-bemutatasa
- * - NKFIH, Startup Factory (2023-1.1.3-STARTUP) támogatott projektjei (mód. 2023. 12. 20.):
+ * - NKFIH, Startup Factory (2023-1.1.3-STARTUP) felhívás és támogatott projektjei (mód. 2023. 12. 20.):
  *   https://nkfih.gov.hu/english/nrdi-fund/startup-factory-2023-113-startup
- * - NKFIH, 2026-1.1.2-TTC felhívás: https://nkfih.gov.hu/palyazoknak/nkfi-alap/technologia-transzfer-vallalatok-halozatanak-fejlesztese-2026-112-ttc/palyazati-felhivas
+ * - NKFIH, az NKFI Alap 2026. évi programstratégiája (2025. november, a kormányváltás előtt; „2026-ban újra elindulnak …
+ *   Startup Factory”): https://nkfih.gov.hu/hivatalrol/kfi-szakpolitika/programstrategia-2026 ; PDF:
+ *   https://nkfih.gov.hu/hivatalrol/hivatal-kiadvanyai/nkfia-programstrategia-2026
+ * - NKFIH, 2026-1.1.2-TTC felhívás (6 Mrd Ft; felsőoktatási intézmények és a HUN-REN TTC-i; beadás 2026. április 16-ig):
+ *   https://nkfih.gov.hu/palyazoknak/nkfi-alap/technologia-transzfer-vallalatok-halozatanak-fejlesztese-2026-112-ttc/palyazati-felhivas
  * - 2/2026. (IX. 21.) TTM utasítás (SZMSZ): https://njt.jog.gov.hu/jogszabaly/2026-2-B0-9N – NIÜ szakmai felügyelete,
  *   Innovációs és Startup Főosztály (kapcsolattartás kamarákkal, szövetségekkel, inkubátorokkal, akcelerátorokkal)
- * - 90/2026. (V. 13.) Korm. rendelet: https://njt.jog.gov.hu/jogszabaly/2026-90-20-22 – 75. § 15. pont, 82. § (vállalkozásfejlesztés)
+ * - 90/2026. (V. 13.) Korm. rendelet: https://njt.jog.gov.hu/jogszabaly/2026-90-20-22 – 75. § 15. pont, 82. §
+ *   (vállalkozásfejlesztés), 92/A. § (GEM: állami hitel-, tőke- és garanciaprogramok), 168/A. § (az MI-vel kapcsolatos
+ *   vállalkozásfejlesztés: TTM)
  * - kormany.hu, TTM közlemények: https://kormany.hu/hirek/innovacios-voucher-program (2026. 09. 02.),
  *   https://kormany.hu/hirek/uj-program-a-doktoranduszoknak (2026. 08. 31.),
  *   https://kormany.hu/hirek/hild-imre-lett-a-nemzeti-innovacios-ugynokseg-uj-megbizott-vezerigazgatoja (2026. 10. 28.)
  * - MGFÜ: https://mgfu.hu/hu/page/about-us ; https://mgfu.hu/hu/page/contact ; https://mgfu.hu/hu/page/modem4
  * - MKIK: https://mkik.hu/ ; IVSZ: https://ivsz.hu/ ; Magyar Innovációs Szövetség: https://innovacio.hu/
- * - Inkubátorok saját oldala: https://www.startupcampus.hu/ ; https://creativeaccelerator.hu/ ; https://www.whiteunicorn.hu/ ;
- *   https://nesprit.vc/
- * - Klaszterek saját oldala: https://pharmapolis.unideb.hu/ ; https://nohac.hu/ ; https://www.archenerg.eu/
- * - European Cluster Collaboration Platform (Európai Bizottság, EISMEA): https://www.clustercollaboration.eu/
+ * - Klaszterfejlesztési stratégia 2023–2030 (területfejlesztési miniszter, 2023; melléklete: akkreditált klaszterek 2023.
+ *   január 1-jén – a 8. kategória listájának forrása is):
+ *   https://cdn.kormany.hu/uploads/document/8/85/859/859655813b0908ec753dfb28e0365d96b5a3d5e0.pdf
+ * - European Cluster Collaboration Platform („an initiative of the European Commission”; klaszterkereső, -térkép,
+ *   „more than 1.500 cluster organisations”): https://www.clustercollaboration.eu/
  *
  * ELLENŐRIZENDŐ:
- * - A NIÜ központi telefonszáma (a honlap csak e-mail-címet és címet közöl), és az új vezérigazgató kiválasztása (az NKFIH
- *   2026. október 30-án írt ki pályázatot; addig megbízott vezérigazgató vezeti).
- * - A Startup Factory 2023 inkubátorainak jelenlegi működése (a projektek 2024–2026-ra szólnak); a Lunar Program, a Virgo
- *   Ventures, az Első Közép-Európai Hardver Akcelerátor, a STRT Invest, a BNL Start Partners, az OXO Labs és a GUKA Energetikai
- *   saját honlapját nem azonosítottam biztosan, ezért ezek a sorok link nélkül szerepelnek.
- * - A hazai klaszterminősítés aktuális rendszere és a minősített klaszterek hivatalos listája (hivatalos, olvasható forrást
- *   nem találtam); a klaszterlista ezért csak szemléltető.
+ * - A NIÜ központi telefonszáma (a honlap csak az info@ és a sajto@ címet és a postacímet közli), és az új vezérigazgató
+ *   kiválasztása (az NKFIH 2026. október 30-án írt ki pályázatot; addig megbízott vezérigazgató vezeti).
+ * - Indul-e 2026-ban új Startup Factory-inkubátorkör: a 2026. évi programstratégia tervezi, az NKFIH felhívásoldalainak
+ *   keretösszeg-táblájában „Startup Factory 6,000” sor áll, de a nyitott felhívások között nem szerepel (ugyanez a 7. kategória
+ *   Startup Factory-kártyáján is nyitott).
+ * - A hazai klaszterakkreditáció 2026-os rendszere és felelőse; a 2023-asnál frissebb hivatalos klaszterlistát nem találtam.
  * - A Magyar Exportfejlesztési Ügynökség (HEPA) és a Nemzeti Befektetési Ügynökség (HIPA) jelenlegi neve, felügyelete és
- *   honlapja (a lekérés nem sikerült) – ha igazolható, a vállalkozásfejlesztési listára kerülhetnek.
- * - A 2026-1.1.2-TTC felhívás eredménye, illetve a NIÜ TTC- és Science Park-projektjének folytatása 2026 után.
+ *   honlapja (a hipa.hu 403-at ad, a hepa.hu nem válaszol) – ha igazolható, a vállalkozásfejlesztési listára kerülhetnek.
+ * - A 2026-1.1.2-TTC felhívás eredménye (a beadás 2026. április 16-án lezárult), illetve a NIÜ TTC- és Science
+ *   Park-projektjének folytatása 2026 után.
  */
 import type { ForrasKategoria } from './tipusok';
 
@@ -48,7 +57,7 @@ const STARTUP_FACTORY = 'https://nkfih.gov.hu/english/nrdi-fund/startup-factory-
 const kategoria: ForrasKategoria = {
   leiras: 'A Nemzeti Innovációs Ügynökség programjai, vállalkozásfejlesztési szervezetek, inkubátorok, klaszterek.',
   bevezeto:
-    'Az innovatív vállalkozásokat és startupokat segítő szervezetek: a Nemzeti Innovációs Ügynökség (NIÜ) és programjai, az országos vállalkozásfejlesztési szervezetek, az állami inkubátorprogramban támogatott inkubátorok, a klaszterek és a startup- és technológiai szervezetek. Az attasé itt találja meg, hová irányíthat egy külföldi startupot, akcelerátort vagy befektetőt, és milyen programokkal jut ki a magyar startup a fogadó ország piacára. A vállalati innovációs központokról és nyílt innovációs programokról bővebben a 8. kategória szól.',
+    'Az innovatív vállalkozásokat és startupokat segítő szervezetek: a Nemzeti Innovációs Ügynökség (NIÜ) és programjai, az országos vállalkozásfejlesztési szervezetek, valamint a startup- és technológiai szervezetek. Az inkubátorokhoz, akcelerátorokhoz és klaszterekhez eligazító kártyák vezetnek: a Startup Factory-inkubátorok listája a 7., az akkreditált klasztereké a 8. kategóriában található. Az attasé itt találja meg, hová irányíthat egy külföldi startupot, akcelerátort vagy befektetőt, és milyen programokkal jut ki a magyar startup a fogadó ország piacára. A vállalati innovációs központokról és nyílt innovációs programokról bővebben a 8. kategória szól.',
   kartyak: [
     {
       slug: 'niu',
@@ -105,12 +114,12 @@ const kategoria: ForrasKategoria = {
         },
         {
           nev: 'HSUP Growth Fund',
-          leiras: 'HSUP-alumni alapította startupok vissza nem térítendő támogatása (10–20 MFt, 80 MFt keret) a befektetésre érett állapotig.',
+          leiras: 'HSUP-alumni alapította startupok vissza nem térítendő támogatása (10–20 MFt, 80 MFt keret) a befektetésre érett állapotig; a 2026-os pályázat 2026. január 9-én lezárult.',
           url: 'https://niu.hu/service/hsup-growth-fund',
         },
         {
           nev: 'Startup-rendezvények támogatása (Rendezvénytámogatási program) 2026',
-          leiras: 'Hazai innovációs és startup-rendezvények támogatása 20 MFt kerettel, rendezvényenként legfeljebb 1, 3 vagy 5 MFt.',
+          leiras: 'Hazai innovációs és startup-rendezvények támogatása (2026: 20 MFt keret, rendezvényenként legfeljebb 1, 3 vagy 5 MFt); a 2026-os beadás 2026. május 29-én lezárult.',
           url: 'https://niu.hu/service/startup-rendezvenyek-tamogatasa-rendezvenytamogatasi-program-2026',
         },
         {
@@ -192,49 +201,45 @@ const kategoria: ForrasKategoria = {
     {
       slug: 'inkubatorok-akceleratorok',
       tipus: 'lista',
-      nev: 'Inkubátorok és akcelerátorok (Startup Factory)',
+      nev: 'Inkubátorok és akcelerátorok',
       osszefoglalo:
-        'Az NKFI Alapból finanszírozott Startup Factory inkubátorprogram az izraeli mintára épülő köz–magán társbefektetési modell: a technológiai inkubátorok korai fázisú startupokba fektetnek, és szakmai, üzleti támogatást adnak. A lista a 2023-1.1.3-STARTUP felhíváson 2023 decemberében támogatott inkubátorokat sorolja fel (projektek 2024–2026); nem teljes piaci áttekintés.',
+        'A hazai inkubátorok és akcelerátorok részletes listái más kategóriákban szerepelnek, ez a kártya oda vezet: a Startup Factory-program 2023-as felhívásán támogatott inkubátorokat a 7. kategória Startup Factory-kártyája, az egyetemi inkubátorokat az 5. kategória sorolja fel. A Startup Factory technológiai inkubátorai az NKFI Alap forrásából, állami–magán társbefektetési modellben fektetnek korai fázisú startupokba, és szakmai, üzleti támogatást adnak.',
       sorok: [
-        { nev: 'Startup Campus Inkubator Zrt.', megjegyzes: 'Debrecen; nemzetközi innovációs központ és startup-inkubátor', url: 'https://www.startupcampus.hu/' },
-        { nev: 'Creative Accelerator Kft.', megjegyzes: 'Szeged; élettudományi fókuszú specializált inkubátor', url: 'https://creativeaccelerator.hu/' },
-        { nev: 'White Unicorn Befektetési és Tanácsadó Kft.', megjegyzes: 'Budapest; egészségügyi, medtech és IT-fókuszú inkubátor', url: 'https://www.whiteunicorn.hu/' },
-        { nev: 'Nesprit Ventures Zrt.', megjegyzes: 'Budapest; pre-seed és seed befektetések, jellemzően klímatechnológia', url: 'https://nesprit.vc/' },
-        { nev: 'GUKA Energetikai Zrt.', megjegyzes: 'Békéscsaba; informatikai és zöld innovációk' },
-        { nev: 'Virgo Ventures Technológiai Inkubátor Kft.', megjegyzes: 'Budapest' },
-        { nev: 'OXO Labs Kft.', megjegyzes: 'Budapest' },
-        { nev: 'STRT Invest Kft.', megjegyzes: 'Budapest' },
-        { nev: 'Lunar Program Zrt.', megjegyzes: 'Budapest' },
-        { nev: 'BNL Start Partners Kft.', megjegyzes: 'Miskolc; kezdő ötletgazdáknak és haladó innovatív vállalkozóknak' },
-        { nev: 'Első Közép-Európai Hardver Akcelerátor Kft.', megjegyzes: 'Bonyhád; hardverfókuszú akcelerátor' },
-        { nev: 'Védelmi Innovációs Kutatóintézet Nonprofit Zrt. – VIRTUS', megjegyzes: 'Budapest; védelmi innovációs venture studio' },
+        {
+          nev: 'Startup Factory inkubátorprogram (NKFI Alap)',
+          megjegyzes: 'A 2023-1.1.3-STARTUP felhíváson támogatott technológiai inkubátorok listája a 7. kategória Startup Factory-kártyáján; új kört a 2026. évi programstratégia tervez.',
+          url: STARTUP_FACTORY,
+        },
+        {
+          nev: 'Egyetemi inkubátorok, kompetenciaközpontok és science parkok',
+          megjegyzes: 'Az 5. kategória „Egyetemi inkubátorok, kompetenciaközpontok és science parkok” kártyája sorolja fel őket; hat egyetem Science Parkjának koncepcióját a NIÜ támogatja.',
+          url: 'https://niu.hu/project/science-park-projekt',
+        },
+        {
+          nev: 'A Nemzeti Innovációs Ügynökség startupprogramjai',
+          megjegyzes: 'Képzés, mentorálás és külpiaci felkészítés (HSUP, XPAND; az XPAND a nemzetközi akcelerátorprogramokba jutást is segíti); részletek a NIÜ kártyáján.',
+          url: 'https://niu.hu/services',
+        },
       ],
-      linkek: [{ felirat: 'A Startup Factory 2023 felhívás és a támogatott projektek (NKFIH, angol)', url: STARTUP_FACTORY }],
     },
     {
       slug: 'innovacios-klaszterek',
       tipus: 'lista',
       nev: 'Klaszterek',
       osszefoglalo:
-        'Ágazati klaszterek: vállalatokat, egyetemeket és kamarákat összefogó együttműködési hálózatok, jó belépési pontok ágazati partnerkereséshez. A lista szemléltető, nem teljes; az uniós klaszteradatbázis, a European Cluster Collaboration Platform további magyar klasztereket is mutat.',
+        'Az ágazati klaszterek vállalatokat, egyetemeket és kamarákat fognak össze, ezért jó belépési pontok ágazati partnerkereséshez. A hazai akkreditált klaszterek 2023-as hivatalos kimutatását a 8. kategória „Akkreditált klaszterek” kártyája közli; ez a kártya a klaszterek kereséséhez és a hazai klaszterpolitikához vezet.',
       sorok: [
         {
-          nev: 'Pharmapolis Innovatív Gyógyszeripari Klaszter',
-          megjegyzes: 'Gyógyszeripari klaszter a Debreceni Egyetem keretében.',
-          url: 'https://pharmapolis.unideb.hu/',
+          nev: 'European Cluster Collaboration Platform (ECCP)',
+          megjegyzes: 'Az Európai Bizottság kezdeményezése: európai klaszterkereső és -térkép, partnerkeresés több mint 1500 klaszterszervezet között.',
+          url: 'https://www.clustercollaboration.eu/',
         },
         {
-          nev: 'Észak-magyarországi Autóipari Klaszter (NOHAC)',
-          megjegyzes: 'Autóipari klaszter; alapítói között autóipari vállalatok, a Miskolci Egyetem és a térség kereskedelmi és iparkamarái.',
-          url: 'https://nohac.hu/',
-        },
-        {
-          nev: 'ArchEnerg Nemzetközi Megújuló Energetikai és Építőipari Klaszter',
-          megjegyzes: 'Megújuló energia és energiatudatos építés; projektgenerálás és forráshoz jutás a tagoknak.',
-          url: 'https://www.archenerg.eu/',
+          nev: 'Klaszterfejlesztési stratégia 2023–2030',
+          megjegyzes: 'A hazai klaszterpolitika 2023-ban kiadott kormányzati stratégiája; melléklete közli a 2023. január 1-jén akkreditált klasztereket.',
+          url: 'https://cdn.kormany.hu/uploads/document/8/85/859/859655813b0908ec753dfb28e0365d96b5a3d5e0.pdf',
         },
       ],
-      linkek: [{ felirat: 'European Cluster Collaboration Platform (Európai Bizottság)', url: 'https://www.clustercollaboration.eu/' }],
     },
     {
       slug: 'startup-technologiai-szervezetek',
@@ -260,12 +265,12 @@ const kategoria: ForrasKategoria = {
         },
         {
           nev: 'Egyetemi technológiatranszfer-cégek (TTC-hálózat)',
-          megjegyzes: 'Egyetemi tulajdonú TT-cégek; fejlesztésüket a NIÜ TTC-projektje és az NKFIH 2026-1.1.2-TTC felhívása (6 Mrd Ft) támogatja.',
+          megjegyzes: 'Egyetemi (és HUN-REN) tulajdonú TT-cégek; a NIÜ TTC-projektje (2024–2026) és az NKFIH 2026-1.1.2-TTC felhívása (6 Mrd Ft; a beadás 2026. április 16-án lezárult) fejleszti őket.',
           url: 'https://niu.hu/project/technology-transfer-company-ttc-projekt',
         },
         {
           nev: 'Tudományos és Innovációs Parkok (Science Park)',
-          megjegyzes: 'Egyetemek, kutatóintézetek, high-tech cégek és startupok közös terei hat egyetemen; a koncepciót a NIÜ támogatja.',
+          megjegyzes: 'Egyetemek, kutatóintézetek, high-tech cégek és startupok közös terei; hat egyetem Science Parkjának szakmai koncepcióját a NIÜ támogatja és monitorozza.',
           url: 'https://niu.hu/project/science-park-projekt',
         },
         {
