@@ -1837,9 +1837,9 @@ export function LinkLista({ linkek }: { linkek: readonly HasznosLink[] }) {
 }
 
 /** Név (linkként, ha van webcím) + rövid leírás soronként: a listakártya sorai és az intézmény programjai. */
-export function SorLista({ sorok }: { sorok: readonly { nev: string; url: string; leiras: string }[] }) {
+export function TetelLista({ sorok }: { sorok: readonly { nev: string; url: string; leiras: string }[] }) {
   return (
-    <ul className="divide-y divide-border rounded-lg border border-border">
+    <ul className="divide-y divide-input rounded-lg border border-input">
       {sorok.map((s, i) => (
         <li key={i} className="flex flex-col gap-0.5 px-3 py-2 text-sm sm:flex-row sm:items-baseline sm:gap-3">
           <span className="font-medium sm:w-2/5 sm:shrink-0">{s.url ? <KulsoLink href={s.url}>{s.nev}</KulsoLink> : s.nev}</span>
@@ -1889,16 +1889,17 @@ import { cn } from '../../../../lib/utils';
 import { KeresoMezo } from './KeresoMezo';
 
 /**
- * A jobb oldali kategória-menü (`lg` fölött, ragadós a fejléc alatt): kis keresőmező, a 9 rövid cím, az
- * aktív kategória alatt a kártyái. A kategória-oldalon a kártya-linkek horgonyok (`#k-<slug>`); a
- * részletoldalon oda visznek, ahol a kártya megjelenik (intézmény: saját oldala, lista: a horgonya), és
- * az aktuális intézmény ki van emelve.
+ * A jobb oldali kategória-menü (`xl` fölött, ragadós a fejléc alatt): kis keresőmező, a 9 rövid cím, az
+ * aktív kategória alatt a kártyái. A kategória-oldalon a kártya-linkek sima horgonyok (`<a href="#k-<slug>">`:
+ * a natív ugrás a fókusz kiindulópontját is a kártyára teszi, a Next `Link` csak görget); a részletoldalon oda
+ * visznek, ahol a kártya megjelenik (intézmény: saját oldala, lista: a horgonya), és az aktuális intézmény ki van
+ * emelve. A menü a szürke lapon áll, ezért a kiemelés fehér háttér + keret (a `bg-muted` itt nem látszana).
  */
 export function KategoriaMenu({
   aktivKategoria, kartyak, aktivSlug,
 }: { aktivKategoria: KategoriaSlug; kartyak: readonly Kartya[]; aktivSlug?: string }) {
   return (
-    <aside className="hidden flex-col gap-3 lg:sticky lg:top-[5.5rem] lg:flex lg:max-h-[calc(100dvh-7.5rem)] lg:overflow-y-auto">
+    <div className="hidden flex-col gap-3 xl:sticky xl:top-[5.5rem] xl:flex xl:max-h-[calc(100dvh-7.5rem)] xl:overflow-y-auto">
       <KeresoMezo id="tudastar-kereses-menu" kompakt />
       <nav aria-label="A tudástár kategóriái">
         <ol className="flex flex-col gap-0.5">
@@ -1910,30 +1911,32 @@ export function KategoriaMenu({
                   href={tudastarUrl(k.slug)}
                   aria-current={aktiv && !aktivSlug ? 'page' : undefined}
                   className={cn(
-                    'flex gap-2 rounded-md px-2 py-1.5 text-sm text-foreground no-underline hover:bg-muted hover:no-underline',
-                    aktiv && 'bg-muted font-medium',
+                    'flex gap-2 rounded-md px-2 py-1.5 text-sm text-foreground no-underline hover:bg-foreground/5 hover:no-underline',
+                    aktiv && 'bg-background font-medium ring-1 ring-foreground/10 hover:bg-background',
                   )}
                 >
                   <span className="w-5 shrink-0 text-right text-muted-foreground tabular-nums">{k.szam}.</span>
                   {k.rovidCim}
                 </Link>
                 {aktiv && kartyak.length > 0 && (
-                  <ul className="mt-0.5 mb-1 ml-7 flex flex-col border-l border-border">
+                  <ul className="mt-0.5 mb-1 ml-7 flex flex-col border-l border-input">
                     {kartyak.map((c) => {
                       const sajat = c.slug === aktivSlug;
+                      const osztaly = cn(
+                        'block truncate py-1 pl-3 text-[13px] text-muted-foreground no-underline hover:text-foreground hover:no-underline',
+                        sajat && 'font-medium text-foreground',
+                      );
                       return (
                         <li key={c.id}>
-                          <Link
-                            href={aktivSlug ? kartyaUrl(c) : `#${kartyaHorgony(c.slug)}`}
-                            aria-current={sajat ? 'page' : undefined}
-                            title={c.nev}
-                            className={cn(
-                              'block truncate py-1 pl-3 text-[13px] text-muted-foreground no-underline hover:text-foreground hover:no-underline',
-                              sajat && 'font-medium text-foreground',
-                            )}
-                          >
-                            {c.rovidites ?? c.nev}
-                          </Link>
+                          {aktivSlug ? (
+                            <Link href={kartyaUrl(c)} aria-current={sajat ? 'page' : undefined} title={c.nev} className={osztaly}>
+                              {c.rovidites ?? c.nev}
+                            </Link>
+                          ) : (
+                            <a href={`#${kartyaHorgony(c.slug)}`} title={c.nev} className={osztaly}>
+                              {c.rovidites ?? c.nev}
+                            </a>
+                          )}
                         </li>
                       );
                     })}
@@ -1944,7 +1947,7 @@ export function KategoriaMenu({
           })}
         </ol>
       </nav>
-    </aside>
+    </div>
   );
 }
 ```
@@ -1961,13 +1964,13 @@ import { tudastarUrl } from '../../../../lib/routes';
 import { TUDASTAR_KATEGORIAK } from '../../../../lib/tudastar-szotar';
 
 /**
- * Keskeny ablakban (`lg` alatt) a jobb oldali menü helyett: kategória-választó, váltáskor a kategória-oldalra
+ * Keskenyebb ablakban (`xl` alatt) a jobb oldali menü helyett: kategória-választó, váltáskor a kategória-oldalra
  * navigál. Nem vezérelt; a `key` miatt útvonal-váltás után az új kategóriával indul.
  */
 export function KategoriaValto({ aktiv }: { aktiv: string }) {
   const router = useRouter();
   return (
-    <div className="flex flex-col gap-1.5 lg:hidden">
+    <div className="flex flex-col gap-1.5 xl:hidden">
       <Label htmlFor="tudastar-kategoria">Kategória</Label>
       <NativeSelect
         key={aktiv}
@@ -1995,14 +1998,15 @@ import { KategoriaMenu } from './KategoriaMenu';
 import { KategoriaValto } from './KategoriaValto';
 
 /**
- * A kategória- és a részletoldal váza: a tartalom mellett jobb oldalt a kategória-menü (`lg` fölött),
- * keskenyebb ablakban a tartalom fölött a kategória-választó. A `kartyak` az aktív kategóriáéi.
+ * A kategória- és a részletoldal váza: a tartalom mellett jobb oldalt a kategória-menü (`xl` fölött – szűkebben
+ * a 238 px-es oldalsáv mellett a tartalomnak nem maradna hely), keskenyebb ablakban a tartalom fölött a
+ * kategória-választó. A `kartyak` az aktív kategóriáéi.
  */
 export function TudastarElrendezes({
   aktivKategoria, kartyak, aktivSlug, children,
 }: { aktivKategoria: KategoriaSlug; kartyak: readonly Kartya[]; aktivSlug?: string; children: ReactNode }) {
   return (
-    <div className="grid max-w-6xl items-start gap-6 lg:grid-cols-[minmax(0,1fr)_16rem]">
+    <div className="grid max-w-6xl items-start gap-6 xl:grid-cols-[minmax(0,1fr)_16rem]">
       <div className="flex min-w-0 flex-col gap-4">
         <KategoriaValto aktiv={aktivKategoria} />
         {children}
@@ -2041,27 +2045,26 @@ export function KartyaLablec({ kartya, mozgatas, children }: { kartya: Kartya; m
   return (
     <CardFooter className="flex-wrap gap-x-4 gap-y-2 text-xs">
       {children}
-      <span className="ml-auto text-muted-foreground">Frissítve: {formatDatum(kartya.updatedAt)}</span>
-      {mozgatas && (
-        <div className="flex items-center gap-1">
-          <Link
-            href={kartyaSzerkesztoUrl(kartya)}
-            className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
-          >
-            Szerkesztés<span className="sr-only">: {kartya.nev}</span>
-          </Link>
-          <form action={mozgatas.fel}>
-            <KuldGomb variant="ghost" size="icon-sm" disabled={!mozgatas.fel} aria-label={`${kartya.nev} feljebb`}>
-              <ArrowUpIcon aria-hidden />
-            </KuldGomb>
-          </form>
-          <form action={mozgatas.le}>
-            <KuldGomb variant="ghost" size="icon-sm" disabled={!mozgatas.le} aria-label={`${kartya.nev} lejjebb`}>
-              <ArrowDownIcon aria-hidden />
-            </KuldGomb>
-          </form>
-        </div>
-      )}
+      <div className="ml-auto flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
+        <span className="text-muted-foreground">Frissítve: {formatDatum(kartya.updatedAt)}</span>
+        {mozgatas && (
+          <div className="flex items-center gap-1">
+            <Link href={kartyaSzerkesztoUrl(kartya)} className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}>
+              Szerkesztés<span className="sr-only">: {kartya.nev}</span>
+            </Link>
+            <form action={mozgatas.fel}>
+              <KuldGomb variant="ghost" size="icon-sm" disabled={!mozgatas.fel} aria-label={`Feljebb: ${kartya.nev}`}>
+                <ArrowUpIcon aria-hidden />
+              </KuldGomb>
+            </form>
+            <form action={mozgatas.le}>
+              <KuldGomb variant="ghost" size="icon-sm" disabled={!mozgatas.le} aria-label={`Lejjebb: ${kartya.nev}`}>
+                <ArrowDownIcon aria-hidden />
+              </KuldGomb>
+            </form>
+          </div>
+        )}
+      </div>
     </CardFooter>
   );
 }
@@ -2077,7 +2080,7 @@ import { kartyaHorgony, kartyaUrl } from '../../../../lib/routes';
 import { TIPUS_CIMKE, type Kartya } from '../../../../lib/tudastar-szotar';
 import { megjelenoHoszt } from '../../../../lib/tudastar-szoveg';
 import { KartyaLablec, type Mozgatas } from './KartyaLablec';
-import { KulsoLink, LinkLista, SorLista } from './KulsoLink';
+import { KulsoLink, LinkLista, TetelLista } from './KulsoLink';
 
 /**
  * Egy kártya a kategória-oldalon. Intézmény: összefoglaló, „Részletek →” és honlap. Lista: bevezető, a
@@ -2093,7 +2096,7 @@ export function TudastarKartya({ kartya, mozgatas }: { kartya: Kartya; mozgatas?
         </Badge>
         <CardTitle role="heading" aria-level={3}>
           {kartya.nev}
-          {kartya.rovidites && <span className="ml-1.5 font-normal text-muted-foreground">{kartya.rovidites}</span>}
+          {kartya.rovidites && <>{' '}<span className="ml-1 font-normal text-muted-foreground">{kartya.rovidites}</span></>}
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
@@ -2101,7 +2104,7 @@ export function TudastarKartya({ kartya, mozgatas }: { kartya: Kartya; mozgatas?
         {kartya.tipus === 'lista' && (
           <>
             {kartya.tartalom.sorok.length > 0 && (
-              <SorLista sorok={kartya.tartalom.sorok.map((s) => ({ nev: s.nev, url: s.url, leiras: s.megjegyzes }))} />
+              <TetelLista sorok={kartya.tartalom.sorok.map((s) => ({ nev: s.nev, url: s.url, leiras: s.megjegyzes }))} />
             )}
             {kartya.tartalom.linkek.length > 0 && <LinkLista linkek={kartya.tartalom.linkek} />}
           </>
@@ -2110,7 +2113,8 @@ export function TudastarKartya({ kartya, mozgatas }: { kartya: Kartya; mozgatas?
       <KartyaLablec kartya={kartya} mozgatas={mozgatas}>
         {kartya.tipus === 'intezmeny' && (
           <Link href={kartyaUrl(kartya)} className="font-medium">
-            Részletek →<span className="sr-only">: {kartya.nev}</span>
+            Részletek <span aria-hidden>→</span>
+            <span className="sr-only">: {kartya.nev}</span>
           </Link>
         )}
         {kartya.honlap && <KulsoLink href={kartya.honlap}>{megjelenoHoszt(kartya.honlap)}</KulsoLink>}
@@ -2128,12 +2132,11 @@ import type { ReactNode } from 'react';
 import { buttonVariants } from '../../../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/card';
 import { formatDatum } from '../../../../lib/datum';
-import { kartyaSzerkesztoUrl, tudastarUrl } from '../../../../lib/routes';
-import type { KartyaTipusu, TudastarKategoria } from '../../../../lib/tudastar-szotar';
+import { kartyaSzerkesztoUrl } from '../../../../lib/routes';
+import type { KartyaTipusu } from '../../../../lib/tudastar-szotar';
 import { megjelenoHoszt } from '../../../../lib/tudastar-szoveg';
 import { cn } from '../../../../lib/utils';
-import { KulsoLink, LinkLista, SorLista } from './KulsoLink';
-import { Morzsa } from './Morzsa';
+import { KulsoLink, LinkLista, TetelLista } from './KulsoLink';
 import { Szoveg } from './Szoveg';
 
 function Blokk({ cim, children }: { cim: string; children: ReactNode }) {
@@ -2163,26 +2166,17 @@ function Adat({ cimke, children }: { cimke: string; children: ReactNode }) {
  * Az intézmény részletoldala: összefoglaló, majd Profil és Kapcsolat, Tevékenység, a szabad szakaszok,
  * Programok, Hasznos linkek – az üres blokk nem jelenik meg.
  */
-export function IntezmenyReszlet({
-  kartya, kategoria, szerkeszthet,
-}: { kartya: KartyaTipusu<'intezmeny'>; kategoria: TudastarKategoria; szerkeszthet: boolean }) {
+export function IntezmenyReszlet({ kartya, szerkeszthet }: { kartya: KartyaTipusu<'intezmeny'>; szerkeszthet: boolean }) {
   const t = kartya.tartalom;
   const { email, telefon, cim } = t.kapcsolat;
   const vanKapcsolat = Boolean(kartya.honlap || email || telefon || cim);
   return (
     <article className="flex flex-col gap-4">
-      <Morzsa
-        elemek={[
-          { felirat: 'TéT Tudástár', href: tudastarUrl() },
-          { felirat: `${kategoria.szam}. ${kategoria.rovidCim}`, href: tudastarUrl(kategoria.slug) },
-          { felirat: kartya.rovidites ?? kartya.nev },
-        ]}
-      />
       <header className="flex flex-col gap-2">
         <div className="flex flex-wrap items-start gap-3">
           <h2 className="text-xl leading-snug font-semibold">
             {kartya.nev}
-            {kartya.rovidites && <span className="ml-2 text-base font-normal text-muted-foreground">{kartya.rovidites}</span>}
+            {kartya.rovidites && <>{' '}<span className="ml-1 text-base font-normal text-muted-foreground">{kartya.rovidites}</span></>}
           </h2>
           {szerkeszthet && (
             <Link href={kartyaSzerkesztoUrl(kartya)} className={cn('ml-auto', buttonVariants({ variant: 'outline' }))}>
@@ -2194,7 +2188,7 @@ export function IntezmenyReszlet({
       </header>
 
       {(t.profil || vanKapcsolat) && (
-        <div className={cn('grid items-start gap-4', t.profil && vanKapcsolat && 'md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]')}>
+        <div className={cn('grid items-start gap-4', t.profil && vanKapcsolat && 'xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]')}>
           {t.profil && (
             <Blokk cim="Profil">
               <Szoveg szoveg={t.profil} />
@@ -2232,7 +2226,7 @@ export function IntezmenyReszlet({
       ))}
       {t.programok.length > 0 && (
         <Blokk cim="Programok">
-          <SorLista sorok={t.programok} />
+          <TetelLista sorok={t.programok} />
         </Blokk>
       )}
       {t.linkek.length > 0 && (
@@ -2262,7 +2256,8 @@ import { requireSession } from '../../../lib/session';
 /** ↑/↓ a kategória-oldalon (bind-olt `<form action>`): a szomszéddal cserél sorrendet. */
 export async function mozgatKartyaAction(id: string, irany: 'fel' | 'le'): Promise<void> {
   const session = await requireSession();
-  if (!canEditTudastar(session)) return;
+  // A bind-olt argumentumok a kliensen át érkeznek vissza: az irányt futásidőben is ellenőrizzük.
+  if (!canEditTudastar(session) || (irany !== 'fel' && irany !== 'le')) return;
   try {
     mozgatKartya(id, irany);
   } catch (err) {
@@ -2270,7 +2265,8 @@ export async function mozgatKartyaAction(id: string, irany: 'fel' | 'le'): Promi
     console.error('[tudastar] mozgatás sikertelen:', err);
     return;
   }
-  revalidatePath('/tudastar', 'layout');
+  // A kódbázis többi actionjével azonos; a `'/tudastar'` tag a `(app)` route group miatt nem illeszkedne.
+  revalidatePath('/', 'layout');
 }
 ```
 
@@ -2357,10 +2353,12 @@ export default async function KategoriaPage({ params }: { params: Promise<{ kate
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { listKartyak } from '../../../../../db/queries/tudastar';
+import { tudastarUrl } from '../../../../../lib/routes';
 import { canEditTudastar } from '../../../../../lib/tudastar-jog';
 import { kategoriaBySlug } from '../../../../../lib/tudastar-szotar';
 import { requireSession } from '../../../../../lib/session';
 import { IntezmenyReszlet } from '../../components/IntezmenyReszlet';
+import { Morzsa } from '../../components/Morzsa';
 import { TudastarElrendezes } from '../../components/TudastarElrendezes';
 
 export const metadata: Metadata = { title: 'TéT Tudástár' };
@@ -2379,7 +2377,14 @@ export default async function IntezmenyPage({ params }: { params: Promise<{ kate
   if (!kartya || kartya.tipus !== 'intezmeny') notFound();
   return (
     <TudastarElrendezes aktivKategoria={kategoria.slug} kartyak={kartyak} aktivSlug={kartya.slug}>
-      <IntezmenyReszlet kartya={kartya} kategoria={kategoria} szerkeszthet={canEditTudastar(session)} />
+      <Morzsa
+        elemek={[
+          { felirat: 'TéT Tudástár', href: tudastarUrl() },
+          { felirat: `${kategoria.szam}. ${kategoria.rovidCim}`, href: tudastarUrl(kategoria.slug) },
+          { felirat: kartya.rovidites ?? kartya.nev },
+        ]}
+      />
+      <IntezmenyReszlet kartya={kartya} szerkeszthet={canEditTudastar(session)} />
     </TudastarElrendezes>
   );
 }
@@ -2874,6 +2879,8 @@ import type { MuveletState } from '../../../components/form/useMuveletForm';
 const NINCS_JOG = 'Nincs jogosultságod a tudástár szerkesztéséhez.';
 const TOROLVE = 'A kártya közben törlődött.';
 const ELAVULT = 'A kártyát közben más módosította – töltsd újra az oldalt.';
+// A revalidálás a kódbázis többi actionjével azonos: `revalidatePath('/', 'layout')`. A `'/tudastar'` útvonal-tag
+// a `(app)` route group miatt egyetlen oldalra sem illeszkedne (a tag `/(app)/tudastar/…` lenne).
 
 /**
  * Új kártya (nincs `id`, a típus a rejtett `tipus` mezőből) vagy meglévő mentése (`id` + `verzio`, a típus a
@@ -2907,14 +2914,15 @@ export async function mentKartyaAction(_prev: MuveletState, formData: FormData):
     console.error('[tudastar] mentés sikertelen:', err);
     return { errors: { form: 'Mentés sikertelen, próbáld újra.' } };
   }
-  revalidatePath('/tudastar', 'layout');
+  revalidatePath('/', 'layout');
   redirect(kartyaUrl({ kategoria: parsed.data.kategoria, slug, tipus: parsed.data.tipus }));
 }
 
 /** ↑/↓ a kategória-oldalon (bind-olt `<form action>`): a szomszéddal cserél sorrendet. */
 export async function mozgatKartyaAction(id: string, irany: 'fel' | 'le'): Promise<void> {
   const session = await requireSession();
-  if (!canEditTudastar(session)) return;
+  // A bind-olt argumentumok a kliensen át érkeznek vissza: az irányt futásidőben is ellenőrizzük.
+  if (!canEditTudastar(session) || (irany !== 'fel' && irany !== 'le')) return;
   try {
     mozgatKartya(id, irany);
   } catch (err) {
@@ -2922,7 +2930,7 @@ export async function mozgatKartyaAction(id: string, irany: 'fel' | 'le'): Promi
     console.error('[tudastar] mozgatás sikertelen:', err);
     return;
   }
-  revalidatePath('/tudastar', 'layout');
+  revalidatePath('/', 'layout');
 }
 
 /** Törlés a szerkesztőből (bind-olt, a dialógus hívja); siker után a kategória-oldalra irányít. */
@@ -2938,7 +2946,7 @@ export async function deleteKartyaAction(id: string): Promise<MuveletState> {
     console.error('[tudastar] törlés sikertelen:', err);
     return { errors: { form: 'Törlés sikertelen, próbáld újra.' } };
   }
-  revalidatePath('/tudastar', 'layout');
+  revalidatePath('/', 'layout');
   redirect(tudastarUrl(meglevo.kategoria));
 }
 ```
@@ -3064,7 +3072,7 @@ A projekt átmeneti állapotban van: a monitoring még a `lib/data.ts` demóadat
 - [ ] **2. lépés: `CLAUDE.md` – új „TéT Tudástár” bekezdés a „Kommunikáció (ticketek)” bekezdés után, a „Demó pontszámlogika” elé**
 
 ```
-**TéT Tudástár.** A magyar innovációs ökoszisztéma szereplői és kapcsolódó programjai az attaséknak: eligazító összefoglalók és az élő hivatalos oldalakra mutató linkek. A 9 kategória **a kódban** van (`lib/tudastar-szotar.ts` `TUDASTAR_KATEGORIAK`: `slug`, `szam`, `cim`, `rovidCim` – a menübe –, `leiras` – a nyitólap csempéjére –, `bevezeto` – a kategória-oldal tetejére; a szerkezet rögzített, a szövegeket fejlesztő módosítja), a kártyák a DB-ben: `db/schema/tudastar.ts` (`tudastar_kartya`; `tipus` `intezmeny` | `lista`, létrehozás után nem változik; `slug` globálisan egyedi, létrehozáskor a rövidítésből vagy a névből – `lib/slug.ts` `slugbol`/`szabadSlug` –, átnevezéskor és kategóriaváltáskor sem változik; `sorrend` a kategórián belül; a `tartalom` egy JSON-oszlop, típusonként más alakú – `IntezmenyTartalom`: profil, tevékenység, kapcsolat, szabad címzett szakaszok, programok, linkek; `ListaTartalom`: sorok, linkek –, olvasáskor a `normalizalTartalom` egészíti ki, ezért új almezőhöz nem kell migráció, almező átnevezéséhez igen; `szerzo_id` az utolsó módosító; CHECK: `tipus` a két érték egyike, a `tartalom` `json_valid` – hibás JSON-nál a Drizzle `JSON.parse`-a minden tudástár-oldalt eldöntené). Lekérdezések `db/queries/tudastar.ts`: `listKartyak` (React `cache()`; a 9 kategória sorrendjében, azon belül `KATEGORIA_SORREND`: sorrend, név, id; ismeretlen kategóriájú vagy típusú sort logolva kihagy; a visszaadott tömböt ne mutáld), `getKartya`, `createKartya` (a hívó adja a slug-alapot; szabad slug + a kategória végére, egy tranzakcióban), `updateKartya` (csak a tartalmi mezőket írja, explicit felsorolással – a hívó objektumának többi kulcsa, pl. egy régi `updatedAt`, nem kerülhet a DB-be –, a típusváltásra hibát dob; verzióval: a szerkesztő megnyitásakori `updatedAt` ms-ban; eltérésnél `elavult`, törölt kártyánál `nincs`; kategóriaváltáskor az új kategória végére), `deleteKartya`, `mozgatKartya` (csere a szomszéddal a megjelenítés sorrendjében, a kategória 1..n-re újraszámozásával – az azonos `sorrend`-ű kártyák is mozgathatók); az író tranzakciók `immediate`-ek. Validátor `lib/tudastar-validacio.ts` (`validalKartya(fd, tipus)`, hibakulcs = a mező id-ja = a `name`; a dinamikus sorok `<lista>.<i>.<mezo>`, a teljesen üres sor kimarad, a félig kitöltött hibát kap; `normalizalUrl`: séma nélkül `https://` elé, csak http(s), pontot tartalmazó hoszt, a `new URL().href` kerül tárolásra), jog `lib/tudastar-jog.ts` `canEditTudastar` (admin; olvasni mindenki), keresés `lib/tudastar-kereses.ts` `keres` (ékezet- és kisbetű-érzéketlen, minden szónak ugyanabban a kártyában kell lennie, JS-ben; a találat `hol`/`reszlet` része a legtöbb szót tartalmazó rész, a név helyett), megjelenítés `lib/tudastar-szoveg.ts` (`tagolSzoveg`: üres sor = bekezdés, „- ” vagy „• ” kezdetű sor = felsorolás, HTML-t nem értelmez; `megjelenoHoszt`), útvonalak `lib/routes.ts` (`tudastarUrl`, `kartyaUrl` – intézmény: a részletoldala, lista: a kategória-oldal `#k-<slug>` horgonya –, `kartyaHorgony`, `kartyaSzerkesztoUrl`, `ujKartyaUrl`). Route-ok: `/tudastar` (keresőmező – `next/form` GET, `?q=` – és a 9 csempe; `?q=` esetén a `KeresesiTalalatok` kategóriánként), `/tudastar/[kategoria]` (bevezető + kártyák; adminnak „+ Új intézmény/lista” és ↑/↓), `/tudastar/[kategoria]/[slug]` (csak intézmény; lista vagy más kategóriájú slug: 404), `/tudastar/[kategoria]/[slug]/szerkesztes` és `/tudastar/[kategoria]/uj?tipus=` (`requireAdmin()`). A kategória- és a részletoldal váza a `TudastarElrendezes`: jobb oldalt `lg` fölött a ragadós `KategoriaMenu` (kis kereső, a 9 rövid cím, az aktív kategória kártyái – a kategória-oldalon horgonyok, a részletoldalon a `kartyaUrl`, az aktuális kiemelve), alatta a `KategoriaValto` natív select. Mindkét típust egy `TudastarKartya` rajzolja, közös `KartyaLablec`-kel („Frissítve”, adminnál Szerkesztés és ↑/↓ – bind-olt `<form action>`, `KuldGomb`); a részletoldal `IntezmenyReszlet` (üres blokk nem jelenik meg). Szerkesztő: `KartyaForm` (vezérelt `Urlap`, rejtett `tipus` vagy `id` + `verzio`), `KartyaMezo`, a generikus `SorSzerkeszto` (stabil `_id`, ↑/↓/törlés, fókuszkezelés és sorhiba-elrejtés a `RendezvenySorok` mintájára), `KartyaTorles` (a `RiportTorles` mintája). Action-ök `app/(app)/tudastar/actions.ts`: `mentKartyaAction` (a jog hiánya, a törölt kártya és az elavult verzió form-szintű hiba, nem 404; siker → `revalidatePath('/tudastar', 'layout')` + átirányítás a `kartyaUrl`-re), `mozgatKartyaAction`, `deleteKartyaAction`.
+**TéT Tudástár.** A magyar innovációs ökoszisztéma szereplői és kapcsolódó programjai az attaséknak: eligazító összefoglalók és az élő hivatalos oldalakra mutató linkek. A 9 kategória **a kódban** van (`lib/tudastar-szotar.ts` `TUDASTAR_KATEGORIAK`: `slug`, `szam`, `cim`, `rovidCim` – a menübe –, `leiras` – a nyitólap csempéjére –, `bevezeto` – a kategória-oldal tetejére; a szerkezet rögzített, a szövegeket fejlesztő módosítja), a kártyák a DB-ben: `db/schema/tudastar.ts` (`tudastar_kartya`; `tipus` `intezmeny` | `lista`, létrehozás után nem változik; `slug` globálisan egyedi, létrehozáskor a rövidítésből vagy a névből – `lib/slug.ts` `slugbol`/`szabadSlug` –, átnevezéskor és kategóriaváltáskor sem változik; `sorrend` a kategórián belül; a `tartalom` egy JSON-oszlop, típusonként más alakú – `IntezmenyTartalom`: profil, tevékenység, kapcsolat, szabad címzett szakaszok, programok, linkek; `ListaTartalom`: sorok, linkek –, olvasáskor a `normalizalTartalom` egészíti ki, ezért új almezőhöz nem kell migráció, almező átnevezéséhez igen; `szerzo_id` az utolsó módosító; CHECK: `tipus` a két érték egyike, a `tartalom` `json_valid` – hibás JSON-nál a Drizzle `JSON.parse`-a minden tudástár-oldalt eldöntené). Lekérdezések `db/queries/tudastar.ts`: `listKartyak` (React `cache()`; a 9 kategória sorrendjében, azon belül `KATEGORIA_SORREND`: sorrend, név, id; ismeretlen kategóriájú vagy típusú sort logolva kihagy; a visszaadott tömböt ne mutáld), `getKartya`, `createKartya` (a hívó adja a slug-alapot; szabad slug + a kategória végére, egy tranzakcióban), `updateKartya` (csak a tartalmi mezőket írja, explicit felsorolással – a hívó objektumának többi kulcsa, pl. egy régi `updatedAt`, nem kerülhet a DB-be –, a típusváltásra hibát dob; verzióval: a szerkesztő megnyitásakori `updatedAt` ms-ban; eltérésnél `elavult`, törölt kártyánál `nincs`; kategóriaváltáskor az új kategória végére), `deleteKartya`, `mozgatKartya` (csere a szomszéddal a megjelenítés sorrendjében, a kategória 1..n-re újraszámozásával – az azonos `sorrend`-ű kártyák is mozgathatók); az író tranzakciók `immediate`-ek. Validátor `lib/tudastar-validacio.ts` (`validalKartya(fd, tipus)`, hibakulcs = a mező id-ja = a `name`; a dinamikus sorok `<lista>.<i>.<mezo>`, a teljesen üres sor kimarad, a félig kitöltött hibát kap; `normalizalUrl`: séma nélkül `https://` elé, csak http(s), pontot tartalmazó hoszt, a `new URL().href` kerül tárolásra), jog `lib/tudastar-jog.ts` `canEditTudastar` (admin; olvasni mindenki), keresés `lib/tudastar-kereses.ts` `keres` (ékezet- és kisbetű-érzéketlen, minden szónak ugyanabban a kártyában kell lennie, JS-ben; a találat `hol`/`reszlet` része a legtöbb szót tartalmazó rész, a név helyett), megjelenítés `lib/tudastar-szoveg.ts` (`tagolSzoveg`: üres sor = bekezdés, „- ” vagy „• ” kezdetű sor = felsorolás, HTML-t nem értelmez; `megjelenoHoszt`), útvonalak `lib/routes.ts` (`tudastarUrl`, `kartyaUrl` – intézmény: a részletoldala, lista: a kategória-oldal `#k-<slug>` horgonya –, `kartyaHorgony`, `kartyaSzerkesztoUrl`, `ujKartyaUrl`). Route-ok: `/tudastar` (keresőmező – `next/form` GET, `?q=` – és a 9 csempe; `?q=` esetén a `KeresesiTalalatok` kategóriánként), `/tudastar/[kategoria]` (bevezető + kártyák; adminnak „+ Új intézmény/lista” és ↑/↓), `/tudastar/[kategoria]/[slug]` (csak intézmény; lista vagy más kategóriájú slug: 404), `/tudastar/[kategoria]/[slug]/szerkesztes` és `/tudastar/[kategoria]/uj?tipus=` (`requireAdmin()`). A kategória- és a részletoldal váza a `TudastarElrendezes`: jobb oldalt `xl` fölött a ragadós `KategoriaMenu` (kis kereső, a 9 rövid cím, az aktív kategória kártyái – a kategória-oldalon sima `<a>` horgonyok – a natív ugrás a fókuszt is a kártyához viszi –, a részletoldalon a `kartyaUrl`, az aktuális kiemelve), alatta a `KategoriaValto` natív select. Mindkét típust egy `TudastarKartya` rajzolja, közös `KartyaLablec`-kel („Frissítve”, adminnál Szerkesztés és ↑/↓ – bind-olt `<form action>`, `KuldGomb`); a részletoldal `IntezmenyReszlet` (üres blokk nem jelenik meg). Szerkesztő: `KartyaForm` (vezérelt `Urlap`, rejtett `tipus` vagy `id` + `verzio`), `KartyaMezo`, a generikus `SorSzerkeszto` (stabil `_id`, ↑/↓/törlés, fókuszkezelés és sorhiba-elrejtés a `RendezvenySorok` mintájára), `KartyaTorles` (a `RiportTorles` mintája). Action-ök `app/(app)/tudastar/actions.ts`: `mentKartyaAction` (a jog hiánya, a törölt kártya és az elavult verzió form-szintű hiba, nem 404; siker → `revalidatePath('/', 'layout')` – a `'/tudastar'` tag a `(app)` route group miatt nem illeszkedne – + átirányítás a `kartyaUrl`-re), `mozgatKartyaAction`, `deleteKartyaAction`.
 
 Amire figyelni kell:
 - Az `uj` slug foglalt (`FOGLALT_SLUGOK`): a statikus `/tudastar/[kategoria]/uj` szegmens elnyelné az ilyen slugú kártyát. Új statikus szegmens a `[kategoria]` alatt csak a listába felvéve.
@@ -3693,3 +3701,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 17. **Lekérdezések szignatúrái:** `getKartya(id)` (nem slug: az oldalak a `listKartyak()`-ból keresnek slug szerint, az actionök id-vel), `createKartya(adat, alap, szerzoId)` – a slug alapját a hívó képzi (az action: rövidítésből, tartalékként a névből), a függvény a szabad változatot keresi és beszúr; az `updateKartya` egy tranzakcióban olvas, hasonlít és ír (a spec `UPDATE … WHERE updated_at = ?` mintája helyett, azonos eredménnyel); a `listKartyak` az ismeretlen kategóriájú sort is kihagyja és logolja, és a kategórián belül `sorrend`, név, id szerint rendez (a mozgatás is ezt a sorrendet követi). A típus változatlanságát az action (a meglévő kártya típusát adja át) és az `updateKartya` is biztosítja (eltérésnél hibát dob).
 18. **A tábla és az írások védelme:** CHECK a `tipus`-ra és a `tartalom` `json_valid`-jára (a kategóriára nem, az a kódban él); az `updateKartya`/`createKartya` csak explicit felsorolt tartalmi mezőket ír, az `updateKartya` típusváltásra hibát dob; az író tranzakciók `immediate`-ek; a `mozgatKartya` a kategóriát 1..n-re számozza újra (az azonos `sorrend`-ű kártyák is mozgathatók); a `mozgatKartyaAction` hibakezelést kap.
 19. **Keresés akadálymentesen:** a nyitólapon állandó `role="status"` régió mondja be a találatszámot (a keresés nem vált címet, ezért a Next útvonal-bemondója hallgatna); a keresőmező vezérelt kliens-bemenet (`KeresoBemenet`), amely a `?q=`-hoz render közben igazodik, így Enter után a fókusz a mezőn marad. A csempék fölött rejtett „Kategóriák” címsor áll.
+20. **A ↑/↓ action visszajelzés nélkül:** a `mozgatKartyaAction` sima `<form action>` (nincs `useActionState`), ezért jog hiányában vagy DB-hibánál csendben nem csinál semmit (a hibát logolja); a gombok csak adminnak látszanak, és a mozgatás nem veszít adatot.
+21. **Komponensek:** az ↑/↓ gombok a `KartyaLablec`-ben vannak (nincs külön `MozgatoGombok`); a spec fájltáblájában nem szereplő, de a terv szerinti komponensek: `Morzsa`, `KulsoLink` (+ `LinkLista`, `SorLista`), `TudastarElrendezes`, `IntezmenyReszlet`, `KeresoBemenet`, `KartyaMezo`/`UrlapBlokk`.
+22. **Revalidálás:** minden tudástár-action `revalidatePath('/', 'layout')`-ot hív (a kódbázis konvenciója); a spec `revalidatePath('/tudastar', 'layout')`-ja a `(app)` route group miatt egyetlen oldalra sem illeszkedne (a tag `/(app)/tudastar/…`), csak a Next mostani durva server-action-revalidálása miatt működne.
+23. **A jobb menü `xl`-től:** a 238 px-es oldalsáv mellett `lg`-n a tartalomnak ~450 px maradna, ezért a menü `xl` fölött jelenik meg (alatta a kategória-választó); a Profil/Kapcsolat két hasábja is `xl`-től. A menü kiemelése fehér háttér + keret (a szürke lapon a `bg-muted` nem látszik), a kategória-oldali kártya-linkek sima `<a>` horgonyok.
