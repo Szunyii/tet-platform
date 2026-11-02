@@ -3,29 +3,38 @@
  * <kategoria-slug>.ts adatfájlok). A kártyák a szerkesztő űrlap-értékeinek alakjában vannak, ezért a futtató
  * ugyanazzal a validátorral ellenőrzi őket, mint a felületet.
  */
-import type { KartyaTipus } from '../../lib/tudastar-szotar';
+import { SOR_MEZOK, type SorLista } from '../../lib/tudastar-szotar';
 
-export interface ForrasKartya {
+interface ForrasAlap {
   /** Az URL-azonosító (kisbetű, számjegy, kötőjel); a kártya URL-je ebből épül, utólag nem változik. */
   slug: string;
-  tipus: KartyaTipus;
   nev: string;
   rovidites?: string;
   /** Intézménynél az összefoglaló, listánál a bevezető (2–3 mondat). */
   osszefoglalo: string;
   /** A hivatalos honlap, kanonikus alakban (pl. `https://nkfih.gov.hu/`). */
   honlap?: string;
-  // Csak intézménynél:
+  linkek?: { felirat: string; url: string }[];
+}
+
+/** Intézménykártya: részletoldala van (profil, tevékenység, kapcsolat, szakaszok, programok). */
+export interface ForrasIntezmeny extends ForrasAlap {
+  tipus: 'intezmeny';
   profil?: string;
   tevekenyseg?: string;
   kapcsolat?: { email?: string; telefon?: string; cim?: string };
   szakaszok?: { cim: string; szoveg: string }[];
   programok?: { nev: string; leiras?: string; url?: string }[];
-  // Csak listánál:
-  sorok?: { nev: string; megjegyzes?: string; url?: string }[];
-  // Mindkettőnél:
-  linkek?: { felirat: string; url: string }[];
 }
+
+/** Listakártya: a kategória szereplői soronként (név, megjegyzés, webcím). */
+export interface ForrasLista extends ForrasAlap {
+  tipus: 'lista';
+  sorok?: { nev: string; megjegyzes?: string; url?: string }[];
+}
+
+/** Egy kártya; a `tipus` szerinti unió miatt a típushoz nem illő mező már a `tsc`-ben hiba. */
+export type ForrasKartya = ForrasIntezmeny | ForrasLista;
 
 /** Egy kategória-fájl default exportja. */
 export interface ForrasKategoria {
@@ -40,22 +49,19 @@ export interface ForrasKategoria {
 /** A kártya a szerkesztő FormData-jaként, ahogy a böngésző küldené (a sorok `<lista>.<i>.<mezo>` nevekkel). */
 export function kartyaFormData(kategoria: string, k: ForrasKartya): FormData {
   const fd = new FormData();
-  const tesz = (nev: string, v: string | undefined) => fd.append(nev, v ?? '');
+  const tesz = (nev: string, v: unknown) => fd.append(nev, typeof v === 'string' ? v : '');
+  const r = k as unknown as Record<string, unknown>;
   tesz('kategoria', kategoria);
-  tesz('nev', k.nev);
-  tesz('rovidites', k.rovidites);
-  tesz('osszefoglalo', k.osszefoglalo);
-  tesz('honlap', k.honlap);
-  tesz('profil', k.profil);
-  tesz('tevekenyseg', k.tevekenyseg);
-  tesz('email', k.kapcsolat?.email);
-  tesz('telefon', k.kapcsolat?.telefon);
-  tesz('cim', k.kapcsolat?.cim);
-  const sorok = (lista: string, elemek: readonly Record<string, string | undefined>[] | undefined, mezok: readonly string[]) =>
-    elemek?.forEach((e, i) => mezok.forEach((m) => tesz(`${lista}.${i}.${m}`, e[m])));
-  sorok('szakaszok', k.szakaszok, ['cim', 'szoveg']);
-  sorok('programok', k.programok, ['nev', 'leiras', 'url']);
-  sorok('sorok', k.sorok, ['nev', 'megjegyzes', 'url']);
-  sorok('linkek', k.linkek, ['felirat', 'url']);
+  for (const mezo of ['nev', 'rovidites', 'osszefoglalo', 'honlap', 'profil', 'tevekenyseg']) tesz(mezo, r[mezo]);
+  const kapcsolat = (r.kapcsolat ?? {}) as Record<string, unknown>;
+  for (const mezo of ['email', 'telefon', 'cim']) tesz(mezo, kapcsolat[mezo]);
+  // A sorok mezőnevei a szótár közös `SOR_MEZOK`-jából: egy új almező így a FormData-ba is bekerül.
+  for (const lista of Object.keys(SOR_MEZOK) as SorLista[]) {
+    const elemek = r[lista];
+    if (!Array.isArray(elemek)) continue;
+    elemek.forEach((e: Record<string, unknown>, i) => {
+      for (const mezo of Object.keys(SOR_MEZOK[lista])) tesz(`${lista}.${i}.${mezo}`, e?.[mezo]);
+    });
+  }
   return fd;
 }
