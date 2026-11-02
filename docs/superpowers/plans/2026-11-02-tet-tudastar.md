@@ -3217,29 +3217,38 @@ Ha nem fut TéT dev szerver: kérdezd meg a felhasználót. Belépés: `$B goto 
  * <kategoria-slug>.ts adatfájlok). A kártyák a szerkesztő űrlap-értékeinek alakjában vannak, ezért a futtató
  * ugyanazzal a validátorral ellenőrzi őket, mint a felületet.
  */
-import type { KartyaTipus } from '../../lib/tudastar-szotar';
+import { SOR_MEZOK, type SorLista } from '../../lib/tudastar-szotar';
 
-export interface ForrasKartya {
+interface ForrasAlap {
   /** Az URL-azonosító (kisbetű, számjegy, kötőjel); a kártya URL-je ebből épül, utólag nem változik. */
   slug: string;
-  tipus: KartyaTipus;
   nev: string;
   rovidites?: string;
   /** Intézménynél az összefoglaló, listánál a bevezető (2–3 mondat). */
   osszefoglalo: string;
   /** A hivatalos honlap, kanonikus alakban (pl. `https://nkfih.gov.hu/`). */
   honlap?: string;
-  // Csak intézménynél:
+  linkek?: { felirat: string; url: string }[];
+}
+
+/** Intézménykártya: részletoldala van (profil, tevékenység, kapcsolat, szakaszok, programok). */
+export interface ForrasIntezmeny extends ForrasAlap {
+  tipus: 'intezmeny';
   profil?: string;
   tevekenyseg?: string;
   kapcsolat?: { email?: string; telefon?: string; cim?: string };
   szakaszok?: { cim: string; szoveg: string }[];
   programok?: { nev: string; leiras?: string; url?: string }[];
-  // Csak listánál:
-  sorok?: { nev: string; megjegyzes?: string; url?: string }[];
-  // Mindkettőnél:
-  linkek?: { felirat: string; url: string }[];
 }
+
+/** Listakártya: a kategória szereplői soronként (név, megjegyzés, webcím). */
+export interface ForrasLista extends ForrasAlap {
+  tipus: 'lista';
+  sorok?: { nev: string; megjegyzes?: string; url?: string }[];
+}
+
+/** Egy kártya; a `tipus` szerinti unió miatt a típushoz nem illő mező már a `tsc`-ben hiba. */
+export type ForrasKartya = ForrasIntezmeny | ForrasLista;
 
 /** Egy kategória-fájl default exportja. */
 export interface ForrasKategoria {
@@ -3254,23 +3263,20 @@ export interface ForrasKategoria {
 /** A kártya a szerkesztő FormData-jaként, ahogy a böngésző küldené (a sorok `<lista>.<i>.<mezo>` nevekkel). */
 export function kartyaFormData(kategoria: string, k: ForrasKartya): FormData {
   const fd = new FormData();
-  const tesz = (nev: string, v: string | undefined) => fd.append(nev, v ?? '');
+  const tesz = (nev: string, v: unknown) => fd.append(nev, typeof v === 'string' ? v : '');
+  const r = k as unknown as Record<string, unknown>;
   tesz('kategoria', kategoria);
-  tesz('nev', k.nev);
-  tesz('rovidites', k.rovidites);
-  tesz('osszefoglalo', k.osszefoglalo);
-  tesz('honlap', k.honlap);
-  tesz('profil', k.profil);
-  tesz('tevekenyseg', k.tevekenyseg);
-  tesz('email', k.kapcsolat?.email);
-  tesz('telefon', k.kapcsolat?.telefon);
-  tesz('cim', k.kapcsolat?.cim);
-  const sorok = (lista: string, elemek: readonly Record<string, string | undefined>[] | undefined, mezok: readonly string[]) =>
-    elemek?.forEach((e, i) => mezok.forEach((m) => tesz(`${lista}.${i}.${m}`, e[m])));
-  sorok('szakaszok', k.szakaszok, ['cim', 'szoveg']);
-  sorok('programok', k.programok, ['nev', 'leiras', 'url']);
-  sorok('sorok', k.sorok, ['nev', 'megjegyzes', 'url']);
-  sorok('linkek', k.linkek, ['felirat', 'url']);
+  for (const mezo of ['nev', 'rovidites', 'osszefoglalo', 'honlap', 'profil', 'tevekenyseg']) tesz(mezo, r[mezo]);
+  const kapcsolat = (r.kapcsolat ?? {}) as Record<string, unknown>;
+  for (const mezo of ['email', 'telefon', 'cim']) tesz(mezo, kapcsolat[mezo]);
+  // A sorok mezőnevei a szótár közös `SOR_MEZOK`-jából: egy új almező így a FormData-ba is bekerül.
+  for (const lista of Object.keys(SOR_MEZOK) as SorLista[]) {
+    const elemek = r[lista];
+    if (!Array.isArray(elemek)) continue;
+    elemek.forEach((e: Record<string, unknown>, i) => {
+      for (const mezo of Object.keys(SOR_MEZOK[lista])) tesz(`${lista}.${i}.${mezo}`, e?.[mezo]);
+    });
+  }
   return fd;
 }
 ```
@@ -3283,17 +3289,20 @@ export function kartyaFormData(kategoria: string, k: ForrasKartya): FormData {
  * scripts/tudastar-tartalom/<kategoria-slug>.ts (default export: ForrasKategoria).
  *
  *   npx tsx scripts/tudastar-tartalom.ts                      – mind a 9 fájl ellenőrzése (a DB-t meg sem nyitja)
- *   npx tsx scripts/tudastar-tartalom.ts --csak egyetemek,…    – csak a megadott kategóriák fájljai
+ *   npx tsx scripts/tudastar-tartalom.ts --csak egyetemek,…    – csak a megadott kategóriák fájljai (a slugok
+ *                                                               egyediségét is csak ezeken belül nézi)
  *   npx tsx scripts/tudastar-tartalom.ts --sql <migráció.sql> – teljes ellenőrzés után megírja az INSERT-eket
  *
  * Ellenőrzés: a validátor (lib/tudastar-validacio.ts) és szigorúan minden, amit a validátor némán
- * megváltoztatna vagy eldobna – ismeretlen mező, nem kanonikus URL, teljesen üres sor, szélein szóközös
- * szöveg –, valamint a slug alakja, foglaltsága és egyedisége. `--sql` módban a fájlok `leiras`/`bevezeto`
- * szövegének egyeznie kell a lib/tudastar-szotar.ts-belivel. A migráció fájlját előbb a
- * `npx drizzle-kit generate --custom --name tudastar_kezdo_tartalom` hozza létre (a naplóbejegyzéssel).
+ * megváltoztatna vagy eldobna – ismeretlen vagy nem szöveges mező, nem kanonikus URL, teljesen üres sor, üres
+ * listakártya, szélein szóközös vagy vezérlőkaraktert tartalmazó szöveg, sortörés egysoros mezőben –, valamint
+ * a slug alakja, foglaltsága és egyedisége. `--sql` módban a fájlok `leiras`/`bevezeto` szövegének egyeznie kell
+ * a lib/tudastar-szotar.ts-belivel, és csak a legutolsó, `drizzle-kit generate --custom` által létrehozott (vagy
+ * e futtató által korábban megírt) migrációs fájlba ír – egy lefutott migrációt így nem írhat felül.
  */
-import { existsSync, readdirSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { createHash } from 'node:crypto';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { SLUG_MAX, SLUG_RE } from '../lib/slug';
 import {
@@ -3301,22 +3310,33 @@ import {
 } from '../lib/tudastar-szotar';
 import { normalizalUrl, validalKartya } from '../lib/tudastar-validacio';
 import { tisztitSzoveg } from '../lib/urlap';
-import { kartyaFormData, type ForrasKartya, type ForrasKategoria } from './tudastar-tartalom/tipusok';
+import { kartyaFormData, type ForrasIntezmeny, type ForrasKartya, type ForrasKategoria, type ForrasLista } from './tudastar-tartalom/tipusok';
 
 const MAPPA = resolve(process.cwd(), 'scripts/tudastar-tartalom');
+const DRIZZLE = resolve(process.cwd(), 'drizzle');
 const LEIRAS_MAX = 120;
 const BEVEZETO_MAX = 900;
+const HASZNALAT = 'Használat: npx tsx scripts/tudastar-tartalom.ts [--csak <slug,…> | --sql <migráció.sql>]';
+const MIGRACIO_FEJ = '-- A TéT Tudástár kezdő tartalma: a scripts/tudastar-tartalom.ts --sql írta, kézzel ne szerkeszd.\n';
+const DRIZZLE_URES = '-- Custom SQL migration file, put your code below! --';
+const BREAKPOINT = '--> statement-breakpoint';
 
-const KOZOS_MEZOK = ['slug', 'tipus', 'nev', 'rovidites', 'osszefoglalo', 'honlap', 'linkek'];
+const KOZOS_MEZOK = ['slug', 'tipus', 'nev', 'rovidites', 'osszefoglalo', 'honlap', 'linkek'] as const;
 const TIPUS_MEZOK = {
-  intezmeny: [...KOZOS_MEZOK, 'profil', 'tevekenyseg', 'kapcsolat', 'szakaszok', 'programok'],
-  lista: [...KOZOS_MEZOK, 'sorok'],
+  intezmeny: [...KOZOS_MEZOK, 'profil', 'tevekenyseg', 'kapcsolat', 'szakaszok', 'programok'] satisfies (keyof ForrasIntezmeny)[],
+  lista: [...KOZOS_MEZOK, 'sorok'] satisfies (keyof ForrasLista)[],
 };
+/** A többsoros felső szintű mezők; a sorok többsoros mezőit a `SOR_MEZOK` `tobbsoros` jelzője adja. */
+const TOBBSOROS_MEZOK: readonly string[] = ['osszefoglalo', 'profil', 'tevekenyseg'];
 /** Az objektum-mezők engedett almezői: a kapcsolat, és a dinamikus listák a szótár közös `SOR_MEZOK`-jából. */
 const ALMEZOK: Record<string, readonly string[]> = {
   kapcsolat: ['email', 'telefon', 'cim'],
   ...Object.fromEntries(Object.entries(SOR_MEZOK).map(([lista, mezok]) => [lista, Object.keys(mezok)])),
 };
+const SOR_SZABALYOK = SOR_MEZOK as Record<string, Record<string, SorMezoSzabaly>>;
+
+/** Használati hiba (rossz argumentum): csak az üzenetet írjuk ki, hívási lánc nélkül. */
+class HasznalatiHiba extends Error {}
 
 interface Ellenorzott {
   kategoria: string;
@@ -3325,50 +3345,96 @@ interface Ellenorzott {
   adat: KartyaAdat;
 }
 
+/** Elfogadott: nincs argumentum, `--csak <lista>` / `--csak=<lista>`, `--sql <fájl>` / `--sql=<fájl>`. */
+function argumentumok(argv: string[]): { csak: Set<string> | null; sqlFajl: string | null } {
+  let csak: Set<string> | null = null;
+  let sqlFajl: string | null = null;
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    const [kapcsolo, egyben] = a.includes('=') ? [a.slice(0, a.indexOf('=')), a.slice(a.indexOf('=') + 1)] : [a, undefined];
+    const ertek = egyben ?? argv[++i];
+    if (kapcsolo === '--csak') {
+      const lista = (ertek ?? '').split(',').map((x) => x.trim()).filter(Boolean);
+      if (lista.length === 0) throw new HasznalatiHiba(`A --csak után vesszős kategória-lista kell.\n${HASZNALAT}`);
+      csak = new Set(lista);
+    } else if (kapcsolo === '--sql') {
+      if (!ertek) throw new HasznalatiHiba(`A --sql után a migrációs fájl útvonala kell.\n${HASZNALAT}`);
+      sqlFajl = resolve(process.cwd(), ertek);
+    } else {
+      throw new HasznalatiHiba(`Ismeretlen argumentum: ${a}\n${HASZNALAT}`);
+    }
+  }
+  if (csak && sqlFajl) throw new HasznalatiHiba('A --sql csak teljes ellenőrzéssel futhat (--csak nélkül).');
+  return { csak, sqlFajl };
+}
+
+/** A betöltési (fordítási vagy futásidejű) hiba első érdemi sora, a mappa útvonala nélkül. */
+function betoltesiHiba(err: unknown): string {
+  const sorok = (err instanceof Error ? err.message : String(err)).split('\n').map((s) => s.trim()).filter(Boolean);
+  const sor = sorok.find((s) => s.includes('ERROR:')) ?? sorok[0] ?? 'ismeretlen hiba';
+  return sor.replace(`${MAPPA}/`, '');
+}
+
 function forrasKategoriaE(v: unknown): v is ForrasKategoria {
   if (typeof v !== 'object' || v === null) return false;
   const o = v as Record<string, unknown>;
   return typeof o.leiras === 'string' && typeof o.bevezeto === 'string' && Array.isArray(o.kartyak);
 }
 
-/** Minden szöveg a kártyában (útvonallal), a szigorú ellenőrzésekhez. */
-function szovegek(v: unknown, ut: string): [string, string][] {
-  if (typeof v === 'string') return [[ut, v]];
-  if (Array.isArray(v)) return v.flatMap((x, i) => szovegek(x, `${ut}[${i}]`));
-  if (typeof v === 'object' && v !== null) return Object.entries(v).flatMap(([k, x]) => szovegek(x, ut ? `${ut}.${k}` : k));
-  return [];
+/** Minden levél-érték a kártyában (útvonallal), a szigorú ellenőrzésekhez. */
+function levelek(v: unknown, ut: string): [string, unknown][] {
+  if (Array.isArray(v)) return v.flatMap((x, i) => levelek(x, `${ut}[${i}]`));
+  if (typeof v === 'object' && v !== null) return Object.entries(v).flatMap(([k, x]) => levelek(x, ut ? `${ut}.${k}` : k));
+  return [[ut, v]];
 }
 
-/** Többsoros-e a mező (útvonal pl. `profil`, `szakaszok[1].szoveg`): ott a sortörés értékes, máshol a validátor szóközre cseréli. */
-function tobbsorosE(ut: string): boolean {
-  if (['osszefoglalo', 'profil', 'tevekenyseg'].includes(ut)) return true;
+/** A mező szabálya az útvonalából (pl. `sorok[0].url` → a `sorok.url` szabálya); felső szintű mezőre undefined. */
+function sorSzabaly(ut: string): SorMezoSzabaly | undefined {
   const m = /^(\w+)\[\d+\]\.(\w+)$/.exec(ut);
-  const szabalyok = m ? (SOR_MEZOK as Record<string, Record<string, SorMezoSzabaly>>)[m[1]] : undefined;
-  return Boolean(m && szabalyok?.[m[2]]?.tobbsoros);
+  return m ? SOR_SZABALYOK[m[1]]?.[m[2]] : undefined;
 }
 
 function szigoruHibak(k: ForrasKartya): string[] {
+  const r = k as unknown as Record<string, unknown>;
+  if (typeof r.slug !== 'string') return ['slug: kötelező szöveg'];
+  if (!isKartyaTipus(r.tipus)) return [`tipus: 'intezmeny' vagy 'lista' kell (${String(r.tipus)})`];
   const hibak: string[] = [];
-  if (!isKartyaTipus(k.tipus)) return [`tipus: 'intezmeny' vagy 'lista' kell (${String(k.tipus)})`];
-  const engedett = TIPUS_MEZOK[k.tipus];
-  for (const kulcs of Object.keys(k)) if (!engedett.includes(kulcs)) hibak.push(`ismeretlen vagy a típushoz nem illő mező: ${kulcs}`);
+  const engedett: readonly string[] = TIPUS_MEZOK[k.tipus];
+  for (const kulcs of Object.keys(r)) if (!engedett.includes(kulcs)) hibak.push(`ismeretlen vagy a típushoz nem illő mező: ${kulcs}`);
   for (const [lista, mezok] of Object.entries(ALMEZOK)) {
-    const ertek = (k as unknown as Record<string, unknown>)[lista];
-    const elemek = lista === 'kapcsolat' ? (ertek ? [ertek] : []) : Array.isArray(ertek) ? ertek : [];
-    elemek.forEach((e, i) => {
-      if (typeof e !== 'object' || e === null) return hibak.push(`${lista}[${i}]: nem objektum`);
+    const ertek = r[lista];
+    if (ertek === undefined) continue;
+    if (lista === 'kapcsolat') {
+      if (typeof ertek !== 'object' || ertek === null || Array.isArray(ertek)) hibak.push('kapcsolat: objektum kell');
+      else for (const kulcs of Object.keys(ertek)) if (!mezok.includes(kulcs)) hibak.push(`kapcsolat: ismeretlen mező: ${kulcs}`);
+      continue;
+    }
+    if (!Array.isArray(ertek)) {
+      hibak.push(`${lista}: tömb kell`);
+      continue;
+    }
+    ertek.forEach((e, i) => {
+      if (typeof e !== 'object' || e === null || Array.isArray(e)) return hibak.push(`${lista}[${i}]: objektum kell`);
       for (const kulcs of Object.keys(e)) if (!mezok.includes(kulcs)) hibak.push(`${lista}[${i}]: ismeretlen mező: ${kulcs}`);
-      if (lista !== 'kapcsolat' && Object.values(e).every((x) => x === '' || x === undefined)) {
-        hibak.push(`${lista}[${i}]: teljesen üres sor (a validátor némán eldobná)`);
-      }
+      if (Object.values(e).every((x) => x === '' || x === undefined)) hibak.push(`${lista}[${i}]: teljesen üres sor (a validátor némán eldobná)`);
     });
   }
-  for (const [ut, v] of szovegek(k, '')) {
-    if (tisztitSzoveg(v) !== v) hibak.push(`${ut}: a szöveg szélén szóköz vagy láthatatlan karakter áll`);
-    if (v.includes('\n') && !tobbsorosE(ut)) hibak.push(`${ut}: egysoros mezőben sortörés áll (a validátor szóközre cserélné)`);
-    if (/(^|\.)url$|^honlap$/.test(ut.replace(/\[\d+\]/g, '')) && v && normalizalUrl(v) !== v) {
-      hibak.push(`${ut}: nem kanonikus URL (${v} → ${normalizalUrl(v) ?? 'érvénytelen'})`);
+  if (k.tipus === 'lista' && !(k.sorok?.length || k.linkek?.length)) hibak.push('üres listakártya: nincs egy sora és egy linkje sem');
+  for (const [ut, v] of levelek(r, '')) {
+    // Az ismeretlen mezőt fent már jeleztük; a levelei itt nem adnak újabb hibát.
+    if (v === undefined || !engedett.includes(ut.split(/[.[]/)[0])) continue;
+    if (typeof v !== 'string') {
+      hibak.push(`${ut}: szöveg kell (${typeof v})`);
+      continue;
     }
+    if (tisztitSzoveg(v) !== v) hibak.push(`${ut}: a szöveg szélén szóköz áll, vagy láthatatlan/vezérlőkarakter (pl. CR) van benne`);
+    const szabaly = sorSzabaly(ut);
+    const tobbsoros = TOBBSOROS_MEZOK.includes(ut) || Boolean(szabaly?.tobbsoros);
+    if (v.includes('\n') && !tobbsoros) hibak.push(`${ut}: egysoros mezőben sortörés áll (a validátor szóközre cserélné)`);
+    if (v.includes(BREAKPOINT)) hibak.push(`${ut}: a szöveg nem tartalmazhatja a migráció-elválasztó „${BREAKPOINT}” jelet`);
+    // Érvénytelen URL-t a validátor jelez; itt csak az érvényes, de nem kanonikus alak hiba.
+    const url = (ut === 'honlap' || szabaly?.url) && v ? normalizalUrl(v) : null;
+    if (url !== null && url !== v) hibak.push(`${ut}: nem kanonikus URL (${v} → ${url})`);
   }
   if (!SLUG_RE.test(k.slug)) hibak.push(`slug: csak kisbetű, számjegy és kötőjel (${k.slug})`);
   if (k.slug.length > SLUG_MAX) hibak.push(`slug: legfeljebb ${SLUG_MAX} karakter (${k.slug.length})`);
@@ -3376,14 +3442,39 @@ function szigoruHibak(k: ForrasKartya): string[] {
   return hibak;
 }
 
+/**
+ * Az `--sql` célfájlja: csak a napló legutolsó migrációja lehet, és csak akkor, ha még a drizzle-kit üres
+ * helykitöltője, vagy e futtató írta (újragenerálás a commit előtt). Hibánál az üzenet, egyébként null.
+ */
+function sqlCelHiba(sqlFajl: string): string | null {
+  const naplo = JSON.parse(readFileSync(join(DRIZZLE, 'meta/_journal.json'), 'utf8')) as { entries: { tag: string }[] };
+  const utolso = naplo.entries.at(-1)?.tag;
+  const vart = utolso ? join(DRIZZLE, `${utolso}.sql`) : null;
+  if (sqlFajl !== vart) {
+    return `--sql: csak a napló legutolsó migrációjába írhat (${vart ? relative(process.cwd(), vart) : 'üres napló'}); előbb: npx drizzle-kit generate --custom --name tudastar_kezdo_tartalom`;
+  }
+  if (!existsSync(sqlFajl)) return `${relative(process.cwd(), sqlFajl)}: nincs ilyen fájl`;
+  const tartalom = readFileSync(sqlFajl, 'utf8');
+  if (tartalom.trim() !== DRIZZLE_URES && !tartalom.startsWith(MIGRACIO_FEJ)) {
+    return `${relative(process.cwd(), sqlFajl)}: nem üres egyedi migráció és nem e futtató írta – nem írom felül`;
+  }
+  return null;
+}
+
 function sqlSzoveg(v: string | null): string {
   return v === null ? 'NULL' : `'${v.replaceAll("'", "''")}'`;
+}
+
+/** Determinisztikus id a slugból (UUID-alakú): az újragenerált migráció így csak a valóban változott sorokban tér el. */
+function kartyaId(slug: string): string {
+  const h = createHash('sha256').update(`tudastar:${slug}`).digest('hex');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`;
 }
 
 function insert(e: Ellenorzott): string {
   const d = e.adat;
   const ertekek = [
-    sqlSzoveg(crypto.randomUUID()), sqlSzoveg(e.kategoria), sqlSzoveg(e.slug), sqlSzoveg(d.tipus), sqlSzoveg(d.nev),
+    sqlSzoveg(kartyaId(e.slug)), sqlSzoveg(e.kategoria), sqlSzoveg(e.slug), sqlSzoveg(d.tipus), sqlSzoveg(d.nev),
     sqlSzoveg(d.rovidites), sqlSzoveg(d.osszefoglalo), sqlSzoveg(d.honlap), String(e.sorrend), sqlSzoveg(JSON.stringify(d.tartalom)),
   ];
   return (
@@ -3393,20 +3484,13 @@ function insert(e: Ellenorzott): string {
 }
 
 async function main() {
-  const argv = process.argv.slice(2);
-  const hasznalat = 'Használat: npx tsx scripts/tudastar-tartalom.ts [--csak <slug,…> | --sql <migráció.sql>]';
-  let sqlFajl: string | null = null;
-  let csak: Set<string> | null = null;
-  if (argv.length === 2 && argv[0] === '--sql') sqlFajl = resolve(process.cwd(), argv[1]);
-  else if (argv.length === 2 && argv[0] === '--csak') csak = new Set(argv[1].split(',').map((x) => x.trim()).filter(Boolean));
-  else if (argv.length > 0) throw new Error(hasznalat);
-
+  const { csak, sqlFajl } = argumentumok(process.argv.slice(2));
   const hibak: string[] = [];
   const vart = new Set(TUDASTAR_KATEGORIAK.map((k) => `${k.slug}.ts`));
   if (csak) {
     for (const c of csak) if (!vart.has(`${c}.ts`)) hibak.push(`--csak: ismeretlen kategória: ${c}`);
   } else {
-    for (const b of readdirSync(MAPPA)) {
+    for (const b of readdirSync(MAPPA).sort()) {
       if (!vart.has(b) && b !== 'tipusok.ts' && b !== '.DS_Store') hibak.push(`${b}: nem kategória-fájl`);
     }
   }
@@ -3420,24 +3504,40 @@ async function main() {
       hibak.push(`${fajl}: hiányzik`);
       continue;
     }
-    const mod = (await import(pathToFileURL(join(MAPPA, fajl)).href)) as { default?: unknown };
+    let mod: { default?: unknown };
+    try {
+      mod = (await import(pathToFileURL(join(MAPPA, fajl)).href)) as { default?: unknown };
+    } catch (err) {
+      // Egy nem betölthető fájl nem takarhatja el a többi fájl hibáit.
+      hibak.push(`${fajl}: nem tölthető be: ${betoltesiHiba(err)}`);
+      continue;
+    }
+    if (mod.default === undefined) {
+      hibak.push(`${fajl}: nincs default export`);
+      continue;
+    }
     if (!forrasKategoriaE(mod.default)) {
       hibak.push(`${fajl}: a default export nem ForrasKategoria (leiras, bevezeto: szöveg; kartyak: tömb)`);
       continue;
     }
     const forras = mod.default;
-    if (!forras.leiras || forras.leiras.length > LEIRAS_MAX) hibak.push(`${fajl}: leiras: 1–${LEIRAS_MAX} karakter`);
-    if (!forras.bevezeto || forras.bevezeto.length > BEVEZETO_MAX) hibak.push(`${fajl}: bevezeto: 1–${BEVEZETO_MAX} karakter`);
-    if (sqlFajl && (forras.leiras !== kat.leiras || forras.bevezeto !== kat.bevezeto)) {
-      hibak.push(`${fajl}: a leiras/bevezeto eltér a lib/tudastar-szotar.ts-belitől – előbb azt frissítsd`);
+    if (!forras.leiras || forras.leiras.length > LEIRAS_MAX) hibak.push(`${fajl}: leiras: 1–${LEIRAS_MAX} karakter (most ${forras.leiras.length})`);
+    if (!forras.bevezeto || forras.bevezeto.length > BEVEZETO_MAX) hibak.push(`${fajl}: bevezeto: 1–${BEVEZETO_MAX} karakter (most ${forras.bevezeto.length})`);
+    if (sqlFajl) {
+      const elter = [forras.leiras !== kat.leiras && 'leiras', forras.bevezeto !== kat.bevezeto && 'bevezeto'].filter(Boolean);
+      if (elter.length > 0) hibak.push(`${fajl}: a ${elter.join(' és a ')} eltér a lib/tudastar-szotar.ts-belitől – előbb azt frissítsd`);
     }
     if (forras.kartyak.length === 0) hibak.push(`${fajl}: nincs egyetlen kártya sem`);
     forras.kartyak.forEach((k, i) => {
-      const hol = `${fajl} [${i}] ${k.slug ?? '?'}`;
+      const hol = `${fajl} [${i}] ${typeof k?.slug === 'string' ? k.slug : '?'}`;
+      if (typeof k !== 'object' || k === null) return hibak.push(`${hol}: a kártya nem objektum`);
       for (const h of szigoruHibak(k)) hibak.push(`${hol}: ${h}`);
-      const elozo = slugok.get(k.slug);
-      if (elozo) hibak.push(`${hol}: a slug már szerepel itt: ${elozo}`);
-      slugok.set(k.slug, hol);
+      if (typeof k.slug === 'string') {
+        const elozo = slugok.get(k.slug);
+        if (elozo) hibak.push(`${hol}: a slug már szerepel itt: ${elozo}`);
+        slugok.set(k.slug, hol);
+      }
+      if (!isKartyaTipus(k.tipus)) return;
       const e = validalKartya(kartyaFormData(kat.slug, k), k.tipus);
       if (!e.ok) {
         for (const [mezo, uzenet] of Object.entries(e.errors)) hibak.push(`${hol}: ${mezo}: ${uzenet}`);
@@ -3445,11 +3545,12 @@ async function main() {
       }
       ellenorzott.push({ kategoria: kat.slug, slug: k.slug, sorrend: i + 1, adat: e.data });
     });
-    const intezmeny = forras.kartyak.filter((k) => k.tipus === 'intezmeny').length;
+    const intezmeny = forras.kartyak.filter((k) => k?.tipus === 'intezmeny').length;
     osszegzes.push(`${kat.slug}: ${forras.kartyak.length} kártya (${intezmeny} intézmény, ${forras.kartyak.length - intezmeny} lista)`);
   }
-  if (sqlFajl && !existsSync(sqlFajl)) {
-    hibak.push(`${sqlFajl}: nincs ilyen fájl – előbb: npx drizzle-kit generate --custom --name tudastar_kezdo_tartalom`);
+  if (sqlFajl) {
+    const h = sqlCelHiba(sqlFajl);
+    if (h) hibak.push(h);
   }
   if (hibak.length > 0) {
     console.error(`${hibak.length} hiba:`);
@@ -3459,13 +3560,12 @@ async function main() {
   for (const s of osszegzes) console.log(s);
   console.log(`Összesen ${ellenorzott.length} kártya rendben.`);
   if (!sqlFajl) return;
-  const fej = '-- A TéT Tudástár kezdő tartalma: a scripts/tudastar-tartalom.ts --sql írta, kézzel ne szerkeszd.\n';
-  writeFileSync(sqlFajl, `${fej}${ellenorzott.map(insert).join('\n--> statement-breakpoint\n')}\n`);
-  console.log(`Megírva: ${sqlFajl}`);
+  writeFileSync(sqlFajl, `${MIGRACIO_FEJ}${ellenorzott.map(insert).join(`\n${BREAKPOINT}\n`)}\n`);
+  console.log(`Megírva: ${relative(process.cwd(), sqlFajl)}`);
 }
 
 main().catch((err) => {
-  console.error(err instanceof Error ? err.message : err);
+  console.error(err instanceof HasznalatiHiba ? err.message : err);
   process.exit(1);
 });
 ```
@@ -3497,7 +3597,7 @@ Várt (kilépési kód 1), pontosan ez a 8 hiba:
   egyetemek.ts [1] uj: ismeretlen vagy a típushoz nem illő mező: ismeretlen
   egyetemek.ts [1] uj: sorok[0]: teljesen üres sor (a validátor némán eldobná)
   egyetemek.ts [1] uj: sorok[1]: ismeretlen mező: extra
-  egyetemek.ts [1] uj: nev: a szöveg szélén szóköz vagy láthatatlan karakter áll
+  egyetemek.ts [1] uj: nev: a szöveg szélén szóköz áll, vagy láthatatlan/vezérlőkarakter (pl. CR) van benne
   egyetemek.ts [1] uj: sorok[1].url: nem kanonikus URL (bme.hu → https://bme.hu/)
   egyetemek.ts [1] uj: slug: foglalt útvonal-szegmens (uj)
   egyetemek.ts [2] proba: ismeretlen vagy a típushoz nem illő mező: sorok
@@ -3509,7 +3609,7 @@ Majd: `npx tsx scripts/tudastar-tartalom.ts` (teljes) → a 8 hiba mellett „<s
 - [ ] **4. lépés: `CLAUDE.md` – a Parancsok blokkba, a `demo-orszagprofil.ts` sora után**
 
 ```
-npx tsx scripts/tudastar-tartalom.ts [--csak egyetemek,… | --sql drizzle/<n>_tudastar_kezdo_tartalom.sql]   # a TéT Tudástár kezdő tartalma (scripts/tudastar-tartalom/<kategoria>.ts): alapból mind a 9 fájl szigorú ellenőrzése, a DB-t meg sem nyitja (validalKartya + ismeretlen mező, nem kanonikus URL, teljesen üres sor, szélein szóközös szöveg, slug alakja/foglaltsága/egyedisége); --csak: csak a megadott kategóriák; --sql: a teljes ellenőrzés és a szótár leiras/bevezeto egyezése után megírja az egyszeri migráció INSERT-jeit (a fájlt előbb `npx drizzle-kit generate --custom --name tudastar_kezdo_tartalom` hozza létre)
+npx tsx scripts/tudastar-tartalom.ts [--csak egyetemek,… | --sql drizzle/<n>_tudastar_kezdo_tartalom.sql]   # a TéT Tudástár kezdő tartalma (scripts/tudastar-tartalom/<kategoria>.ts): alapból mind a 9 fájl szigorú ellenőrzése, a DB-t meg sem nyitja (validalKartya + ismeretlen vagy nem szöveges mező, nem kanonikus URL, teljesen üres sor, üres listakártya, szélein szóközös vagy vezérlőkaraktert tartalmazó szöveg, sortörés egysoros mezőben, slug alakja/hossza/foglaltsága/egyedisége; egy nem betölthető fájl a többi hibáit nem takarja el); --csak: csak a megadott kategóriák (a slug-egyediséget is csak ezeken belül); --sql: a teljes ellenőrzés és a szótár leiras/bevezeto egyezése után megírja az egyszeri migráció INSERT-jeit, a slugból képzett determinisztikus id-vel – csak a napló legutolsó migrációjába, ha az még a `npx drizzle-kit generate --custom --name tudastar_kezdo_tartalom` üres helykitöltője vagy e futtató írta
 ```
 
 - [ ] **5. lépés: `npx tsc --noEmit`** – várt: üres.
@@ -3725,3 +3825,4 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 24. **A szerkesztő apróságai:** a Mentés sima `Button` a `useMuveletForm` pendingjével (a `BlokkForm`/`RiportForm` mintája, nem `KuldGomb`); a formázási súgósor a közös `Mezo` szerint a mező fölött áll; az Alapadatokban a honlap az összefoglaló előtt, a Programok és Sorok mezőiben a webcím a leírás/megjegyzés előtt áll (`SOR_MEZOK` sorrendje); a hozzáadás-gomb felirata listánként „+ Új szakasz / program / link / sor”.
 25. **Sortörés egysoros mezőben:** a validátor szóközre cseréli (a szerkesztő `<input>`-ja szóköz nélkül dobná el; a webcímből a `new URL()` maga veszi ki), a tartalom-futtató (B fázis) hibának veszi; többsoros mező: az összefoglaló/bevezető, a profil, a tevékenység és a szakasz szövege.
 26. **Külső link csak http(s):** a `KulsoLink` (és a rá épülő `LinkLista`/`TetelLista`) csak `http(s)` címből rajzol `<a>`-t, más esetben sima szöveget – a validátor mást nem enged be, de a kézzel módosított DB-sor se adhasson `javascript:` hrefet.
+27. **A futtató védelmei:** a `--sql` csak a napló legutolsó migrációjába ír, és csak ha az még a drizzle-kit üres helykitöltője vagy e futtató írta (lefutott migrációt nem írhat felül); a kártya-id a slugból képzett determinisztikus, UUID-alakú érték (az újragenerálás csak a változott sorokat érinti); egy nem betölthető adatfájl a többi hibáit nem takarja el; a forrás-típus a `tipus` szerinti unió (`ForrasIntezmeny | ForrasLista`); üres listakártya, nem szöveges érték és a migráció-elválasztó jel a szövegben hiba.
