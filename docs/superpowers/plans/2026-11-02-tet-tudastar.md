@@ -1893,13 +1893,14 @@ import { KeresoMezo } from './KeresoMezo';
  * aktív kategória alatt a kártyái. A kategória-oldalon a kártya-linkek sima horgonyok (`<a href="#k-<slug>">`:
  * a natív ugrás a fókusz kiindulópontját is a kártyára teszi, a Next `Link` csak görget); a részletoldalon oda
  * visznek, ahol a kártya megjelenik (intézmény: saját oldala, lista: a horgonya), és az aktuális intézmény ki van
- * emelve. A menü a szürke lapon áll, ezért a kiemelés fehér háttér + keret (a `bg-muted` itt nem látszana).
+ * emelve. A menü a szürke lapon áll, ezért a kiemelés fehér háttér + belső keret (a `bg-muted` itt nem látszana); a
+ * görgetődoboz 1-es párnája a fókuszgyűrűknek ad helyet (a görgető elem a szélén levágná őket).
  */
 export function KategoriaMenu({
   aktivKategoria, kartyak, aktivSlug,
 }: { aktivKategoria: KategoriaSlug; kartyak: readonly Kartya[]; aktivSlug?: string }) {
   return (
-    <div className="hidden flex-col gap-3 xl:sticky xl:top-[5.5rem] xl:flex xl:max-h-[calc(100dvh-7.5rem)] xl:overflow-y-auto">
+    <div className="hidden flex-col gap-3 xl:sticky xl:top-[5.5rem] xl:-m-1 xl:flex xl:max-h-[calc(100dvh-7.5rem)] xl:overflow-y-auto xl:p-1">
       <KeresoMezo id="tudastar-kereses-menu" kompakt />
       <nav aria-label="A tudástár kategóriái">
         <ol className="flex flex-col gap-0.5">
@@ -1912,7 +1913,7 @@ export function KategoriaMenu({
                   aria-current={aktiv && !aktivSlug ? 'page' : undefined}
                   className={cn(
                     'flex gap-2 rounded-md px-2 py-1.5 text-sm text-foreground no-underline hover:bg-foreground/5 hover:no-underline',
-                    aktiv && 'bg-background font-medium ring-1 ring-foreground/10 hover:bg-background',
+                    aktiv && 'bg-background font-medium ring-1 ring-foreground/10 ring-inset hover:bg-background',
                   )}
                 >
                   <span className="w-5 shrink-0 text-right text-muted-foreground tabular-nums">{k.szam}.</span>
@@ -2113,8 +2114,7 @@ export function TudastarKartya({ kartya, mozgatas }: { kartya: Kartya; mozgatas?
       <KartyaLablec kartya={kartya} mozgatas={mozgatas}>
         {kartya.tipus === 'intezmeny' && (
           <Link href={kartyaUrl(kartya)} className="font-medium">
-            Részletek <span aria-hidden>→</span>
-            <span className="sr-only">: {kartya.nev}</span>
+            Részletek<span className="sr-only">: {kartya.nev}</span> <span aria-hidden>→</span>
           </Link>
         )}
         {kartya.honlap && <KulsoLink href={kartya.honlap}>{megjelenoHoszt(kartya.honlap)}</KulsoLink>}
@@ -3052,7 +3052,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 7: Dokumentáció (CLAUDE.md, spec), az eldobható scriptek törlése
 
 **Fájlok:**
-- Módosít: `CLAUDE.md`, `README.md`, `docs/superpowers/specs/2026-11-02-tet-tudastar-design.md`, és apró review-javítások: `lib/tudastar-szotar.ts`, `lib/urlap.ts`, `lib/tudastar-validacio.ts`
+- Módosít: `CLAUDE.md`, `README.md`, `docs/superpowers/specs/2026-11-02-tet-tudastar-design.md`, és apró review-javítások: `lib/tudastar-szotar.ts`, `lib/urlap.ts`, `lib/tudastar-validacio.ts`, `app/(app)/tudastar/components/KategoriaMenu.tsx`, `TudastarKartya.tsx`
 - Töröl (nem commitolt fájlok): `scripts/_proba-tudastar.ts`, `scripts/_proba-tudastar-validacio.ts`, `scripts/_proba-tudastar-db.ts`
 
 - [ ] **1. lépés: `CLAUDE.md` – „Mi ez” bekezdés**
@@ -3101,7 +3101,7 @@ Ellenőrzés: `grep -n "knowledge" README.md` – üres.
 
 A spec állapot-sorát cseréld: `Állapot: jóváhagyott terv, megvalósítás előtt` → `Állapot: az A fázis (funkció) megvalósítva; a B fázis (kezdő tartalom) folyamatban`. A spec végére új szakasz `## Tervezéskori pontosítások` címmel, a terv végi „Eltérések a spectől” lista pontjaival (szó szerint átvehető).
 
-- [ ] **4b. lépés: apró kódjavítások a 2. task záró review-jából**
+- [ ] **4b. lépés: apró kódjavítások a 2. és az 5. task záró review-jából**
 
 `lib/tudastar-szotar.ts` – a `export type SorLista = keyof SorTipusok;` sor után:
 
@@ -3142,6 +3142,16 @@ function webcim(v: string, id: string, cimke: string, max: number, kotelezo: boo
 
 és a két hívás: `webcim(v, id, sz.cimke, sz.max, Boolean(sz.kotelezo), errors)`, illetve `webcim(mezo(fd, 'honlap'), 'honlap', C.honlap, URL_MAX, false, errors)`.
 
+`app/(app)/tudastar/components/KategoriaMenu.tsx` – a görgetődoboz párnát kap a fókuszgyűrűknek, az aktív elem kerete belső (az 5. task záró review-ja):
+
+```tsx
+    <div className="hidden flex-col gap-3 xl:sticky xl:top-[5.5rem] xl:-m-1 xl:flex xl:max-h-[calc(100dvh-7.5rem)] xl:overflow-y-auto xl:p-1">
+```
+
+és `aktiv && 'bg-background font-medium ring-1 ring-foreground/10 ring-inset hover:bg-background',`; a doc-komment utolsó mondata: „A menü a szürke lapon áll, ezért a kiemelés fehér háttér + belső keret (a `bg-muted` itt nem látszana); a görgetődoboz 1-es párnája a fókuszgyűrűknek ad helyet (a görgető elem a szélén levágná őket).”
+
+`app/(app)/tudastar/components/TudastarKartya.tsx` – a „Részletek” link neve szóköz nélkül: `Részletek<span className="sr-only">: {kartya.nev}</span> <span aria-hidden>→</span>`.
+
 Ellenőrzés: `npx tsc --noEmit` üres, a két `_proba` script „rendben”. Ezek a fájlok is a 6. lépés commitjába kerülnek.
 
 - [ ] **5. lépés: az eldobható scriptek törlése**
@@ -3151,12 +3161,12 @@ rm scripts/_proba-tudastar.ts scripts/_proba-tudastar-validacio.ts scripts/_prob
 git status --short
 ```
 
-Várt: a `git status` csak a `CLAUDE.md`-t, a `README.md`-t, a spec-et és a 4b. lépés három lib-fájlját mutatja módosítottként (a `data/tet.db` nem lehet a listában módosítottként – ha mégis, ne add hozzá).
+Várt: a `git status` csak a `CLAUDE.md`-t, a `README.md`-t, a spec-et és a 4b. lépés öt fájlját mutatja módosítottként (a `data/tet.db` nem lehet a listában módosítottként – ha mégis, ne add hozzá).
 
 - [ ] **6. lépés: commit**
 
 ```bash
-git add CLAUDE.md README.md docs/superpowers/specs/2026-11-02-tet-tudastar-design.md lib/tudastar-szotar.ts lib/urlap.ts lib/tudastar-validacio.ts
+git add CLAUDE.md README.md docs/superpowers/specs/2026-11-02-tet-tudastar-design.md lib/tudastar-szotar.ts lib/urlap.ts lib/tudastar-validacio.ts "app/(app)/tudastar/components/KategoriaMenu.tsx" "app/(app)/tudastar/components/TudastarKartya.tsx"
 git commit -m "docs(tudastar): CLAUDE.md TéT Tudástár szakasz, a spec tervezéskori pontosításai; apró review-javítások (sormező-őr, webcim-korlát)
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -3691,7 +3701,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 7. **Futtató:** `--csak <slug,…>` kapcsoló a párhuzamos kutatáshoz; a kategóriák `leiras`/`bevezeto` szövege a kategória-fájlokban készül, és a 11. task viszi át a szótárba (a `--sql` az egyezést ellenőrzi).
 8. **A tartalom-migráció az átnézés előtt elkészül** és helyben lefut, hogy a tartalom a felületen nézhető legyen; push előtt a 12. task eljárásával újraírható és újra alkalmazható (a spec szerint „a B fázis végén” készült volna).
 9. **Ismert korlát:** a kategória-oldal ↑/↓ gombja után a fókusz nem marad a gombon (a kártya DOM-ja áthelyeződik); a szerkesztő sorszerkesztője visszaadja.
-10. **Keresés keskeny ablakban:** a kategória- és a részletoldalon a kereső a jobb menüben van; `lg` alatt ott csak a kategória-választó látszik, a kereséshez a nyitólapra kell lépni (a spec szerint is a menü helyén csak a select áll).
+10. **Keresés keskenyebb ablakban:** a kategória- és a részletoldalon a kereső a jobb menüben van; `xl` alatt (≈ 1280 px alatt) ott csak a kategória-választó látszik, a kereséshez a nyitólapra kell lépni (a spec szerint is a menü helyén csak a select áll).
 11. **A találat helye (`hol`/`reszlet`):** nem az első egyező rész, hanem a legtöbb keresőszót tartalmazó (holtversenyben a korábbi), a név és a rövidítés helyett – ezek a találati sorban amúgy is látszanak; ha csak azokban talált, a `hol` üres, a `reszlet` az összefoglaló eleje. A szakasz címe és szövege külön rész: címre találva „Szakasz: <cím>”, szövegre „<cím>: <kivágás>”.
 12. **Felsorolásjel:** a „- ” mellett a bemásolt szövegekben gyakori „– ” és „• ” kezdetű sor is felsoroláspont; az üres felsorolássor kimarad.
 13. **Slug-hossz:** a `-2`, `-3`… utótag a 60 karakteres alapon felül járulhat hozzá; a tartalom-futtató a kézzel írt slug hosszát is ellenőrzi.
@@ -3702,6 +3712,6 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 18. **A tábla és az írások védelme:** CHECK a `tipus`-ra és a `tartalom` `json_valid`-jára (a kategóriára nem, az a kódban él); az `updateKartya`/`createKartya` csak explicit felsorolt tartalmi mezőket ír, az `updateKartya` típusváltásra hibát dob; az író tranzakciók `immediate`-ek; a `mozgatKartya` a kategóriát 1..n-re számozza újra (az azonos `sorrend`-ű kártyák is mozgathatók); a `mozgatKartyaAction` hibakezelést kap.
 19. **Keresés akadálymentesen:** a nyitólapon állandó `role="status"` régió mondja be a találatszámot (a keresés nem vált címet, ezért a Next útvonal-bemondója hallgatna); a keresőmező vezérelt kliens-bemenet (`KeresoBemenet`), amely a `?q=`-hoz render közben igazodik, így Enter után a fókusz a mezőn marad. A csempék fölött rejtett „Kategóriák” címsor áll.
 20. **A ↑/↓ action visszajelzés nélkül:** a `mozgatKartyaAction` sima `<form action>` (nincs `useActionState`), ezért jog hiányában vagy DB-hibánál csendben nem csinál semmit (a hibát logolja); a gombok csak adminnak látszanak, és a mozgatás nem veszít adatot.
-21. **Komponensek:** az ↑/↓ gombok a `KartyaLablec`-ben vannak (nincs külön `MozgatoGombok`); a spec fájltáblájában nem szereplő, de a terv szerinti komponensek: `Morzsa`, `KulsoLink` (+ `LinkLista`, `SorLista`), `TudastarElrendezes`, `IntezmenyReszlet`, `KeresoBemenet`, `KartyaMezo`/`UrlapBlokk`.
+21. **Komponensek:** az ↑/↓ gombok a `KartyaLablec`-ben vannak (nincs külön `MozgatoGombok`); a spec fájltáblájában nem szereplő, de a terv szerinti komponensek: `Morzsa`, `KulsoLink` (+ `LinkLista`, `TetelLista`), `TudastarElrendezes`, `IntezmenyReszlet`, `KeresoBemenet`, `KartyaMezo`/`UrlapBlokk`.
 22. **Revalidálás:** minden tudástár-action `revalidatePath('/', 'layout')`-ot hív (a kódbázis konvenciója); a spec `revalidatePath('/tudastar', 'layout')`-ja a `(app)` route group miatt egyetlen oldalra sem illeszkedne (a tag `/(app)/tudastar/…`), csak a Next mostani durva server-action-revalidálása miatt működne.
 23. **A jobb menü `xl`-től:** a 238 px-es oldalsáv mellett `lg`-n a tartalomnak ~450 px maradna, ezért a menü `xl` fölött jelenik meg (alatta a kategória-választó); a Profil/Kapcsolat két hasábja is `xl`-től. A menü kiemelése fehér háttér + keret (a szürke lapon a `bg-muted` nem látszik), a kategória-oldali kártya-linkek sima `<a>` horgonyok.
