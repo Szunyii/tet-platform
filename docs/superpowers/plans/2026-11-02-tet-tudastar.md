@@ -84,6 +84,7 @@ assert.equal(slugbol(`${'a'.repeat(59)} b`), 'a'.repeat(59));
 assert.equal(szabadSlug('nkfih', () => false), 'nkfih');
 assert.equal(szabadSlug('nkfih', (s) => s === 'nkfih' || s === 'nkfih-2'), 'nkfih-3');
 assert.equal(szabadSlug('uj', (s) => ['uj'].includes(s)), 'uj-2');
+assert.equal(slugbol('ﬁnanszírozás'), 'finanszirozas', 'NFKD: a ligatúra felbomlik');
 
 // szöveg-tagolás
 assert.deepEqual(tagolSzoveg('Első sor\nmásodik sor\n\n- egy\n- kettő\n• három\nZáró'), [
@@ -93,11 +94,13 @@ assert.deepEqual(tagolSzoveg('Első sor\nmásodik sor\n\n- egy\n- kettő\n• h�
 ]);
 assert.deepEqual(tagolSzoveg(''), []);
 assert.deepEqual(tagolSzoveg('-nincs szóköz'), [{ tipus: 'bekezdes', sorok: ['-nincs szóköz'] }]);
+assert.deepEqual(tagolSzoveg('– nagykötőjel\n- \n- második'), [{ tipus: 'lista', elemek: ['nagykötőjel', 'második'] }]);
 assert.equal(megjelenoHoszt('https://www.nkfih.gov.hu/palyazatok'), 'nkfih.gov.hu');
+assert.equal(megjelenoHoszt('https://www.'), 'https://www.');
 
 // normalizáló
 assert.deepEqual(normalizalTartalom('lista', null), { sorok: [], linkek: [] });
-assert.deepEqual(normalizalTartalom('lista', { sorok: [{ nev: 'BME' }, 'x', null], linkek: 'rossz' }), {
+assert.deepEqual(normalizalTartalom('lista', { sorok: [{ nev: 'BME' }, 'x', null, {}], linkek: 'rossz' }), {
   sorok: [{ nev: 'BME', megjegyzes: '', url: '' }],
   linkek: [],
 });
@@ -129,6 +132,20 @@ const t3 = keres([niu, egyetemek], 'ugynokseg');
 assert.equal(t3[0].hol, '', 'csak a névben talált');
 assert.equal(t3[0].reszlet, 'Összefoglaló szöveg.');
 assert.equal(keres([niu, egyetemek], 'xpand bme').length, 0, 'minden szónak egy kártyában kell lennie');
+assert.deepEqual(keresoSzavak('„XPAND”, (NKFIH). k+f+i –'), ['xpand', 'nkfih', 'k+f+i']);
+assert.equal(keres([niu, egyetemek], 'NIÜ, „XPAND”').length, 1, 'a szó szélén álló írásjel nem számít');
+assert.equal(keres([niu, egyetemek], '–').length, 0, 'a csak írásjelből álló kifejezés nem keres');
+const tti = kartya({
+  nev: 'Tudományos és Technológiai Minisztérium', tipus: 'intezmeny',
+  tartalom: { ...uresTartalom('intezmeny'), szakaszok: [{ cim: 'Prioritások', szoveg: 'A kormány KFI-prioritásai: ﬁnanszírozás.' }] },
+});
+const t4 = keres([tti], 'prioritasok');
+assert.deepEqual([t4[0].hol, t4[0].reszlet], ['Szakasz', 'Prioritások'], 'címre talált: a cím nem ismétlődik');
+const t5 = keres([tti], 'kormany');
+assert.deepEqual([t5[0].hol, t5[0].reszlet], ['Prioritások', 'A kormány KFI-prioritásai: ﬁnanszírozás.']);
+assert.equal(keres([tti], 'finanszirozas').length, 1, 'NFKD: a ligatúrás szövegben is talál');
+const emoji = kartya({ nev: 'E', tipus: 'lista', osszefoglalo: `${'😀'.repeat(80)} cél`, tartalom: uresTartalom('lista') });
+assert.ok(!/[\ud800-\udbff](?![\udc00-\udfff])/.test(keres([emoji], 'cel')[0].reszlet), 'a kivágás nem vág UTF-16 párt');
 
 console.log('tudástár: minden ellenőrzés rendben');
 ```
@@ -373,10 +390,16 @@ function objektum(v: unknown): Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
 }
 
-/** Objektumok listája; a nem objektum elemet eldobja, a többit a `sor` egészíti ki. */
-function objLista<T>(v: unknown, sor: (r: Record<string, unknown>) => T): T[] {
+/**
+ * Objektumok listája; a nem objektum elemet eldobja, a többit a `sor` egészíti ki. A kiegészítés után
+ * teljesen üres sort is eldobja, mint a validátor (különben üres szakasz, link vagy listasor jelenne meg).
+ */
+function objLista<T extends object>(v: unknown, sor: (r: Record<string, unknown>) => T): T[] {
   return Array.isArray(v)
-    ? v.filter((x) => typeof x === 'object' && x !== null && !Array.isArray(x)).map((x) => sor(x as Record<string, unknown>))
+    ? v
+        .filter((x) => typeof x === 'object' && x !== null && !Array.isArray(x))
+        .map((x) => sor(x as Record<string, unknown>))
+        .filter((s) => Object.values(s).some((m) => m !== ''))
     : [];
 }
 
@@ -427,9 +450,13 @@ export function uresTartalom<T extends KartyaTipus>(tipus: T): KartyaTartalmak[T
 export const SLUG_MAX = 60;
 export const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-/** Az ékezetjelek (NFD után a kombinált jelek) elhagyása; az „ő”, „ű” kettős ékezete is. */
+/**
+ * Az ékezetjelek elhagyása (NFKD után a kombinált jelek; az „ő”, „ű” kettős ékezete is). Az NFKD a
+ * kompatibilitási alakokat is felbontja: a PDF-ből másolt „ﬁ” ligatúra „fi”, a teljes szélességű betű
+ * közönséges lesz.
+ */
 export function ekezetNelkul(s: string): string {
-  return s.normalize('NFD').replace(/\p{Diacritic}/gu, '');
+  return s.normalize('NFKD').replace(/\p{Diacritic}/gu, '');
 }
 
 /** Slug a szövegből; ha semmi nem marad (pl. csak írásjel), a `tartalek`. */
@@ -457,12 +484,13 @@ export function szabadSlug(alap: string, foglalt: (s: string) => boolean): strin
 ```ts
 /**
  * A tudástár szövegeinek megjelenítési segédei (tiszta függvények). A szöveges mezők sima szövegek két
- * szabállyal: üres sor = új bekezdés, „- ” (vagy „• ”) kezdetű sor = felsoroláspont. HTML-t nem értelmezünk.
+ * szabállyal: üres sor = új bekezdés, „- ” (vagy a bemásolt szövegekben gyakori „– ”, „• ”) kezdetű sor =
+ * felsoroláspont. HTML-t nem értelmezünk.
  */
 
 export type SzovegBlokk = { tipus: 'bekezdes'; sorok: string[] } | { tipus: 'lista'; elemek: string[] };
 
-const LISTA_SOR = /^\s*[-•]\s+/;
+const LISTA_SOR = /^\s*[-–•]\s+/;
 
 /** A szöveg bekezdésekre és felsorolásokra bontva, a beírás sorrendjében. */
 export function tagolSzoveg(s: string): SzovegBlokk[] {
@@ -475,6 +503,7 @@ export function tagolSzoveg(s: string): SzovegBlokk[] {
     }
     if (LISTA_SOR.test(sor)) {
       const elem = sor.replace(LISTA_SOR, '').trim();
+      if (!elem) continue;
       if (aktualis?.tipus !== 'lista') {
         aktualis = { tipus: 'lista', elemek: [] };
         blokkok.push(aktualis);
@@ -491,10 +520,10 @@ export function tagolSzoveg(s: string): SzovegBlokk[] {
   return blokkok;
 }
 
-/** Az URL megjelenő rövid alakja: a hoszt „www.” nélkül (pl. „nkfih.gov.hu”); érvénytelen URL-re maga a szöveg. */
+/** Az URL megjelenő rövid alakja: a hoszt „www.” nélkül (pl. „nkfih.gov.hu”); érvénytelen vagy hoszt nélküli URL-re maga a szöveg. */
 export function megjelenoHoszt(url: string): string {
   try {
-    return new URL(url).hostname.replace(/^www\./, '');
+    return new URL(url).hostname.replace(/^www\./, '') || url;
   } catch {
     return url;
   }
@@ -508,11 +537,20 @@ export function megjelenoHoszt(url: string): string {
  * A tudástár keresése (tiszta függvények): kis- és nagybetűre, valamint ékezetre érzéketlen; több szónál
  * minden szónak szerepelnie kell a kártyában (ÉS). A kártyák száma kicsi (~100), ezért JS-ben szűrünk.
  */
+import { ekezetNelkul } from './slug';
 import type { Kartya } from './tudastar-szotar';
 
 export const KERESES_MAX = 200;
 const RESZLET_HOSSZ = 120;
 const RESZLET_ELOTTE = 40;
+// A szó elején és végén álló írásjelek („NKFIH,”, „„XPAND””, „(NKFIH)”); a szó belsejében maradnak (k+f+i, kfi-strategia).
+const SZELI_IRASJEL = /^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu;
+
+/** Egy karakter összehasonlítási alakja; az ASCII ágon gyors (a `^` és a `` ` `` is ékezetjel, mint az `ekezetNelkul`-ban). */
+function karakterAlak(ch: string): string {
+  if (ch < '\x80') return ch === '^' || ch === '`' ? '' : ch.toLowerCase();
+  return ekezetNelkul(ch).toLowerCase();
+}
 
 /** Ékezet nélküli kisbetűs alak, és minden normalizált karakterhez az eredeti szövegbeli indexe. */
 function normalizalTerkeppel(s: string): { norm: string; eredeti: number[] } {
@@ -520,7 +558,7 @@ function normalizalTerkeppel(s: string): { norm: string; eredeti: number[] } {
   const eredeti: number[] = [];
   let i = 0;
   for (const ch of s) {
-    const n = ch.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+    const n = karakterAlak(ch);
     norm += n;
     for (let j = 0; j < n.length; j++) eredeti.push(i);
     i += ch.length;
@@ -533,22 +571,35 @@ export function normalizal(s: string): string {
   return normalizalTerkeppel(s).norm;
 }
 
-/** A keresőkifejezés szavai normalizálva; a kifejezés legfeljebb `KERESES_MAX` karakter. */
+/** A keresőkifejezés szavai normalizálva, a szélükön álló írásjelek nélkül; a kifejezés legfeljebb `KERESES_MAX` karakter. */
 export function keresoSzavak(q: string): string[] {
-  return normalizal(q.slice(0, KERESES_MAX)).split(/\s+/).filter(Boolean);
+  return normalizal(q.slice(0, KERESES_MAX))
+    .split(/\s+/)
+    .map((w) => w.replace(SZELI_IRASJEL, ''))
+    .filter(Boolean);
 }
 
-/** A kártya kereshető részei a megjelenítés sorrendjében; a `hol` a találati sorban jelenik meg. */
-function reszek(k: Kartya): { hol: string; szoveg: string }[] {
-  const r = [
-    { hol: '', szoveg: k.nev },
-    { hol: '', szoveg: k.rovidites ?? '' },
+interface Resz {
+  /** A találati sorban megjelenő név (pl. „Programok”, a szakasz címe). */
+  hol: string;
+  szoveg: string;
+  /** A név és a rövidítés: az ÉS-feltételbe beleszámít, de a `hol`/`reszlet` nem lehet (a találati sorban amúgy is látszik). */
+  nevResz?: true;
+}
+
+/** A kártya kereshető részei a megjelenítés sorrendjében. */
+function reszek(k: Kartya): Resz[] {
+  const r: Resz[] = [
+    { hol: '', szoveg: k.nev, nevResz: true },
+    { hol: '', szoveg: k.rovidites ?? '', nevResz: true },
     { hol: 'Összefoglaló', szoveg: k.osszefoglalo },
   ];
   if (k.tipus === 'intezmeny') {
     const t = k.tartalom;
     r.push({ hol: 'Profil', szoveg: t.profil }, { hol: 'Tevékenység', szoveg: t.tevekenyseg });
-    for (const sz of t.szakaszok) r.push({ hol: sz.cim, szoveg: `${sz.cim}\n${sz.szoveg}` });
+    // A szakasz szövege és címe külön rész: a címre talált keresés „Szakasz: <cím>”, a szövegre talált
+    // „<cím>: <kivágás>” sort ad (a cím így nem ismétlődik). A szöveg áll elöl, holtversenyben az nyer.
+    for (const sz of t.szakaszok) r.push({ hol: sz.cim, szoveg: sz.szoveg }, { hol: 'Szakasz', szoveg: sz.cim });
     for (const p of t.programok) r.push({ hol: 'Programok', szoveg: p.leiras ? `${p.nev} – ${p.leiras}` : p.nev });
   } else {
     for (const s of k.tartalom.sorok) r.push({ hol: 'Lista', szoveg: s.megjegyzes ? `${s.nev} – ${s.megjegyzes}` : s.nev });
@@ -557,10 +608,18 @@ function reszek(k: Kartya): { hol: string; szoveg: string }[] {
   return r;
 }
 
+/** Igaz, ha az `i` index egy UTF-16 pár második fele (a kivágás nem kezdődhet és nem végződhet a pár közepén). */
+function parKozepe(s: string, i: number): boolean {
+  const c = s.charCodeAt(i);
+  return c >= 0xdc00 && c <= 0xdfff;
+}
+
 /** Legfeljebb `RESZLET_HOSSZ` karakteres kivágás az `index` körül, egy sorba vonva, „…” jellel a vágott végeken. */
 function kivagas(szoveg: string, index: number): string {
-  const kezdet = Math.max(0, index - RESZLET_ELOTTE);
-  const veg = Math.min(szoveg.length, kezdet + RESZLET_HOSSZ);
+  let kezdet = Math.max(0, index - RESZLET_ELOTTE);
+  let veg = Math.min(szoveg.length, kezdet + RESZLET_HOSSZ);
+  if (kezdet > 0 && parKozepe(szoveg, kezdet)) kezdet++;
+  if (veg < szoveg.length && parKozepe(szoveg, veg)) veg--;
   const resz = szoveg.slice(kezdet, veg).replace(/\s+/g, ' ').trim();
   return `${kezdet > 0 ? '…' : ''}${resz}${veg < szoveg.length ? '…' : ''}`;
 }
@@ -589,7 +648,7 @@ export function keres(kartyak: readonly Kartya[], q: string): Talalat[] {
     let legjobb: (typeof r)[number] | null = null;
     let legjobbDb = 0;
     for (const x of r) {
-      if (x.hol === '') continue;
+      if (x.nevResz) continue;
       const db = szavak.filter((s) => x.norm.includes(s)).length;
       if (db > legjobbDb) {
         legjobb = x;
@@ -2657,7 +2716,8 @@ export async function mentKartyaAction(_prev: MuveletState, formData: FormData):
       if (eredmeny === 'elavult') return { errors: { form: ELAVULT } };
       slug = meglevo.slug;
     } else {
-      slug = createKartya(parsed.data, slugbol(parsed.data.rovidites ?? parsed.data.nev), session.userId);
+      // A rövidítésből, ha abból értelmes slug lesz (pl. nem csak írásjel), különben a névből.
+      slug = createKartya(parsed.data, slugbol(parsed.data.rovidites ?? '', slugbol(parsed.data.nev)), session.userId);
     }
   } catch (err) {
     unstable_rethrow(err);
@@ -2980,7 +3040,7 @@ export function kartyaFormData(kategoria: string, k: ForrasKartya): FormData {
 import { existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { SLUG_RE } from '../lib/slug';
+import { SLUG_MAX, SLUG_RE } from '../lib/slug';
 import { FOGLALT_SLUGOK, TUDASTAR_KATEGORIAK, isKartyaTipus, type KartyaAdat } from '../lib/tudastar-szotar';
 import { normalizalUrl, validalKartya } from '../lib/tudastar-validacio';
 import { tisztitSzoveg } from '../lib/urlap';
@@ -3047,6 +3107,7 @@ function szigoruHibak(k: ForrasKartya): string[] {
     }
   }
   if (!SLUG_RE.test(k.slug)) hibak.push(`slug: csak kisbetű, számjegy és kötőjel (${k.slug})`);
+  if (k.slug.length > SLUG_MAX) hibak.push(`slug: legfeljebb ${SLUG_MAX} karakter (${k.slug.length})`);
   if (FOGLALT_SLUGOK.includes(k.slug)) hibak.push(`slug: foglalt útvonal-szegmens (${k.slug})`);
   return hibak;
 }
@@ -3384,3 +3445,8 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 8. **A tartalom-migráció az átnézés előtt elkészül** és helyben lefut, hogy a tartalom a felületen nézhető legyen; push előtt a 12. task eljárásával újraírható és újra alkalmazható (a spec szerint „a B fázis végén” készült volna).
 9. **Ismert korlát:** a kategória-oldal ↑/↓ gombja után a fókusz nem marad a gombon (a kártya DOM-ja áthelyeződik); a szerkesztő sorszerkesztője visszaadja.
 10. **Keresés keskeny ablakban:** a kategória- és a részletoldalon a kereső a jobb menüben van; `lg` alatt ott csak a kategória-választó látszik, a kereséshez a nyitólapra kell lépni (a spec szerint is a menü helyén csak a select áll).
+11. **A találat helye (`hol`/`reszlet`):** nem az első egyező rész, hanem a legtöbb keresőszót tartalmazó (holtversenyben a korábbi), a név és a rövidítés helyett – ezek a találati sorban amúgy is látszanak; ha csak azokban talált, a `hol` üres, a `reszlet` az összefoglaló eleje. A szakasz címe és szövege külön rész: címre találva „Szakasz: <cím>”, szövegre „<cím>: <kivágás>”.
+12. **Felsorolásjel:** a „- ” mellett a bemásolt szövegekben gyakori „– ” és „• ” kezdetű sor is felsoroláspont; az üres felsorolássor kimarad.
+13. **Slug-hossz:** a `-2`, `-3`… utótag a 60 karakteres alapon felül járulhat hozzá; a tartalom-futtató a kézzel írt slug hosszát is ellenőrzi.
+14. **Keresés és slug, Unicode:** a keresőszavak szélén álló írásjelek nem számítanak („NKFIH,”, „„XPAND””); az ékezetlenítés NFKD-vel megy, így a PDF-ből másolt ligatúrák („ﬁ”) is kereshetők és slugosíthatók; a kivágás nem vág UTF-16 párt.
+15. **Normalizáló:** olvasáskor a teljesen üres sort (szakasz, program, link, listasor) is eldobja, mint a validátor.
