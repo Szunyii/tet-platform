@@ -4,9 +4,11 @@ import { ArrowDownIcon, ArrowUpIcon } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { Button } from '../../../../components/ui/button';
-import { SOR_EGYSEG, SOR_MAX, SOR_MEZOK, type SorLista, type SorMezoSzabaly, type SorTipusok } from '../../../../lib/tudastar-szotar';
+import {
+  SOR_EGYSEG, SOR_MAX, SOR_MEZOK, SZOVEG_SUGO, type SorLista, type SorMezoSzabaly, type SorTipusok,
+} from '../../../../lib/tudastar-szotar';
 import type { MezoHibak } from '../../../../lib/urlap';
-import { KartyaMezo, SZOVEG_SUGO } from './KartyaMezo';
+import { KartyaMezo } from './KartyaMezo';
 
 /** Egy sor az űrlapon; az `_id` stabil kliens-kulcs (a sorok mozognak és törölhetők), a mentésbe nem kerül. */
 export type SorAllapot<T> = T & { _id: number };
@@ -41,6 +43,12 @@ export function SorSzerkeszto<L extends SorLista>({
   const egyseg = SOR_EGYSEG[lista];
   const max = SOR_MAX[lista];
   const mezoId = (i: number, kulcs: string) => `${lista}.${i}.${kulcs}`;
+  // A gombok id-ja nem mezőnév-alakú (`.` helyett `-`), így egy későbbi `fel`/`le` nevű mezővel sem ütközhet.
+  const gombId = (i: number, irany: 'fel' | 'le') => `${lista}.${i}-${irany}`;
+  // Az egysoros mezők párosával állnak; ha páratlan sok van, az utolsó a teljes szélességet kapja.
+  const egysorosak = mezok.filter(([, sz]) => !sz.tobbsoros).map(([kulcs]) => kulcs);
+  const szeles = (kulcs: string, sz: SorMezoSzabaly) =>
+    sz.tobbsoros || (egysorosak.length % 2 === 1 && kulcs === egysorosak[egysorosak.length - 1]);
   const set = (id: number, kulcs: keyof SorTipusok[L], v: string) =>
     onChange(value.map((s) => (s._id === id ? { ...s, [kulcs]: v } : s)));
 
@@ -65,8 +73,8 @@ export function SorSzerkeszto<L extends SorLista>({
       [uj[i], uj[j]] = [uj[j], uj[i]];
       onChange(uj);
     });
-    const ugyanaz = document.getElementById(mezoId(j, irany < 0 ? 'fel' : 'le')) as HTMLButtonElement | null;
-    (ugyanaz && !ugyanaz.disabled ? ugyanaz : document.getElementById(mezoId(j, irany < 0 ? 'le' : 'fel')))?.focus();
+    const ugyanaz = document.getElementById(gombId(j, irany < 0 ? 'fel' : 'le')) as HTMLButtonElement | null;
+    (ugyanaz && !ugyanaz.disabled ? ugyanaz : document.getElementById(gombId(j, irany < 0 ? 'le' : 'fel')))?.focus();
   };
 
   return (
@@ -91,16 +99,16 @@ export function SorSzerkeszto<L extends SorLista>({
                 sugo={sz.formazott ? SZOVEG_SUGO : undefined}
                 placeholder={sz.url ? 'https://…' : undefined}
                 inputMode={sz.url ? 'url' : undefined}
-                className={sz.tobbsoros ? 'sm:col-span-2' : undefined}
+                className={szeles(kulcs, sz) ? 'sm:col-span-2' : undefined}
               />
             ))}
           </div>
           <div className="flex gap-1">
-            <Button id={mezoId(i, 'fel')} type="button" variant="outline" size="icon-sm" disabled={i === 0}
+            <Button id={gombId(i, 'fel')} type="button" variant="outline" size="icon-sm" disabled={i === 0}
               aria-label={`${i + 1}. ${egyseg} feljebb`} onClick={() => mozgat(i, -1)}>
               <ArrowUpIcon aria-hidden />
             </Button>
-            <Button id={mezoId(i, 'le')} type="button" variant="outline" size="icon-sm" disabled={i === value.length - 1}
+            <Button id={gombId(i, 'le')} type="button" variant="outline" size="icon-sm" disabled={i === value.length - 1}
               aria-label={`${i + 1}. ${egyseg} lejjebb`} onClick={() => mozgat(i, 1)}>
               <ArrowDownIcon aria-hidden />
             </Button>
@@ -112,7 +120,7 @@ export function SorSzerkeszto<L extends SorLista>({
       ))}
       <div className="flex items-center gap-2">
         <Button ref={hozzaadGomb} type="button" variant="outline" size="sm" disabled={value.length >= max} onClick={ujSor}>
-          + Új {egyseg}
+          <span aria-hidden>+</span> Új {egyseg}
         </Button>
         {value.length >= max && (
           <span className="text-xs text-muted-foreground">

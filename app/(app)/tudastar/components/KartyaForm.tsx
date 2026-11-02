@@ -9,13 +9,14 @@ import { useMuveletForm, type FormAction, type MuveletAction } from '../../../..
 import { Button, buttonVariants } from '../../../../components/ui/button';
 import {
   CIM_MAX, EMAIL_MAX, KARTYA_CIMKEK, NEV_CIMKE, NEV_MAX, OSSZEFOGLALO_CIMKE, OSSZEFOGLALO_MAX, ROVIDITES_MAX,
-  SZOVEG_MAX, TELEFON_MAX, TIPUS_CIMKE, TUDASTAR_KATEGORIAK, URL_MAX, uresTartalom,
+  SZOVEG_MAX, SZOVEG_SUGO, TELEFON_MAX, TIPUS_CIMKE, TUDASTAR_KATEGORIAK, URL_MAX, uresTartalom,
   type HasznosLink, type Kartya, type KartyaTipus, type ListaSor, type Program, type Szakasz,
 } from '../../../../lib/tudastar-szotar';
 import { cn } from '../../../../lib/utils';
-import { KartyaMezo, SZOVEG_SUGO, UrlapBlokk } from './KartyaMezo';
+import { KartyaMezo } from './KartyaMezo';
 import { KartyaTorles } from './KartyaTorles';
 import { SorSzerkeszto, sorokbol, type SorAllapot } from './SorSzerkeszto';
+import { UrlapBlokk } from './UrlapBlokk';
 
 /** Az űrlap vezérelt állapota: mindkét típus mezői (a nem használtak üresek és nem renderelődnek). */
 interface Urlap {
@@ -73,6 +74,9 @@ export function KartyaForm(props: KartyaFormProps) {
   const [state, formAction, pending] = useMuveletForm(action);
   const errors = state.errors ?? {};
   const [u, setU] = useState(() => kezdoUrlap(kartya, props.kategoria ?? ''));
+  // A verzió a tartalommal együtt, a megnyitáskor rögzül: egy helyben újrarenderelt oldal (pl. évváltás a fejlécben)
+  // friss `kartya`-t adhat, a mezők viszont a régi tartalmat őrzik – az élő verzió a közbeni módosítást elfedné.
+  const [verzio] = useState(() => kartya?.updatedAt.getTime());
   const set = <K extends keyof Urlap>(k: K) => (v: Urlap[K]) => setU((p) => ({ ...p, [k]: v }));
   const mezo = (k: SzovegKulcs) => ({ id: k, value: u[k], onChange: set(k), errors });
   const intezmeny = tipus === 'intezmeny';
@@ -85,7 +89,7 @@ export function KartyaForm(props: KartyaFormProps) {
       ) : (
         <>
           <input type="hidden" name="id" value={props.kartya.id} />
-          <input type="hidden" name="verzio" value={props.kartya.updatedAt.getTime()} />
+          <input type="hidden" name="verzio" value={verzio} />
         </>
       )}
       <UrlapBlokk
@@ -141,7 +145,7 @@ export function KartyaForm(props: KartyaFormProps) {
       </UrlapBlokk>
 
       <div className="flex flex-wrap items-center gap-3">
-        {props.mod === 'szerkesztes' && <KartyaTorles nev={props.kartya.nev} action={props.torlesAction} />}
+        {props.mod === 'szerkesztes' && <KartyaTorles nev={props.kartya.nev} action={props.torlesAction} tiltva={pending} />}
         <MezoHiba mezo="form" errors={errors} alert />
         <div className="ml-auto flex gap-2">
           {/* Link + buttonVariants (nem Button render={<Link/>}): a Base UI Button natív <button>-t vár. */}

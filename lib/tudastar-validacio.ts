@@ -49,16 +49,16 @@ function szoveg(v: string, id: string, cimke: string, max: number, kotelezo: boo
 }
 
 /** Webcím: üresen `''` (vagy hiba, ha kötelező); különben a normalizált URL, hibánál a beírt érték. */
-function webcim(v: string, id: string, cimke: string, kotelezo: boolean, errors: MezoHibak): string {
-  if (!v || v.length > URL_MAX) return szoveg(v, id, cimke, URL_MAX, kotelezo, errors);
+function webcim(v: string, id: string, cimke: string, max: number, kotelezo: boolean, errors: MezoHibak): string {
+  if (!v || v.length > max) return szoveg(v, id, cimke, max, kotelezo, errors);
   const url = normalizalUrl(v);
   if (url === null) errors[id] = URL_HIBA;
-  else if (url.length > URL_MAX) errors[id] = `${nevelovel(cimke)} kódolva (az ékezetes betűkkel) hosszabb ${URL_MAX} karakternél.`;
+  else if (url.length > max) errors[id] = `${nevelovel(cimke)} kódolva (az ékezetes betűk és a szóközök kódolásával) hosszabb ${max} karakternél.`;
   else return url;
   return v;
 }
 
-// A sorindex legfeljebb 4 jegyű, vezető nulla nélkül: a validátor ennél többet sosem fogad el (`SOR_MAX`).
+// A sorindex legfeljebb 4 jegyű, vezető nulla nélkül (a `SOR_MAX` ennél jóval kisebb); a hosszabb indexű mezőt nem olvassuk.
 const sorIndexRe = (lista: SorLista) => new RegExp(`^${lista}\\.(0|[1-9]\\d{0,3})\\.`);
 
 /** A dinamikus sorok indexei a FormData-ban (`<lista>.<i>.<mezo>`), növekvő sorrendben. */
@@ -91,7 +91,7 @@ function sorok<L extends SorLista>(fd: FormData, lista: L, errors: MezoHibak): S
     const sor: Record<string, string> = {};
     for (const { kulcs, sz, v } of ertekek) {
       const id = `${lista}.${i}.${kulcs}`;
-      sor[kulcs] = sz.url ? webcim(v, id, sz.cimke, Boolean(sz.kotelezo), errors) : szoveg(v, id, sz.cimke, sz.max, Boolean(sz.kotelezo), errors);
+      sor[kulcs] = sz.url ? webcim(v, id, sz.cimke, sz.max, Boolean(sz.kotelezo), errors) : szoveg(v, id, sz.cimke, sz.max, Boolean(sz.kotelezo), errors);
     }
     // A `SOR_MEZOK` a sortípus minden mezőjét kimerítően felsorolja, ezért a sor teljes.
     eredmeny.push(sor as unknown as SorTipusok[L]);
@@ -108,7 +108,7 @@ export function validalKartya(fd: FormData, tipus: KartyaTipus): ParseResult<Kar
   const nev = szoveg(mezo(fd, 'nev'), 'nev', NEV_CIMKE[tipus], NEV_MAX, true, errors);
   const rovidites = szoveg(mezo(fd, 'rovidites'), 'rovidites', C.rovidites, ROVIDITES_MAX, false, errors);
   const osszefoglalo = szoveg(mezo(fd, 'osszefoglalo'), 'osszefoglalo', OSSZEFOGLALO_CIMKE[tipus], OSSZEFOGLALO_MAX, true, errors);
-  const honlap = webcim(mezo(fd, 'honlap'), 'honlap', C.honlap, false, errors);
+  const honlap = webcim(mezo(fd, 'honlap'), 'honlap', C.honlap, URL_MAX, false, errors);
   const linkek = sorok(fd, 'linkek', errors);
 
   let torzs: KartyaTorzs;

@@ -37,10 +37,10 @@ export default async function KategoriaPage({ params }: { params: Promise<{ kate
           {admin && (
             <div className="ml-auto flex gap-2">
               <Link href={ujKartyaUrl(kategoria.slug, 'intezmeny')} className={cn(buttonVariants({ variant: 'outline' }))}>
-                + Új intézmény
+                <span aria-hidden>+</span> Új intézmény
               </Link>
               <Link href={ujKartyaUrl(kategoria.slug, 'lista')} className={cn(buttonVariants({ variant: 'outline' }))}>
-                + Új lista
+                <span aria-hidden>+</span> Új lista
               </Link>
             </div>
           )}

@@ -9,13 +9,14 @@ import { KeresoMezo } from './KeresoMezo';
  * aktív kategória alatt a kártyái. A kategória-oldalon a kártya-linkek sima horgonyok (`<a href="#k-<slug>">`:
  * a natív ugrás a fókusz kiindulópontját is a kártyára teszi, a Next `Link` csak görget); a részletoldalon oda
  * visznek, ahol a kártya megjelenik (intézmény: saját oldala, lista: a horgonya), és az aktuális intézmény ki van
- * emelve. A menü a szürke lapon áll, ezért a kiemelés fehér háttér + keret (a `bg-muted` itt nem látszana).
+ * emelve. A menü a szürke lapon áll, ezért a kiemelés fehér háttér + belső keret (a `bg-muted` itt nem látszana); a
+ * görgetődoboz 1-es párnája a fókuszgyűrűknek ad helyet (a görgető elem a szélén levágná őket).
  */
 export function KategoriaMenu({
   aktivKategoria, kartyak, aktivSlug,
 }: { aktivKategoria: KategoriaSlug; kartyak: readonly Kartya[]; aktivSlug?: string }) {
   return (
-    <div className="hidden flex-col gap-3 xl:sticky xl:top-[5.5rem] xl:flex xl:max-h-[calc(100dvh-7.5rem)] xl:overflow-y-auto">
+    <div className="hidden flex-col gap-3 xl:sticky xl:top-[5.5rem] xl:-m-1 xl:flex xl:max-h-[calc(100dvh-7.5rem)] xl:overflow-y-auto xl:p-1">
       <KeresoMezo id="tudastar-kereses-menu" kompakt />
       <nav aria-label="A tudástár kategóriái">
         <ol className="flex flex-col gap-0.5">
@@ -28,7 +29,7 @@ export function KategoriaMenu({
                   aria-current={aktiv && !aktivSlug ? 'page' : undefined}
                   className={cn(
                     'flex gap-2 rounded-md px-2 py-1.5 text-sm text-foreground no-underline hover:bg-foreground/5 hover:no-underline',
-                    aktiv && 'bg-background font-medium ring-1 ring-foreground/10 hover:bg-background',
+                    aktiv && 'bg-background font-medium ring-1 ring-foreground/10 ring-inset hover:bg-background',
                   )}
                 >
                   <span className="w-5 shrink-0 text-right text-muted-foreground tabular-nums">{k.szam}.</span>

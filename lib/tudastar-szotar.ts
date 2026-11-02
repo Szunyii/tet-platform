@@ -227,10 +227,19 @@ export interface SorTipusok {
   sorok: ListaSor;
 }
 export type SorLista = keyof SorTipusok;
+// Típusszintű őr: a dinamikus listák minden mezője szöveg (a validátor és a sorszerkesztő stringként kezeli,
+// a `SOR_MEZOK` kimerítőségére épülő cast így teljes és helyes típusú sort ad). Nem szöveges mezőnél a
+// `MindSzoveg` `boolean` lesz, és az `Igaz<…>` fordítási hibát ad.
+type MindSzoveg = { [L in SorLista]: SorTipusok[L][keyof SorTipusok[L]] extends string ? true : false }[SorLista];
+type Igaz<T extends true> = T;
+export type SorMezokSzovegesek = Igaz<MindSzoveg>;
 
 export const SOR_MAX: Record<SorLista, number> = { szakaszok: 12, programok: 30, linkek: 20, sorok: 150 };
 /** A lista egy sorának neve (a szerkesztő sorcímkéje, a „+ Új …” gomb és a darabszám-hiba szövege). */
 export const SOR_EGYSEG: Record<SorLista, string> = { szakaszok: 'szakasz', programok: 'program', linkek: 'link', sorok: 'sor' };
+
+/** A formázható szöveges mezők súgója a szerkesztőben: a megjelenítés két szabálya (lib/tudastar-szoveg.ts). */
+export const SZOVEG_SUGO = 'Üres sor: új bekezdés · „- ” kezdetű sor: felsorolás.';
 
 /** Egy sor-mező szabálya: a szerkesztő és a validátor közös forrása. */
 export interface SorMezoSzabaly {
@@ -256,7 +265,7 @@ export const SOR_MEZOK: { [L in SorLista]: { [K in keyof SorTipusok[L]]-?: SorMe
   programok: {
     nev: { cimke: 'Név', max: NEV_MAX, kotelezo: true },
     url: { cimke: 'Webcím', max: URL_MAX, url: true },
-    leiras: { cimke: 'Egysoros leírás', max: PROGRAM_LEIRAS_MAX, tobbsoros: true },
+    leiras: { cimke: 'Egysoros leírás', max: PROGRAM_LEIRAS_MAX },
   },
   linkek: {
     felirat: { cimke: 'Felirat', max: FELIRAT_MAX, kotelezo: true },

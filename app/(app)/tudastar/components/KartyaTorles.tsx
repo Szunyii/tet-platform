@@ -16,8 +16,11 @@ import {
 } from '../../../../components/ui/alert-dialog';
 import { Button } from '../../../../components/ui/button';
 
-/** A kártya törlése megerősítéssel (a `RiportTorles` mintája); sikernél az action a kategória-oldalra irányít. */
-export function KartyaTorles({ nev, action }: { nev: string; action: MuveletAction }) {
+/**
+ * A kártya törlése megerősítéssel (a `RiportTorles` mintája); sikernél az action a kategória-oldalra irányít.
+ * `tiltva`: a szerkesztő mentése közben nem indítható (a mentés és a törlés ne versenyezzen).
+ */
+export function KartyaTorles({ nev, action, tiltva = false }: { nev: string; action: MuveletAction; tiltva?: boolean }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
@@ -36,7 +39,7 @@ export function KartyaTorles({ nev, action }: { nev: string; action: MuveletActi
 
   return (
     <>
-      <Button type="button" variant="destructive" onClick={() => setOpen(true)}>
+      <Button type="button" variant="destructive" disabled={tiltva} onClick={() => setOpen(true)}>
         Kártya törlése
       </Button>
       <AlertDialog
@@ -57,7 +60,8 @@ export function KartyaTorles({ nev, action }: { nev: string; action: MuveletActi
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={pending}>Mégse</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" disabled={pending} onClick={torol}>
+            {/* focusableWhenDisabled: törlés közben a fókusz a gombon marad (különben a body-ra esne). */}
+            <AlertDialogAction variant="destructive" disabled={pending} focusableWhenDisabled onClick={torol}>
               {pending ? 'Törlés…' : 'Törlés'}
             </AlertDialogAction>
           </AlertDialogFooter>

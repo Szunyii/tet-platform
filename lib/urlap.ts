@@ -43,7 +43,11 @@ export const EMAIL_RE = /^(?!.*\.\.)[^\s@.](?:[^\s@]*[^\s@.])?@[^\s@]+\.[A-Za-z]
 
 const MAGANHANGZO_RE = /^[aáeéiíoóöőuúüű]/i;
 
-/** A mezőcímke névelővel, mondat elejére: „Név” → „A név”, „Összefoglaló” → „Az összefoglaló”. */
+/**
+ * A mezőcímke névelővel, mondat elejére: „Név” → „A név”, „Összefoglaló” → „Az összefoglaló”. Közönséges,
+ * nagybetűvel kezdődő szóra való (az első betűt kisbetűsíti); rövidítéssel, számmal vagy tulajdonnévvel kezdődő
+ * címkére nem.
+ */
 export function nevelovel(cimke: string): string {
   const kis = cimke.charAt(0).toLowerCase() + cimke.slice(1);
   return `${MAGANHANGZO_RE.test(kis) ? 'Az' : 'A'} ${kis}`;

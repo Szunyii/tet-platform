@@ -37,7 +37,9 @@ export async function mentKartyaAction(_prev: MuveletState, formData: FormData):
   let slug: string;
   try {
     if (meglevo) {
-      const eredmeny = updateKartya(meglevo.id, parsed.data, Number(mezo(formData, 'verzio')), session.userId);
+      const verzio = Number(mezo(formData, 'verzio'));
+      if (!Number.isInteger(verzio) || verzio <= 0) return { errors: { form: 'Hibás kérés: hiányzik a kártya verziója.' } };
+      const eredmeny = updateKartya(meglevo.id, parsed.data, verzio, session.userId);
       if (eredmeny === 'nincs') return { errors: { form: TOROLVE } };
       if (eredmeny === 'elavult') return { errors: { form: ELAVULT } };
       slug = meglevo.slug;

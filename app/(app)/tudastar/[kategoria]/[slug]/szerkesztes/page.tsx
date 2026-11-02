@@ -24,7 +24,8 @@ export default async function KartyaSzerkesztesPage({ params }: { params: Promis
         elemek={[
           { felirat: 'TéT Tudástár', href: tudastarUrl() },
           { felirat: `${kategoria.szam}. ${kategoria.rovidCim}`, href: tudastarUrl(kategoria.slug) },
-          { felirat: `${kartya.rovidites ?? kartya.nev} szerkesztése` },
+          { felirat: kartya.rovidites ?? kartya.nev, href: kartyaUrl(kartya) },
+          { felirat: 'Szerkesztés' },
         ]}
       />
       <KartyaForm

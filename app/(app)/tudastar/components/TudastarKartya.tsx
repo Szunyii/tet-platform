@@ -38,8 +38,7 @@ export function TudastarKartya({ kartya, mozgatas }: { kartya: Kartya; mozgatas?
       <KartyaLablec kartya={kartya} mozgatas={mozgatas}>
         {kartya.tipus === 'intezmeny' && (
           <Link href={kartyaUrl(kartya)} className="font-medium">
-            Részletek <span aria-hidden>→</span>
-            <span className="sr-only">: {kartya.nev}</span>
+            Részletek<span className="sr-only">: {kartya.nev}</span> <span aria-hidden>→</span>
           </Link>
         )}
         {kartya.honlap && <KulsoLink href={kartya.honlap}>{megjelenoHoszt(kartya.honlap)}</KulsoLink>}
