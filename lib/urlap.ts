@@ -35,3 +35,16 @@ export function mezo(fd: FormData, key: string): string {
 
 /** Egy FormData-validátor eredménye: siker a típusos adattal, vagy a mezőhibák (`form` = űrlap-szintű). */
 export type ParseResult<T> = { ok: true; data: T } | { ok: false; errors: MezoHibak };
+
+// Közel a Better Auth (zod) e-mail szabályához: nincs vezető/záró/dupla pont a helyi
+// részben, a domain végén legalább 2 betűs TLD. Ami itt átmegy, de a Better Auth elutasít
+// (pl. ékezetes cím), azt a felhasználó-kezelés server actionje INVALID_EMAIL hibaként az email mezőre teszi.
+export const EMAIL_RE = /^(?!.*\.\.)[^\s@.](?:[^\s@]*[^\s@.])?@[^\s@]+\.[A-Za-z]{2,}$/;
+
+const MAGANHANGZO_RE = /^[aáeéiíoóöőuúüű]/i;
+
+/** A mezőcímke névelővel, mondat elejére: „Név” → „A név”, „Összefoglaló” → „Az összefoglaló”. */
+export function nevelovel(cimke: string): string {
+  const kis = cimke.charAt(0).toLowerCase() + cimke.slice(1);
+  return `${MAGANHANGZO_RE.test(kis) ? 'Az' : 'A'} ${kis}`;
+}

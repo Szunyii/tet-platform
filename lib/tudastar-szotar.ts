@@ -218,7 +218,70 @@ export const MEGJEGYZES_MAX = 200;
 export const EMAIL_MAX = 200;
 export const TELEFON_MAX = 60;
 export const CIM_MAX = 200;
-export const SOR_MAX = { szakaszok: 12, programok: 30, linkek: 20, sorok: 150 } as const;
+
+/** A dinamikus listák sortípusai (a `<lista>.<i>.<mezo>` mezőnevek első tagja). */
+export interface SorTipusok {
+  szakaszok: Szakasz;
+  programok: Program;
+  linkek: HasznosLink;
+  sorok: ListaSor;
+}
+export type SorLista = keyof SorTipusok;
+
+export const SOR_MAX: Record<SorLista, number> = { szakaszok: 12, programok: 30, linkek: 20, sorok: 150 };
+/** A lista egy sorának neve (a szerkesztő sorcímkéje, a „+ Új …” gomb és a darabszám-hiba szövege). */
+export const SOR_EGYSEG: Record<SorLista, string> = { szakaszok: 'szakasz', programok: 'program', linkek: 'link', sorok: 'sor' };
+
+/** Egy sor-mező szabálya: a szerkesztő és a validátor közös forrása. */
+export interface SorMezoSzabaly {
+  cimke: string;
+  max: number;
+  kotelezo?: true;
+  /** Webcím: a validátor normalizálja (lib/tudastar-validacio.ts `normalizalUrl`). */
+  url?: true;
+  /** Többsoros szöveg; `formazott`: a szerkesztő a bekezdés/felsorolás súgóját is mutatja. */
+  tobbsoros?: true;
+  formazott?: true;
+}
+
+/**
+ * A dinamikus listák mezői, listánként a szerkesztőbeli sorrendben. Mezőnév szerint kimerítő: új almező
+ * fordítási hiba, amíg itt nincs szabálya (különben a normalizáló beolvasná, de a mentés csendben eldobná).
+ */
+export const SOR_MEZOK: { [L in SorLista]: { [K in keyof SorTipusok[L]]-?: SorMezoSzabaly } } = {
+  szakaszok: {
+    cim: { cimke: 'Cím', max: SZAKASZ_CIM_MAX, kotelezo: true },
+    szoveg: { cimke: 'Szöveg', max: SZOVEG_MAX, kotelezo: true, tobbsoros: true, formazott: true },
+  },
+  programok: {
+    nev: { cimke: 'Név', max: NEV_MAX, kotelezo: true },
+    url: { cimke: 'Webcím', max: URL_MAX, url: true },
+    leiras: { cimke: 'Egysoros leírás', max: PROGRAM_LEIRAS_MAX, tobbsoros: true },
+  },
+  linkek: {
+    felirat: { cimke: 'Felirat', max: FELIRAT_MAX, kotelezo: true },
+    url: { cimke: 'Webcím', max: URL_MAX, kotelezo: true, url: true },
+  },
+  sorok: {
+    nev: { cimke: 'Név', max: NEV_MAX, kotelezo: true },
+    url: { cimke: 'Webcím', max: URL_MAX, url: true },
+    megjegyzes: { cimke: 'Megjegyzés', max: MEGJEGYZES_MAX },
+  },
+};
+
+/** A kártya egyszerű mezőinek feliratai (szerkesztő, validátor); a név és az összefoglaló típusonként más. */
+export const KARTYA_CIMKEK = {
+  kategoria: 'Kategória',
+  rovidites: 'Rövidítés',
+  honlap: 'Honlap',
+  profil: 'Profil',
+  tevekenyseg: 'Tevékenység',
+  email: 'E-mail',
+  telefon: 'Telefon',
+  cim: 'Cím',
+} as const;
+export const NEV_CIMKE: Record<KartyaTipus, string> = { intezmeny: 'Név', lista: 'Lista címe' };
+export const OSSZEFOGLALO_CIMKE: Record<KartyaTipus, string> = { intezmeny: 'Összefoglaló', lista: 'Bevezető' };
 
 function szoveg(v: unknown): string {
   return typeof v === 'string' ? v : '';

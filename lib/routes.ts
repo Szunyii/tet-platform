@@ -1,5 +1,7 @@
 // Központi útvonal-konstansok. Az útvonaltábla (lib/navigacio.ts) a menüé és a fejlécé, ez a kód által
 // használt fix célpontoké.
+import type { KartyaTipus } from './tudastar-szotar';
+
 export const HOME_ROUTE = '/terkep';
 export const LOGIN_ROUTE = '/login';
 
@@ -48,6 +50,8 @@ export function biztonsagosNext(raw: string | string[] | undefined): string {
   return path;
 }
 
+// A slugok csak [a-z0-9-] karakterek (lib/slug.ts), ezért kódolás nélkül kerülnek az URL-be.
+
 /** A tudástár nyitólapja, vagy egy kategória-oldala. */
 export function tudastarUrl(kategoria?: string): string {
   return kategoria ? `/tudastar/${kategoria}` : '/tudastar';
@@ -59,7 +63,7 @@ export function kartyaHorgony(slug: string): string {
 }
 
 /** Ahol a kártya megjelenik: az intézménynek saját oldala van, a lista a kategória-oldalon, a horgonyánál. */
-export function kartyaUrl(k: { kategoria: string; slug: string; tipus: 'intezmeny' | 'lista' }): string {
+export function kartyaUrl(k: { kategoria: string; slug: string; tipus: KartyaTipus }): string {
   return k.tipus === 'intezmeny' ? `/tudastar/${k.kategoria}/${k.slug}` : `${tudastarUrl(k.kategoria)}#${kartyaHorgony(k.slug)}`;
 }
 
@@ -69,6 +73,6 @@ export function kartyaSzerkesztoUrl(k: { kategoria: string; slug: string }): str
 }
 
 /** Új kártya szerkesztője a kategóriában. */
-export function ujKartyaUrl(kategoria: string, tipus: 'intezmeny' | 'lista'): string {
+export function ujKartyaUrl(kategoria: string, tipus: KartyaTipus): string {
   return `/tudastar/${kategoria}/uj?tipus=${tipus}`;
 }

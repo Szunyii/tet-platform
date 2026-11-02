@@ -13,7 +13,7 @@
  */
 import { REGIO_MAX, RESZTERULET_MAX, VAROS_MAX, type AttaseOrszag } from './attase-orszag';
 import { orszagByKod } from './orszagok';
-import { mezo, type MezoHibak, type ParseResult } from './urlap';
+import { EMAIL_RE, mezo, type MezoHibak, type ParseResult } from './urlap';
 
 export const SZEREPKOROK = ['admin', 'attase'] as const;
 export type Szerepkor = (typeof SZEREPKOROK)[number];
@@ -51,11 +51,6 @@ export interface SzerkesztesInput extends ElerhetosegAdatok {
   szerepkor: Szerepkor;
   orszagok: AttaseOrszag[];
 }
-
-// Közel a Better Auth (zod) e-mail szabályához: nincs vezető/záró/dupla pont a helyi
-// részben, a domain végén legalább 2 betűs TLD. Ami itt átmegy, de a Better Auth elutasít
-// (pl. ékezetes cím), azt a server action INVALID_EMAIL hibaként az email mezőre teszi.
-const EMAIL_RE = /^(?!.*\.\.)[^\s@.](?:[^\s@]*[^\s@.])?@[^\s@]+\.[A-Za-z]{2,}$/;
 
 /** Nyers érték trim nélkül: a jelszóban a szóköz is értékes karakter. */
 function raw(fd: FormData, key: string): string {

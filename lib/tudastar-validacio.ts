@@ -1,22 +1,26 @@
 /**
  * A tudástár-kártya szerkesztőjének szerver-oldali validátora. A hibakulcs a mező `id`-ja (a szerkesztőben
  * id = name, egy űrlap van az oldalon); a dinamikus sorok mezői `<lista>.<i>.<mezo>` (pl. `szakaszok.0.cim`).
- * A teljesen üres sor kimarad, a félig kitöltött sor hibát kap.
+ * A teljesen üres sor kimarad, a félig kitöltött sor hibát kap. A feliratok és a korlátok a szerkesztővel
+ * közösek (lib/tudastar-szotar.ts `KARTYA_CIMKEK`, `SOR_MEZOK`).
  */
-import { mezo, type MezoHibak, type ParseResult } from './urlap';
+import { EMAIL_RE, mezo, nevelovel, type MezoHibak, type ParseResult } from './urlap';
 import {
-  CIM_MAX, EMAIL_MAX, FELIRAT_MAX, MEGJEGYZES_MAX, NEV_MAX, OSSZEFOGLALO_MAX, PROGRAM_LEIRAS_MAX, ROVIDITES_MAX,
-  SOR_MAX, SZAKASZ_CIM_MAX, SZOVEG_MAX, TELEFON_MAX, URL_MAX, isKategoriaSlug,
-  type HasznosLink, type KartyaAdat, type KartyaTipus, type KartyaTorzs, type ListaSor, type Program, type Szakasz,
+  CIM_MAX, EMAIL_MAX, KARTYA_CIMKEK, NEV_CIMKE, NEV_MAX, OSSZEFOGLALO_CIMKE, OSSZEFOGLALO_MAX, ROVIDITES_MAX,
+  SOR_EGYSEG, SOR_MAX, SOR_MEZOK, SZOVEG_MAX, TELEFON_MAX, URL_MAX, isKategoriaSlug,
+  type KartyaAdat, type KartyaTipus, type KartyaTorzs, type SorLista, type SorMezoSzabaly, type SorTipusok,
 } from './tudastar-szotar';
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SEMA_RE = /^[a-z][a-z0-9+.-]*:/i;
+// A hosztnév két, nem üres címkéje között pont áll (a „valami”, a „localhost” és a „localhost.” is kiesik).
+const PONTOS_HOSZT_RE = /[^.]\.[^.]/;
+const URL_HIBA = 'Érvényes webcímet adj meg (pl. https://nkfih.gov.hu).';
 
 /**
- * Egy URL ellenőrzése és normalizálása: séma nélkül `https://` kerül elé; csak `http:`/`https:` séma, pontot
- * tartalmazó hosztnév és legfeljebb `URL_MAX` karakter fogadható el (a `javascript:` és társai így kiesnek).
- * Siker: a `new URL()` normalizált `href`-je; hiba: `null`.
+ * Egy URL ellenőrzése és normalizálása: séma nélkül `https://` kerül elé; csak `http:`/`https:` séma,
+ * felhasználónév/jelszó nélkül (a honlap-mezőbe tévedt `info@nkfih.gov.hu` és a megtévesztő
+ * `https://nkfih.gov.hu@masik.hu` így kiesik), pontot tartalmazó hosztnévvel. Siker: a `new URL()`
+ * normalizált `href`-je; hiba: `null`. A hosszkorlátot a hívó nézi.
  */
 export function normalizalUrl(nyers: string): string | null {
   const s = SEMA_RE.test(nyers) ? nyers : `https://${nyers}`;
@@ -27,15 +31,39 @@ export function normalizalUrl(nyers: string): string | null {
     return null;
   }
   if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
-  if (!u.hostname.includes('.')) return null;
-  return u.href.length <= URL_MAX ? u.href : null;
+  if (u.username || u.password) return null;
+  if (!PONTOS_HOSZT_RE.test(u.hostname)) return null;
+  return u.href;
 }
 
-const URL_HIBA = 'Érvényes webcímet adj meg (pl. https://nkfih.gov.hu).';
+/** Űrlap-szintű hiba; ha már van, hozzáfűzi (több lista is túllépheti a korlátját). */
+function formHiba(errors: MezoHibak, uzenet: string): void {
+  errors.form = errors.form ? `${errors.form} ${uzenet}` : uzenet;
+}
+
+/** Szöveges érték ellenőrzése: kötelezőség és hossz; a hibát az `errors`-ba írja, az értéket visszaadja. */
+function szoveg(v: string, id: string, cimke: string, max: number, kotelezo: boolean, errors: MezoHibak): string {
+  if (kotelezo && !v) errors[id] = `${nevelovel(cimke)} kötelező.`;
+  else if (v.length > max) errors[id] = `${nevelovel(cimke)} legfeljebb ${max} karakter.`;
+  return v;
+}
+
+/** Webcím: üresen `''` (vagy hiba, ha kötelező); különben a normalizált URL, hibánál a beírt érték. */
+function webcim(v: string, id: string, cimke: string, kotelezo: boolean, errors: MezoHibak): string {
+  if (!v || v.length > URL_MAX) return szoveg(v, id, cimke, URL_MAX, kotelezo, errors);
+  const url = normalizalUrl(v);
+  if (url === null) errors[id] = URL_HIBA;
+  else if (url.length > URL_MAX) errors[id] = `${nevelovel(cimke)} kódolva (az ékezetes betűkkel) hosszabb ${URL_MAX} karakternél.`;
+  else return url;
+  return v;
+}
+
+// A sorindex legfeljebb 4 jegyű, vezető nulla nélkül: a validátor ennél többet sosem fogad el (`SOR_MAX`).
+const sorIndexRe = (lista: SorLista) => new RegExp(`^${lista}\\.(0|[1-9]\\d{0,3})\\.`);
 
 /** A dinamikus sorok indexei a FormData-ban (`<lista>.<i>.<mezo>`), növekvő sorrendben. */
-function sorIndexek(fd: FormData, lista: string): number[] {
-  const re = new RegExp(`^${lista}\\.(0|[1-9]\\d*)\\.`);
+function sorIndexek(fd: FormData, lista: SorLista): number[] {
+  const re = sorIndexRe(lista);
   const halmaz = new Set<number>();
   for (const k of fd.keys()) {
     const m = re.exec(k);
@@ -44,113 +72,67 @@ function sorIndexek(fd: FormData, lista: string): number[] {
   return [...halmaz].sort((a, b) => a - b);
 }
 
-interface SorMezo<T> {
-  kulcs: keyof T & string;
-  cimke: string;
-  max: number;
-  kotelezo?: boolean;
-  url?: boolean;
-}
-
-/** Egy dinamikus lista sorai: a teljesen üres sor kimarad, a többit mezőnként ellenőrzi. */
-function sorok<T extends { [K in keyof T]: string }>(
-  fd: FormData,
-  lista: keyof typeof SOR_MAX,
-  mezok: readonly SorMezo<T>[],
-  errors: MezoHibak,
-): T[] {
-  const eredmeny: T[] = [];
-  for (const i of sorIndexek(fd, lista)) {
-    const ertekek = mezok.map((m) => [m, mezo(fd, `${lista}.${i}.${m.kulcs}`)] as const);
-    if (ertekek.every(([, v]) => v === '')) continue;
-    const sor = {} as Record<string, string>;
-    for (const [m, v] of ertekek) {
-      const id = `${lista}.${i}.${m.kulcs}`;
-      sor[m.kulcs] = v;
-      if (m.kotelezo && !v) errors[id] = `${m.cimke} megadása kötelező.`;
-      else if (v.length > m.max) errors[id] = `${m.cimke}: legfeljebb ${m.max} karakter.`;
-      else if (m.url && v) {
-        const url = normalizalUrl(v);
-        if (url === null) errors[id] = URL_HIBA;
-        else sor[m.kulcs] = url;
-      }
-    }
-    eredmeny.push(sor as unknown as T);
+/**
+ * Egy dinamikus lista sorai a `SOR_MEZOK` szabályaival: a teljesen üres sor kimarad, a többit mezőnként
+ * ellenőrzi. Ha a beküldött sorok száma a korlát fölött van, egy sort sem olvas (a szerkesztő ennél többet
+ * nem küld; a sok kulcsos kérés így sem lassítja a feldolgozást).
+ */
+function sorok<L extends SorLista>(fd: FormData, lista: L, errors: MezoHibak): SorTipusok[L][] {
+  const indexek = sorIndexek(fd, lista);
+  if (indexek.length > SOR_MAX[lista]) {
+    formHiba(errors, `Legfeljebb ${SOR_MAX[lista]} ${SOR_EGYSEG[lista]} adható meg.`);
+    return [];
   }
-  if (eredmeny.length > SOR_MAX[lista]) errors.form = `Legfeljebb ${SOR_MAX[lista]} ${SOR_EGYSEG[lista]} adható meg.`;
+  const mezok = Object.entries(SOR_MEZOK[lista]) as [string, SorMezoSzabaly][];
+  const eredmeny: SorTipusok[L][] = [];
+  for (const i of indexek) {
+    const ertekek = mezok.map(([kulcs, sz]) => ({ kulcs, sz, v: mezo(fd, `${lista}.${i}.${kulcs}`) }));
+    if (ertekek.every((e) => e.v === '')) continue;
+    const sor: Record<string, string> = {};
+    for (const { kulcs, sz, v } of ertekek) {
+      const id = `${lista}.${i}.${kulcs}`;
+      sor[kulcs] = sz.url ? webcim(v, id, sz.cimke, Boolean(sz.kotelezo), errors) : szoveg(v, id, sz.cimke, sz.max, Boolean(sz.kotelezo), errors);
+    }
+    // A `SOR_MEZOK` a sortípus minden mezőjét kimerítően felsorolja, ezért a sor teljes.
+    eredmeny.push(sor as unknown as SorTipusok[L]);
+  }
   return eredmeny;
-}
-
-/** A darabszám-hiba szövegéhez. */
-const SOR_EGYSEG: Record<keyof typeof SOR_MAX, string> = {
-  szakaszok: 'szakasz', programok: 'program', linkek: 'link', sorok: 'listasor',
-};
-
-const SZAKASZ_MEZOK: readonly SorMezo<Szakasz>[] = [
-  { kulcs: 'cim', cimke: 'Cím', max: SZAKASZ_CIM_MAX, kotelezo: true },
-  { kulcs: 'szoveg', cimke: 'Szöveg', max: SZOVEG_MAX, kotelezo: true },
-];
-const PROGRAM_MEZOK: readonly SorMezo<Program>[] = [
-  { kulcs: 'nev', cimke: 'Név', max: NEV_MAX, kotelezo: true },
-  { kulcs: 'leiras', cimke: 'Leírás', max: PROGRAM_LEIRAS_MAX },
-  { kulcs: 'url', cimke: 'Webcím', max: URL_MAX, url: true },
-];
-const LINK_MEZOK: readonly SorMezo<HasznosLink>[] = [
-  { kulcs: 'felirat', cimke: 'Felirat', max: FELIRAT_MAX, kotelezo: true },
-  { kulcs: 'url', cimke: 'Webcím', max: URL_MAX, kotelezo: true, url: true },
-];
-const LISTA_SOR_MEZOK: readonly SorMezo<ListaSor>[] = [
-  { kulcs: 'nev', cimke: 'Név', max: NEV_MAX, kotelezo: true },
-  { kulcs: 'megjegyzes', cimke: 'Megjegyzés', max: MEGJEGYZES_MAX },
-  { kulcs: 'url', cimke: 'Webcím', max: URL_MAX, url: true },
-];
-
-/** Egy szöveges mező: kötelezőség és hossz; a hibát az `errors`-ba írja, az értéket mindig visszaadja. */
-function szoveg(fd: FormData, kulcs: string, cimke: string, max: number, errors: MezoHibak, kotelezo = false): string {
-  const v = mezo(fd, kulcs);
-  if (kotelezo && !v) errors[kulcs] = `${cimke} megadása kötelező.`;
-  else if (v.length > max) errors[kulcs] = `${cimke}: legfeljebb ${max} karakter.`;
-  return v;
 }
 
 /** A szerkesztő űrlapja; a `tipus` a meglévő kártyáé (szerkesztés) vagy a rejtett mezőé (létrehozás). */
 export function validalKartya(fd: FormData, tipus: KartyaTipus): ParseResult<KartyaAdat> {
   const errors: MezoHibak = {};
+  const C = KARTYA_CIMKEK;
   const kategoria = mezo(fd, 'kategoria');
   if (!isKategoriaSlug(kategoria)) errors.kategoria = 'Válassz kategóriát.';
-  const nev = szoveg(fd, 'nev', 'Név', NEV_MAX, errors, true);
-  const rovidites = szoveg(fd, 'rovidites', 'Rövidítés', ROVIDITES_MAX, errors);
-  const osszefoglalo = szoveg(fd, 'osszefoglalo', 'Összefoglaló', OSSZEFOGLALO_MAX, errors, true);
-  const honlapNyers = mezo(fd, 'honlap');
-  let honlap: string | null = null;
-  if (honlapNyers) {
-    honlap = normalizalUrl(honlapNyers);
-    if (honlap === null) errors.honlap = URL_HIBA;
-  }
-  const linkek = sorok(fd, 'linkek', LINK_MEZOK, errors);
+  const nev = szoveg(mezo(fd, 'nev'), 'nev', NEV_CIMKE[tipus], NEV_MAX, true, errors);
+  const rovidites = szoveg(mezo(fd, 'rovidites'), 'rovidites', C.rovidites, ROVIDITES_MAX, false, errors);
+  const osszefoglalo = szoveg(mezo(fd, 'osszefoglalo'), 'osszefoglalo', OSSZEFOGLALO_CIMKE[tipus], OSSZEFOGLALO_MAX, true, errors);
+  const honlap = webcim(mezo(fd, 'honlap'), 'honlap', C.honlap, false, errors);
+  const linkek = sorok(fd, 'linkek', errors);
 
   let torzs: KartyaTorzs;
   if (tipus === 'intezmeny') {
-    const email = szoveg(fd, 'email', 'E-mail', EMAIL_MAX, errors);
-    if (email && !errors.email && !EMAIL_RE.test(email)) errors.email = 'Érvényes e-mail-címet adj meg.';
+    const email = szoveg(mezo(fd, 'email'), 'email', C.email, EMAIL_MAX, false, errors);
+    if (email && !errors.email && !EMAIL_RE.test(email)) errors.email = 'Érvénytelen e-mail cím.';
     torzs = {
       tipus,
       tartalom: {
-        profil: szoveg(fd, 'profil', 'Profil', SZOVEG_MAX, errors),
-        tevekenyseg: szoveg(fd, 'tevekenyseg', 'Tevékenység', SZOVEG_MAX, errors),
+        profil: szoveg(mezo(fd, 'profil'), 'profil', C.profil, SZOVEG_MAX, false, errors),
+        tevekenyseg: szoveg(mezo(fd, 'tevekenyseg'), 'tevekenyseg', C.tevekenyseg, SZOVEG_MAX, false, errors),
         kapcsolat: {
           email,
-          telefon: szoveg(fd, 'telefon', 'Telefon', TELEFON_MAX, errors),
-          cim: szoveg(fd, 'cim', 'Cím', CIM_MAX, errors),
+          telefon: szoveg(mezo(fd, 'telefon'), 'telefon', C.telefon, TELEFON_MAX, false, errors),
+          cim: szoveg(mezo(fd, 'cim'), 'cim', C.cim, CIM_MAX, false, errors),
         },
-        szakaszok: sorok(fd, 'szakaszok', SZAKASZ_MEZOK, errors),
-        programok: sorok(fd, 'programok', PROGRAM_MEZOK, errors),
+        szakaszok: sorok(fd, 'szakaszok', errors),
+        programok: sorok(fd, 'programok', errors),
         linkek,
       },
     };
   } else {
-    torzs = { tipus, tartalom: { sorok: sorok(fd, 'sorok', LISTA_SOR_MEZOK, errors), linkek } };
+    torzs = { tipus, tartalom: { sorok: sorok(fd, 'sorok', errors), linkek } };
   }
   if (Object.keys(errors).length > 0 || !isKategoriaSlug(kategoria)) return { ok: false, errors };
-  return { ok: true, data: { kategoria, nev, rovidites: rovidites || null, osszefoglalo, honlap, ...torzs } };
+  return { ok: true, data: { kategoria, nev, rovidites: rovidites || null, osszefoglalo, honlap: honlap || null, ...torzs } };
 }

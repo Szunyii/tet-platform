@@ -91,7 +91,11 @@ function kivagas(szoveg: string, index: number): string {
 
 export interface Talalat {
   kartya: Kartya;
-  /** Hol talált (pl. „Programok”, egy szakasz címe); üres, ha csak a névben vagy a rövidítésben. */
+  /**
+   * Hol talált: „Összefoglaló”, „Profil”, „Tevékenység”, „Programok”, „Lista”, „Hasznos linkek”, egy szakasz
+   * címe (a szakasz szövegére talált) vagy „Szakasz” (a címére); üres, ha csak a névben vagy a rövidítésben (vagy
+   * – csak kézzel módosított adatnál – egy cím nélküli szakasz szövegében).
+   */
   hol: string;
   /** Rövid kivágás a találat körül; ha csak a névben talált, az összefoglaló eleje. */
   reszlet: string;
