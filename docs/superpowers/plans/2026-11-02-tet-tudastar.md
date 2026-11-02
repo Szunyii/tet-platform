@@ -400,6 +400,9 @@ export const SOR_MAX: Record<SorLista, number> = { szakaszok: 12, programok: 30,
 /** A lista egy sorának neve (a szerkesztő sorcímkéje, a „+ Új …” gomb és a darabszám-hiba szövege). */
 export const SOR_EGYSEG: Record<SorLista, string> = { szakaszok: 'szakasz', programok: 'program', linkek: 'link', sorok: 'sor' };
 
+/** A formázható szöveges mezők súgója a szerkesztőben: a megjelenítés két szabálya (lib/tudastar-szoveg.ts). */
+export const SZOVEG_SUGO = 'Üres sor: új bekezdés · „- ” kezdetű sor: felsorolás.';
+
 /** Egy sor-mező szabálya: a szerkesztő és a validátor közös forrása. */
 export interface SorMezoSzabaly {
   cimke: string;
@@ -424,7 +427,7 @@ export const SOR_MEZOK: { [L in SorLista]: { [K in keyof SorTipusok[L]]-?: SorMe
   programok: {
     nev: { cimke: 'Név', max: NEV_MAX, kotelezo: true },
     url: { cimke: 'Webcím', max: URL_MAX, url: true },
-    leiras: { cimke: 'Egysoros leírás', max: PROGRAM_LEIRAS_MAX, tobbsoros: true },
+    leiras: { cimke: 'Egysoros leírás', max: PROGRAM_LEIRAS_MAX },
   },
   linkek: {
     felirat: { cimke: 'Felirat', max: FELIRAT_MAX, kotelezo: true },
@@ -2312,10 +2315,10 @@ export default async function KategoriaPage({ params }: { params: Promise<{ kate
           {admin && (
             <div className="ml-auto flex gap-2">
               <Link href={ujKartyaUrl(kategoria.slug, 'intezmeny')} className={cn(buttonVariants({ variant: 'outline' }))}>
-                + Új intézmény
+                <span aria-hidden>+</span> Új intézmény
               </Link>
               <Link href={ujKartyaUrl(kategoria.slug, 'lista')} className={cn(buttonVariants({ variant: 'outline' }))}>
-                + Új lista
+                <span aria-hidden>+</span> Új lista
               </Link>
             </div>
           )}
@@ -2409,28 +2412,24 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 6: Szerkesztő (új, szerkesztés, törlés)
 
 **Fájlok:**
-- Létrehoz: `app/(app)/tudastar/components/KartyaMezo.tsx`, `SorSzerkeszto.tsx`, `KartyaForm.tsx`, `KartyaTorles.tsx`; `app/(app)/tudastar/[kategoria]/uj/page.tsx`; `app/(app)/tudastar/[kategoria]/[slug]/szerkesztes/page.tsx`
+- Létrehoz: `app/(app)/tudastar/components/KartyaMezo.tsx`, `UrlapBlokk.tsx`, `SorSzerkeszto.tsx`, `KartyaForm.tsx`, `KartyaTorles.tsx`; `app/(app)/tudastar/[kategoria]/uj/page.tsx`; `app/(app)/tudastar/[kategoria]/[slug]/szerkesztes/page.tsx`
 - Módosít: `app/(app)/tudastar/actions.ts` (teljes csere)
 
-- [ ] **1. lépés: `app/(app)/tudastar/components/KartyaMezo.tsx`**
+- [ ] **1. lépés: `app/(app)/tudastar/components/KartyaMezo.tsx` és `UrlapBlokk.tsx`**
 
 ```tsx
 'use client';
 
-import type { ReactNode } from 'react';
 import { Mezo } from '../../../../components/form/Mezo';
 import { leiroAttr } from '../../../../components/form/MezoHiba';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../components/ui/card';
 import { Input } from '../../../../components/ui/input';
 import { Textarea } from '../../../../components/ui/textarea';
 import type { MezoHibak } from '../../../../lib/urlap';
 
-/** A szöveges mezők súgója: a megjelenítés két szabálya (lib/tudastar-szoveg.ts). */
-export const SZOVEG_SUGO = 'Üres sor: új bekezdés · „- ” kezdetű sor: felsorolás.';
-
 /**
  * A szerkesztő egy szöveges mezője (vezérelt): címke, opcionális látható súgósor, egy- vagy többsoros
- * vezérlő, hibasor. Az `id` = a `name` = a hiba kulcsa (egy űrlap van az oldalon). `szamlalo`: „n/max”.
+ * vezérlő, hibasor. Az `id` = a `name` = a hiba kulcsa (egy űrlap van az oldalon). `szamlalo`: „n/max” a mező alatt
+ * (az `aria-describedby` része, a felolvasó fókuszáláskor bemondja).
  */
 export function KartyaMezo({
   id, cimke, value, onChange, max, errors, opcionalis, tobbsoros, sorok = 4, sugo, szamlalo, placeholder, inputMode, className,
@@ -2450,31 +2449,38 @@ export function KartyaMezo({
   inputMode?: 'url' | 'email' | 'tel';
   className?: string;
 }) {
-  const attr = leiroAttr(errors, id, Boolean(sugo));
+  const szamlaloId = `${id}-szamlalo`;
+  const { 'aria-describedby': leirok, ...attr } = leiroAttr(errors, id, Boolean(sugo));
+  const describedby = [leirok, szamlalo && szamlaloId].filter(Boolean).join(' ') || undefined;
   return (
     <Mezo id={id} cimke={cimke} opcionalis={opcionalis} sugo={sugo} errors={errors} className={className}>
       {tobbsoros ? (
         <Textarea id={id} name={id} rows={sorok} maxLength={max} placeholder={placeholder} value={value}
-          onChange={(e) => onChange(e.target.value)} {...attr} />
+          onChange={(e) => onChange(e.target.value)} {...attr} aria-describedby={describedby} />
       ) : (
         <Input id={id} name={id} maxLength={max} autoComplete="off" inputMode={inputMode} placeholder={placeholder} value={value}
-          onChange={(e) => onChange(e.target.value)} {...attr} />
+          onChange={(e) => onChange(e.target.value)} {...attr} aria-describedby={describedby} />
       )}
       {szamlalo && (
-        <p className="text-right text-xs text-muted-foreground tabular-nums">
+        <p id={szamlaloId} className="text-right text-xs text-muted-foreground tabular-nums">
           {value.length}/{max}
         </p>
       )}
     </Mezo>
   );
 }
+```
 
-/** A szerkesztő egy blokkja: kártya címmel, opcionális leírással. */
+```tsx
+import type { ReactNode } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../components/ui/card';
+
+/** A szerkesztő egy blokkja: kártya címmel (2-es szint – az oldalon a fejléc h1-je fölötte az egyetlen címsor), opcionális leírással. */
 export function UrlapBlokk({ cim, leiras, children }: { cim: string; leiras?: string; children: ReactNode }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle role="heading" aria-level={3}>
+        <CardTitle role="heading" aria-level={2}>
           {cim}
         </CardTitle>
         {leiras && <CardDescription>{leiras}</CardDescription>}
@@ -2494,9 +2500,11 @@ import { ArrowDownIcon, ArrowUpIcon } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { Button } from '../../../../components/ui/button';
-import { SOR_EGYSEG, SOR_MAX, SOR_MEZOK, type SorLista, type SorMezoSzabaly, type SorTipusok } from '../../../../lib/tudastar-szotar';
+import {
+  SOR_EGYSEG, SOR_MAX, SOR_MEZOK, SZOVEG_SUGO, type SorLista, type SorMezoSzabaly, type SorTipusok,
+} from '../../../../lib/tudastar-szotar';
 import type { MezoHibak } from '../../../../lib/urlap';
-import { KartyaMezo, SZOVEG_SUGO } from './KartyaMezo';
+import { KartyaMezo } from './KartyaMezo';
 
 /** Egy sor az űrlapon; az `_id` stabil kliens-kulcs (a sorok mozognak és törölhetők), a mentésbe nem kerül. */
 export type SorAllapot<T> = T & { _id: number };
@@ -2531,6 +2539,12 @@ export function SorSzerkeszto<L extends SorLista>({
   const egyseg = SOR_EGYSEG[lista];
   const max = SOR_MAX[lista];
   const mezoId = (i: number, kulcs: string) => `${lista}.${i}.${kulcs}`;
+  // A gombok id-ja nem mezőnév-alakú (`.` helyett `-`), így egy későbbi `fel`/`le` nevű mezővel sem ütközhet.
+  const gombId = (i: number, irany: 'fel' | 'le') => `${lista}.${i}-${irany}`;
+  // Az egysoros mezők párosával állnak; ha páratlan sok van, az utolsó a teljes szélességet kapja.
+  const egysorosak = mezok.filter(([, sz]) => !sz.tobbsoros).map(([kulcs]) => kulcs);
+  const szeles = (kulcs: string, sz: SorMezoSzabaly) =>
+    sz.tobbsoros || (egysorosak.length % 2 === 1 && kulcs === egysorosak[egysorosak.length - 1]);
   const set = (id: number, kulcs: keyof SorTipusok[L], v: string) =>
     onChange(value.map((s) => (s._id === id ? { ...s, [kulcs]: v } : s)));
 
@@ -2555,8 +2569,8 @@ export function SorSzerkeszto<L extends SorLista>({
       [uj[i], uj[j]] = [uj[j], uj[i]];
       onChange(uj);
     });
-    const ugyanaz = document.getElementById(mezoId(j, irany < 0 ? 'fel' : 'le')) as HTMLButtonElement | null;
-    (ugyanaz && !ugyanaz.disabled ? ugyanaz : document.getElementById(mezoId(j, irany < 0 ? 'le' : 'fel')))?.focus();
+    const ugyanaz = document.getElementById(gombId(j, irany < 0 ? 'fel' : 'le')) as HTMLButtonElement | null;
+    (ugyanaz && !ugyanaz.disabled ? ugyanaz : document.getElementById(gombId(j, irany < 0 ? 'le' : 'fel')))?.focus();
   };
 
   return (
@@ -2581,16 +2595,16 @@ export function SorSzerkeszto<L extends SorLista>({
                 sugo={sz.formazott ? SZOVEG_SUGO : undefined}
                 placeholder={sz.url ? 'https://…' : undefined}
                 inputMode={sz.url ? 'url' : undefined}
-                className={sz.tobbsoros ? 'sm:col-span-2' : undefined}
+                className={szeles(kulcs, sz) ? 'sm:col-span-2' : undefined}
               />
             ))}
           </div>
           <div className="flex gap-1">
-            <Button id={mezoId(i, 'fel')} type="button" variant="outline" size="icon-sm" disabled={i === 0}
+            <Button id={gombId(i, 'fel')} type="button" variant="outline" size="icon-sm" disabled={i === 0}
               aria-label={`${i + 1}. ${egyseg} feljebb`} onClick={() => mozgat(i, -1)}>
               <ArrowUpIcon aria-hidden />
             </Button>
-            <Button id={mezoId(i, 'le')} type="button" variant="outline" size="icon-sm" disabled={i === value.length - 1}
+            <Button id={gombId(i, 'le')} type="button" variant="outline" size="icon-sm" disabled={i === value.length - 1}
               aria-label={`${i + 1}. ${egyseg} lejjebb`} onClick={() => mozgat(i, 1)}>
               <ArrowDownIcon aria-hidden />
             </Button>
@@ -2602,7 +2616,7 @@ export function SorSzerkeszto<L extends SorLista>({
       ))}
       <div className="flex items-center gap-2">
         <Button ref={hozzaadGomb} type="button" variant="outline" size="sm" disabled={value.length >= max} onClick={ujSor}>
-          + Új {egyseg}
+          <span aria-hidden>+</span> Új {egyseg}
         </Button>
         {value.length >= max && (
           <span className="text-xs text-muted-foreground">
@@ -2636,8 +2650,11 @@ import {
 } from '../../../../components/ui/alert-dialog';
 import { Button } from '../../../../components/ui/button';
 
-/** A kártya törlése megerősítéssel (a `RiportTorles` mintája); sikernél az action a kategória-oldalra irányít. */
-export function KartyaTorles({ nev, action }: { nev: string; action: MuveletAction }) {
+/**
+ * A kártya törlése megerősítéssel (a `RiportTorles` mintája); sikernél az action a kategória-oldalra irányít.
+ * `tiltva`: a szerkesztő mentése közben nem indítható (a mentés és a törlés ne versenyezzen).
+ */
+export function KartyaTorles({ nev, action, tiltva = false }: { nev: string; action: MuveletAction; tiltva?: boolean }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
@@ -2656,7 +2673,7 @@ export function KartyaTorles({ nev, action }: { nev: string; action: MuveletActi
 
   return (
     <>
-      <Button type="button" variant="destructive" onClick={() => setOpen(true)}>
+      <Button type="button" variant="destructive" disabled={tiltva} onClick={() => setOpen(true)}>
         Kártya törlése
       </Button>
       <AlertDialog
@@ -2677,7 +2694,8 @@ export function KartyaTorles({ nev, action }: { nev: string; action: MuveletActi
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={pending}>Mégse</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" disabled={pending} onClick={torol}>
+            {/* focusableWhenDisabled: törlés közben a fókusz a gombon marad (különben a body-ra esne). */}
+            <AlertDialogAction variant="destructive" disabled={pending} focusableWhenDisabled onClick={torol}>
               {pending ? 'Törlés…' : 'Törlés'}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -2702,13 +2720,14 @@ import { useMuveletForm, type FormAction, type MuveletAction } from '../../../..
 import { Button, buttonVariants } from '../../../../components/ui/button';
 import {
   CIM_MAX, EMAIL_MAX, KARTYA_CIMKEK, NEV_CIMKE, NEV_MAX, OSSZEFOGLALO_CIMKE, OSSZEFOGLALO_MAX, ROVIDITES_MAX,
-  SZOVEG_MAX, TELEFON_MAX, TIPUS_CIMKE, TUDASTAR_KATEGORIAK, URL_MAX, uresTartalom,
+  SZOVEG_MAX, SZOVEG_SUGO, TELEFON_MAX, TIPUS_CIMKE, TUDASTAR_KATEGORIAK, URL_MAX, uresTartalom,
   type HasznosLink, type Kartya, type KartyaTipus, type ListaSor, type Program, type Szakasz,
 } from '../../../../lib/tudastar-szotar';
 import { cn } from '../../../../lib/utils';
-import { KartyaMezo, SZOVEG_SUGO, UrlapBlokk } from './KartyaMezo';
+import { KartyaMezo } from './KartyaMezo';
 import { KartyaTorles } from './KartyaTorles';
 import { SorSzerkeszto, sorokbol, type SorAllapot } from './SorSzerkeszto';
+import { UrlapBlokk } from './UrlapBlokk';
 
 /** Az űrlap vezérelt állapota: mindkét típus mezői (a nem használtak üresek és nem renderelődnek). */
 interface Urlap {
@@ -2766,6 +2785,9 @@ export function KartyaForm(props: KartyaFormProps) {
   const [state, formAction, pending] = useMuveletForm(action);
   const errors = state.errors ?? {};
   const [u, setU] = useState(() => kezdoUrlap(kartya, props.kategoria ?? ''));
+  // A verzió a tartalommal együtt, a megnyitáskor rögzül: egy helyben újrarenderelt oldal (pl. évváltás a fejlécben)
+  // friss `kartya`-t adhat, a mezők viszont a régi tartalmat őrzik – az élő verzió a közbeni módosítást elfedné.
+  const [verzio] = useState(() => kartya?.updatedAt.getTime());
   const set = <K extends keyof Urlap>(k: K) => (v: Urlap[K]) => setU((p) => ({ ...p, [k]: v }));
   const mezo = (k: SzovegKulcs) => ({ id: k, value: u[k], onChange: set(k), errors });
   const intezmeny = tipus === 'intezmeny';
@@ -2778,7 +2800,7 @@ export function KartyaForm(props: KartyaFormProps) {
       ) : (
         <>
           <input type="hidden" name="id" value={props.kartya.id} />
-          <input type="hidden" name="verzio" value={props.kartya.updatedAt.getTime()} />
+          <input type="hidden" name="verzio" value={verzio} />
         </>
       )}
       <UrlapBlokk
@@ -2834,7 +2856,7 @@ export function KartyaForm(props: KartyaFormProps) {
       </UrlapBlokk>
 
       <div className="flex flex-wrap items-center gap-3">
-        {props.mod === 'szerkesztes' && <KartyaTorles nev={props.kartya.nev} action={props.torlesAction} />}
+        {props.mod === 'szerkesztes' && <KartyaTorles nev={props.kartya.nev} action={props.torlesAction} tiltva={pending} />}
         <MezoHiba mezo="form" errors={errors} alert />
         <div className="ml-auto flex gap-2">
           {/* Link + buttonVariants (nem Button render={<Link/>}): a Base UI Button natív <button>-t vár. */}
@@ -2901,7 +2923,9 @@ export async function mentKartyaAction(_prev: MuveletState, formData: FormData):
   let slug: string;
   try {
     if (meglevo) {
-      const eredmeny = updateKartya(meglevo.id, parsed.data, Number(mezo(formData, 'verzio')), session.userId);
+      const verzio = Number(mezo(formData, 'verzio'));
+      if (!Number.isInteger(verzio) || verzio <= 0) return { errors: { form: 'Hibás kérés: hiányzik a kártya verziója.' } };
+      const eredmeny = updateKartya(meglevo.id, parsed.data, verzio, session.userId);
       if (eredmeny === 'nincs') return { errors: { form: TOROLVE } };
       if (eredmeny === 'elavult') return { errors: { form: ELAVULT } };
       slug = meglevo.slug;
@@ -3018,7 +3042,8 @@ export default async function KartyaSzerkesztesPage({ params }: { params: Promis
         elemek={[
           { felirat: 'TéT Tudástár', href: tudastarUrl() },
           { felirat: `${kategoria.szam}. ${kategoria.rovidCim}`, href: tudastarUrl(kategoria.slug) },
-          { felirat: `${kartya.rovidites ?? kartya.nev} szerkesztése` },
+          { felirat: kartya.rovidites ?? kartya.nev, href: kartyaUrl(kartya) },
+          { felirat: 'Szerkesztés' },
         ]}
       />
       <KartyaForm
@@ -3041,7 +3066,7 @@ Várt: a tsc üres; a build route-listájában `/tudastar/[kategoria]/uj` és `/
 - [ ] **9. lépés: commit**
 
 ```bash
-git add "app/(app)/tudastar/actions.ts" "app/(app)/tudastar/[kategoria]/uj/page.tsx" "app/(app)/tudastar/[kategoria]/[slug]/szerkesztes/page.tsx" "app/(app)/tudastar/components/KartyaMezo.tsx" "app/(app)/tudastar/components/SorSzerkeszto.tsx" "app/(app)/tudastar/components/KartyaForm.tsx" "app/(app)/tudastar/components/KartyaTorles.tsx"
+git add "app/(app)/tudastar/actions.ts" "app/(app)/tudastar/[kategoria]/uj/page.tsx" "app/(app)/tudastar/[kategoria]/[slug]/szerkesztes/page.tsx" "app/(app)/tudastar/components/KartyaMezo.tsx" "app/(app)/tudastar/components/UrlapBlokk.tsx" "app/(app)/tudastar/components/SorSzerkeszto.tsx" "app/(app)/tudastar/components/KartyaForm.tsx" "app/(app)/tudastar/components/KartyaTorles.tsx"
 git commit -m "feat(tudastar): kártya-szerkesztő – dinamikus sorok, verziós mentés, törlés megerősítéssel
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -3052,7 +3077,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 7: Dokumentáció (CLAUDE.md, spec), az eldobható scriptek törlése
 
 **Fájlok:**
-- Módosít: `CLAUDE.md`, `README.md`, `docs/superpowers/specs/2026-11-02-tet-tudastar-design.md`, és apró review-javítások: `lib/tudastar-szotar.ts`, `lib/urlap.ts`, `lib/tudastar-validacio.ts`, `app/(app)/tudastar/components/KategoriaMenu.tsx`, `TudastarKartya.tsx`
+- Módosít: `CLAUDE.md`, `README.md`, `docs/superpowers/specs/2026-11-02-tet-tudastar-design.md`
 - Töröl (nem commitolt fájlok): `scripts/_proba-tudastar.ts`, `scripts/_proba-tudastar-validacio.ts`, `scripts/_proba-tudastar-db.ts`
 
 - [ ] **1. lépés: `CLAUDE.md` – „Mi ez” bekezdés**
@@ -3101,59 +3126,6 @@ Ellenőrzés: `grep -n "knowledge" README.md` – üres.
 
 A spec állapot-sorát cseréld: `Állapot: jóváhagyott terv, megvalósítás előtt` → `Állapot: az A fázis (funkció) megvalósítva; a B fázis (kezdő tartalom) folyamatban`. A spec végére új szakasz `## Tervezéskori pontosítások` címmel, a terv végi „Eltérések a spectől” lista pontjaival (szó szerint átvehető).
 
-- [ ] **4b. lépés: apró kódjavítások a 2. és az 5. task záró review-jából**
-
-`lib/tudastar-szotar.ts` – a `export type SorLista = keyof SorTipusok;` sor után:
-
-```ts
-// Típusszintű őr: a dinamikus listák minden mezője szöveg (a validátor és a sorszerkesztő stringként kezeli,
-// a `SOR_MEZOK` kimerítőségére épülő cast így teljes és helyes típusú sort ad). Nem szöveges mezőnél a
-// `MindSzoveg` `boolean` lesz, és az `Igaz<…>` fordítási hibát ad.
-type MindSzoveg = { [L in SorLista]: SorTipusok[L][keyof SorTipusok[L]] extends string ? true : false }[SorLista];
-type Igaz<T extends true> = T;
-export type SorMezokSzovegesek = Igaz<MindSzoveg>;
-```
-
-`lib/urlap.ts` – a `nevelovel` doc-kommentje:
-
-```ts
-/**
- * A mezőcímke névelővel, mondat elejére: „Név” → „A név”, „Összefoglaló” → „Az összefoglaló”. Közönséges,
- * nagybetűvel kezdődő szóra való (az első betűt kisbetűsíti); rövidítéssel, számmal vagy tulajdonnévvel kezdődő
- * címkére nem.
- */
-```
-
-`lib/tudastar-validacio.ts` – a `webcim` a szabály korlátját kapja (a `honlap`-nál `URL_MAX`), és két komment pontosabb:
-
-```ts
-/** Webcím: üresen `''` (vagy hiba, ha kötelező); különben a normalizált URL, hibánál a beírt érték. */
-function webcim(v: string, id: string, cimke: string, max: number, kotelezo: boolean, errors: MezoHibak): string {
-  if (!v || v.length > max) return szoveg(v, id, cimke, max, kotelezo, errors);
-  const url = normalizalUrl(v);
-  if (url === null) errors[id] = URL_HIBA;
-  else if (url.length > max) errors[id] = `${nevelovel(cimke)} kódolva (az ékezetes betűk és a szóközök kódolásával) hosszabb ${max} karakternél.`;
-  else return url;
-  return v;
-}
-
-// A sorindex legfeljebb 4 jegyű, vezető nulla nélkül (a `SOR_MAX` ennél jóval kisebb); a hosszabb indexű mezőt nem olvassuk.
-```
-
-és a két hívás: `webcim(v, id, sz.cimke, sz.max, Boolean(sz.kotelezo), errors)`, illetve `webcim(mezo(fd, 'honlap'), 'honlap', C.honlap, URL_MAX, false, errors)`.
-
-`app/(app)/tudastar/components/KategoriaMenu.tsx` – a görgetődoboz párnát kap a fókuszgyűrűknek, az aktív elem kerete belső (az 5. task záró review-ja):
-
-```tsx
-    <div className="hidden flex-col gap-3 xl:sticky xl:top-[5.5rem] xl:-m-1 xl:flex xl:max-h-[calc(100dvh-7.5rem)] xl:overflow-y-auto xl:p-1">
-```
-
-és `aktiv && 'bg-background font-medium ring-1 ring-foreground/10 ring-inset hover:bg-background',`; a doc-komment utolsó mondata: „A menü a szürke lapon áll, ezért a kiemelés fehér háttér + belső keret (a `bg-muted` itt nem látszana); a görgetődoboz 1-es párnája a fókuszgyűrűknek ad helyet (a görgető elem a szélén levágná őket).”
-
-`app/(app)/tudastar/components/TudastarKartya.tsx` – a „Részletek” link neve szóköz nélkül: `Részletek<span className="sr-only">: {kartya.nev}</span> <span aria-hidden>→</span>`.
-
-Ellenőrzés: `npx tsc --noEmit` üres, a két `_proba` script „rendben”. Ezek a fájlok is a 6. lépés commitjába kerülnek.
-
 - [ ] **5. lépés: az eldobható scriptek törlése**
 
 ```bash
@@ -3161,13 +3133,13 @@ rm scripts/_proba-tudastar.ts scripts/_proba-tudastar-validacio.ts scripts/_prob
 git status --short
 ```
 
-Várt: a `git status` csak a `CLAUDE.md`-t, a `README.md`-t, a spec-et és a 4b. lépés öt fájlját mutatja módosítottként (a `data/tet.db` nem lehet a listában módosítottként – ha mégis, ne add hozzá).
+Várt: a `git status` csak a `CLAUDE.md`-t, a `README.md`-t és a spec-et mutatja módosítottként (a `data/tet.db` nem lehet a listában módosítottként – ha mégis, ne add hozzá).
 
 - [ ] **6. lépés: commit**
 
 ```bash
-git add CLAUDE.md README.md docs/superpowers/specs/2026-11-02-tet-tudastar-design.md lib/tudastar-szotar.ts lib/urlap.ts lib/tudastar-validacio.ts "app/(app)/tudastar/components/KategoriaMenu.tsx" "app/(app)/tudastar/components/TudastarKartya.tsx"
-git commit -m "docs(tudastar): CLAUDE.md TéT Tudástár szakasz, a spec tervezéskori pontosításai; apró review-javítások (sormező-őr, webcim-korlát)
+git add CLAUDE.md README.md docs/superpowers/specs/2026-11-02-tet-tudastar-design.md
+git commit -m "docs(tudastar): CLAUDE.md és README TéT Tudástár szakasz, a spec tervezéskori pontosításai
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
@@ -3715,3 +3687,4 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 21. **Komponensek:** az ↑/↓ gombok a `KartyaLablec`-ben vannak (nincs külön `MozgatoGombok`); a spec fájltáblájában nem szereplő, de a terv szerinti komponensek: `Morzsa`, `KulsoLink` (+ `LinkLista`, `TetelLista`), `TudastarElrendezes`, `IntezmenyReszlet`, `KeresoBemenet`, `KartyaMezo`/`UrlapBlokk`.
 22. **Revalidálás:** minden tudástár-action `revalidatePath('/', 'layout')`-ot hív (a kódbázis konvenciója); a spec `revalidatePath('/tudastar', 'layout')`-ja a `(app)` route group miatt egyetlen oldalra sem illeszkedne (a tag `/(app)/tudastar/…`), csak a Next mostani durva server-action-revalidálása miatt működne.
 23. **A jobb menü `xl`-től:** a 238 px-es oldalsáv mellett `lg`-n a tartalomnak ~450 px maradna, ezért a menü `xl` fölött jelenik meg (alatta a kategória-választó); a Profil/Kapcsolat két hasábja is `xl`-től. A menü kiemelése fehér háttér + keret (a szürke lapon a `bg-muted` nem látszik), a kategória-oldali kártya-linkek sima `<a>` horgonyok.
+24. **A szerkesztő apróságai:** a Mentés sima `Button` a `useMuveletForm` pendingjével (a `BlokkForm`/`RiportForm` mintája, nem `KuldGomb`); a formázási súgósor a közös `Mezo` szerint a mező fölött áll; az Alapadatokban a honlap az összefoglaló előtt, a Programok és Sorok mezőiben a webcím a leírás/megjegyzés előtt áll (`SOR_MEZOK` sorrendje); a hozzáadás-gomb felirata listánként „+ Új szakasz / program / link / sor”.
