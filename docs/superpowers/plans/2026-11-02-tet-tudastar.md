@@ -1101,13 +1101,15 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 ```ts
 import { sql } from 'drizzle-orm';
-import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { check, index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { user } from './auth';
 import type { KartyaTartalom } from '../../lib/tudastar-szotar';
 
 // TéT Tudástár: egy sor = egy kártya. A `kategoria` a lib/tudastar-szotar.ts TUDASTAR_KATEGORIAK slugja,
 // a `tipus` 'intezmeny' | 'lista' (létrehozás után nem változik). A `tartalom` típusonként más alakú JSON;
 // olvasáskor a normalizalTartalom() egészíti ki (régi sor, új almező). A `szerzo_id` az utolsó módosító.
+// A CHECK-ek a kézi DB-módosítás ellen védenek: hibás JSON-nál a Drizzle JSON.parse-a minden tudástár-oldalt
+// eldöntené (a normalizáló ezt már nem tudja elkapni). A kategóriára nincs CHECK, mert a lista a kódban él.
 export const tudastarKartya = sqliteTable(
   'tudastar_kartya',
   {
@@ -1133,6 +1135,8 @@ export const tudastarKartya = sqliteTable(
   (table) => [
     uniqueIndex('tudastar_kartya_slug_idx').on(table.slug),
     index('tudastar_kartya_kategoria_idx').on(table.kategoria, table.sorrend),
+    check('tudastar_kartya_tipus_check', sql`${table.tipus} in ('intezmeny', 'lista')`),
+    check('tudastar_kartya_tartalom_check', sql`json_valid(${table.tartalom})`),
   ],
 );
 ```
@@ -1163,7 +1167,9 @@ CREATE TABLE `tudastar_kartya` (
 	`szerzo_id` text,
 	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
 	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
-	FOREIGN KEY (`szerzo_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE set null
+	FOREIGN KEY (`szerzo_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE set null,
+	CONSTRAINT "tudastar_kartya_tipus_check" CHECK("tudastar_kartya"."tipus" in ('intezmeny', 'lista')),
+	CONSTRAINT "tudastar_kartya_tartalom_check" CHECK(json_valid("tudastar_kartya"."tartalom"))
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `tudastar_kartya_slug_idx` ON `tudastar_kartya` (`slug`);--> statement-breakpoint
@@ -1184,13 +1190,14 @@ Ha a sorszám nem 0012 (közben más migráció került a `main`-re), a később
 import assert from 'node:assert/strict';
 import { eq } from 'drizzle-orm';
 import { db } from '../db';
-import { user } from '../db/schema';
+import { tudastarKartya, user } from '../db/schema';
 import { createKartya, deleteKartya, getKartya, listKartyak, mozgatKartya, updateKartya } from '../db/queries/tudastar';
 import { TUDASTAR_KATEGORIAK, uresTartalom, type KartyaAdat } from '../lib/tudastar-szotar';
 
 const url = process.env.DATABASE_URL ?? '';
 assert.ok(url && !url.endsWith('data/tet.db'), 'csak DB-másolaton fut (DATABASE_URL)');
 const admin = db.select({ id: user.id }).from(user).where(eq(user.role, 'admin')).get();
+const sqlite = db.$client;
 assert.ok(admin, 'nincs admin a DB-ben');
 
 const lista = (nev: string, kategoria: KartyaAdat['kategoria'] = 'egyetemek'): KartyaAdat => ({
@@ -1215,6 +1222,7 @@ assert.deepEqual(sorrendek, [...sorrendek].sort((a, b) => a - b), 'a 9 kategóri
 // mozgatás: az updatedAt nem változik
 const a = most.at(-3)!;
 const b = most.at(-2)!;
+const c = most.at(-1)!;
 mozgatKartya(b.id, 'fel');
 const utana = egyetemek();
 assert.deepEqual(utana.slice(-3).map((k) => k.slug), ['proba-2', 'proba', 'uj-2']);
@@ -1232,8 +1240,32 @@ assert.equal(a2.nev, 'Próba A2');
 assert.equal(updateKartya(a.id, lista('Próba A', 'befektetok'), a2.updatedAt.getTime(), admin.id), 'ok');
 assert.equal(listKartyak().filter((k) => k.kategoria === 'befektetok').at(-1)!.id, a.id);
 
+// a hívó objektumának többi kulcsa nem kerül a DB-be: a slug marad, az updatedAt lép (a verzió nem kerülhető meg)
+const a3 = getKartya(a.id)!;
+const varakozas2 = Date.now() + 5;
+while (Date.now() < varakozas2);
+const elavultObjektum = { ...a3, nev: 'Próba A4', slug: 'eltereles' }; // Kartya: a típus engedi (KartyaAdat-ként adható át)
+assert.equal(updateKartya(a.id, elavultObjektum, a3.updatedAt.getTime(), admin.id), 'ok');
+const a4 = getKartya(a.id)!;
+assert.equal(a4.slug, a3.slug);
+assert.ok(a4.updatedAt.getTime() > a3.updatedAt.getTime(), 'a mentés lépteti az updatedAt-ot');
+assert.equal(updateKartya(a.id, lista('x'), a3.updatedAt.getTime(), admin.id), 'elavult');
+assert.throws(() => updateKartya(a.id, { ...lista('x'), tipus: 'intezmeny', tartalom: uresTartalom('intezmeny') }, a4.updatedAt.getTime(), admin.id), /típusa nem változhat/);
+assert.throws(() => createKartya(lista('x'), '', admin.id), /érvénytelen slug-alap/);
+
+// azonos sorrend-értékek (kézi módosításból): a mozgatás újraszámoz, és cserél
+db.update(tudastarKartya).set({ sorrend: 50 }).where(eq(tudastarKartya.kategoria, 'egyetemek')).run();
+const azonosak = egyetemek().map((k) => k.id);
+mozgatKartya(azonosak[1], 'fel');
+assert.deepEqual(egyetemek().map((k) => k.id), [azonosak[1], azonosak[0], ...azonosak.slice(2)]);
+assert.deepEqual(egyetemek().map((k) => k.sorrend), azonosak.map((_, i) => i + 1));
+
+// a CHECK-ek: hibás JSON és ismeretlen típus nem kerülhet a táblába
+assert.throws(() => sqlite.prepare("update tudastar_kartya set tartalom = '{' where id = ?").run(a.id), /CHECK constraint failed/);
+assert.throws(() => sqlite.prepare("update tudastar_kartya set tipus = 'x' where id = ?").run(a.id), /CHECK constraint failed/);
+
 // törlés
-for (const k of [a, b, egyetemek().at(-1)!]) assert.ok(deleteKartya(k.id));
+for (const k of [a, b, c]) assert.ok(deleteKartya(k.id));
 assert.equal(updateKartya(a.id, lista('x'), 0, admin.id), 'nincs');
 assert.equal(egyetemek().length, kezdo);
 console.log('tudástár DB: minden ellenőrzés rendben');
@@ -1252,17 +1284,24 @@ Várt: a migráció lefut a másolaton, a script hibát ad: a `../db/queries/tud
 
 ```ts
 import 'server-only';
-import { and, asc, desc, eq, gt, like, lt, max, or, sql } from 'drizzle-orm';
+import { asc, eq, like, max, or, sql } from 'drizzle-orm';
 import { cache } from 'react';
 import { db } from '../index';
 import { tudastarKartya } from '../schema';
-import { szabadSlug } from '../../lib/slug';
+import { SLUG_RE, szabadSlug } from '../../lib/slug';
 import {
-  FOGLALT_SLUGOK, isKategoriaSlug, kategoriaIndex, normalizalTartalom, type Kartya, type KartyaAdat,
+  FOGLALT_SLUGOK, isKategoriaSlug, kategoriaIndex, normalizalTartalom, type Kartya, type KartyaAdat, type KategoriaSlug,
 } from '../../lib/tudastar-szotar';
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 type Sor = typeof tudastarKartya.$inferSelect;
+
+// Az írás előtti olvasás miatt `immediate`: egy másik folyamat (pl. migráció ugyanazon a DB-n) írása így a
+// busy_timeout-ig várakoztat, nem SQLITE_BUSY_SNAPSHOT-tal bukik el.
+const IRAS = { behavior: 'immediate' } as const;
+
+/** A kártya-sorrend a kategórián belül: a megjelenítéssel azonos (sorrend, név, id) – a mozgatás is ezt követi. */
+const KATEGORIA_SORREND = [asc(tudastarKartya.sorrend), asc(tudastarKartya.nev), asc(tudastarKartya.id)];
 
 /** DB-sor → kártya; ismeretlen kategória vagy típus (csak kézi DB-módosításból lehet) → null, logolva. */
 function kartyabol(r: Sor): Kartya | null {
@@ -1281,11 +1320,11 @@ function kartyabol(r: Sor): Kartya | null {
 }
 
 /**
- * Minden kártya a 9 kategória sorrendjében, azon belül `sorrend` szerint. React.cache: a page egy kérésen
+ * Minden kártya a 9 kategória sorrendjében, azon belül a `KATEGORIA_SORREND` szerint. React.cache: a page egy kérésen
  * belül egyszer kérdez le; a visszaadott tömböt ne mutáld.
  */
 export const listKartyak = cache((): Kartya[] => {
-  const sorok = db.select().from(tudastarKartya).orderBy(asc(tudastarKartya.sorrend), asc(tudastarKartya.nev)).all();
+  const sorok = db.select().from(tudastarKartya).orderBy(...KATEGORIA_SORREND).all();
   return sorok
     .map(kartyabol)
     .filter((k): k is Kartya => k !== null)
@@ -1298,13 +1337,20 @@ export function getKartya(id: string): Kartya | null {
 }
 
 /** A kategória következő szabad sorrend-értéke (a végére). */
-function kovetkezoSorrend(tx: Tx, kategoria: string): number {
+function kovetkezoSorrend(tx: Tx, kategoria: KategoriaSlug): number {
   const r = tx.select({ m: max(tudastarKartya.sorrend) }).from(tudastarKartya).where(eq(tudastarKartya.kategoria, kategoria)).get();
   return (r?.m ?? 0) + 1;
 }
 
+/** A tárolt mezők a validált adatból, explicit felsorolással (a hívó objektumának többi kulcsa nem kerül a DB-be). */
+function taroltMezok(adat: KartyaAdat) {
+  const { kategoria, nev, rovidites, osszefoglalo, honlap, tartalom } = adat;
+  return { kategoria, nev, rovidites, osszefoglalo, honlap, tartalom };
+}
+
 /** Új kártya a kategória végére; a slug az `alap`-ból, ütközésnél `-2`, `-3`… utótaggal. Visszaadja a slugot. */
 export function createKartya(adat: KartyaAdat, alap: string, szerzoId: string): string {
+  if (!SLUG_RE.test(alap)) throw new Error(`[tudastar] érvénytelen slug-alap: ${alap}`);
   return db.transaction((tx) => {
     const foglalt = new Set(
       tx
@@ -1316,32 +1362,42 @@ export function createKartya(adat: KartyaAdat, alap: string, szerzoId: string): 
     );
     const slug = szabadSlug(alap, (s) => foglalt.has(s) || FOGLALT_SLUGOK.includes(s));
     tx.insert(tudastarKartya)
-      .values({ id: crypto.randomUUID(), slug, sorrend: kovetkezoSorrend(tx, adat.kategoria), szerzoId, ...adat })
+      .values({
+        ...taroltMezok(adat),
+        id: crypto.randomUUID(),
+        tipus: adat.tipus,
+        slug,
+        sorrend: kovetkezoSorrend(tx, adat.kategoria),
+        szerzoId,
+      })
       .run();
     return slug;
-  });
+  }, IRAS);
 }
 
 export type ModositasEredmeny = 'ok' | 'nincs' | 'elavult';
 
 /**
  * A kártya mentése, ha a `verzio` (a szerkesztő megnyitásakori `updatedAt`, ms) még érvényes: különben
- * `elavult` (közben más mentette), törölt kártyánál `nincs`. Kategóriaváltáskor a kártya az új kategória
- * végére kerül; különben a `sorrend` nem változik.
+ * `elavult` (közben más mentette), törölt kártyánál `nincs`. Csak a tartalmi mezőket írja (a slug, a típus
+ * és az `updatedAt` nem jöhet a hívótól; az utóbbit a séma `$onUpdate`-je lépteti). A típus nem változhat:
+ * eltérésnél hibát dob (programhiba – az action a meglévő kártya típusát adja át). Kategóriaváltáskor a
+ * kártya az új kategória végére kerül; különben a `sorrend` nem változik.
  */
 export function updateKartya(id: string, adat: KartyaAdat, verzio: number, szerzoId: string): ModositasEredmeny {
   return db.transaction((tx) => {
     const r = tx
-      .select({ kategoria: tudastarKartya.kategoria, updatedAt: tudastarKartya.updatedAt })
+      .select({ kategoria: tudastarKartya.kategoria, tipus: tudastarKartya.tipus, updatedAt: tudastarKartya.updatedAt })
       .from(tudastarKartya)
       .where(eq(tudastarKartya.id, id))
       .get();
     if (!r) return 'nincs';
+    if (r.tipus !== adat.tipus) throw new Error(`[tudastar] a kártya típusa nem változhat: ${id} (${r.tipus} → ${adat.tipus})`);
     if (r.updatedAt.getTime() !== verzio) return 'elavult';
     const sorrend = r.kategoria === adat.kategoria ? {} : { sorrend: kovetkezoSorrend(tx, adat.kategoria) };
-    tx.update(tudastarKartya).set({ ...adat, ...sorrend, szerzoId }).where(eq(tudastarKartya.id, id)).run();
+    tx.update(tudastarKartya).set({ ...taroltMezok(adat), ...sorrend, szerzoId }).where(eq(tudastarKartya.id, id)).run();
     return 'ok';
-  });
+  }, IRAS);
 }
 
 export function deleteKartya(id: string): boolean {
@@ -1349,34 +1405,33 @@ export function deleteKartya(id: string): boolean {
 }
 
 /**
- * Csere a kategórián belüli szomszéddal (`fel`: az előzővel, `le`: a következővel). Az `updatedAt` nem
- * változik: a „Frissítve” dátum a tartalomra vonatkozik, és a nyitott szerkesztő verziója sem avul el tőle.
+ * Csere a kategórián belüli szomszéddal (`fel`: az előzővel, `le`: a következővel), a megjelenítés
+ * sorrendjében. A kategória sorrendjét közben 1..n-re számozza újra, így az azonos `sorrend`-ű (kézi
+ * módosításból származó) kártyák is mozgathatók. Az `updatedAt` nem változik: a „Frissítve” dátum a
+ * tartalomra vonatkozik, és a nyitott szerkesztő verziója sem avul el tőle.
  */
 export function mozgatKartya(id: string, irany: 'fel' | 'le'): void {
   db.transaction((tx) => {
-    const r = tx
-      .select({ kategoria: tudastarKartya.kategoria, sorrend: tudastarKartya.sorrend })
-      .from(tudastarKartya)
-      .where(eq(tudastarKartya.id, id))
-      .get();
+    const r = tx.select({ kategoria: tudastarKartya.kategoria }).from(tudastarKartya).where(eq(tudastarKartya.id, id)).get();
     if (!r) return;
-    const szomszed = tx
+    const sorok = tx
       .select({ id: tudastarKartya.id, sorrend: tudastarKartya.sorrend })
       .from(tudastarKartya)
-      .where(
-        and(
-          eq(tudastarKartya.kategoria, r.kategoria),
-          irany === 'fel' ? lt(tudastarKartya.sorrend, r.sorrend) : gt(tudastarKartya.sorrend, r.sorrend),
-        ),
-      )
-      .orderBy(irany === 'fel' ? desc(tudastarKartya.sorrend) : asc(tudastarKartya.sorrend))
-      .limit(1)
-      .get();
-    if (!szomszed) return;
-    const valtozatlan = { updatedAt: sql`${tudastarKartya.updatedAt}` };
-    tx.update(tudastarKartya).set({ sorrend: szomszed.sorrend, ...valtozatlan }).where(eq(tudastarKartya.id, id)).run();
-    tx.update(tudastarKartya).set({ sorrend: r.sorrend, ...valtozatlan }).where(eq(tudastarKartya.id, szomszed.id)).run();
-  });
+      .where(eq(tudastarKartya.kategoria, r.kategoria))
+      .orderBy(...KATEGORIA_SORREND)
+      .all();
+    const i = sorok.findIndex((s) => s.id === id);
+    const j = irany === 'fel' ? i - 1 : i + 1;
+    if (j < 0 || j >= sorok.length) return;
+    [sorok[i], sorok[j]] = [sorok[j], sorok[i]];
+    sorok.forEach((s, k) => {
+      if (s.sorrend === k + 1) return;
+      tx.update(tudastarKartya)
+        .set({ sorrend: k + 1, updatedAt: sql`${tudastarKartya.updatedAt}` })
+        .where(eq(tudastarKartya.id, s.id))
+        .run();
+    });
+  }, IRAS);
 }
 ```
 
@@ -2156,6 +2211,7 @@ A 6. task ezt a fájlt a teljes változatra cseréli.
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { unstable_rethrow } from 'next/navigation';
 import { mozgatKartya } from '../../../db/queries/tudastar';
 import { canEditTudastar } from '../../../lib/tudastar-jog';
 import { requireSession } from '../../../lib/session';
@@ -2164,7 +2220,13 @@ import { requireSession } from '../../../lib/session';
 export async function mozgatKartyaAction(id: string, irany: 'fel' | 'le'): Promise<void> {
   const session = await requireSession();
   if (!canEditTudastar(session)) return;
-  mozgatKartya(id, irany);
+  try {
+    mozgatKartya(id, irany);
+  } catch (err) {
+    unstable_rethrow(err);
+    console.error('[tudastar] mozgatás sikertelen:', err);
+    return;
+  }
   revalidatePath('/tudastar', 'layout');
 }
 ```
@@ -2810,7 +2872,13 @@ export async function mentKartyaAction(_prev: MuveletState, formData: FormData):
 export async function mozgatKartyaAction(id: string, irany: 'fel' | 'le'): Promise<void> {
   const session = await requireSession();
   if (!canEditTudastar(session)) return;
-  mozgatKartya(id, irany);
+  try {
+    mozgatKartya(id, irany);
+  } catch (err) {
+    unstable_rethrow(err);
+    console.error('[tudastar] mozgatás sikertelen:', err);
+    return;
+  }
   revalidatePath('/tudastar', 'layout');
 }
 
@@ -2953,7 +3021,7 @@ A projekt átmeneti állapotban van: a monitoring még a `lib/data.ts` demóadat
 - [ ] **2. lépés: `CLAUDE.md` – új „TéT Tudástár” bekezdés a „Kommunikáció (ticketek)” bekezdés után, a „Demó pontszámlogika” elé**
 
 ```
-**TéT Tudástár.** A magyar innovációs ökoszisztéma szereplői és kapcsolódó programjai az attaséknak: eligazító összefoglalók és az élő hivatalos oldalakra mutató linkek. A 9 kategória **a kódban** van (`lib/tudastar-szotar.ts` `TUDASTAR_KATEGORIAK`: `slug`, `szam`, `cim`, `rovidCim` – a menübe –, `leiras` – a nyitólap csempéjére –, `bevezeto` – a kategória-oldal tetejére; a szerkezet rögzített, a szövegeket fejlesztő módosítja), a kártyák a DB-ben: `db/schema/tudastar.ts` (`tudastar_kartya`; `tipus` `intezmeny` | `lista`, létrehozás után nem változik; `slug` globálisan egyedi, létrehozáskor a rövidítésből vagy a névből – `lib/slug.ts` `slugbol`/`szabadSlug` –, átnevezéskor és kategóriaváltáskor sem változik; `sorrend` a kategórián belül; a `tartalom` egy JSON-oszlop, típusonként más alakú – `IntezmenyTartalom`: profil, tevékenység, kapcsolat, szabad címzett szakaszok, programok, linkek; `ListaTartalom`: sorok, linkek –, olvasáskor a `normalizalTartalom` egészíti ki, ezért új almezőhöz nem kell migráció, almező átnevezéséhez igen; `szerzo_id` az utolsó módosító). Lekérdezések `db/queries/tudastar.ts`: `listKartyak` (React `cache()`; a 9 kategória sorrendjében, azon belül `sorrend`; ismeretlen kategóriájú vagy típusú sort logolva kihagy; a visszaadott tömböt ne mutáld), `getKartya`, `createKartya` (szabad slug + a kategória végére, egy tranzakcióban), `updateKartya` (verzióval: a szerkesztő megnyitásakori `updatedAt` ms-ban; eltérésnél `elavult`, törölt kártyánál `nincs`; kategóriaváltáskor az új kategória végére), `deleteKartya`, `mozgatKartya` (csere a kategórián belüli szomszéddal). Validátor `lib/tudastar-validacio.ts` (`validalKartya(fd, tipus)`, hibakulcs = a mező id-ja = a `name`; a dinamikus sorok `<lista>.<i>.<mezo>`, a teljesen üres sor kimarad, a félig kitöltött hibát kap; `normalizalUrl`: séma nélkül `https://` elé, csak http(s), pontot tartalmazó hoszt, a `new URL().href` kerül tárolásra), jog `lib/tudastar-jog.ts` `canEditTudastar` (admin; olvasni mindenki), keresés `lib/tudastar-kereses.ts` `keres` (ékezet- és kisbetű-érzéketlen, minden szónak ugyanabban a kártyában kell lennie, JS-ben; a találat `hol`/`reszlet` része a legtöbb szót tartalmazó rész, a név helyett), megjelenítés `lib/tudastar-szoveg.ts` (`tagolSzoveg`: üres sor = bekezdés, „- ” vagy „• ” kezdetű sor = felsorolás, HTML-t nem értelmez; `megjelenoHoszt`), útvonalak `lib/routes.ts` (`tudastarUrl`, `kartyaUrl` – intézmény: a részletoldala, lista: a kategória-oldal `#k-<slug>` horgonya –, `kartyaHorgony`, `kartyaSzerkesztoUrl`, `ujKartyaUrl`). Route-ok: `/tudastar` (keresőmező – `next/form` GET, `?q=` – és a 9 csempe; `?q=` esetén a `KeresesiTalalatok` kategóriánként), `/tudastar/[kategoria]` (bevezető + kártyák; adminnak „+ Új intézmény/lista” és ↑/↓), `/tudastar/[kategoria]/[slug]` (csak intézmény; lista vagy más kategóriájú slug: 404), `/tudastar/[kategoria]/[slug]/szerkesztes` és `/tudastar/[kategoria]/uj?tipus=` (`requireAdmin()`). A kategória- és a részletoldal váza a `TudastarElrendezes`: jobb oldalt `lg` fölött a ragadós `KategoriaMenu` (kis kereső, a 9 rövid cím, az aktív kategória kártyái – a kategória-oldalon horgonyok, a részletoldalon a `kartyaUrl`, az aktuális kiemelve), alatta a `KategoriaValto` natív select. Mindkét típust egy `TudastarKartya` rajzolja, közös `KartyaLablec`-kel („Frissítve”, adminnál Szerkesztés és ↑/↓ – bind-olt `<form action>`, `KuldGomb`); a részletoldal `IntezmenyReszlet` (üres blokk nem jelenik meg). Szerkesztő: `KartyaForm` (vezérelt `Urlap`, rejtett `tipus` vagy `id` + `verzio`), `KartyaMezo`, a generikus `SorSzerkeszto` (stabil `_id`, ↑/↓/törlés, fókuszkezelés és sorhiba-elrejtés a `RendezvenySorok` mintájára), `KartyaTorles` (a `RiportTorles` mintája). Action-ök `app/(app)/tudastar/actions.ts`: `mentKartyaAction` (a jog hiánya, a törölt kártya és az elavult verzió form-szintű hiba, nem 404; siker → `revalidatePath('/tudastar', 'layout')` + átirányítás a `kartyaUrl`-re), `mozgatKartyaAction`, `deleteKartyaAction`.
+**TéT Tudástár.** A magyar innovációs ökoszisztéma szereplői és kapcsolódó programjai az attaséknak: eligazító összefoglalók és az élő hivatalos oldalakra mutató linkek. A 9 kategória **a kódban** van (`lib/tudastar-szotar.ts` `TUDASTAR_KATEGORIAK`: `slug`, `szam`, `cim`, `rovidCim` – a menübe –, `leiras` – a nyitólap csempéjére –, `bevezeto` – a kategória-oldal tetejére; a szerkezet rögzített, a szövegeket fejlesztő módosítja), a kártyák a DB-ben: `db/schema/tudastar.ts` (`tudastar_kartya`; `tipus` `intezmeny` | `lista`, létrehozás után nem változik; `slug` globálisan egyedi, létrehozáskor a rövidítésből vagy a névből – `lib/slug.ts` `slugbol`/`szabadSlug` –, átnevezéskor és kategóriaváltáskor sem változik; `sorrend` a kategórián belül; a `tartalom` egy JSON-oszlop, típusonként más alakú – `IntezmenyTartalom`: profil, tevékenység, kapcsolat, szabad címzett szakaszok, programok, linkek; `ListaTartalom`: sorok, linkek –, olvasáskor a `normalizalTartalom` egészíti ki, ezért új almezőhöz nem kell migráció, almező átnevezéséhez igen; `szerzo_id` az utolsó módosító; CHECK: `tipus` a két érték egyike, a `tartalom` `json_valid` – hibás JSON-nál a Drizzle `JSON.parse`-a minden tudástár-oldalt eldöntené). Lekérdezések `db/queries/tudastar.ts`: `listKartyak` (React `cache()`; a 9 kategória sorrendjében, azon belül `KATEGORIA_SORREND`: sorrend, név, id; ismeretlen kategóriájú vagy típusú sort logolva kihagy; a visszaadott tömböt ne mutáld), `getKartya`, `createKartya` (a hívó adja a slug-alapot; szabad slug + a kategória végére, egy tranzakcióban), `updateKartya` (csak a tartalmi mezőket írja, explicit felsorolással – a hívó objektumának többi kulcsa, pl. egy régi `updatedAt`, nem kerülhet a DB-be –, a típusváltásra hibát dob; verzióval: a szerkesztő megnyitásakori `updatedAt` ms-ban; eltérésnél `elavult`, törölt kártyánál `nincs`; kategóriaváltáskor az új kategória végére), `deleteKartya`, `mozgatKartya` (csere a szomszéddal a megjelenítés sorrendjében, a kategória 1..n-re újraszámozásával – az azonos `sorrend`-ű kártyák is mozgathatók); az író tranzakciók `immediate`-ek. Validátor `lib/tudastar-validacio.ts` (`validalKartya(fd, tipus)`, hibakulcs = a mező id-ja = a `name`; a dinamikus sorok `<lista>.<i>.<mezo>`, a teljesen üres sor kimarad, a félig kitöltött hibát kap; `normalizalUrl`: séma nélkül `https://` elé, csak http(s), pontot tartalmazó hoszt, a `new URL().href` kerül tárolásra), jog `lib/tudastar-jog.ts` `canEditTudastar` (admin; olvasni mindenki), keresés `lib/tudastar-kereses.ts` `keres` (ékezet- és kisbetű-érzéketlen, minden szónak ugyanabban a kártyában kell lennie, JS-ben; a találat `hol`/`reszlet` része a legtöbb szót tartalmazó rész, a név helyett), megjelenítés `lib/tudastar-szoveg.ts` (`tagolSzoveg`: üres sor = bekezdés, „- ” vagy „• ” kezdetű sor = felsorolás, HTML-t nem értelmez; `megjelenoHoszt`), útvonalak `lib/routes.ts` (`tudastarUrl`, `kartyaUrl` – intézmény: a részletoldala, lista: a kategória-oldal `#k-<slug>` horgonya –, `kartyaHorgony`, `kartyaSzerkesztoUrl`, `ujKartyaUrl`). Route-ok: `/tudastar` (keresőmező – `next/form` GET, `?q=` – és a 9 csempe; `?q=` esetén a `KeresesiTalalatok` kategóriánként), `/tudastar/[kategoria]` (bevezető + kártyák; adminnak „+ Új intézmény/lista” és ↑/↓), `/tudastar/[kategoria]/[slug]` (csak intézmény; lista vagy más kategóriájú slug: 404), `/tudastar/[kategoria]/[slug]/szerkesztes` és `/tudastar/[kategoria]/uj?tipus=` (`requireAdmin()`). A kategória- és a részletoldal váza a `TudastarElrendezes`: jobb oldalt `lg` fölött a ragadós `KategoriaMenu` (kis kereső, a 9 rövid cím, az aktív kategória kártyái – a kategória-oldalon horgonyok, a részletoldalon a `kartyaUrl`, az aktuális kiemelve), alatta a `KategoriaValto` natív select. Mindkét típust egy `TudastarKartya` rajzolja, közös `KartyaLablec`-kel („Frissítve”, adminnál Szerkesztés és ↑/↓ – bind-olt `<form action>`, `KuldGomb`); a részletoldal `IntezmenyReszlet` (üres blokk nem jelenik meg). Szerkesztő: `KartyaForm` (vezérelt `Urlap`, rejtett `tipus` vagy `id` + `verzio`), `KartyaMezo`, a generikus `SorSzerkeszto` (stabil `_id`, ↑/↓/törlés, fókuszkezelés és sorhiba-elrejtés a `RendezvenySorok` mintájára), `KartyaTorles` (a `RiportTorles` mintája). Action-ök `app/(app)/tudastar/actions.ts`: `mentKartyaAction` (a jog hiánya, a törölt kártya és az elavult verzió form-szintű hiba, nem 404; siker → `revalidatePath('/tudastar', 'layout')` + átirányítás a `kartyaUrl`-re), `mozgatKartyaAction`, `deleteKartyaAction`.
 
 Amire figyelni kell:
 - Az `uj` slug foglalt (`FOGLALT_SLUGOK`): a statikus `/tudastar/[kategoria]/uj` szegmens elnyelné az ilyen slugú kártyát. Új statikus szegmens a `[kategoria]` alatt csak a listába felvéve.
@@ -3570,3 +3638,5 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 14. **Keresés és slug, Unicode:** a keresőszavak szélén álló írásjelek nem számítanak („NKFIH,”, „„XPAND””); az ékezetlenítés NFKD-vel megy, így a PDF-ből másolt ligatúrák („ﬁ”) is kereshetők és slugosíthatók; a kivágás nem vág UTF-16 párt.
 15. **Normalizáló:** olvasáskor a teljesen üres sort (szakasz, program, link, listasor) is eldobja, mint a validátor.
 16. **URL-szabályok szigorítása:** a hosztnévben pontnak kell lennie (a `valami` így nem lesz `https://valami/`, de az `https://localhost` is hibás); a 500 karakteres korlát a normalizált `href`-re vonatkozik; séma nélküli, portos cím (`nkfih.gov.hu:8080/x`) sémának látszik és hibát kap – mindhárom a biztonságos oldalra hibázik.
+17. **Lekérdezések szignatúrái:** `getKartya(id)` (nem slug: az oldalak a `listKartyak()`-ból keresnek slug szerint, az actionök id-vel), `createKartya(adat, alap, szerzoId)` – a slug alapját a hívó képzi (az action: rövidítésből, tartalékként a névből), a függvény a szabad változatot keresi és beszúr; az `updateKartya` egy tranzakcióban olvas, hasonlít és ír (a spec `UPDATE … WHERE updated_at = ?` mintája helyett, azonos eredménnyel); a `listKartyak` az ismeretlen kategóriájú sort is kihagyja és logolja, a `sorrend`-holtversenyt név szerint dönti el. A típus változatlanságát a hívó biztosítja (az action a meglévő kártya típusát adja át).
+18. **A tábla és az írások védelme:** CHECK a `tipus`-ra és a `tartalom` `json_valid`-jára (a kategóriára nem, az a kódban él); az `updateKartya`/`createKartya` csak explicit felsorolt tartalmi mezőket ír, az `updateKartya` típusváltásra hibát dob; az író tranzakciók `immediate`-ek; a `mozgatKartya` a kategóriát 1..n-re számozza újra (az azonos `sorrend`-ű kártyák is mozgathatók); a `mozgatKartyaAction` hibakezelést kap.
