@@ -3179,6 +3179,7 @@ Ha nem fut TéT dev szerver: kérdezd meg a felhasználót. Belépés: `$B goto 
   9. Sorszerkesztő: új sor → fókusz az új sor első mezőjén; törlés → fókusz a „+ Új …” gombon; ↑ → a mozgatott sor gombján.
   10. Keresés: `/tudastar?q=qa intezmeny` (ékezet nélkül) → a QA Intézmény a találatok közt, a „Keresés törlése” után a mező üres; találat nélküli kifejezés → „Nincs találat erre: …”. Billentyűzettel (a mezőbe írva, Enter): a fókusz a mezőn marad, a `role="status"` régió szövege a találatszámra vált; a Vissza gomb után a mező a korábbi kifejezést mutatja.
   11. Keskeny ablak (`$B viewport 390x844`): a menü helyett a „Kategória” select, váltáskor navigál.
+  11b. Felolvasós szempontból (a kódból és a DOM-ból): a kategória-oldal kis keresőjéből indított keresés a nyitólapra visz (a `role="status"` régió ott már kitöltve jelenik meg, a fókusz a lap elejére esik); a tudástár-oldalak lapcíme egyforma, így az útvonal-bemondó lapváltáskor hallgat. Jegyezd fel a felhasználónak döntésre (dinamikus lapcím vagy fókusz a találati címsorra), ne javítsd kérés nélkül.
   12. Ismeretlen URL-ek: `/tudastar/nincs` 404, `/tudastar/egyetemek/qa-lista` 404 (lista), `/tudastar/egyetemek/uj?tipus=x` 404.
 - [ ] **Attasé:** a kategória- és részletoldal olvasható; „+ Új …”, Szerkesztés, ↑/↓ nem látszik; `/tudastar/egyetemek/uj?tipus=lista` és a `…/szerkesztes` 404.
 - [ ] **Takarítás:** a QA-kártyák törlése a felületen („Kártya törlése” → megerősítés → vissza a kategória-oldalra), kijelentkezés mindkét fiókkal. A `data/tet.db`-t nem commitoljuk.
