@@ -47,3 +47,28 @@ export function biztonsagosNext(raw: string | string[] | undefined): string {
   if (path === '/api' || path.startsWith('/api/')) return HOME_ROUTE;
   return path;
 }
+
+/** A tudástár nyitólapja, vagy egy kategória-oldala. */
+export function tudastarUrl(kategoria?: string): string {
+  return kategoria ? `/tudastar/${kategoria}` : '/tudastar';
+}
+
+/** A tudástár-kártya horgonyának id-ja a kategória-oldalon. */
+export function kartyaHorgony(slug: string): string {
+  return `k-${slug}`;
+}
+
+/** Ahol a kártya megjelenik: az intézménynek saját oldala van, a lista a kategória-oldalon, a horgonyánál. */
+export function kartyaUrl(k: { kategoria: string; slug: string; tipus: 'intezmeny' | 'lista' }): string {
+  return k.tipus === 'intezmeny' ? `/tudastar/${k.kategoria}/${k.slug}` : `${tudastarUrl(k.kategoria)}#${kartyaHorgony(k.slug)}`;
+}
+
+/** A kártya szerkesztője (mindkét típusnál a `[slug]` alatt). */
+export function kartyaSzerkesztoUrl(k: { kategoria: string; slug: string }): string {
+  return `/tudastar/${k.kategoria}/${k.slug}/szerkesztes`;
+}
+
+/** Új kártya szerkesztője a kategóriában. */
+export function ujKartyaUrl(kategoria: string, tipus: 'intezmeny' | 'lista'): string {
+  return `/tudastar/${kategoria}/uj?tipus=${tipus}`;
+}
