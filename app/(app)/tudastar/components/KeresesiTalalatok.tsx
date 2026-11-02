@@ -4,7 +4,11 @@ import type { Talalat } from '../../../../lib/tudastar-kereses';
 import { TUDASTAR_KATEGORIAK } from '../../../../lib/tudastar-szotar';
 import { SzamJelveny } from './SzamJelveny';
 
-/** A nyitólap `?q=`-nál: a találatok kategóriánként csoportosítva, soronként a kártya és a találat helye. */
+/**
+ * A nyitólap `?q=`-nál: a találatok kategóriánként csoportosítva, soronként a kártya és a találat helye. A
+ * találatszámot a page állandó `role="status"` régiója mondja be (az itt újonnan megjelenő címsort a felolvasó
+ * nem olvassa fel magától).
+ */
 export function KeresesiTalalatok({ q, talalatok }: { q: string; talalatok: readonly Talalat[] }) {
   const csoportok = TUDASTAR_KATEGORIAK.map((k) => ({
     kategoria: k,
@@ -13,7 +17,7 @@ export function KeresesiTalalatok({ q, talalatok }: { q: string; talalatok: read
   return (
     <section aria-labelledby="tudastar-talalatok" className="flex flex-col gap-5">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h2 id="tudastar-talalatok" className="text-base font-semibold">
+        <h2 id="tudastar-talalatok" className="min-w-0 text-base font-semibold break-words">
           {talalatok.length === 0 ? `Nincs találat erre: „${q}”.` : `${talalatok.length} találat erre: „${q}”`}
         </h2>
         <Link href={tudastarUrl()} className="text-sm">
@@ -35,7 +39,7 @@ export function KeresesiTalalatok({ q, talalatok }: { q: string; talalatok: read
                   {kartya.nev}
                   {kartya.rovidites && ` (${kartya.rovidites})`}
                 </Link>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
                   {hol && <span className="text-foreground">{hol}: </span>}
                   {reszlet}
                 </span>

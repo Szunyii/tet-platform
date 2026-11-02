@@ -13,16 +13,20 @@ export const metadata: Metadata = { title: 'TéT Tudástár' };
 export default async function TudastarPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   await requireSession();
   const { q: nyers } = await searchParams;
-  const q = typeof nyers === 'string' ? nyers.trim().slice(0, KERESES_MAX) : '';
+  const q = (Array.isArray(nyers) ? nyers[0] : nyers)?.trim().slice(0, KERESES_MAX) ?? '';
   const kartyak = listKartyak();
-  const darabok = new Map<string, number>();
-  for (const k of kartyak) darabok.set(k.kategoria, (darabok.get(k.kategoria) ?? 0) + 1);
+  const talalatok = q ? keres(kartyak, q) : [];
   return (
     <div className="flex max-w-6xl flex-col gap-5">
       <div className="max-w-2xl">
         <KeresoMezo id="tudastar-kereses" q={q} />
       </div>
-      {q ? <KeresesiTalalatok q={q} talalatok={keres(kartyak, q)} /> : <KategoriaCsempek darabok={darabok} />}
+      {/* Állandó élő régió: a keresés címet nem vált, ezért a Next útvonal-bemondója hallgat; a page kliens-állapota
+          a ?q= változásakor megmarad, így ennek a szövegváltozását a felolvasó bemondja. */}
+      <p role="status" className="sr-only">
+        {q ? (talalatok.length > 0 ? `${talalatok.length} találat erre: „${q}”` : `Nincs találat erre: „${q}”.`) : ''}
+      </p>
+      {q ? <KeresesiTalalatok q={q} talalatok={talalatok} /> : <KategoriaCsempek kartyak={kartyak} />}
     </div>
   );
 }

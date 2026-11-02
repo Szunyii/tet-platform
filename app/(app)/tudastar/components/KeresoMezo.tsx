@@ -1,14 +1,13 @@
 import { SearchIcon } from 'lucide-react';
 import Form from 'next/form';
 import { Button } from '../../../../components/ui/button';
-import { Input } from '../../../../components/ui/input';
 import { tudastarUrl } from '../../../../lib/routes';
-import { KERESES_MAX } from '../../../../lib/tudastar-kereses';
+import { KeresoBemenet } from './KeresoBemenet';
 
 /**
  * Keresés a tudástárban: GET űrlap a nyitólapra (`?q=`), a Next `Form`-jával kliens-oldali navigációval. A
- * találati lista így linkelhető, és a Vissza gomb is működik. Az input `key`-e a `q`: a „Keresés törlése”
- * után üresen indul. `kompakt`: a kategória-menü keskeny változata (ikon-gomb).
+ * találati lista így linkelhető, és a Vissza gomb is működik. `kompakt`: a kategória-menü keskeny változata
+ * (ikon-gomb).
  */
 export function KeresoMezo({ id, q = '', kompakt = false }: { id: string; q?: string; kompakt?: boolean }) {
   return (
@@ -16,16 +15,7 @@ export function KeresoMezo({ id, q = '', kompakt = false }: { id: string; q?: st
       <label htmlFor={id} className="sr-only">
         Keresés a tudástárban
       </label>
-      <Input
-        key={q}
-        id={id}
-        name="q"
-        type="search"
-        defaultValue={q}
-        maxLength={KERESES_MAX}
-        placeholder={kompakt ? 'Keresés…' : 'Keresés: intézmény, program, kulcsszó…'}
-        className="min-w-0 flex-1"
-      />
+      <KeresoBemenet id={id} q={q} placeholder={kompakt ? 'Keresés…' : 'Keresés: intézmény, program, kulcsszó…'} />
       {kompakt ? (
         <Button type="submit" variant="outline" size="icon" aria-label="Keresés">
           <SearchIcon aria-hidden />
