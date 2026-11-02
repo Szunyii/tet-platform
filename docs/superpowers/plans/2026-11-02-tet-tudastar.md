@@ -1457,7 +1457,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 **Fájlok:**
 - Módosít: `lib/navigacio.ts`, `app/(app)/tudastar/page.tsx` (teljes csere)
-- Létrehoz: `app/(app)/tudastar/components/SzamJelveny.tsx`, `KeresoMezo.tsx`, `KategoriaCsempek.tsx`, `KeresesiTalalatok.tsx`
+- Létrehoz: `app/(app)/tudastar/components/SzamJelveny.tsx`, `KeresoBemenet.tsx`, `KeresoMezo.tsx`, `KategoriaCsempek.tsx`, `KeresesiTalalatok.tsx`
 - Töröl: `lib/knowledge.ts` (csak a régi `page.tsx` importálta – ellenőrizd: `grep -rn "knowledge" app components lib db scripts --include='*.ts' --include='*.tsx'` a csere után üres)
 
 - [ ] **1. lépés: `lib/navigacio.ts` – a Tudástár sor**
@@ -1496,22 +1496,56 @@ export function SzamJelveny({ szam }: { szam: number }) {
 }
 ```
 
-- [ ] **3. lépés: `app/(app)/tudastar/components/KeresoMezo.tsx`**
+- [ ] **3. lépés: `app/(app)/tudastar/components/KeresoBemenet.tsx` és `KeresoMezo.tsx`**
 
-A `next/form` `Form`-ja GET-űrlapnál kliens-oldali navigációt ad (lásd `node_modules/next/dist/docs/01-app/03-api-reference/02-components/form.md`).
+A `next/form` `Form`-ja GET-űrlapnál kliens-oldali navigációt ad (lásd `node_modules/next/dist/docs/01-app/03-api-reference/02-components/form.md`). A beviteli mező külön kliens-komponens: render közben igazodik a `q`-hoz, hogy kereséskor a fókusz megmaradjon.
+
+```tsx
+'use client';
+
+import { useState } from 'react';
+import { Input } from '../../../../components/ui/input';
+import { KERESES_MAX } from '../../../../lib/tudastar-kereses';
+
+/**
+ * A keresőmező vezérelt beviteli eleme. Az oldal kliens-állapota a `?q=` változásakor megmarad (a Next
+ * állapot-kulcsában nincs benne a keresési paraméter), ezért a mező a szerverről jövő `q`-hoz render közben
+ * igazodik (a „Keresés törlése” és a Vissza gomb után is): `key`-es újracsatolás helyett, mert az a kereséskor
+ * fókuszban lévő mezőt kicserélné, és a fókusz a lap elejére esne.
+ */
+export function KeresoBemenet({ id, q, placeholder }: { id: string; q: string; placeholder: string }) {
+  const [ertek, setErtek] = useState(q);
+  const [elozoQ, setElozoQ] = useState(q);
+  if (elozoQ !== q) {
+    setElozoQ(q);
+    setErtek(q);
+  }
+  return (
+    <Input
+      id={id}
+      name="q"
+      type="search"
+      value={ertek}
+      onChange={(e) => setErtek(e.target.value)}
+      maxLength={KERESES_MAX}
+      placeholder={placeholder}
+      className="min-w-0 flex-1"
+    />
+  );
+}
+```
 
 ```tsx
 import { SearchIcon } from 'lucide-react';
 import Form from 'next/form';
 import { Button } from '../../../../components/ui/button';
-import { Input } from '../../../../components/ui/input';
 import { tudastarUrl } from '../../../../lib/routes';
-import { KERESES_MAX } from '../../../../lib/tudastar-kereses';
+import { KeresoBemenet } from './KeresoBemenet';
 
 /**
  * Keresés a tudástárban: GET űrlap a nyitólapra (`?q=`), a Next `Form`-jával kliens-oldali navigációval. A
- * találati lista így linkelhető, és a Vissza gomb is működik. Az input `key`-e a `q`: a „Keresés törlése”
- * után üresen indul. `kompakt`: a kategória-menü keskeny változata (ikon-gomb).
+ * találati lista így linkelhető, és a Vissza gomb is működik. `kompakt`: a kategória-menü keskeny változata
+ * (ikon-gomb).
  */
 export function KeresoMezo({ id, q = '', kompakt = false }: { id: string; q?: string; kompakt?: boolean }) {
   return (
@@ -1519,16 +1553,7 @@ export function KeresoMezo({ id, q = '', kompakt = false }: { id: string; q?: st
       <label htmlFor={id} className="sr-only">
         Keresés a tudástárban
       </label>
-      <Input
-        key={q}
-        id={id}
-        name="q"
-        type="search"
-        defaultValue={q}
-        maxLength={KERESES_MAX}
-        placeholder={kompakt ? 'Keresés…' : 'Keresés: intézmény, program, kulcsszó…'}
-        className="min-w-0 flex-1"
-      />
+      <KeresoBemenet id={id} q={q} placeholder={kompakt ? 'Keresés…' : 'Keresés: intézmény, program, kulcsszó…'} />
       {kompakt ? (
         <Button type="submit" variant="outline" size="icon" aria-label="Keresés">
           <SearchIcon aria-hidden />
@@ -1548,27 +1573,37 @@ export function KeresoMezo({ id, q = '', kompakt = false }: { id: string; q?: st
 ```tsx
 import Link from 'next/link';
 import { tudastarUrl } from '../../../../lib/routes';
-import { TUDASTAR_KATEGORIAK } from '../../../../lib/tudastar-szotar';
+import { TUDASTAR_KATEGORIAK, type Kartya } from '../../../../lib/tudastar-szotar';
 import { SzamJelveny } from './SzamJelveny';
 
 /** A nyitólap: a 9 kategória csempéje (szám, cím, egysoros leírás, kártyaszám), mindegyik a kategória-oldalra visz. */
-export function KategoriaCsempek({ darabok }: { darabok: ReadonlyMap<string, number> }) {
+export function KategoriaCsempek({ kartyak }: { kartyak: readonly Kartya[] }) {
+  const darabok = new Map<string, number>();
+  for (const k of kartyak) darabok.set(k.kategoria, (darabok.get(k.kategoria) ?? 0) + 1);
   return (
-    <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-      {TUDASTAR_KATEGORIAK.map((k) => (
-        <li key={k.slug}>
-          <Link
-            href={tudastarUrl(k.slug)}
-            className="flex h-full flex-col gap-1.5 rounded-xl bg-card p-4 text-card-foreground no-underline ring-1 ring-foreground/10 transition-shadow hover:no-underline hover:ring-foreground/30 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-          >
-            <SzamJelveny szam={k.szam} />
-            <span className="text-[15px] leading-snug font-semibold">{k.cim}</span>
-            <span className="text-sm text-muted-foreground">{k.leiras}</span>
-            <span className="mt-auto pt-1 text-xs text-muted-foreground">{darabok.get(k.slug) ?? 0} kártya</span>
-          </Link>
-        </li>
-      ))}
-    </ul>
+    <section aria-labelledby="tudastar-kategoriak">
+      <h2 id="tudastar-kategoriak" className="sr-only">
+        Kategóriák
+      </h2>
+      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {TUDASTAR_KATEGORIAK.map((k) => (
+          <li key={k.slug}>
+            <Link
+              href={tudastarUrl(k.slug)}
+              className="flex h-full flex-col gap-1.5 rounded-xl bg-card p-4 text-card-foreground no-underline ring-1 ring-foreground/10 transition-shadow hover:no-underline hover:ring-foreground/30 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            >
+              <SzamJelveny szam={k.szam} />
+              <span className="text-[15px] leading-snug font-semibold break-words">
+                <span className="sr-only">{k.szam}. </span>
+                {k.cim}
+              </span>
+              <span className="text-sm text-muted-foreground">{k.leiras}</span>
+              <span className="mt-auto pt-1 text-xs text-muted-foreground">{darabok.get(k.slug) ?? 0} kártya</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 ```
@@ -1582,7 +1617,11 @@ import type { Talalat } from '../../../../lib/tudastar-kereses';
 import { TUDASTAR_KATEGORIAK } from '../../../../lib/tudastar-szotar';
 import { SzamJelveny } from './SzamJelveny';
 
-/** A nyitólap `?q=`-nál: a találatok kategóriánként csoportosítva, soronként a kártya és a találat helye. */
+/**
+ * A nyitólap `?q=`-nál: a találatok kategóriánként csoportosítva, soronként a kártya és a találat helye. A
+ * találatszámot a page állandó `role="status"` régiója mondja be (az itt újonnan megjelenő címsort a felolvasó
+ * nem olvassa fel magától).
+ */
 export function KeresesiTalalatok({ q, talalatok }: { q: string; talalatok: readonly Talalat[] }) {
   const csoportok = TUDASTAR_KATEGORIAK.map((k) => ({
     kategoria: k,
@@ -1591,7 +1630,7 @@ export function KeresesiTalalatok({ q, talalatok }: { q: string; talalatok: read
   return (
     <section aria-labelledby="tudastar-talalatok" className="flex flex-col gap-5">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h2 id="tudastar-talalatok" className="text-base font-semibold">
+        <h2 id="tudastar-talalatok" className="min-w-0 text-base font-semibold break-words">
           {talalatok.length === 0 ? `Nincs találat erre: „${q}”.` : `${talalatok.length} találat erre: „${q}”`}
         </h2>
         <Link href={tudastarUrl()} className="text-sm">
@@ -1613,7 +1652,7 @@ export function KeresesiTalalatok({ q, talalatok }: { q: string; talalatok: read
                   {kartya.nev}
                   {kartya.rovidites && ` (${kartya.rovidites})`}
                 </Link>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
                   {hol && <span className="text-foreground">{hol}: </span>}
                   {reszlet}
                 </span>
@@ -1645,16 +1684,20 @@ export const metadata: Metadata = { title: 'TéT Tudástár' };
 export default async function TudastarPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   await requireSession();
   const { q: nyers } = await searchParams;
-  const q = typeof nyers === 'string' ? nyers.trim().slice(0, KERESES_MAX) : '';
+  const q = (Array.isArray(nyers) ? nyers[0] : nyers)?.trim().slice(0, KERESES_MAX) ?? '';
   const kartyak = listKartyak();
-  const darabok = new Map<string, number>();
-  for (const k of kartyak) darabok.set(k.kategoria, (darabok.get(k.kategoria) ?? 0) + 1);
+  const talalatok = q ? keres(kartyak, q) : [];
   return (
     <div className="flex max-w-6xl flex-col gap-5">
       <div className="max-w-2xl">
         <KeresoMezo id="tudastar-kereses" q={q} />
       </div>
-      {q ? <KeresesiTalalatok q={q} talalatok={keres(kartyak, q)} /> : <KategoriaCsempek darabok={darabok} />}
+      {/* Állandó élő régió: a keresés címet nem vált, ezért a Next útvonal-bemondója hallgat; a page kliens-állapota
+          a ?q= változásakor megmarad, így ennek a szövegváltozását a felolvasó bemondja. */}
+      <p role="status" className="sr-only">
+        {q ? (talalatok.length > 0 ? `${talalatok.length} találat erre: „${q}”` : `Nincs találat erre: „${q}”.`) : ''}
+      </p>
+      {q ? <KeresesiTalalatok q={q} talalatok={talalatok} /> : <KategoriaCsempek kartyak={kartyak} />}
     </div>
   );
 }
@@ -1677,7 +1720,7 @@ Várt: a tsc üres; a build lefut, a route-listában szerepel a `/tudastar` (ƒ,
 - [ ] **9. lépés: commit**
 
 ```bash
-git add lib/navigacio.ts "app/(app)/tudastar/page.tsx" "app/(app)/tudastar/components/SzamJelveny.tsx" "app/(app)/tudastar/components/KeresoMezo.tsx" "app/(app)/tudastar/components/KategoriaCsempek.tsx" "app/(app)/tudastar/components/KeresesiTalalatok.tsx"
+git add lib/navigacio.ts "app/(app)/tudastar/page.tsx" "app/(app)/tudastar/components/SzamJelveny.tsx" "app/(app)/tudastar/components/KeresoBemenet.tsx" "app/(app)/tudastar/components/KeresoMezo.tsx" "app/(app)/tudastar/components/KategoriaCsempek.tsx" "app/(app)/tudastar/components/KeresesiTalalatok.tsx"
 git commit -m "feat(tudastar): TéT Tudástár nyitólap – 9 kategória-csempe és keresés; a régi demó (lib/knowledge.ts) törölve
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -3001,7 +3044,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 7: Dokumentáció (CLAUDE.md, spec), az eldobható scriptek törlése
 
 **Fájlok:**
-- Módosít: `CLAUDE.md`, `docs/superpowers/specs/2026-11-02-tet-tudastar-design.md`
+- Módosít: `CLAUDE.md`, `README.md`, `docs/superpowers/specs/2026-11-02-tet-tudastar-design.md`, és apró review-javítások: `lib/tudastar-szotar.ts`, `lib/urlap.ts`, `lib/tudastar-validacio.ts`
 - Töröl (nem commitolt fájlok): `scripts/_proba-tudastar.ts`, `scripts/_proba-tudastar-validacio.ts`, `scripts/_proba-tudastar-db.ts`
 
 - [ ] **1. lépés: `CLAUDE.md` – „Mi ez” bekezdés**
@@ -3037,6 +3080,14 @@ A „Demó pontszámlogika” bekezdésben cseréld: `A `lib/data`/`lib/score` c
 A „UI és stílus” részben cseréld: `hardcode-olt színekkel (`FIELD_COLORS` a `lib/knowledge.ts`-ben, `PILL_COLORS` a `lib/score.ts`-ben)` → `hardcode-olt színekkel (`PILL_COLORS` a `lib/score.ts`-ben)`.
 
 Ellenőrzés: `grep -n "knowledge" CLAUDE.md` – üres.
+
+- [ ] **3b. lépés: `README.md` – a két régi hivatkozás**
+
+A bevezető bekezdésben cseréld: `A tudástár és a monitoring képernyő még statikus dummy adatokból dolgozik (`lib/data.ts`, `lib/knowledge.ts`); az auth, a felhasználó-kezelés, az országprofil (és a térkép), a jelentések (információs bejegyzések) és a kommunikáció (ticketek) már valódi adatbázisból (lásd lent).` → `A monitoring képernyő még statikus dummy adatokból dolgozik (`lib/data.ts`); az auth, a felhasználó-kezelés, az országprofil (és a térkép), a jelentések (információs bejegyzések), a kommunikáció (ticketek) és a TéT Tudástár már valódi adatbázisból (lásd lent).`
+
+A fájllistában cseréld a `- `lib/knowledge.ts` – tudástár demóadatok: 6 program, 6 ökoszisztéma-elem, 5 együttműködési forma` sort erre: `- `lib/tudastar-szotar.ts` – a TéT Tudástár 9 kategóriája, kártyatípusai, korlátai, közös felirat- és sorszabály-táblái és a normalizáló; a kártyák a `tudastar_kartya` táblában (`db/queries/tudastar.ts`), az oldalak és a szerkesztő az `app/(app)/tudastar/` alatt`.
+
+Ellenőrzés: `grep -n "knowledge" README.md` – üres.
 
 - [ ] **4. lépés: a spec – a terv végi „Eltérések a spectől” szakasz átvezetése**
 
@@ -3092,12 +3143,12 @@ rm scripts/_proba-tudastar.ts scripts/_proba-tudastar-validacio.ts scripts/_prob
 git status --short
 ```
 
-Várt: a `git status` csak a `CLAUDE.md`-t, a spec-et és a 4b. lépés három lib-fájlját mutatja módosítottként (a `data/tet.db` nem lehet a listában módosítottként – ha mégis, ne add hozzá).
+Várt: a `git status` csak a `CLAUDE.md`-t, a `README.md`-t, a spec-et és a 4b. lépés három lib-fájlját mutatja módosítottként (a `data/tet.db` nem lehet a listában módosítottként – ha mégis, ne add hozzá).
 
 - [ ] **6. lépés: commit**
 
 ```bash
-git add CLAUDE.md docs/superpowers/specs/2026-11-02-tet-tudastar-design.md lib/tudastar-szotar.ts lib/urlap.ts lib/tudastar-validacio.ts
+git add CLAUDE.md README.md docs/superpowers/specs/2026-11-02-tet-tudastar-design.md lib/tudastar-szotar.ts lib/urlap.ts lib/tudastar-validacio.ts
 git commit -m "docs(tudastar): CLAUDE.md TéT Tudástár szakasz, a spec tervezéskori pontosításai; apró review-javítások (sormező-őr, webcim-korlát)
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -3126,7 +3177,7 @@ Ha nem fut TéT dev szerver: kérdezd meg a felhasználót. Belépés: `$B goto 
   7. Szerkesztés: kategóriaváltás `egyetemek`-re → a kártya ott a lista végén; slug változatlan.
   8. Verzióütközés: a szerkesztőt két lapon (`$B newtab`) megnyitva, az egyiken mentve, a másikon mentve → „A kártyát közben más módosította – töltsd újra az oldalt.”, a beírt tartalom megmarad.
   9. Sorszerkesztő: új sor → fókusz az új sor első mezőjén; törlés → fókusz a „+ Új …” gombon; ↑ → a mozgatott sor gombján.
-  10. Keresés: `/tudastar?q=qa intezmeny` (ékezet nélkül) → a QA Intézmény a találatok közt, a „Keresés törlése” után a mező üres; találat nélküli kifejezés → „Nincs találat erre: …”.
+  10. Keresés: `/tudastar?q=qa intezmeny` (ékezet nélkül) → a QA Intézmény a találatok közt, a „Keresés törlése” után a mező üres; találat nélküli kifejezés → „Nincs találat erre: …”. Billentyűzettel (a mezőbe írva, Enter): a fókusz a mezőn marad, a `role="status"` régió szövege a találatszámra vált; a Vissza gomb után a mező a korábbi kifejezést mutatja.
   11. Keskeny ablak (`$B viewport 390x844`): a menü helyett a „Kategória” select, váltáskor navigál.
   12. Ismeretlen URL-ek: `/tudastar/nincs` 404, `/tudastar/egyetemek/qa-lista` 404 (lista), `/tudastar/egyetemek/uj?tipus=x` 404.
 - [ ] **Attasé:** a kategória- és részletoldal olvasható; „+ Új …”, Szerkesztés, ↑/↓ nem látszik; `/tudastar/egyetemek/uj?tipus=lista` és a `…/szerkesztes` 404.
@@ -3640,3 +3691,4 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 16. **URL-szabályok szigorítása:** a hosztnévben pontnak kell lennie (a `valami` így nem lesz `https://valami/`, de az `https://localhost` is hibás); a 500 karakteres korlát a normalizált `href`-re vonatkozik; séma nélküli, portos cím (`nkfih.gov.hu:8080/x`) sémának látszik és hibát kap – mindhárom a biztonságos oldalra hibázik.
 17. **Lekérdezések szignatúrái:** `getKartya(id)` (nem slug: az oldalak a `listKartyak()`-ból keresnek slug szerint, az actionök id-vel), `createKartya(adat, alap, szerzoId)` – a slug alapját a hívó képzi (az action: rövidítésből, tartalékként a névből), a függvény a szabad változatot keresi és beszúr; az `updateKartya` egy tranzakcióban olvas, hasonlít és ír (a spec `UPDATE … WHERE updated_at = ?` mintája helyett, azonos eredménnyel); a `listKartyak` az ismeretlen kategóriájú sort is kihagyja és logolja, és a kategórián belül `sorrend`, név, id szerint rendez (a mozgatás is ezt a sorrendet követi). A típus változatlanságát az action (a meglévő kártya típusát adja át) és az `updateKartya` is biztosítja (eltérésnél hibát dob).
 18. **A tábla és az írások védelme:** CHECK a `tipus`-ra és a `tartalom` `json_valid`-jára (a kategóriára nem, az a kódban él); az `updateKartya`/`createKartya` csak explicit felsorolt tartalmi mezőket ír, az `updateKartya` típusváltásra hibát dob; az író tranzakciók `immediate`-ek; a `mozgatKartya` a kategóriát 1..n-re számozza újra (az azonos `sorrend`-ű kártyák is mozgathatók); a `mozgatKartyaAction` hibakezelést kap.
+19. **Keresés akadálymentesen:** a nyitólapon állandó `role="status"` régió mondja be a találatszámot (a keresés nem vált címet, ezért a Next útvonal-bemondója hallgatna); a keresőmező vezérelt kliens-bemenet (`KeresoBemenet`), amely a `?q=`-hoz render közben igazodik, így Enter után a fókusz a mezőn marad. A csempék fölött rejtett „Kategóriák” címsor áll.
