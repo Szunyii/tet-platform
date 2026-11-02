@@ -143,7 +143,7 @@ const kategoria: ForrasKategoria = {
         { felirat: 'A Kormány tagjainak feladat- és hatásköre (90/2026. (V. 13.) Korm. rendelet)', url: 'https://njt.jog.gov.hu/jogszabaly/2026-90-20-22' },
         { felirat: 'A KFI-törvény (2014. évi LXXVI. törvény)', url: 'https://njt.jog.gov.hu/jogszabaly/2014-76-00-00' },
         { felirat: 'Kormányzati elérhetőségek', url: 'https://kormany.hu/kormanyzati-elerhetosegek' },
-        { felirat: 'Új program a doktoranduszoknak – az államtitkár a tudományos és innovációs tervekről (TTM, 2026. 08. 31.)', url: 'https://kormany.hu/hirek/uj-program-a-doktoranduszoknak' },
+        { felirat: 'Új program a doktoranduszoknak – az államtitkár a tudományos és innovációs tervekről (TTM, 2026. augusztus 31.)', url: 'https://kormany.hu/hirek/uj-program-a-doktoranduszoknak' },
       ],
     },
     {
@@ -237,7 +237,7 @@ const kategoria: ForrasKategoria = {
         },
         {
           nev: 'HUN-REN Magyar Kutatási Hálózat',
-          megjegyzes: 'Az állami kutatóközpontokat és -intézeteket összefogó hálózat; a TTM tudománypolitikai ügyekben kapcsolatot tart vele, elnöke társjavaslattevő a KKT tagjainál. Bővebben: 4. kategória.',
+          megjegyzes: 'A közfinanszírozott kutatóközpontokat és -intézeteket összefogó hálózat; a TTM tudománypolitikai ügyekben kapcsolatot tart vele, elnöke társjavaslattevő a KKT tagjainál. Bővebben: 4. kategória.',
           url: 'https://hun-ren.hu/',
         },
         {

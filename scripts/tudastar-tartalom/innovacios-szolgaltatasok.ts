@@ -203,11 +203,11 @@ const kategoria: ForrasKategoria = {
       tipus: 'lista',
       nev: 'Inkubátorok és akcelerátorok',
       osszefoglalo:
-        'A hazai inkubátorok és akcelerátorok részletes listái más kategóriákban szerepelnek, ez a kártya oda vezet: a Startup Factory-program 2023-as felhívásán támogatott inkubátorokat a 7. kategória Startup Factory-kártyája, az egyetemi inkubátorokat az 5. kategória sorolja fel. A Startup Factory technológiai inkubátorai az NKFI Alap forrásából, állami–magán társbefektetési modellben fektetnek korai fázisú startupokba, és szakmai, üzleti támogatást adnak.',
+        'A hazai inkubátorok és akcelerátorok részletes listái más kategóriákban szerepelnek, ez a kártya oda vezet: a Startup Factory-program 2023-as felhívásán támogatott inkubátorokat a 7. kategória „Inkubációs és akcelerációs befektetők (Startup Factory)” kártyája, az egyetemi inkubátorokat az 5. kategória sorolja fel. A Startup Factory technológiai inkubátorai az NKFI Alap forrásából, állami–magán társbefektetési modellben fektetnek korai fázisú startupokba, és szakmai, üzleti támogatást adnak.',
       sorok: [
         {
           nev: 'Startup Factory inkubátorprogram (NKFI Alap)',
-          megjegyzes: 'A 2023-1.1.3-STARTUP felhíváson támogatott technológiai inkubátorok listája a 7. kategória Startup Factory-kártyáján; új kört a 2026. évi programstratégia tervez.',
+          megjegyzes: 'A 2023-1.1.3-STARTUP felhíváson támogatott 12 inkubátor listája a 7. kategória „Inkubációs és akcelerációs befektetők (Startup Factory)” kártyáján; új kört a 2026. évi programstratégia tervez.',
           url: STARTUP_FACTORY,
         },
         {

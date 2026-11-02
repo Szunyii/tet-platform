@@ -100,8 +100,6 @@
  * - Az európai partnerségek táblázata 20 sort tartalmaz, a szöveg 19 konstrukciót említ (az EUREKA valószínűleg nem
  *   partnerség, hanem külön sor).
  * - Az EIT Community Hub mai összetétele (a 2021-es induláskor négy KIC); a hub és az EEN-partnerek elérhetőségei.
- * - A EURAXESS-koordinátor (Bay Zoltán) pontos magyar cégneve (a portálon „Bay Zoltán Nonprofit Ltd. for Applied
- *   Research”).
  */
 import type { ForrasKategoria } from './tipusok';
 
@@ -262,7 +260,7 @@ const kategoria: ForrasKategoria = {
       tipus: 'lista',
       nev: 'Európai hálózatok: COST, EURAXESS, Enterprise Europe Network',
       osszefoglalo:
-        'Kutatói és vállalati hálózatok magyar pontjai. A COST nemzeti koordinátora az NKFI Hivatalban dolgozik; a EURAXESS Hungary nemzeti koordinátora a portál szerint 2008 óta a Bay Zoltán alkalmazott kutatási nonprofit társaság, 14 EURAXESS-központtal; az Enterprise Europe Network magyar helyi kapcsolattartói a HEPA, megyei kereskedelmi és iparkamarák és vállalkozásfejlesztési alapítványok.',
+        'Kutatói és vállalati hálózatok magyar pontjai. A COST nemzeti koordinátora az NKFI Hivatalban dolgozik; az EURAXESS Hungary nemzeti koordinátora a portál szerint 2008 óta a Bay Zoltán Alkalmazott Kutatási Közhasznú Nonprofit Kft., 14 EURAXESS-központtal; az Enterprise Europe Network magyar helyi kapcsolattartói a HEPA, területi kereskedelmi és iparkamarák és vállalkozásfejlesztési alapítványok.',
       sorok: [
         {
           nev: 'COST – Európai Tudományos és Technológiai Együttműködés',
@@ -281,7 +279,7 @@ const kategoria: ForrasKategoria = {
         },
         {
           nev: 'EURAXESS Hungary-hálózat',
-          megjegyzes: 'Nemzeti koordinátor (Bridgehead): Bay Zoltán alkalmazott kutatási nonprofit társaság; 14 EURAXESS-központ egyetemeken és más intézményekben; euraxess@bayzoltan.hu.',
+          megjegyzes: 'Nemzeti koordinátor (Bridgehead): Bay Zoltán Alkalmazott Kutatási Közhasznú Nonprofit Kft.; 14 EURAXESS-központ egyetemeken és más intézményekben; euraxess@bayzoltan.hu.',
           url: 'https://www.euraxess.hu/hungary/hungary-network',
         },
         { nev: 'EEN – HEPA Magyar Exportfejlesztési Ügynökség (Budapest)', megjegyzes: '1027 Budapest, Kacsa u. 15–23.; eeninfo@hepa.hu' },

@@ -117,7 +117,7 @@ const kategoria: ForrasKategoria = {
         'A HUN-REN jogállását a 2024 decemberében elfogadott HUN-REN-törvény (2024. évi XCI. törvény) rendezi: sajátos jogállású ' +
         'jogi személy, miniszteri felügyelet alatt nem áll; az állam nevében – például a finanszírozási megállapodásoknál – a ' +
         'tudománypolitika koordinációjáért felelős miniszter, 2026-ban a tudományos és technológiai miniszter jár el. Belső működését ' +
-        'az alapító okirat és a szervezeti és működési szabályzat. A megújult hálózat 2025-ben jött létre, és egységes nemzeti ' +
+        'az alapító okirat és a szervezeti és működési szabályzat szabályozza. A megújult hálózat 2025-ben jött létre, és egységes nemzeti ' +
         'keretbe foglalta a Magyar Tudományos Akadémia nagy múltú kutatóintézeteit.\n\n' +
         'A hálózathoz 15 kutatóintézmény tartozik – mindegyik önálló jogi személy –, valamint két gazdálkodó szervezet: a Bay ' +
         'Zoltán Alkalmazott Kutatási Közhasznú Nonprofit Kft. és a technológiatranszferért felelős Hunrentech Kft.\n\n' +

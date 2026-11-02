@@ -236,7 +236,7 @@ const kategoria: ForrasKategoria = {
       tipus: 'lista',
       nev: 'Inkubációs és akcelerációs befektetők (Startup Factory); vállalati kockázati tőke',
       osszefoglalo:
-        'Az NKFI Alap Startup Factory programjában állami–magán társbefektetési modellben működő technológiai inkubátorok fektetnek be korai fázisú startupokba, és szakmai, üzleti tudást is adnak. A lista a 2023-as felhívás 12 támogatott inkubátora (NKFIH, 2023. december) a projekt címével, helyszínével és a támogatással. Önálló hazai vállalati kockázatitőke-programot (CVC) hivatalos forrásból nem azonosítottunk; a nagyvállalati nyílt innovációs programokat a 8. kategória sorolja fel.',
+        'Az NKFI Alap Startup Factory programjában állami–magán társbefektetési modellben működő technológiai inkubátorok fektetnek be korai fázisú startupokba, és szakmai, üzleti tudást is adnak. A lista a 2023-as felhívás 12 támogatott inkubátora (NKFIH: 2023. december 7-i döntés 11, december 18-i döntés további 1 projekt; összesen mintegy 5,75 Mrd Ft) a projekt címével, helyszínével és a támogatással. Önálló hazai vállalati kockázatitőke-programot (CVC) hivatalos forrásból nem azonosítottunk; a nagyvállalati nyílt innovációs programokat a 8. kategória sorolja fel.',
       sorok: [
         { nev: 'Lunar Program Zrt.', megjegyzes: 'Lunar Program – Startup Factory Inkubációs Program; Budapest; 246,5 M Ft támogatás.' },
         {
@@ -269,11 +269,11 @@ const kategoria: ForrasKategoria = {
       tipus: 'lista',
       nev: 'Deep tech finanszírozók',
       osszefoglalo:
-        'A tudományos és mérnöki áttörésekre épülő technológiák finanszírozására 2026 márciusában külön állami tőkeprogramot hirdettek meg: a GINOP Plusz Technológiaspecifikus Kockázati Tőkeprogramja a pályázaton kiválasztandó alapkezelőkön keresztül fektet be. Európai szinten az Európai Innovációs Tanács (EIC) saját meghatározása szerint az egyik legnagyobb deep tech befektető; a magyar pályázóknak az NKFI Hivatal nemzeti kapcsolattartója ad tanácsot.',
+        'A tudományos és mérnöki áttörésekre épülő technológiák finanszírozására 2026 márciusában külön állami tőkeprogramot hirdettek meg: a GINOP Plusz Technológiaspecifikus Kockázati Tőkeprogramja a kiválasztandó alapkezelőkön (pénzügyi közvetítőkön) keresztül fektet be. Európai szinten az Európai Innovációs Tanács (EIC) saját meghatározása szerint az egyik legnagyobb deep tech befektető; a magyar pályázóknak az NKFI Hivatal nemzeti kapcsolattartója ad tanácsot.',
       sorok: [
         {
           nev: 'Technológiaspecifikus Kockázati Tőkeprogram (GINOP Plusz-2.5.2-26)',
-          megjegyzes: 'Meghirdetve 2026. március 25.; 55,12 Mrd Ft; a pályázaton kiválasztandó (kb. 10) alapkezelőn át 200–2000 M Ft-os befektetések deep tech kkv-kba, elsősorban TRL 6 fölött.',
+          megjegyzes: 'Meghirdetve 2026. március 25.; 55,12 Mrd Ft; a kiválasztandó alapkezelőkön át vállalkozásonként 200–2000 M Ft-os tőkebefektetés deep tech kkv-kba, elsősorban TRL 6 fölött.',
           url: 'https://nkfih.gov.hu/english/szechenyi-plan-plus/technology-specific-venture-capital-programme-ginop-plusz-252-26',
         },
         {

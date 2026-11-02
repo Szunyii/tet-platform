@@ -133,7 +133,7 @@ const kategoria: ForrasKategoria = {
       tipus: 'lista',
       nev: 'Kiemelt innovatív kkv-k, startupok és nyílt innovációs programok',
       osszefoglalo:
-        'A kiválasztás forrása a Magyar Innovációs Nagydíj: a Magyar Innovációs Szövetség 2026. március 18-án adta át a 2025-ös innovációs teljesítményeket elismerő Nagydíjat és kilenc további díjat (91 pályázatból; a pályázók 68%-a kkv, 16%-a startup). A díjazottak után egy EIT által kiemelt startup és a nyílt innovációs programok következnek; az innovációs központokat és a nyílt innovációs programok működtetőit a 3. kategória is gyűjti.',
+        'A kiválasztás forrása a Magyar Innovációs Nagydíj: a Magyar Innovációs Szövetség 2026. március 18-án adta át a 2025-ös innovációs teljesítményeket elismerő Nagydíjat és kilenc további díjat (91 pályázatból; a pályázók 68%-a kkv, 16%-a startup). A díjazottak után egy EIT által kiemelt startup és a nyílt innovációs programok következnek; a startup- és technológiai szervezeteket és az egyetem–vállalat együttműködési programokat a 3. kategória „Startup- és technológiai szervezetek, vállalati és nyílt innovációs programok” kártyája gyűjti.',
       sorok: [
         { nev: 'Kravtex-Kühne Csoport (Credobus)', megjegyzes: 'Magyar Innovációs Nagydíj 2025: ultrakönnyű városi-elővárosi buszcsalád (dízel Econell Next, elektromos Electronell); Mosonmagyaróvár, Győr.' },
         { nev: 'Webwise Hungary Kft.', megjegyzes: 'MKIK KKV Innovációs Díj 2025: a Syncee kereskedelmi rendszer, amely a magyar cégek exportpiacra lépését segíti.' },
@@ -205,7 +205,7 @@ const kategoria: ForrasKategoria = {
       tipus: 'lista',
       nev: 'Kamarák és kétoldalú üzleti kamarák',
       osszefoglalo:
-        'A gazdasági kamarák a hazai vállalatok széles körét érik el; a megyei kereskedelmi és iparkamarák közül több az Enterprise Europe Network magyar partnere (lásd a 9. kategóriát). A kétoldalú üzleti kamarák a külföldi és a magyar vállalatok közötti kapcsolatépítés első címei.',
+        'A gazdasági kamarák a hazai vállalatok széles körét érik el; a területi kereskedelmi és iparkamarák közül több az Enterprise Europe Network magyar partnere (lásd a 9. kategóriát). A kétoldalú üzleti kamarák a külföldi és a magyar vállalatok közötti kapcsolatépítés első címei.',
       sorok: [
         {
           nev: 'Magyar Kereskedelmi és Iparkamara (MKIK)',

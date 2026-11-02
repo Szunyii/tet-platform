@@ -224,10 +224,10 @@ const kategoria: ForrasKategoria = {
       tipus: 'lista',
       nev: 'Egyetemi technológiatranszfer-cégek (TTC)',
       osszefoglalo:
-        'Az egyetemek – és a HUN-REN – 100%-os tulajdonában álló technológiatranszfer-cégek: szellemi tulajdon hasznosítása, ' +
+        'Az egyetemek – és a HUN-REN – tulajdonában álló technológiatranszfer-cégek: szellemi tulajdon hasznosítása, ' +
         'licenc, proof of concept és spin-off-alapítás. A modell a Nemzeti Innovációs Ügynökség 2023-ban indított kísérleti ' +
         'TTC-projektjéből nőtt ki (DE, ÓE, SE, SZE, SZTE); a hálózat fejlesztésére az NKFI Alap 2026-ban 6 milliárd forintos ' +
-        'pályázatot hirdetett (2026-1.1.2-TTC). Külföldi ipari partner licenc- vagy együttműködési ügyben elsőként a TTC-t keresse.',
+        'pályázatot hirdetett a 100%-os egyetemi vagy HUN-REN-tulajdonú TTC-knek (2026-1.1.2-TTC; a beadás 2026. április 16-án lezárult). Külföldi ipari partner licenc- vagy együttműködési ügyben elsőként a TTC-t keresse.',
       sorok: [
         {
           nev: 'SZTE TTC Zrt.',
@@ -301,7 +301,7 @@ const kategoria: ForrasKategoria = {
       sorok: [
         {
           nev: 'Science Park projekt (Nemzeti Innovációs Ügynökség)',
-          megjegyzes: '2023-ban 500 millió Ft állami forrás hat egyetem (DE, ÓE, PE, SE, SZE, SZTE) koncepciójára; az NIÜ szakmailag támogatja és monitorozza.',
+          megjegyzes: '2023-ban 500 millió Ft állami forrás hat egyetem (DE, ÓE, PE, SE, SZE, SZTE) koncepciójára; a NIÜ szakmailag támogatja és monitorozza.',
           url: 'https://niu.hu/project/science-park-projekt',
         },
         {
