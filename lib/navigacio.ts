@@ -57,9 +57,9 @@ export const UTVONALAK: readonly Utvonal[] = [
   },
   {
     href: '/tudastar',
-    cim: 'Tudástár',
-    alcim: 'Magyarországról ajánlható programok, partnerek és együttműködési formák',
-    menu: { ikon: '◫', felirat: 'Tudástár ??' },
+    cim: 'TéT Tudástár',
+    alcim: 'A magyar innovációs ökoszisztéma szereplői és kapcsolódó programok',
+    menu: { ikon: '◫', felirat: 'TéT Tudástár' },
   },
   {
     href: '/monitoring',
