@@ -389,6 +389,12 @@ export interface SorTipusok {
   sorok: ListaSor;
 }
 export type SorLista = keyof SorTipusok;
+// Típusszintű őr: a dinamikus listák minden mezője szöveg (a validátor és a sorszerkesztő stringként kezeli,
+// a `SOR_MEZOK` kimerítőségére épülő cast így teljes és helyes típusú sort ad). Nem szöveges mezőnél a
+// `MindSzoveg` `boolean` lesz, és az `Igaz<…>` fordítási hibát ad.
+type MindSzoveg = { [L in SorLista]: SorTipusok[L][keyof SorTipusok[L]] extends string ? true : false }[SorLista];
+type Igaz<T extends true> = T;
+export type SorMezokSzovegesek = Igaz<MindSzoveg>;
 
 export const SOR_MAX: Record<SorLista, number> = { szakaszok: 12, programok: 30, linkek: 20, sorok: 150 };
 /** A lista egy sorának neve (a szerkesztő sorcímkéje, a „+ Új …” gomb és a darabszám-hiba szövege). */
@@ -912,16 +918,16 @@ function szoveg(v: string, id: string, cimke: string, max: number, kotelezo: boo
 }
 
 /** Webcím: üresen `''` (vagy hiba, ha kötelező); különben a normalizált URL, hibánál a beírt érték. */
-function webcim(v: string, id: string, cimke: string, kotelezo: boolean, errors: MezoHibak): string {
-  if (!v || v.length > URL_MAX) return szoveg(v, id, cimke, URL_MAX, kotelezo, errors);
+function webcim(v: string, id: string, cimke: string, max: number, kotelezo: boolean, errors: MezoHibak): string {
+  if (!v || v.length > max) return szoveg(v, id, cimke, max, kotelezo, errors);
   const url = normalizalUrl(v);
   if (url === null) errors[id] = URL_HIBA;
-  else if (url.length > URL_MAX) errors[id] = `${nevelovel(cimke)} kódolva (az ékezetes betűkkel) hosszabb ${URL_MAX} karakternél.`;
+  else if (url.length > max) errors[id] = `${nevelovel(cimke)} kódolva (az ékezetes betűk és a szóközök kódolásával) hosszabb ${max} karakternél.`;
   else return url;
   return v;
 }
 
-// A sorindex legfeljebb 4 jegyű, vezető nulla nélkül: a validátor ennél többet sosem fogad el (`SOR_MAX`).
+// A sorindex legfeljebb 4 jegyű, vezető nulla nélkül (a `SOR_MAX` ennél jóval kisebb); a hosszabb indexű mezőt nem olvassuk.
 const sorIndexRe = (lista: SorLista) => new RegExp(`^${lista}\\.(0|[1-9]\\d{0,3})\\.`);
 
 /** A dinamikus sorok indexei a FormData-ban (`<lista>.<i>.<mezo>`), növekvő sorrendben. */
@@ -954,7 +960,7 @@ function sorok<L extends SorLista>(fd: FormData, lista: L, errors: MezoHibak): S
     const sor: Record<string, string> = {};
     for (const { kulcs, sz, v } of ertekek) {
       const id = `${lista}.${i}.${kulcs}`;
-      sor[kulcs] = sz.url ? webcim(v, id, sz.cimke, Boolean(sz.kotelezo), errors) : szoveg(v, id, sz.cimke, sz.max, Boolean(sz.kotelezo), errors);
+      sor[kulcs] = sz.url ? webcim(v, id, sz.cimke, sz.max, Boolean(sz.kotelezo), errors) : szoveg(v, id, sz.cimke, sz.max, Boolean(sz.kotelezo), errors);
     }
     // A `SOR_MEZOK` a sortípus minden mezőjét kimerítően felsorolja, ezért a sor teljes.
     eredmeny.push(sor as unknown as SorTipusok[L]);
@@ -971,7 +977,7 @@ export function validalKartya(fd: FormData, tipus: KartyaTipus): ParseResult<Kar
   const nev = szoveg(mezo(fd, 'nev'), 'nev', NEV_CIMKE[tipus], NEV_MAX, true, errors);
   const rovidites = szoveg(mezo(fd, 'rovidites'), 'rovidites', C.rovidites, ROVIDITES_MAX, false, errors);
   const osszefoglalo = szoveg(mezo(fd, 'osszefoglalo'), 'osszefoglalo', OSSZEFOGLALO_CIMKE[tipus], OSSZEFOGLALO_MAX, true, errors);
-  const honlap = webcim(mezo(fd, 'honlap'), 'honlap', C.honlap, false, errors);
+  const honlap = webcim(mezo(fd, 'honlap'), 'honlap', C.honlap, URL_MAX, false, errors);
   const linkek = sorok(fd, 'linkek', errors);
 
   let torzs: KartyaTorzs;
@@ -1053,7 +1059,11 @@ export const EMAIL_RE = /^(?!.*\.\.)[^\s@.](?:[^\s@]*[^\s@.])?@[^\s@]+\.[A-Za-z]
 
 const MAGANHANGZO_RE = /^[aáeéiíoóöőuúüű]/i;
 
-/** A mezőcímke névelővel, mondat elejére: „Név” → „A név”, „Összefoglaló” → „Az összefoglaló”. */
+/**
+ * A mezőcímke névelővel, mondat elejére: „Név” → „A név”, „Összefoglaló” → „Az összefoglaló”. Közönséges,
+ * nagybetűvel kezdődő szóra való (az első betűt kisbetűsíti); rövidítéssel, számmal vagy tulajdonnévvel kezdődő
+ * címkére nem.
+ */
 export function nevelovel(cimke: string): string {
   const kis = cimke.charAt(0).toLowerCase() + cimke.slice(1);
   return `${MAGANHANGZO_RE.test(kis) ? 'Az' : 'A'} ${kis}`;
@@ -2964,6 +2974,49 @@ Ellenőrzés: `grep -n "knowledge" CLAUDE.md` – üres.
 
 A spec állapot-sorát cseréld: `Állapot: jóváhagyott terv, megvalósítás előtt` → `Állapot: az A fázis (funkció) megvalósítva; a B fázis (kezdő tartalom) folyamatban`. A spec végére új szakasz `## Tervezéskori pontosítások` címmel, a terv végi „Eltérések a spectől” lista pontjaival (szó szerint átvehető).
 
+- [ ] **4b. lépés: apró kódjavítások a 2. task záró review-jából**
+
+`lib/tudastar-szotar.ts` – a `export type SorLista = keyof SorTipusok;` sor után:
+
+```ts
+// Típusszintű őr: a dinamikus listák minden mezője szöveg (a validátor és a sorszerkesztő stringként kezeli,
+// a `SOR_MEZOK` kimerítőségére épülő cast így teljes és helyes típusú sort ad). Nem szöveges mezőnél a
+// `MindSzoveg` `boolean` lesz, és az `Igaz<…>` fordítási hibát ad.
+type MindSzoveg = { [L in SorLista]: SorTipusok[L][keyof SorTipusok[L]] extends string ? true : false }[SorLista];
+type Igaz<T extends true> = T;
+export type SorMezokSzovegesek = Igaz<MindSzoveg>;
+```
+
+`lib/urlap.ts` – a `nevelovel` doc-kommentje:
+
+```ts
+/**
+ * A mezőcímke névelővel, mondat elejére: „Név” → „A név”, „Összefoglaló” → „Az összefoglaló”. Közönséges,
+ * nagybetűvel kezdődő szóra való (az első betűt kisbetűsíti); rövidítéssel, számmal vagy tulajdonnévvel kezdődő
+ * címkére nem.
+ */
+```
+
+`lib/tudastar-validacio.ts` – a `webcim` a szabály korlátját kapja (a `honlap`-nál `URL_MAX`), és két komment pontosabb:
+
+```ts
+/** Webcím: üresen `''` (vagy hiba, ha kötelező); különben a normalizált URL, hibánál a beírt érték. */
+function webcim(v: string, id: string, cimke: string, max: number, kotelezo: boolean, errors: MezoHibak): string {
+  if (!v || v.length > max) return szoveg(v, id, cimke, max, kotelezo, errors);
+  const url = normalizalUrl(v);
+  if (url === null) errors[id] = URL_HIBA;
+  else if (url.length > max) errors[id] = `${nevelovel(cimke)} kódolva (az ékezetes betűk és a szóközök kódolásával) hosszabb ${max} karakternél.`;
+  else return url;
+  return v;
+}
+
+// A sorindex legfeljebb 4 jegyű, vezető nulla nélkül (a `SOR_MAX` ennél jóval kisebb); a hosszabb indexű mezőt nem olvassuk.
+```
+
+és a két hívás: `webcim(v, id, sz.cimke, sz.max, Boolean(sz.kotelezo), errors)`, illetve `webcim(mezo(fd, 'honlap'), 'honlap', C.honlap, URL_MAX, false, errors)`.
+
+Ellenőrzés: `npx tsc --noEmit` üres, a két `_proba` script „rendben”. Ezek a fájlok is a 6. lépés commitjába kerülnek.
+
 - [ ] **5. lépés: az eldobható scriptek törlése**
 
 ```bash
@@ -2971,13 +3024,13 @@ rm scripts/_proba-tudastar.ts scripts/_proba-tudastar-validacio.ts scripts/_prob
 git status --short
 ```
 
-Várt: a `git status` csak a `CLAUDE.md`-t és a spec-et mutatja módosítottként (a `data/tet.db` nem lehet a listában módosítottként – ha mégis, ne add hozzá).
+Várt: a `git status` csak a `CLAUDE.md`-t, a spec-et és a 4b. lépés három lib-fájlját mutatja módosítottként (a `data/tet.db` nem lehet a listában módosítottként – ha mégis, ne add hozzá).
 
 - [ ] **6. lépés: commit**
 
 ```bash
-git add CLAUDE.md docs/superpowers/specs/2026-11-02-tet-tudastar-design.md
-git commit -m "docs(tudastar): CLAUDE.md TéT Tudástár szakasz, a spec tervezéskori pontosításai
+git add CLAUDE.md docs/superpowers/specs/2026-11-02-tet-tudastar-design.md lib/tudastar-szotar.ts lib/urlap.ts lib/tudastar-validacio.ts
+git commit -m "docs(tudastar): CLAUDE.md TéT Tudástár szakasz, a spec tervezéskori pontosításai; apró review-javítások (sormező-őr, webcim-korlát)
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
@@ -3109,7 +3162,7 @@ import { existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { SLUG_MAX, SLUG_RE } from '../lib/slug';
-import { FOGLALT_SLUGOK, TUDASTAR_KATEGORIAK, isKartyaTipus, type KartyaAdat } from '../lib/tudastar-szotar';
+import { FOGLALT_SLUGOK, SOR_MEZOK, TUDASTAR_KATEGORIAK, isKartyaTipus, type KartyaAdat } from '../lib/tudastar-szotar';
 import { normalizalUrl, validalKartya } from '../lib/tudastar-validacio';
 import { tisztitSzoveg } from '../lib/urlap';
 import { kartyaFormData, type ForrasKartya, type ForrasKategoria } from './tudastar-tartalom/tipusok';
@@ -3123,12 +3176,10 @@ const TIPUS_MEZOK = {
   intezmeny: [...KOZOS_MEZOK, 'profil', 'tevekenyseg', 'kapcsolat', 'szakaszok', 'programok'],
   lista: [...KOZOS_MEZOK, 'sorok'],
 };
-const SOR_MEZOK: Record<string, readonly string[]> = {
+/** Az objektum-mezők engedett almezői: a kapcsolat, és a dinamikus listák a szótár közös `SOR_MEZOK`-jából. */
+const ALMEZOK: Record<string, readonly string[]> = {
   kapcsolat: ['email', 'telefon', 'cim'],
-  szakaszok: ['cim', 'szoveg'],
-  programok: ['nev', 'leiras', 'url'],
-  sorok: ['nev', 'megjegyzes', 'url'],
-  linkek: ['felirat', 'url'],
+  ...Object.fromEntries(Object.entries(SOR_MEZOK).map(([lista, mezok]) => [lista, Object.keys(mezok)])),
 };
 
 interface Ellenorzott {
@@ -3157,7 +3208,7 @@ function szigoruHibak(k: ForrasKartya): string[] {
   if (!isKartyaTipus(k.tipus)) return [`tipus: 'intezmeny' vagy 'lista' kell (${String(k.tipus)})`];
   const engedett = TIPUS_MEZOK[k.tipus];
   for (const kulcs of Object.keys(k)) if (!engedett.includes(kulcs)) hibak.push(`ismeretlen vagy a típushoz nem illő mező: ${kulcs}`);
-  for (const [lista, mezok] of Object.entries(SOR_MEZOK)) {
+  for (const [lista, mezok] of Object.entries(ALMEZOK)) {
     const ertek = (k as unknown as Record<string, unknown>)[lista];
     const elemek = lista === 'kapcsolat' ? (ertek ? [ertek] : []) : Array.isArray(ertek) ? ertek : [];
     elemek.forEach((e, i) => {
