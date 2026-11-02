@@ -44,6 +44,7 @@ export function KartyaMezo({
       {szamlalo && (
         <p id={szamlaloId} className="text-right text-xs text-muted-foreground tabular-nums">
           {value.length}/{max}
+          <span className="sr-only"> karakter</span>
         </p>
       )}
     </Mezo>

@@ -41,8 +41,15 @@ function formHiba(errors: MezoHibak, uzenet: string): void {
   errors.form = errors.form ? `${errors.form} ${uzenet}` : uzenet;
 }
 
-/** Szöveges érték ellenőrzése: kötelezőség és hossz; a hibát az `errors`-ba írja, az értéket visszaadja. */
-function szoveg(v: string, id: string, cimke: string, max: number, kotelezo: boolean, errors: MezoHibak): string {
+/**
+ * Szöveges érték ellenőrzése: kötelezőség és hossz; a hibát az `errors`-ba írja, az értéket visszaadja. Az
+ * egysoros mezőben (`tobbsoros` nélkül) a sortörés szóköz lesz: a szerkesztő `<input>`-ja a következő mentéskor
+ * szóköz nélkül dobná el, és a szavak egybefolynának.
+ */
+function szoveg(
+  nyers: string, id: string, cimke: string, max: number, kotelezo: boolean, errors: MezoHibak, tobbsoros = false,
+): string {
+  const v = tobbsoros ? nyers : nyers.replace(/\s*\n\s*/g, ' ');
   if (kotelezo && !v) errors[id] = `${nevelovel(cimke)} kötelező.`;
   else if (v.length > max) errors[id] = `${nevelovel(cimke)} legfeljebb ${max} karakter.`;
   return v;
@@ -91,7 +98,9 @@ function sorok<L extends SorLista>(fd: FormData, lista: L, errors: MezoHibak): S
     const sor: Record<string, string> = {};
     for (const { kulcs, sz, v } of ertekek) {
       const id = `${lista}.${i}.${kulcs}`;
-      sor[kulcs] = sz.url ? webcim(v, id, sz.cimke, sz.max, Boolean(sz.kotelezo), errors) : szoveg(v, id, sz.cimke, sz.max, Boolean(sz.kotelezo), errors);
+      sor[kulcs] = sz.url
+        ? webcim(v, id, sz.cimke, sz.max, Boolean(sz.kotelezo), errors)
+        : szoveg(v, id, sz.cimke, sz.max, Boolean(sz.kotelezo), errors, Boolean(sz.tobbsoros));
     }
     // A `SOR_MEZOK` a sortípus minden mezőjét kimerítően felsorolja, ezért a sor teljes.
     eredmeny.push(sor as unknown as SorTipusok[L]);
@@ -107,7 +116,7 @@ export function validalKartya(fd: FormData, tipus: KartyaTipus): ParseResult<Kar
   if (!isKategoriaSlug(kategoria)) errors.kategoria = 'Válassz kategóriát.';
   const nev = szoveg(mezo(fd, 'nev'), 'nev', NEV_CIMKE[tipus], NEV_MAX, true, errors);
   const rovidites = szoveg(mezo(fd, 'rovidites'), 'rovidites', C.rovidites, ROVIDITES_MAX, false, errors);
-  const osszefoglalo = szoveg(mezo(fd, 'osszefoglalo'), 'osszefoglalo', OSSZEFOGLALO_CIMKE[tipus], OSSZEFOGLALO_MAX, true, errors);
+  const osszefoglalo = szoveg(mezo(fd, 'osszefoglalo'), 'osszefoglalo', OSSZEFOGLALO_CIMKE[tipus], OSSZEFOGLALO_MAX, true, errors, true);
   const honlap = webcim(mezo(fd, 'honlap'), 'honlap', C.honlap, URL_MAX, false, errors);
   const linkek = sorok(fd, 'linkek', errors);
 
@@ -118,8 +127,8 @@ export function validalKartya(fd: FormData, tipus: KartyaTipus): ParseResult<Kar
     torzs = {
       tipus,
       tartalom: {
-        profil: szoveg(mezo(fd, 'profil'), 'profil', C.profil, SZOVEG_MAX, false, errors),
-        tevekenyseg: szoveg(mezo(fd, 'tevekenyseg'), 'tevekenyseg', C.tevekenyseg, SZOVEG_MAX, false, errors),
+        profil: szoveg(mezo(fd, 'profil'), 'profil', C.profil, SZOVEG_MAX, false, errors, true),
+        tevekenyseg: szoveg(mezo(fd, 'tevekenyseg'), 'tevekenyseg', C.tevekenyseg, SZOVEG_MAX, false, errors, true),
         kapcsolat: {
           email,
           telefon: szoveg(mezo(fd, 'telefon'), 'telefon', C.telefon, TELEFON_MAX, false, errors),

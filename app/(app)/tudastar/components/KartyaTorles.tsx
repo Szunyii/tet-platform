@@ -60,8 +60,10 @@ export function KartyaTorles({ nev, action, tiltva = false }: { nev: string; act
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={pending}>Mégse</AlertDialogCancel>
-            {/* focusableWhenDisabled: törlés közben a fókusz a gombon marad (különben a body-ra esne). */}
-            <AlertDialogAction variant="destructive" disabled={pending} focusableWhenDisabled onClick={torol}>
+            {/* focusableWhenDisabled: törlés közben a fókusz a gombon marad (különben a body-ra esne). Ilyenkor natív
+                disabled nincs, csak aria-disabled, ezért a letiltott kinézetet az aria-disabled: osztályok adják. */}
+            <AlertDialogAction variant="destructive" disabled={pending} focusableWhenDisabled onClick={torol}
+              className="aria-disabled:pointer-events-none aria-disabled:opacity-50">
               {pending ? 'Törlés…' : 'Törlés'}
             </AlertDialogAction>
           </AlertDialogFooter>
