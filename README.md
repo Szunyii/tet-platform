@@ -1,7 +1,7 @@
 # NIÜ · TéT Platform – Next.js dummy demó
 
 Egyszerű Next.js (App Router, TypeScript) demóprojekt a „TéT Platform" design-doksi alapján.
-A tudástár és a monitoring képernyő még statikus dummy adatokból dolgozik (`lib/data.ts`, `lib/knowledge.ts`); az auth, a felhasználó-kezelés, az országprofil (és a térkép), a jelentések (információs bejegyzések) és a kommunikáció (ticketek) már valódi adatbázisból (lásd lent).
+A monitoring képernyő még statikus dummy adatokból dolgozik (`lib/data.ts`); az auth, a felhasználó-kezelés, az országprofil (és a térkép), a jelentések (információs bejegyzések), a kommunikáció (ticketek) és a TéT Tudástár már valódi adatbázisból (lásd lent).
 
 ## Indítás
 
@@ -83,7 +83,7 @@ A `data/tet.db` demó-adatbázis a repóban van (felhasználókkal és az attas�
 - `lib/orszagprofil-szotar.ts` – az országprofil blokkjai, opciólistái, címkéi és korlátai
 - `components/orszagprofil/` – az országprofil jelvényei (`AllapotBadge`, `AgazatBadge`, közös színstílusuk a `SzinesBadge`) és a `SzerkesztesGomb` – a profil oldal és a térkép is használja
 - `app/(app)/orszagprofil/components/` – a profil olvasó nézete (`BlokkNezet`, `AttaseLista`) és a szerkesztő blokkonkénti űrlapjai (`BlokkForm`, `mezok/`, `RendezvenySorok`; nem szerkeszthető évre a `NemSzerkeszthetoEv` kártya)
-- `lib/knowledge.ts` – tudástár demóadatok: 6 program, 6 ökoszisztéma-elem, 5 együttműködési forma
+- `lib/tudastar-szotar.ts` – a TéT Tudástár 9 kategóriája, kártyatípusai, korlátai, közös felirat- és sorszabály-táblái és a normalizáló; a kártyák a `tudastar_kartya` táblában (`db/queries/tudastar.ts`), az oldalak és a szerkesztő az `app/(app)/tudastar/` alatt
 - `lib/score.ts` – determinisztikus dummy pontszámok a monitoringhoz (a doksi logikája szerint)
 - `lib/riport-szotar.ts` – kategóriák, kulcsszavak, csatolmány-limit
 - `lib/ticket-szotar.ts` – ticket típusok, prioritások, státuszok, szűrők, a lista szűrős URL-je (`listaUrl`)
