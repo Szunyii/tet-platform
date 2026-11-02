@@ -22,81 +22,81 @@ export const TUDASTAR_KATEGORIAK = [
     szam: 1,
     cim: 'Szakpolitikai irányítás és koordináció',
     rovidCim: 'Szakpolitikai irányítás',
-    leiras: 'A KFI-politikát alakító minisztériumok, koordinációs és tanácsadó testületek.',
+    leiras: 'A KFI-politikát irányító TTM, az érintett ágazati minisztériumok, koordinációs és tanácsadó testületek.',
     bevezeto:
-      'A magyar kutatás-, fejlesztés- és innovációpolitika irányítói: a Tudományos és Technológiai Minisztérium, az innovációhoz kapcsolódó ágazati minisztériumok, valamint a koordinációs, stratégiai és tanácsadó testületek. A minisztérium kártyáján a KFI-stratégia, a prioritások és a kiemelt ágazatok összefoglalója olvasható.',
+      'A magyar kutatás-, fejlesztés- és innovációpolitikát 2026 óta a Tudományos és Technológiai Minisztérium (TTM) irányítja: övé a kormányzati tudománypolitika és annak koordinációja, irányítja az NKFI Hivatalt, és szakmailag felügyeli a Nemzeti Innovációs Ügynökséget. A gazdaságfejlesztés, a felsőoktatás, a tudománydiplomácia és az ágazati innováció más minisztériumoknál van, a döntések előkészítésében pedig a KFI-törvény szerinti tanácsok és a tudományos köztestületek vesznek részt. Az attasé itt látja, melyik kérdéssel kihez forduljon, és hol található a TéT-attasé hálózatot koordináló minisztériumi egység.',
   },
   {
     slug: 'finanszirozas',
     szam: 2,
     cim: 'Kutatás-fejlesztési és innovációs finanszírozás',
     rovidCim: 'K+F+I finanszírozás',
-    leiras: 'Az NKFI Hivatal, a hazai és uniós források kezelői, a nemzeti kapcsolattartók.',
+    leiras: 'Az NKFI Hivatal és az NKFI Alap, a hazai és uniós források kezelői, a nemzeti kapcsolattartók.',
     bevezeto:
-      'Kik döntenek a hazai KFI-forrásokról, és kihez fordulhat a külföldi partner pályázati együttműködésért. Itt található a Nemzeti Kutatási, Fejlesztési és Innovációs Hivatal, a hazai és európai uniós támogatások kezelői, a Horizont Európa nemzeti kapcsolattartói, valamint az EUREKA, a Eurostars, a COST és más programok hazai felelősei.',
+      'A hazai KFI-források legnagyobb kezelője a Nemzeti Kutatási, Fejlesztési és Innovációs Hivatal: az NKFI Alapból pályázatokat ír ki, és itt működnek a Horizont Európa nemzeti kapcsolattartói, valamint az EUREKA, a Eurostars és a COST hazai pontjai. Az attasé itt találja, milyen hazai pályázatokkal kapcsolódhat be egy külföldi partner, hol kaphat egy magyar szervezet társfinanszírozást a nemzetközi projektekhez, és kihez irányíthatja a pályázati kérdéseket. Az uniós kohéziós források felhívásai a Széchenyi Terv Plusz portálján jelennek meg.',
   },
   {
     slug: 'innovacios-szolgaltatasok',
     szam: 3,
     cim: 'Innovációs szolgáltatások és vállalkozásfejlesztés',
     rovidCim: 'Innovációs szolgáltatások',
-    leiras: 'A Nemzeti Innovációs Ügynökség, inkubátorok, akcelerátorok, klaszterek.',
+    leiras: 'A Nemzeti Innovációs Ügynökség programjai, vállalkozásfejlesztési szervezetek, inkubátorok, klaszterek.',
     bevezeto:
-      'Az innovatív vállalkozásokat és startupokat segítő szervezetek: a Nemzeti Innovációs Ügynökség és programjai, az országos vállalkozásfejlesztési szervezetek, az inkubátorok, akcelerátorok és klaszterek, valamint a vállalati innovációs központok és a nyílt innovációs programok működtetői.',
+      'Az innovatív vállalkozásokat és startupokat segítő szervezetek: a Nemzeti Innovációs Ügynökség (NIÜ) és programjai, az országos vállalkozásfejlesztési szervezetek, valamint a startup- és technológiai szervezetek. Az inkubátorokhoz, akcelerátorokhoz és klaszterekhez eligazító kártyák vezetnek: a Startup Factory-inkubátorok listája a 7., az akkreditált klasztereké a 8. kategóriában található. Az attasé itt találja meg, hová irányíthat egy külföldi startupot, akcelerátort vagy befektetőt, és milyen programokkal jut ki a magyar startup a fogadó ország piacára. A vállalati innovációs központokról és nyílt innovációs programokról bővebben a 8. kategória szól.',
   },
   {
     slug: 'kutatohalozat',
     szam: 4,
     cim: 'Kutatóhálózat és kutatóintézetek',
     rovidCim: 'Kutatóhálózat',
-    leiras: 'A HUN-REN hálózat, nemzeti laboratóriumok, kutatási infrastruktúrák.',
+    leiras: 'A HUN-REN és intézetei, támogatott kutatócsoportok, nemzeti laboratóriumok, kutatási infrastruktúrák.',
     bevezeto:
-      'A magyar kutatóhálózat: a HUN-REN Magyar Kutatási Hálózat és kutatóközpontjai, a támogatott kutatócsoportok, a nemzeti laboratóriumok, a kutatási infrastruktúrák és az önálló állami vagy nonprofit kutatóhelyek.',
+      'A közfinanszírozott magyar kutatás intézményi gerince: a HUN-REN Magyar Kutatási Hálózat 15 kutatóintézménye, a főként egyetemeken működő támogatott kutatócsoportok, a 2026-ban támogatott Misszióvezérelt Nemzeti Laboratóriumok, a nagy kutatási infrastruktúrák (ELI ALPS, Budapest Neutron Centrum, HUN-REN Cloud, Komondor), valamint a hálózaton kívüli állami és nonprofit kutatóhelyek. Az attasé itt találja meg, melyik intézet melyik területen erős, és hová irányítsa a külföldi partnert közös kutatás, infrastruktúra-hozzáférés vagy laborlátogatás ügyében. A korábbi akadémiai bölcsészet- és társadalomtudományi kutatóközpontok 2025. augusztus 1. óta az ELTE-hez tartoznak.',
   },
   {
     slug: 'egyetemek',
     szam: 5,
     cim: 'Egyetemek és technológiatranszfer',
     rovidCim: 'Egyetemek és TT',
-    leiras: 'Kutatóegyetemek, technológiatranszfer-irodák, science parkok, spin-offok.',
+    leiras: 'Kutatásintenzív egyetemek, innovációs igazgatóságok, technológiatranszfer-cégek, science parkok, spin-offok.',
     bevezeto:
-      'A kutatóegyetemek és a tudás hasznosításának szereplői: innovációs igazgatóságok, technológiatranszfer-irodák és -cégek, egyetemi inkubátorok, kompetenciaközpontok, science parkok, egyetemi kutatási infrastruktúrák és spin-off portfóliók.',
+      'A kutatóegyetemek és a tudás hasznosításának szereplői. Hatályos, hivatalos „kutatóegyetem”-lista nincs, ezért az első lista a kutatásban és a hasznosításban legaktívabb egyetemeket ellenőrizhető mutatókkal (támogatott kutatócsoportok, nemzeti laboratóriumok) mutatja be. Az egyetemi technológiatranszfer 2023 óta átalakul: a Nemzeti Innovációs Ügynökség kísérleti programjából egyetemi tulajdonú technológiatranszfer-cégek (TTC-k) nőttek ki, ezek a külföldi partner első kapcsolatai licenc, közös fejlesztés vagy spin-off ügyében. A kevés adatú típusok – inkubátorok, kompetenciaközpontok, science parkok – egy összevont listán szerepelnek.',
   },
   {
     slug: 'szellemi-tulajdon',
     szam: 6,
     cim: 'Szellemi tulajdon, szabályozás és minősítés',
     rovidCim: 'Szellemi tulajdon',
-    leiras: 'Az SZTNH, szabványosítás, akkreditáció, ágazati hatóságok.',
+    leiras: 'Az SZTNH, szabványosítás, akkreditáció, ágazati hatóságok, tesztkörnyezetek, kutatásbiztonság.',
     bevezeto:
-      'A szellemi tulajdon védelmének, a szabályozásnak és a minősítésnek a szereplői: a Szellemi Tulajdon Nemzeti Hivatala, a szabványosítási, akkreditációs és megfelelőségértékelési szervezetek, az ágazati hatóságok, a szabályozói tesztkörnyezetek, valamint a kutatásbiztonsági és technológiabiztonsági kapcsolattartók.',
+      'A szellemi tulajdon védelmének, a szabályozásnak és a minősítésnek a szereplői: a Szellemi Tulajdon Nemzeti Hivatala, a Magyar Szabványügyi Testület, a Nemzeti Akkreditáló Hatóság és a megfelelőségértékelő szervezetek, az innovatív termékeket engedélyező ágazati hatóságok, a szabályozói tesztkörnyezetek, valamint a kutatás- és technológiabiztonságban illetékes szervek. Az attasé itt találja, hová irányítsa a külföldi partnert oltalomszerzés, szabványosítás, tanúsítás, piacra lépési engedély vagy exportellenőrzési kérdés ügyében.',
   },
   {
     slug: 'befektetok',
     szam: 7,
     cim: 'Finanszírozók és befektetők',
     rovidCim: 'Finanszírozók, befektetők',
-    leiras: 'Állami és magán kockázati tőke, üzleti angyalok, banki finanszírozás.',
+    leiras: 'Állami és magán kockázati tőke, üzleti angyalok, fejlesztési bankok, deep tech és egyetemi alapok.',
     bevezeto:
-      'Az innováció tőkeoldala: az állami és állami hátterű finanszírozók, a kockázatitőke-alapok, az üzleti angyal hálózatok, a banki innovációfinanszírozás, a corporate venture capital szereplők, az inkubációs és akcelerációs befektetők, a deep tech finanszírozók, valamint az egyetemi és proof-of-concept alapok.',
+      'Az innováció tőkeoldalának szereplői címtárszerűen: az állami és állami hátterű finanszírozók, a kockázatitőke-alapkezelők, az üzleti angyal hálózatok, a fejlesztési bankok és garanciaintézmények, az inkubációs és vállalati befektetők, a deep tech finanszírozók, valamint az egyetemi és proof-of-concept alapok. Az attasé itt találja meg, kihez irányíthatja a társbefektetőt kereső külföldi partnert, vagy honnan ered egy magyar startup finanszírozása. A lista nem befektetési tanács és nem értékelés; önálló vállalati kockázatitőke-programot (CVC) hivatalos forrásból nem azonosítottunk, az összegek a források közlései.',
   },
   {
     slug: 'vallalatok',
     szam: 8,
     cim: 'Kiemelt vállalati, piaci szereplők',
     rovidCim: 'Vállalati szereplők',
-    leiras: 'Innovatív nagyvállalatok, KFI-központok, kkv-k, startupok, kamarák.',
+    leiras: 'Innovatív nagyvállalatok és KFI-központok, díjazott kkv-k és startupok, szövetségek, kamarák, klaszterek.',
     bevezeto:
-      'A magyar gazdaság innovatív szereplői: a legnagyobb innovatív vállalatok és a jelentős KFI-központtal rendelkező cégek, a nyílt innovációs programokat működtető vállalatok, a kiemelt innovatív kkv-k, startupok és scale-upok, valamint az ágazati szövetségek, kamarák és klaszterek.',
+      'A magyar gazdaság innovatív szereplői címtárszerűen. Az első kártya a nemzetközi K+F-rangsorokban szereplő magyar vállalatokat és a jelentős hazai KFI-központtal rendelkező nagyvállalatokat gyűjti össze – a két típus a kevés rangsoradat miatt közös kártyán szerepel –, a második a Magyar Innovációs Nagydíj 2025-ös díjazottjait és a nyílt innovációs programokat. Ezt követik az ágazati szövetségek, a kamarák (köztük a kétoldalú üzleti kamarák) és az akkreditált klaszterek. A leírások a vállalatok és szervezetek saját közlései; a lista nem értékelés.',
   },
   {
     slug: 'nemzetkozi-programok',
     szam: 9,
     cim: 'Nemzetközi programok magyar kapcsolódási pontjai',
     rovidCim: 'Nemzetközi programok',
-    leiras: 'Horizont Európa, EIC, EIT, EUREKA, COST, EEN, EURAXESS és társaik.',
+    leiras: 'Horizont Európa, EIC, EIT, EUREKA, Eurostars, COST, EEN, EURAXESS: ki a magyar felelős és kapcsolattartó.',
     bevezeto:
-      'A nemzetközi KFI-programok magyar kapcsolódási pontjai: Horizont Európa, EIC, EIT és a KIC-ek, EUREKA, Eurostars, COST, Enterprise Europe Network, EURAXESS, a kétoldalú TéT-programok, a nemzetközi kutatási infrastruktúrák, az EU-partnerségek és a Widening-programok.',
+      'A nemzetközi KFI-programok magyar oldala: ki a hazai felelős, hol a nemzeti kapcsolattartó, és mire számíthat egy külföldi partner. A legtöbb program magyar kapcsolódási pontja az NKFI Hivatal – a Horizont Európa nemzeti kapcsolattartói, az EUREKA, a Eurostars, a COST, a nemzetközi kutatási infrastruktúrák és az európai partnerségek –; a kormányközi TéT-egyezményekért a Tudományos és Technológiai Minisztérium felel, az EIT székhelye pedig Budapest. Fontos 2026-os változás: október 14. óta a közérdekű vagyonkezelő alapítványok által fenntartott egyetemek ismét kedvezményezettként és konzorciumvezetőként is részt vehetnek a Horizont Európában és az Erasmus+-ban.',
   },
 ] as const satisfies readonly TudastarKategoria[];
 

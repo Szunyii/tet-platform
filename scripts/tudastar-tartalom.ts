@@ -12,7 +12,8 @@
  * listakártya, szélein szóközös vagy vezérlőkaraktert tartalmazó szöveg, sortörés egysoros mezőben –, valamint
  * a slug alakja, foglaltsága és egyedisége. `--sql` módban a fájlok `leiras`/`bevezeto` szövegének egyeznie kell
  * a lib/tudastar-szotar.ts-belivel, és csak a legutolsó, `drizzle-kit generate --custom` által létrehozott (vagy
- * e futtató által korábban megírt) migrációs fájlba ír – egy lefutott migrációt így nem írhat felül.
+ * e futtató által korábban megírt) migrációs fájlba ír – egy régebbi migrációt így nem írhat felül. A legutolsót
+ * akkor is újraírhatja, ha helyben már lefutott: ez a push előtti javítás útja (lásd a tervet), push után tilos.
  */
 import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';

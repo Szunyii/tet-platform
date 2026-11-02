@@ -92,6 +92,13 @@
       "when": 1793625161522,
       "tag": "0012_tudastar",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1793658149128,
+      "tag": "0013_tudastar_kezdo_tartalom",
+      "breakpoints": true
     }
   ]
 }
