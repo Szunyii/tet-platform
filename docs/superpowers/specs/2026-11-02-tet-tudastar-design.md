@@ -1,7 +1,7 @@
 # TéT Tudástár – tervezési spec
 
 Dátum: 2026-11-02
-Állapot: az A fázis (funkció) megvalósítva, a böngészős QA (a terv 8. taskja) hátravan; a B fázis (kezdő tartalom) folyamatban
+Állapot: az A fázis (funkció) megvalósítva, átnézve és böngészőben kipróbálva (2026-11-02, a futó dev szerveren: admin és attasé); a B fázis (kezdő tartalom) folyamatban
 Ág: `tet-tudastar`
 Forrás: `TTM_TUD_STR_final.pdf` („TÉT TUDÁSTÁR” – a javasolt fő struktúra, 9 kategória a szereplőtípusokkal)
 
@@ -362,7 +362,7 @@ terület-címkék és -szűrő, a kategóriák DB-ből szerkesztése, angol nyel
 13. **Slug-hossz:** a `-2`, `-3`… utótag a 60 karakteres alapon felül járulhat hozzá; a tartalom-futtató (B fázis) a kézzel írt slug hosszát is ellenőrzi.
 14. **Keresés és slug, Unicode:** a keresőszavak szélén álló írásjelek nem számítanak („NKFIH,”, „„XPAND””); az ékezetlenítés NFKD-vel megy, így a PDF-ből másolt ligatúrák („ﬁ”) is kereshetők és slugosíthatók; a kivágás nem vág UTF-16 párt.
 15. **Normalizáló:** olvasáskor a teljesen üres sort (szakasz, program, link, listasor) is eldobja, mint a validátor.
-16. **URL-szabályok szigorítása:** felhasználónév/jelszó nem lehet a címben (a honlap-mezőbe tévedt `info@nkfih.gov.hu` és a megtévesztő `https://a.hu@b.hu` így hibás); a hosztnévben pontnak kell lennie (a `valami` így nem lesz `https://valami/`, de az `https://localhost` is hibás); a 500 karakteres korlát a normalizált `href`-re vonatkozik; séma nélküli, portos cím (`nkfih.gov.hu:8080/x`) sémának látszik és hibát kap – mindhárom a biztonságos oldalra hibázik.
+16. **URL-szabályok szigorítása:** felhasználónév/jelszó nem lehet a címben (a honlap-mezőbe tévedt `info@nkfih.gov.hu` és a megtévesztő `https://a.hu@b.hu` így hibás); a hosztnévben pontnak kell lennie (a `valami` így nem lesz `https://valami/`, de az `https://localhost` is hibás); a 500 karakteres korlát a normalizált `href`-re vonatkozik; séma nélküli, portos cím (`nkfih.gov.hu:8080/x`) sémának látszik és hibát kap – mindegyik a biztonságos oldalra hibázik.
 17. **Lekérdezések szignatúrái:** `getKartya(id)` (nem slug: az oldalak a `listKartyak()`-ból keresnek slug szerint, az actionök id-vel), `createKartya(adat, alap, szerzoId)` – a slug alapját a hívó képzi (az action: rövidítésből, tartalékként a névből), a függvény a szabad változatot keresi és beszúr; az `updateKartya` egy tranzakcióban olvas, hasonlít és ír (a spec `UPDATE … WHERE updated_at = ?` mintája helyett, azonos eredménnyel); a `listKartyak` az ismeretlen kategóriájú sort is kihagyja és logolja, és a kategórián belül `sorrend`, név, id szerint rendez (a mozgatás is ezt a sorrendet követi). A típus változatlanságát az action (a meglévő kártya típusát adja át) és az `updateKartya` is biztosítja (eltérésnél hibát dob).
 18. **A tábla és az írások védelme:** CHECK a `tipus`-ra és a `tartalom` `json_valid`-jára (a kategóriára nem, az a kódban él); az `updateKartya`/`createKartya` csak explicit felsorolt tartalmi mezőket ír, az `updateKartya` típusváltásra hibát dob; az író tranzakciók `immediate`-ek; a `mozgatKartya` a kategóriát 1..n-re számozza újra (az azonos `sorrend`-ű kártyák is mozgathatók); a `mozgatKartyaAction` hibakezelést kap.
 19. **Keresés akadálymentesen:** a nyitólapon állandó `role="status"` régió mondja be a találatszámot (a keresés nem vált címet, ezért a Next útvonal-bemondója hallgatna); a keresőmező vezérelt kliens-bemenet (`KeresoBemenet`), amely a `?q=`-hoz render közben igazodik, így Enter után a fókusz a mezőn marad. A csempék fölött rejtett „Kategóriák” címsor áll.

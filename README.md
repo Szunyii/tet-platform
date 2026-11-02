@@ -120,8 +120,8 @@ A `data/tet.db` demó-adatbázis a repóban van (felhasználókkal és az attas�
   a törölt nyitó/szerző neve pillanatképként megmarad az üzeneteken.
 - A Kommunikáció menü olvasatlan-számlálója kliens-oldali navigációnál a következő ticket-műveletig
   vagy teljes betöltésig késhet (a /kommunikacio oldal maga szinkronizálja).
-- TéT Tudástár: a kártyák változástörténete nem őrződik meg; a kategória-oldal ↑/↓ gombja után nincs
-  visszajelzés, és a fókusz nem marad a gombon; `xl` (≈ 1280 px) alatt a kategória- és a részletoldalon
+- TéT Tudástár: a kártyák változástörténete nem őrződik meg; a kategória-oldal ↑/↓ gombja hibánál nem ad
+  visszajelzést, és a mozgatás után a fókusz nem marad a gombon; `xl` (≈ 1280 px) alatt a kategória- és a részletoldalon
   nincs keresőmező (a nyitólapon van); a lapcím minden tudástár-oldalon azonos.
 - Az attasé országainak vagy relációs vezetőségének admin-módosítása a jogosultság-ellenőrzésben
   azonnal érvényes, de az attasé oldalsávja és a térkép „Saját országprofil"/Szerkesztés gombja
