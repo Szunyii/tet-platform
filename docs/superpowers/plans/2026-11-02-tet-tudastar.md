@@ -380,7 +380,70 @@ export const MEGJEGYZES_MAX = 200;
 export const EMAIL_MAX = 200;
 export const TELEFON_MAX = 60;
 export const CIM_MAX = 200;
-export const SOR_MAX = { szakaszok: 12, programok: 30, linkek: 20, sorok: 150 } as const;
+
+/** A dinamikus listák sortípusai (a `<lista>.<i>.<mezo>` mezőnevek első tagja). */
+export interface SorTipusok {
+  szakaszok: Szakasz;
+  programok: Program;
+  linkek: HasznosLink;
+  sorok: ListaSor;
+}
+export type SorLista = keyof SorTipusok;
+
+export const SOR_MAX: Record<SorLista, number> = { szakaszok: 12, programok: 30, linkek: 20, sorok: 150 };
+/** A lista egy sorának neve (a szerkesztő sorcímkéje, a „+ Új …” gomb és a darabszám-hiba szövege). */
+export const SOR_EGYSEG: Record<SorLista, string> = { szakaszok: 'szakasz', programok: 'program', linkek: 'link', sorok: 'sor' };
+
+/** Egy sor-mező szabálya: a szerkesztő és a validátor közös forrása. */
+export interface SorMezoSzabaly {
+  cimke: string;
+  max: number;
+  kotelezo?: true;
+  /** Webcím: a validátor normalizálja (lib/tudastar-validacio.ts `normalizalUrl`). */
+  url?: true;
+  /** Többsoros szöveg; `formazott`: a szerkesztő a bekezdés/felsorolás súgóját is mutatja. */
+  tobbsoros?: true;
+  formazott?: true;
+}
+
+/**
+ * A dinamikus listák mezői, listánként a szerkesztőbeli sorrendben. Mezőnév szerint kimerítő: új almező
+ * fordítási hiba, amíg itt nincs szabálya (különben a normalizáló beolvasná, de a mentés csendben eldobná).
+ */
+export const SOR_MEZOK: { [L in SorLista]: { [K in keyof SorTipusok[L]]-?: SorMezoSzabaly } } = {
+  szakaszok: {
+    cim: { cimke: 'Cím', max: SZAKASZ_CIM_MAX, kotelezo: true },
+    szoveg: { cimke: 'Szöveg', max: SZOVEG_MAX, kotelezo: true, tobbsoros: true, formazott: true },
+  },
+  programok: {
+    nev: { cimke: 'Név', max: NEV_MAX, kotelezo: true },
+    url: { cimke: 'Webcím', max: URL_MAX, url: true },
+    leiras: { cimke: 'Egysoros leírás', max: PROGRAM_LEIRAS_MAX, tobbsoros: true },
+  },
+  linkek: {
+    felirat: { cimke: 'Felirat', max: FELIRAT_MAX, kotelezo: true },
+    url: { cimke: 'Webcím', max: URL_MAX, kotelezo: true, url: true },
+  },
+  sorok: {
+    nev: { cimke: 'Név', max: NEV_MAX, kotelezo: true },
+    url: { cimke: 'Webcím', max: URL_MAX, url: true },
+    megjegyzes: { cimke: 'Megjegyzés', max: MEGJEGYZES_MAX },
+  },
+};
+
+/** A kártya egyszerű mezőinek feliratai (szerkesztő, validátor); a név és az összefoglaló típusonként más. */
+export const KARTYA_CIMKEK = {
+  kategoria: 'Kategória',
+  rovidites: 'Rövidítés',
+  honlap: 'Honlap',
+  profil: 'Profil',
+  tevekenyseg: 'Tevékenység',
+  email: 'E-mail',
+  telefon: 'Telefon',
+  cim: 'Cím',
+} as const;
+export const NEV_CIMKE: Record<KartyaTipus, string> = { intezmeny: 'Név', lista: 'Lista címe' };
+export const OSSZEFOGLALO_CIMKE: Record<KartyaTipus, string> = { intezmeny: 'Összefoglaló', lista: 'Bevezető' };
 
 function szoveg(v: unknown): string {
   return typeof v === 'string' ? v : '';
@@ -626,7 +689,11 @@ function kivagas(szoveg: string, index: number): string {
 
 export interface Talalat {
   kartya: Kartya;
-  /** Hol talált (pl. „Programok”, egy szakasz címe); üres, ha csak a névben vagy a rövidítésben. */
+  /**
+   * Hol talált: „Összefoglaló”, „Profil”, „Tevékenység”, „Programok”, „Lista”, „Hasznos linkek”, egy szakasz
+   * címe (a szakasz szövegére talált) vagy „Szakasz” (a címére); üres, ha csak a névben vagy a rövidítésben (vagy
+   * – csak kézzel módosított adatnál – egy cím nélküli szakasz szövegében).
+   */
   hol: string;
   /** Rövid kivágás a találat körül; ha csak a névben talált, az összefoglaló eleje. */
   reszlet: string;
@@ -692,8 +759,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 **Fájlok:**
 - Létrehoz: `lib/tudastar-validacio.ts`, `lib/tudastar-jog.ts`
-- Módosít: `lib/routes.ts` (a fájl végére)
+- Módosít: `lib/routes.ts` (típus-import + a fájl végére), `lib/urlap.ts` (`EMAIL_RE`, `nevelovel`), `lib/felhasznalo-validacio.ts` (az `EMAIL_RE` innen költözik a `lib/urlap.ts`-be)
 - Teszt (eldobható): `scripts/_proba-tudastar-validacio.ts`
+
+(A validátor a `lib/tudastar-szotar.ts` közös felirat- és sorszabály-tábláit – `KARTYA_CIMKEK`, `NEV_CIMKE`, `OSSZEFOGLALO_CIMKE`, `SOR_MEZOK`, `SOR_EGYSEG` – használja; ezek az 1. task szótárában vannak.)
 
 - [ ] **1. lépés: az ellenőrző script**
 
@@ -714,7 +783,10 @@ assert.equal(normalizalUrl('javascript:alert(1)'), null);
 assert.equal(normalizalUrl('mailto:info@nkfih.gov.hu'), null);
 assert.equal(normalizalUrl('valami szöveg'), null);
 assert.equal(normalizalUrl('https://localhost'), null);
-assert.equal(normalizalUrl(`https://a.hu/${'x'.repeat(600)}`), null);
+assert.equal(normalizalUrl('info@nkfih.gov.hu'), null, 'e-mail a honlap mezőben');
+assert.equal(normalizalUrl('https://nkfih.gov.hu@masik.hu/'), null, 'felhasználónév a címben');
+assert.equal(normalizalUrl('https://a.'), null);
+assert.equal(normalizalUrl('https://localhost.'), null);
 
 // validátor
 function fd(ertekek: Record<string, string>): FormData {
@@ -750,6 +822,20 @@ const rossz = validalKartya(
 );
 assert.ok(!rossz.ok);
 assert.deepEqual(Object.keys(rossz.errors).sort(), ['email', 'honlap', 'kategoria', 'linkek.0.url', 'nev', 'szakaszok.0.szoveg'].sort());
+assert.equal(rossz.errors.nev, 'A név kötelező.');
+assert.equal(rossz.errors.email, 'Érvénytelen e-mail cím.');
+assert.equal(rossz.errors['linkek.0.url'], 'A webcím kötelező.');
+const listaHiba = validalKartya(fd({ kategoria: 'egyetemek', nev: '', osszefoglalo: '', 'sorok.0.megjegyzes': 'x' }), 'lista');
+assert.ok(!listaHiba.ok);
+assert.deepEqual(
+  [listaHiba.errors.nev, listaHiba.errors.osszefoglalo, listaHiba.errors['sorok.0.nev']],
+  ['A lista címe kötelező.', 'A bevezető kötelező.', 'A név kötelező.'],
+  'a feliratok a szerkesztőéi (típusonként)',
+);
+const hosszuUrl = validalKartya(fd({ kategoria: 'egyetemek', nev: 'L', osszefoglalo: 'x', honlap: `a.hu/${'é'.repeat(100)}` }), 'lista');
+assert.ok(!hosszuUrl.ok && hosszuUrl.errors.honlap.startsWith('A honlap kódolva'));
+const nagyIndex = validalKartya(fd({ kategoria: 'egyetemek', nev: 'L', osszefoglalo: 'x', 'linkek.99999.felirat': 'F', 'linkek.99999.url': 'a.hu' }), 'lista');
+assert.ok(nagyIndex.ok && nagyIndex.data.tartalom.linkek.length === 0, 'az 5+ jegyű index nem sor');
 const tulSok = new FormData();
 tulSok.append('kategoria', 'egyetemek');
 tulSok.append('nev', 'Lista');
@@ -760,6 +846,9 @@ for (let i = 0; i < 21; i++) {
 }
 const tulSokE = validalKartya(tulSok, 'lista');
 assert.ok(!tulSokE.ok && tulSokE.errors.form === 'Legfeljebb 20 link adható meg.');
+for (let i = 0; i < 151; i++) tulSok.append(`sorok.${i}.nev`, `S${i}`);
+const ketLista = validalKartya(tulSok, 'lista');
+assert.ok(!ketLista.ok && ketLista.errors.form === 'Legfeljebb 20 link adható meg. Legfeljebb 150 sor adható meg.', 'mindkét túllépés látszik');
 
 console.log('tudástár validátor: minden ellenőrzés rendben');
 ```
@@ -775,22 +864,26 @@ Várt: hiba, a `../lib/tudastar-validacio` modul nem található.
 /**
  * A tudástár-kártya szerkesztőjének szerver-oldali validátora. A hibakulcs a mező `id`-ja (a szerkesztőben
  * id = name, egy űrlap van az oldalon); a dinamikus sorok mezői `<lista>.<i>.<mezo>` (pl. `szakaszok.0.cim`).
- * A teljesen üres sor kimarad, a félig kitöltött sor hibát kap.
+ * A teljesen üres sor kimarad, a félig kitöltött sor hibát kap. A feliratok és a korlátok a szerkesztővel
+ * közösek (lib/tudastar-szotar.ts `KARTYA_CIMKEK`, `SOR_MEZOK`).
  */
-import { mezo, type MezoHibak, type ParseResult } from './urlap';
+import { EMAIL_RE, mezo, nevelovel, type MezoHibak, type ParseResult } from './urlap';
 import {
-  CIM_MAX, EMAIL_MAX, FELIRAT_MAX, MEGJEGYZES_MAX, NEV_MAX, OSSZEFOGLALO_MAX, PROGRAM_LEIRAS_MAX, ROVIDITES_MAX,
-  SOR_MAX, SZAKASZ_CIM_MAX, SZOVEG_MAX, TELEFON_MAX, URL_MAX, isKategoriaSlug,
-  type HasznosLink, type KartyaAdat, type KartyaTipus, type KartyaTorzs, type ListaSor, type Program, type Szakasz,
+  CIM_MAX, EMAIL_MAX, KARTYA_CIMKEK, NEV_CIMKE, NEV_MAX, OSSZEFOGLALO_CIMKE, OSSZEFOGLALO_MAX, ROVIDITES_MAX,
+  SOR_EGYSEG, SOR_MAX, SOR_MEZOK, SZOVEG_MAX, TELEFON_MAX, URL_MAX, isKategoriaSlug,
+  type KartyaAdat, type KartyaTipus, type KartyaTorzs, type SorLista, type SorMezoSzabaly, type SorTipusok,
 } from './tudastar-szotar';
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SEMA_RE = /^[a-z][a-z0-9+.-]*:/i;
+// A hosztnév két, nem üres címkéje között pont áll (a „valami”, a „localhost” és a „localhost.” is kiesik).
+const PONTOS_HOSZT_RE = /[^.]\.[^.]/;
+const URL_HIBA = 'Érvényes webcímet adj meg (pl. https://nkfih.gov.hu).';
 
 /**
- * Egy URL ellenőrzése és normalizálása: séma nélkül `https://` kerül elé; csak `http:`/`https:` séma, pontot
- * tartalmazó hosztnév és legfeljebb `URL_MAX` karakter fogadható el (a `javascript:` és társai így kiesnek).
- * Siker: a `new URL()` normalizált `href`-je; hiba: `null`.
+ * Egy URL ellenőrzése és normalizálása: séma nélkül `https://` kerül elé; csak `http:`/`https:` séma,
+ * felhasználónév/jelszó nélkül (a honlap-mezőbe tévedt `info@nkfih.gov.hu` és a megtévesztő
+ * `https://nkfih.gov.hu@masik.hu` így kiesik), pontot tartalmazó hosztnévvel. Siker: a `new URL()`
+ * normalizált `href`-je; hiba: `null`. A hosszkorlátot a hívó nézi.
  */
 export function normalizalUrl(nyers: string): string | null {
   const s = SEMA_RE.test(nyers) ? nyers : `https://${nyers}`;
@@ -801,15 +894,39 @@ export function normalizalUrl(nyers: string): string | null {
     return null;
   }
   if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
-  if (!u.hostname.includes('.')) return null;
-  return u.href.length <= URL_MAX ? u.href : null;
+  if (u.username || u.password) return null;
+  if (!PONTOS_HOSZT_RE.test(u.hostname)) return null;
+  return u.href;
 }
 
-const URL_HIBA = 'Érvényes webcímet adj meg (pl. https://nkfih.gov.hu).';
+/** Űrlap-szintű hiba; ha már van, hozzáfűzi (több lista is túllépheti a korlátját). */
+function formHiba(errors: MezoHibak, uzenet: string): void {
+  errors.form = errors.form ? `${errors.form} ${uzenet}` : uzenet;
+}
+
+/** Szöveges érték ellenőrzése: kötelezőség és hossz; a hibát az `errors`-ba írja, az értéket visszaadja. */
+function szoveg(v: string, id: string, cimke: string, max: number, kotelezo: boolean, errors: MezoHibak): string {
+  if (kotelezo && !v) errors[id] = `${nevelovel(cimke)} kötelező.`;
+  else if (v.length > max) errors[id] = `${nevelovel(cimke)} legfeljebb ${max} karakter.`;
+  return v;
+}
+
+/** Webcím: üresen `''` (vagy hiba, ha kötelező); különben a normalizált URL, hibánál a beírt érték. */
+function webcim(v: string, id: string, cimke: string, kotelezo: boolean, errors: MezoHibak): string {
+  if (!v || v.length > URL_MAX) return szoveg(v, id, cimke, URL_MAX, kotelezo, errors);
+  const url = normalizalUrl(v);
+  if (url === null) errors[id] = URL_HIBA;
+  else if (url.length > URL_MAX) errors[id] = `${nevelovel(cimke)} kódolva (az ékezetes betűkkel) hosszabb ${URL_MAX} karakternél.`;
+  else return url;
+  return v;
+}
+
+// A sorindex legfeljebb 4 jegyű, vezető nulla nélkül: a validátor ennél többet sosem fogad el (`SOR_MAX`).
+const sorIndexRe = (lista: SorLista) => new RegExp(`^${lista}\\.(0|[1-9]\\d{0,3})\\.`);
 
 /** A dinamikus sorok indexei a FormData-ban (`<lista>.<i>.<mezo>`), növekvő sorrendben. */
-function sorIndexek(fd: FormData, lista: string): number[] {
-  const re = new RegExp(`^${lista}\\.(0|[1-9]\\d*)\\.`);
+function sorIndexek(fd: FormData, lista: SorLista): number[] {
+  const re = sorIndexRe(lista);
   const halmaz = new Set<number>();
   for (const k of fd.keys()) {
     const m = re.exec(k);
@@ -818,115 +935,69 @@ function sorIndexek(fd: FormData, lista: string): number[] {
   return [...halmaz].sort((a, b) => a - b);
 }
 
-interface SorMezo<T> {
-  kulcs: keyof T & string;
-  cimke: string;
-  max: number;
-  kotelezo?: boolean;
-  url?: boolean;
-}
-
-/** Egy dinamikus lista sorai: a teljesen üres sor kimarad, a többit mezőnként ellenőrzi. */
-function sorok<T extends { [K in keyof T]: string }>(
-  fd: FormData,
-  lista: keyof typeof SOR_MAX,
-  mezok: readonly SorMezo<T>[],
-  errors: MezoHibak,
-): T[] {
-  const eredmeny: T[] = [];
-  for (const i of sorIndexek(fd, lista)) {
-    const ertekek = mezok.map((m) => [m, mezo(fd, `${lista}.${i}.${m.kulcs}`)] as const);
-    if (ertekek.every(([, v]) => v === '')) continue;
-    const sor = {} as Record<string, string>;
-    for (const [m, v] of ertekek) {
-      const id = `${lista}.${i}.${m.kulcs}`;
-      sor[m.kulcs] = v;
-      if (m.kotelezo && !v) errors[id] = `${m.cimke} megadása kötelező.`;
-      else if (v.length > m.max) errors[id] = `${m.cimke}: legfeljebb ${m.max} karakter.`;
-      else if (m.url && v) {
-        const url = normalizalUrl(v);
-        if (url === null) errors[id] = URL_HIBA;
-        else sor[m.kulcs] = url;
-      }
-    }
-    eredmeny.push(sor as unknown as T);
+/**
+ * Egy dinamikus lista sorai a `SOR_MEZOK` szabályaival: a teljesen üres sor kimarad, a többit mezőnként
+ * ellenőrzi. Ha a beküldött sorok száma a korlát fölött van, egy sort sem olvas (a szerkesztő ennél többet
+ * nem küld; a sok kulcsos kérés így sem lassítja a feldolgozást).
+ */
+function sorok<L extends SorLista>(fd: FormData, lista: L, errors: MezoHibak): SorTipusok[L][] {
+  const indexek = sorIndexek(fd, lista);
+  if (indexek.length > SOR_MAX[lista]) {
+    formHiba(errors, `Legfeljebb ${SOR_MAX[lista]} ${SOR_EGYSEG[lista]} adható meg.`);
+    return [];
   }
-  if (eredmeny.length > SOR_MAX[lista]) errors.form = `Legfeljebb ${SOR_MAX[lista]} ${SOR_EGYSEG[lista]} adható meg.`;
+  const mezok = Object.entries(SOR_MEZOK[lista]) as [string, SorMezoSzabaly][];
+  const eredmeny: SorTipusok[L][] = [];
+  for (const i of indexek) {
+    const ertekek = mezok.map(([kulcs, sz]) => ({ kulcs, sz, v: mezo(fd, `${lista}.${i}.${kulcs}`) }));
+    if (ertekek.every((e) => e.v === '')) continue;
+    const sor: Record<string, string> = {};
+    for (const { kulcs, sz, v } of ertekek) {
+      const id = `${lista}.${i}.${kulcs}`;
+      sor[kulcs] = sz.url ? webcim(v, id, sz.cimke, Boolean(sz.kotelezo), errors) : szoveg(v, id, sz.cimke, sz.max, Boolean(sz.kotelezo), errors);
+    }
+    // A `SOR_MEZOK` a sortípus minden mezőjét kimerítően felsorolja, ezért a sor teljes.
+    eredmeny.push(sor as unknown as SorTipusok[L]);
+  }
   return eredmeny;
-}
-
-/** A darabszám-hiba szövegéhez. */
-const SOR_EGYSEG: Record<keyof typeof SOR_MAX, string> = {
-  szakaszok: 'szakasz', programok: 'program', linkek: 'link', sorok: 'listasor',
-};
-
-const SZAKASZ_MEZOK: readonly SorMezo<Szakasz>[] = [
-  { kulcs: 'cim', cimke: 'Cím', max: SZAKASZ_CIM_MAX, kotelezo: true },
-  { kulcs: 'szoveg', cimke: 'Szöveg', max: SZOVEG_MAX, kotelezo: true },
-];
-const PROGRAM_MEZOK: readonly SorMezo<Program>[] = [
-  { kulcs: 'nev', cimke: 'Név', max: NEV_MAX, kotelezo: true },
-  { kulcs: 'leiras', cimke: 'Leírás', max: PROGRAM_LEIRAS_MAX },
-  { kulcs: 'url', cimke: 'Webcím', max: URL_MAX, url: true },
-];
-const LINK_MEZOK: readonly SorMezo<HasznosLink>[] = [
-  { kulcs: 'felirat', cimke: 'Felirat', max: FELIRAT_MAX, kotelezo: true },
-  { kulcs: 'url', cimke: 'Webcím', max: URL_MAX, kotelezo: true, url: true },
-];
-const LISTA_SOR_MEZOK: readonly SorMezo<ListaSor>[] = [
-  { kulcs: 'nev', cimke: 'Név', max: NEV_MAX, kotelezo: true },
-  { kulcs: 'megjegyzes', cimke: 'Megjegyzés', max: MEGJEGYZES_MAX },
-  { kulcs: 'url', cimke: 'Webcím', max: URL_MAX, url: true },
-];
-
-/** Egy szöveges mező: kötelezőség és hossz; a hibát az `errors`-ba írja, az értéket mindig visszaadja. */
-function szoveg(fd: FormData, kulcs: string, cimke: string, max: number, errors: MezoHibak, kotelezo = false): string {
-  const v = mezo(fd, kulcs);
-  if (kotelezo && !v) errors[kulcs] = `${cimke} megadása kötelező.`;
-  else if (v.length > max) errors[kulcs] = `${cimke}: legfeljebb ${max} karakter.`;
-  return v;
 }
 
 /** A szerkesztő űrlapja; a `tipus` a meglévő kártyáé (szerkesztés) vagy a rejtett mezőé (létrehozás). */
 export function validalKartya(fd: FormData, tipus: KartyaTipus): ParseResult<KartyaAdat> {
   const errors: MezoHibak = {};
+  const C = KARTYA_CIMKEK;
   const kategoria = mezo(fd, 'kategoria');
   if (!isKategoriaSlug(kategoria)) errors.kategoria = 'Válassz kategóriát.';
-  const nev = szoveg(fd, 'nev', 'Név', NEV_MAX, errors, true);
-  const rovidites = szoveg(fd, 'rovidites', 'Rövidítés', ROVIDITES_MAX, errors);
-  const osszefoglalo = szoveg(fd, 'osszefoglalo', 'Összefoglaló', OSSZEFOGLALO_MAX, errors, true);
-  const honlapNyers = mezo(fd, 'honlap');
-  let honlap: string | null = null;
-  if (honlapNyers) {
-    honlap = normalizalUrl(honlapNyers);
-    if (honlap === null) errors.honlap = URL_HIBA;
-  }
-  const linkek = sorok(fd, 'linkek', LINK_MEZOK, errors);
+  const nev = szoveg(mezo(fd, 'nev'), 'nev', NEV_CIMKE[tipus], NEV_MAX, true, errors);
+  const rovidites = szoveg(mezo(fd, 'rovidites'), 'rovidites', C.rovidites, ROVIDITES_MAX, false, errors);
+  const osszefoglalo = szoveg(mezo(fd, 'osszefoglalo'), 'osszefoglalo', OSSZEFOGLALO_CIMKE[tipus], OSSZEFOGLALO_MAX, true, errors);
+  const honlap = webcim(mezo(fd, 'honlap'), 'honlap', C.honlap, false, errors);
+  const linkek = sorok(fd, 'linkek', errors);
 
   let torzs: KartyaTorzs;
   if (tipus === 'intezmeny') {
-    const email = szoveg(fd, 'email', 'E-mail', EMAIL_MAX, errors);
-    if (email && !errors.email && !EMAIL_RE.test(email)) errors.email = 'Érvényes e-mail-címet adj meg.';
+    const email = szoveg(mezo(fd, 'email'), 'email', C.email, EMAIL_MAX, false, errors);
+    if (email && !errors.email && !EMAIL_RE.test(email)) errors.email = 'Érvénytelen e-mail cím.';
     torzs = {
       tipus,
       tartalom: {
-        profil: szoveg(fd, 'profil', 'Profil', SZOVEG_MAX, errors),
-        tevekenyseg: szoveg(fd, 'tevekenyseg', 'Tevékenység', SZOVEG_MAX, errors),
+        profil: szoveg(mezo(fd, 'profil'), 'profil', C.profil, SZOVEG_MAX, false, errors),
+        tevekenyseg: szoveg(mezo(fd, 'tevekenyseg'), 'tevekenyseg', C.tevekenyseg, SZOVEG_MAX, false, errors),
         kapcsolat: {
           email,
-          telefon: szoveg(fd, 'telefon', 'Telefon', TELEFON_MAX, errors),
-          cim: szoveg(fd, 'cim', 'Cím', CIM_MAX, errors),
+          telefon: szoveg(mezo(fd, 'telefon'), 'telefon', C.telefon, TELEFON_MAX, false, errors),
+          cim: szoveg(mezo(fd, 'cim'), 'cim', C.cim, CIM_MAX, false, errors),
         },
-        szakaszok: sorok(fd, 'szakaszok', SZAKASZ_MEZOK, errors),
-        programok: sorok(fd, 'programok', PROGRAM_MEZOK, errors),
+        szakaszok: sorok(fd, 'szakaszok', errors),
+        programok: sorok(fd, 'programok', errors),
         linkek,
       },
     };
   } else {
-    torzs = { tipus, tartalom: { sorok: sorok(fd, 'sorok', LISTA_SOR_MEZOK, errors), linkek } };
+    torzs = { tipus, tartalom: { sorok: sorok(fd, 'sorok', errors), linkek } };
   }
   if (Object.keys(errors).length > 0 || !isKategoriaSlug(kategoria)) return { ok: false, errors };
-  return { ok: true, data: { kategoria, nev, rovidites: rovidites || null, osszefoglalo, honlap, ...torzs } };
+  return { ok: true, data: { kategoria, nev, rovidites: rovidites || null, osszefoglalo, honlap: honlap || null, ...torzs } };
 }
 ```
 
@@ -941,9 +1012,11 @@ export function canEditTudastar(session: AppSession): boolean {
 }
 ```
 
-- [ ] **5. lépés: `lib/routes.ts` – a fájl végére fűzd**
+- [ ] **5. lépés: `lib/routes.ts`** – a fejkomment alá: `import type { KartyaTipus } from './tudastar-szotar';` (üres sorral), és a fájl végére:
 
 ```ts
+// A slugok csak [a-z0-9-] karakterek (lib/slug.ts), ezért kódolás nélkül kerülnek az URL-be.
+
 /** A tudástár nyitólapja, vagy egy kategória-oldala. */
 export function tudastarUrl(kategoria?: string): string {
   return kategoria ? `/tudastar/${kategoria}` : '/tudastar';
@@ -955,7 +1028,7 @@ export function kartyaHorgony(slug: string): string {
 }
 
 /** Ahol a kártya megjelenik: az intézménynek saját oldala van, a lista a kategória-oldalon, a horgonyánál. */
-export function kartyaUrl(k: { kategoria: string; slug: string; tipus: 'intezmeny' | 'lista' }): string {
+export function kartyaUrl(k: { kategoria: string; slug: string; tipus: KartyaTipus }): string {
   return k.tipus === 'intezmeny' ? `/tudastar/${k.kategoria}/${k.slug}` : `${tudastarUrl(k.kategoria)}#${kartyaHorgony(k.slug)}`;
 }
 
@@ -965,10 +1038,29 @@ export function kartyaSzerkesztoUrl(k: { kategoria: string; slug: string }): str
 }
 
 /** Új kártya szerkesztője a kategóriában. */
-export function ujKartyaUrl(kategoria: string, tipus: 'intezmeny' | 'lista'): string {
+export function ujKartyaUrl(kategoria: string, tipus: KartyaTipus): string {
   return `/tudastar/${kategoria}/uj?tipus=${tipus}`;
 }
 ```
+
+- [ ] **5b. lépés: `lib/urlap.ts` – a fájl végére** (az `EMAIL_RE` a `lib/felhasznalo-validacio.ts`-ből költözik ide, a két validátor közös):
+
+```ts
+// Közel a Better Auth (zod) e-mail szabályához: nincs vezető/záró/dupla pont a helyi
+// részben, a domain végén legalább 2 betűs TLD. Ami itt átmegy, de a Better Auth elutasít
+// (pl. ékezetes cím), azt a felhasználó-kezelés server actionje INVALID_EMAIL hibaként az email mezőre teszi.
+export const EMAIL_RE = /^(?!.*\.\.)[^\s@.](?:[^\s@]*[^\s@.])?@[^\s@]+\.[A-Za-z]{2,}$/;
+
+const MAGANHANGZO_RE = /^[aáeéiíoóöőuúüű]/i;
+
+/** A mezőcímke névelővel, mondat elejére: „Név” → „A név”, „Összefoglaló” → „Az összefoglaló”. */
+export function nevelovel(cimke: string): string {
+  const kis = cimke.charAt(0).toLowerCase() + cimke.slice(1);
+  return `${MAGANHANGZO_RE.test(kis) ? 'Az' : 'A'} ${kis}`;
+}
+```
+
+A `lib/felhasznalo-validacio.ts`-ből töröld a helyi `EMAIL_RE`-t a fölötte álló háromsoros kommenttel együtt, és az importot cseréld: `import { EMAIL_RE, mezo, type MezoHibak, type ParseResult } from './urlap';`. Ellenőrzés: `grep -rn "EMAIL_RE =" lib` – csak a `lib/urlap.ts`.
 
 - [ ] **6. lépés: futtatás – át kell mennie**
 
@@ -980,7 +1072,7 @@ Várt: `tudástár validátor: minden ellenőrzés rendben`, majd `tudástár: m
 - [ ] **8. lépés: commit**
 
 ```bash
-git add lib/tudastar-validacio.ts lib/tudastar-jog.ts lib/routes.ts
+git add lib/tudastar-validacio.ts lib/tudastar-jog.ts lib/routes.ts lib/urlap.ts lib/felhasznalo-validacio.ts
 git commit -m "feat(tudastar): kártya-validátor (URL-normalizálás, dinamikus sorok), jog és útvonal-segédek
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -1607,8 +1699,13 @@ import type { ReactNode } from 'react';
 import type { HasznosLink } from '../../../../lib/tudastar-szotar';
 import { cn } from '../../../../lib/utils';
 
-/** Külső hivatkozás új lapon (`noopener noreferrer`), ↗ jellel és a felolvasónak szóló jelzéssel. */
+/**
+ * Külső hivatkozás új lapon (`noopener noreferrer`), ↗ jellel és a felolvasónak szóló jelzéssel. Csak
+ * http(s) címből lesz link: a validátor mást nem enged be, de a kézzel módosított DB-sor se adhasson
+ * `javascript:` hrefet – ilyenkor a felirat sima szövegként jelenik meg.
+ */
 export function KulsoLink({ href, children, className }: { href: string; children: ReactNode; className?: string }) {
+  if (!/^https?:\/\//i.test(href)) return <span className={className}>{children}</span>;
   return (
     <a href={href} target="_blank" rel="noopener noreferrer" className={cn('inline-flex items-baseline gap-0.5', className)}>
       {children}
@@ -2277,22 +2374,12 @@ import { ArrowDownIcon, ArrowUpIcon } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { Button } from '../../../../components/ui/button';
+import { SOR_EGYSEG, SOR_MAX, SOR_MEZOK, type SorLista, type SorMezoSzabaly, type SorTipusok } from '../../../../lib/tudastar-szotar';
 import type { MezoHibak } from '../../../../lib/urlap';
-import { KartyaMezo } from './KartyaMezo';
+import { KartyaMezo, SZOVEG_SUGO } from './KartyaMezo';
 
 /** Egy sor az űrlapon; az `_id` stabil kliens-kulcs (a sorok mozognak és törölhetők), a mentésbe nem kerül. */
 export type SorAllapot<T> = T & { _id: number };
-
-export interface SorMezoDef<T> {
-  kulcs: keyof T & string;
-  cimke: string;
-  max: number;
-  opcionalis?: boolean;
-  tobbsoros?: boolean;
-  sugo?: string;
-  placeholder?: string;
-  inputMode?: 'url';
-}
 
 /** Mentett lista → űrlap-sorok (1-től számozott `_id`-vel). */
 export function sorokbol<T>(lista: readonly T[]): SorAllapot<T>[] {
@@ -2300,35 +2387,38 @@ export function sorokbol<T>(lista: readonly T[]): SorAllapot<T>[] {
 }
 
 /**
- * Hozzáadható, mozgatható, törölhető sorok; a mezők id-ja és neve `<lista>.<i>.<mezo>` (az `i` a sor
- * aktuális pozíciója – a validátor indexenként olvas). A `RendezvenySorok` mintájára: hozzáadás után a
- * fókusz az új sor első mezőjére, törlés után a hozzáadás-gombra kerül; mozgatás után a mozgatott sor gombjára
- * (a DOM-áthelyezés elvenné a fókuszt). Törlés és mozgatás a következő beküldésig elrejti a pozícióhoz kötött
- * sorhibákat (más sorra mutatnának). A korlátnál a hozzáadás-gomb letiltva, mellette szöveges magyarázattal.
+ * Egy dinamikus lista (`szakaszok`, `programok`, `linkek`, `sorok`) szerkesztője; a mezők, a korlát és a
+ * feliratok a `SOR_MEZOK`/`SOR_MAX`/`SOR_EGYSEG`-ből jönnek, mint a validátornál. A mezők id-ja és neve
+ * `<lista>.<i>.<mezo>` (az `i` a sor aktuális pozíciója – a validátor indexenként olvas). A
+ * `RendezvenySorok` mintájára: hozzáadás után a fókusz az új sor első mezőjére, törlés után a
+ * hozzáadás-gombra kerül; mozgatás után a mozgatott sor gombjára (a DOM-áthelyezés elvenné a fókuszt).
+ * Törlés és mozgatás a következő beküldésig elrejti a pozícióhoz kötött sorhibákat (más sorra mutatnának).
+ * A korlátnál a hozzáadás-gomb letiltva, mellette szöveges magyarázattal.
  */
-export function SorSzerkeszto<T extends { [K in keyof T]: string }>({
-  lista, egyseg, mezok, ures, max, value, onChange, errors, ujFelirat,
+export function SorSzerkeszto<L extends SorLista>({
+  lista, value, onChange, errors,
 }: {
-  lista: string;
-  egyseg: string;
-  mezok: readonly SorMezoDef<T>[];
-  ures: T;
-  max: number;
-  value: SorAllapot<T>[];
-  onChange: (v: SorAllapot<T>[]) => void;
+  lista: L;
+  value: SorAllapot<SorTipusok[L]>[];
+  onChange: (v: SorAllapot<SorTipusok[L]>[]) => void;
   errors: MezoHibak;
-  ujFelirat: string;
 }) {
   const hozzaadGomb = useRef<HTMLButtonElement>(null);
   // Két beküldés között az `errors` ugyanaz az objektum: amíg az, a törlés/mozgatás előtti hibák rejtve maradnak.
   const [elavultHibak, setElavultHibak] = useState<MezoHibak | null>(null);
   const hibak = elavultHibak === errors ? {} : errors;
+  const mezok = Object.entries(SOR_MEZOK[lista]) as [keyof SorTipusok[L] & string, SorMezoSzabaly][];
+  const egyseg = SOR_EGYSEG[lista];
+  const max = SOR_MAX[lista];
   const mezoId = (i: number, kulcs: string) => `${lista}.${i}.${kulcs}`;
-  const set = (id: number, kulcs: keyof T, v: string) => onChange(value.map((s) => (s._id === id ? { ...s, [kulcs]: v } : s)));
+  const set = (id: number, kulcs: keyof SorTipusok[L], v: string) =>
+    onChange(value.map((s) => (s._id === id ? { ...s, [kulcs]: v } : s)));
 
   const ujSor = () => {
+    // A `SOR_MEZOK` a sortípus minden mezőjét felsorolja, ezért az üres sor teljes.
+    const ures = Object.fromEntries(mezok.map(([kulcs]) => [kulcs, ''])) as unknown as SorTipusok[L];
     flushSync(() => onChange([...value, { ...ures, _id: Math.max(0, ...value.map((s) => s._id)) + 1 }]));
-    document.getElementById(mezoId(value.length, mezok[0].kulcs))?.focus();
+    document.getElementById(mezoId(value.length, mezok[0][0]))?.focus();
   };
   const torol = (id: number) => {
     flushSync(() => {
@@ -2357,21 +2447,21 @@ export function SorSzerkeszto<T extends { [K in keyof T]: string }>({
             {i + 1}. {egyseg}
           </legend>
           <div className="grid gap-3 sm:grid-cols-2">
-            {mezok.map((m) => (
+            {mezok.map(([kulcs, sz]) => (
               <KartyaMezo
-                key={m.kulcs}
-                id={mezoId(i, m.kulcs)}
-                cimke={m.cimke}
-                value={s[m.kulcs]}
-                onChange={(v) => set(s._id, m.kulcs, v)}
-                max={m.max}
+                key={kulcs}
+                id={mezoId(i, kulcs)}
+                cimke={sz.cimke}
+                value={String(s[kulcs])}
+                onChange={(v) => set(s._id, kulcs, v)}
+                max={sz.max}
                 errors={hibak}
-                opcionalis={m.opcionalis}
-                tobbsoros={m.tobbsoros}
-                sugo={m.sugo}
-                placeholder={m.placeholder}
-                inputMode={m.inputMode}
-                className={m.tobbsoros ? 'sm:col-span-2' : undefined}
+                opcionalis={!sz.kotelezo}
+                tobbsoros={sz.tobbsoros}
+                sugo={sz.formazott ? SZOVEG_SUGO : undefined}
+                placeholder={sz.url ? 'https://…' : undefined}
+                inputMode={sz.url ? 'url' : undefined}
+                className={sz.tobbsoros ? 'sm:col-span-2' : undefined}
               />
             ))}
           </div>
@@ -2392,7 +2482,7 @@ export function SorSzerkeszto<T extends { [K in keyof T]: string }>({
       ))}
       <div className="flex items-center gap-2">
         <Button ref={hozzaadGomb} type="button" variant="outline" size="sm" disabled={value.length >= max} onClick={ujSor}>
-          {ujFelirat}
+          + Új {egyseg}
         </Button>
         {value.length >= max && (
           <span className="text-xs text-muted-foreground">
@@ -2491,33 +2581,14 @@ import { NativeSelect } from '../../../../components/form/NativeSelect';
 import { useMuveletForm, type FormAction, type MuveletAction } from '../../../../components/form/useMuveletForm';
 import { Button, buttonVariants } from '../../../../components/ui/button';
 import {
-  CIM_MAX, EMAIL_MAX, FELIRAT_MAX, MEGJEGYZES_MAX, NEV_MAX, OSSZEFOGLALO_MAX, PROGRAM_LEIRAS_MAX, ROVIDITES_MAX,
-  SOR_MAX, SZAKASZ_CIM_MAX, SZOVEG_MAX, TELEFON_MAX, TIPUS_CIMKE, TUDASTAR_KATEGORIAK, URL_MAX, uresTartalom,
+  CIM_MAX, EMAIL_MAX, KARTYA_CIMKEK, NEV_CIMKE, NEV_MAX, OSSZEFOGLALO_CIMKE, OSSZEFOGLALO_MAX, ROVIDITES_MAX,
+  SZOVEG_MAX, TELEFON_MAX, TIPUS_CIMKE, TUDASTAR_KATEGORIAK, URL_MAX, uresTartalom,
   type HasznosLink, type Kartya, type KartyaTipus, type ListaSor, type Program, type Szakasz,
 } from '../../../../lib/tudastar-szotar';
 import { cn } from '../../../../lib/utils';
 import { KartyaMezo, SZOVEG_SUGO, UrlapBlokk } from './KartyaMezo';
 import { KartyaTorles } from './KartyaTorles';
-import { SorSzerkeszto, sorokbol, type SorAllapot, type SorMezoDef } from './SorSzerkeszto';
-
-const SZAKASZ_MEZOK: readonly SorMezoDef<Szakasz>[] = [
-  { kulcs: 'cim', cimke: 'Cím', max: SZAKASZ_CIM_MAX },
-  { kulcs: 'szoveg', cimke: 'Szöveg', max: SZOVEG_MAX, tobbsoros: true, sugo: SZOVEG_SUGO },
-];
-const PROGRAM_MEZOK: readonly SorMezoDef<Program>[] = [
-  { kulcs: 'nev', cimke: 'Név', max: NEV_MAX },
-  { kulcs: 'url', cimke: 'Webcím', max: URL_MAX, opcionalis: true, placeholder: 'https://…', inputMode: 'url' },
-  { kulcs: 'leiras', cimke: 'Egysoros leírás', max: PROGRAM_LEIRAS_MAX, opcionalis: true, tobbsoros: true },
-];
-const LISTA_SOR_MEZOK: readonly SorMezoDef<ListaSor>[] = [
-  { kulcs: 'nev', cimke: 'Név', max: NEV_MAX },
-  { kulcs: 'url', cimke: 'Webcím', max: URL_MAX, opcionalis: true, placeholder: 'https://…', inputMode: 'url' },
-  { kulcs: 'megjegyzes', cimke: 'Megjegyzés', max: MEGJEGYZES_MAX, opcionalis: true },
-];
-const LINK_MEZOK: readonly SorMezoDef<HasznosLink>[] = [
-  { kulcs: 'felirat', cimke: 'Felirat', max: FELIRAT_MAX },
-  { kulcs: 'url', cimke: 'Webcím', max: URL_MAX, placeholder: 'https://…', inputMode: 'url' },
-];
+import { SorSzerkeszto, sorokbol, type SorAllapot } from './SorSzerkeszto';
 
 /** Az űrlap vezérelt állapota: mindkét típus mezői (a nem használtak üresek és nem renderelődnek). */
 interface Urlap {
@@ -2578,6 +2649,7 @@ export function KartyaForm(props: KartyaFormProps) {
   const set = <K extends keyof Urlap>(k: K) => (v: Urlap[K]) => setU((p) => ({ ...p, [k]: v }));
   const mezo = (k: SzovegKulcs) => ({ id: k, value: u[k], onChange: set(k), errors });
   const intezmeny = tipus === 'intezmeny';
+  const C = KARTYA_CIMKEK;
 
   return (
     <form action={formAction} noValidate className="flex max-w-4xl flex-col gap-4">
@@ -2594,7 +2666,7 @@ export function KartyaForm(props: KartyaFormProps) {
         leiras={`${TIPUS_CIMKE[tipus]} · ${intezmeny ? 'a kártyán az összefoglaló látszik, a részletek külön oldalon' : 'a kártyán a bevezető és a sorok látszanak'}`}
       >
         <div className="grid gap-4 sm:grid-cols-2">
-          <Mezo id="kategoria" cimke="Kategória" errors={errors} className="sm:col-span-2">
+          <Mezo id="kategoria" cimke={C.kategoria} errors={errors} className="sm:col-span-2">
             <NativeSelect id="kategoria" name="kategoria" value={u.kategoria} onChange={(e) => set('kategoria')(e.target.value)}
               {...leiroAttr(errors, 'kategoria')}>
               {TUDASTAR_KATEGORIAK.map((k) => (
@@ -2604,10 +2676,10 @@ export function KartyaForm(props: KartyaFormProps) {
               ))}
             </NativeSelect>
           </Mezo>
-          <KartyaMezo {...mezo('nev')} cimke={intezmeny ? 'Név' : 'A lista címe'} max={NEV_MAX} className="sm:col-span-2" />
-          <KartyaMezo {...mezo('rovidites')} cimke="Rövidítés" opcionalis max={ROVIDITES_MAX} />
-          <KartyaMezo {...mezo('honlap')} cimke="Honlap" opcionalis max={URL_MAX} placeholder="https://…" inputMode="url" />
-          <KartyaMezo {...mezo('osszefoglalo')} cimke={intezmeny ? 'Összefoglaló' : 'Bevezető'} max={OSSZEFOGLALO_MAX}
+          <KartyaMezo {...mezo('nev')} cimke={NEV_CIMKE[tipus]} max={NEV_MAX} className="sm:col-span-2" />
+          <KartyaMezo {...mezo('rovidites')} cimke={C.rovidites} opcionalis max={ROVIDITES_MAX} />
+          <KartyaMezo {...mezo('honlap')} cimke={C.honlap} opcionalis max={URL_MAX} placeholder="https://…" inputMode="url" />
+          <KartyaMezo {...mezo('osszefoglalo')} cimke={OSSZEFOGLALO_CIMKE[tipus]} max={OSSZEFOGLALO_MAX}
             tobbsoros sorok={3} szamlalo sugo="2–3 mondat, ez látszik a kártyán." className="sm:col-span-2" />
         </div>
       </UrlapBlokk>
@@ -2615,34 +2687,30 @@ export function KartyaForm(props: KartyaFormProps) {
       {intezmeny ? (
         <>
           <UrlapBlokk cim="Profil és tevékenység" leiras="A részletoldal első két blokkja.">
-            <KartyaMezo {...mezo('profil')} cimke="Profil" opcionalis max={SZOVEG_MAX} tobbsoros sorok={5} sugo={SZOVEG_SUGO} />
-            <KartyaMezo {...mezo('tevekenyseg')} cimke="Tevékenység" opcionalis max={SZOVEG_MAX} tobbsoros sorok={5} sugo={SZOVEG_SUGO} />
+            <KartyaMezo {...mezo('profil')} cimke={C.profil} opcionalis max={SZOVEG_MAX} tobbsoros sorok={5} sugo={SZOVEG_SUGO} />
+            <KartyaMezo {...mezo('tevekenyseg')} cimke={C.tevekenyseg} opcionalis max={SZOVEG_MAX} tobbsoros sorok={5} sugo={SZOVEG_SUGO} />
           </UrlapBlokk>
           <UrlapBlokk cim="Kapcsolat" leiras="Csak intézményi elérhetőség: központi e-mail, telefon, cím.">
             <div className="grid gap-4 sm:grid-cols-2">
-              <KartyaMezo {...mezo('email')} cimke="E-mail" opcionalis max={EMAIL_MAX} inputMode="email" />
-              <KartyaMezo {...mezo('telefon')} cimke="Telefon" opcionalis max={TELEFON_MAX} inputMode="tel" />
-              <KartyaMezo {...mezo('cim')} cimke="Cím" opcionalis max={CIM_MAX} className="sm:col-span-2" />
+              <KartyaMezo {...mezo('email')} cimke={C.email} opcionalis max={EMAIL_MAX} inputMode="email" />
+              <KartyaMezo {...mezo('telefon')} cimke={C.telefon} opcionalis max={TELEFON_MAX} inputMode="tel" />
+              <KartyaMezo {...mezo('cim')} cimke={C.cim} opcionalis max={CIM_MAX} className="sm:col-span-2" />
             </div>
           </UrlapBlokk>
           <UrlapBlokk cim="Szakaszok" leiras="Címzett szakaszok a részletoldalon, pl. KFI-stratégia, prioritások, aktuális pályázatok.">
-            <SorSzerkeszto lista="szakaszok" egyseg="szakasz" mezok={SZAKASZ_MEZOK} ures={{ cim: '', szoveg: '' }}
-              max={SOR_MAX.szakaszok} value={u.szakaszok} onChange={set('szakaszok')} errors={errors} ujFelirat="+ Új szakasz" />
+            <SorSzerkeszto lista="szakaszok" value={u.szakaszok} onChange={set('szakaszok')} errors={errors} />
           </UrlapBlokk>
           <UrlapBlokk cim="Programok" leiras="Programonként egysoros leírás és link.">
-            <SorSzerkeszto lista="programok" egyseg="program" mezok={PROGRAM_MEZOK} ures={{ nev: '', leiras: '', url: '' }}
-              max={SOR_MAX.programok} value={u.programok} onChange={set('programok')} errors={errors} ujFelirat="+ Új program" />
+            <SorSzerkeszto lista="programok" value={u.programok} onChange={set('programok')} errors={errors} />
           </UrlapBlokk>
         </>
       ) : (
         <UrlapBlokk cim="Sorok" leiras="A lista szereplői: név, honlap, rövid megjegyzés.">
-          <SorSzerkeszto lista="sorok" egyseg="sor" mezok={LISTA_SOR_MEZOK} ures={{ nev: '', megjegyzes: '', url: '' }}
-            max={SOR_MAX.sorok} value={u.sorok} onChange={set('sorok')} errors={errors} ujFelirat="+ Új sor" />
+          <SorSzerkeszto lista="sorok" value={u.sorok} onChange={set('sorok')} errors={errors} />
         </UrlapBlokk>
       )}
       <UrlapBlokk cim="Hasznos linkek" leiras="Pl. pályázatok, hírek, szolgáltatások – az élő hivatalos oldalakra.">
-        <SorSzerkeszto lista="linkek" egyseg="link" mezok={LINK_MEZOK} ures={{ felirat: '', url: '' }}
-          max={SOR_MAX.linkek} value={u.linkek} onChange={set('linkek')} errors={errors} ujFelirat="+ Új link" />
+        <SorSzerkeszto lista="linkek" value={u.linkek} onChange={set('linkek')} errors={errors} />
       </UrlapBlokk>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -3450,3 +3518,4 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 13. **Slug-hossz:** a `-2`, `-3`… utótag a 60 karakteres alapon felül járulhat hozzá; a tartalom-futtató a kézzel írt slug hosszát is ellenőrzi.
 14. **Keresés és slug, Unicode:** a keresőszavak szélén álló írásjelek nem számítanak („NKFIH,”, „„XPAND””); az ékezetlenítés NFKD-vel megy, így a PDF-ből másolt ligatúrák („ﬁ”) is kereshetők és slugosíthatók; a kivágás nem vág UTF-16 párt.
 15. **Normalizáló:** olvasáskor a teljesen üres sort (szakasz, program, link, listasor) is eldobja, mint a validátor.
+16. **URL-szabályok szigorítása:** a hosztnévben pontnak kell lennie (a `valami` így nem lesz `https://valami/`, de az `https://localhost` is hibás); a 500 karakteres korlát a normalizált `href`-re vonatkozik; séma nélküli, portos cím (`nkfih.gov.hu:8080/x`) sémának látszik és hibát kap – mindhárom a biztonságos oldalra hibázik.
