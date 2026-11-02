@@ -9,7 +9,8 @@ import { requireSession } from '../../../lib/session';
 /** ↑/↓ a kategória-oldalon (bind-olt `<form action>`): a szomszéddal cserél sorrendet. */
 export async function mozgatKartyaAction(id: string, irany: 'fel' | 'le'): Promise<void> {
   const session = await requireSession();
-  if (!canEditTudastar(session)) return;
+  // A bind-olt argumentumok a kliensen át érkeznek vissza: az irányt futásidőben is ellenőrizzük.
+  if (!canEditTudastar(session) || (irany !== 'fel' && irany !== 'le')) return;
   try {
     mozgatKartya(id, irany);
   } catch (err) {
@@ -17,5 +18,6 @@ export async function mozgatKartyaAction(id: string, irany: 'fel' | 'le'): Promi
     console.error('[tudastar] mozgatás sikertelen:', err);
     return;
   }
-  revalidatePath('/tudastar', 'layout');
+  // A kódbázis többi actionjével azonos; a `'/tudastar'` tag a `(app)` route group miatt nem illeszkedne.
+  revalidatePath('/', 'layout');
 }

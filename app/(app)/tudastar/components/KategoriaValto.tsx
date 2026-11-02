@@ -7,13 +7,13 @@ import { tudastarUrl } from '../../../../lib/routes';
 import { TUDASTAR_KATEGORIAK } from '../../../../lib/tudastar-szotar';
 
 /**
- * Keskeny ablakban (`lg` alatt) a jobb oldali menü helyett: kategória-választó, váltáskor a kategória-oldalra
+ * Keskenyebb ablakban (`xl` alatt) a jobb oldali menü helyett: kategória-választó, váltáskor a kategória-oldalra
  * navigál. Nem vezérelt; a `key` miatt útvonal-váltás után az új kategóriával indul.
  */
 export function KategoriaValto({ aktiv }: { aktiv: string }) {
   const router = useRouter();
   return (
-    <div className="flex flex-col gap-1.5 lg:hidden">
+    <div className="flex flex-col gap-1.5 xl:hidden">
       <Label htmlFor="tudastar-kategoria">Kategória</Label>
       <NativeSelect
         key={aktiv}

@@ -33,9 +33,9 @@ export function LinkLista({ linkek }: { linkek: readonly HasznosLink[] }) {
 }
 
 /** Név (linkként, ha van webcím) + rövid leírás soronként: a listakártya sorai és az intézmény programjai. */
-export function SorLista({ sorok }: { sorok: readonly { nev: string; url: string; leiras: string }[] }) {
+export function TetelLista({ sorok }: { sorok: readonly { nev: string; url: string; leiras: string }[] }) {
   return (
-    <ul className="divide-y divide-border rounded-lg border border-border">
+    <ul className="divide-y divide-input rounded-lg border border-input">
       {sorok.map((s, i) => (
         <li key={i} className="flex flex-col gap-0.5 px-3 py-2 text-sm sm:flex-row sm:items-baseline sm:gap-3">
           <span className="font-medium sm:w-2/5 sm:shrink-0">{s.url ? <KulsoLink href={s.url}>{s.nev}</KulsoLink> : s.nev}</span>

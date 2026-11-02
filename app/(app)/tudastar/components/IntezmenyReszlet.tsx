@@ -3,12 +3,11 @@ import type { ReactNode } from 'react';
 import { buttonVariants } from '../../../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/card';
 import { formatDatum } from '../../../../lib/datum';
-import { kartyaSzerkesztoUrl, tudastarUrl } from '../../../../lib/routes';
-import type { KartyaTipusu, TudastarKategoria } from '../../../../lib/tudastar-szotar';
+import { kartyaSzerkesztoUrl } from '../../../../lib/routes';
+import type { KartyaTipusu } from '../../../../lib/tudastar-szotar';
 import { megjelenoHoszt } from '../../../../lib/tudastar-szoveg';
 import { cn } from '../../../../lib/utils';
-import { KulsoLink, LinkLista, SorLista } from './KulsoLink';
-import { Morzsa } from './Morzsa';
+import { KulsoLink, LinkLista, TetelLista } from './KulsoLink';
 import { Szoveg } from './Szoveg';
 
 function Blokk({ cim, children }: { cim: string; children: ReactNode }) {
@@ -38,26 +37,17 @@ function Adat({ cimke, children }: { cimke: string; children: ReactNode }) {
  * Az intézmény részletoldala: összefoglaló, majd Profil és Kapcsolat, Tevékenység, a szabad szakaszok,
  * Programok, Hasznos linkek – az üres blokk nem jelenik meg.
  */
-export function IntezmenyReszlet({
-  kartya, kategoria, szerkeszthet,
-}: { kartya: KartyaTipusu<'intezmeny'>; kategoria: TudastarKategoria; szerkeszthet: boolean }) {
+export function IntezmenyReszlet({ kartya, szerkeszthet }: { kartya: KartyaTipusu<'intezmeny'>; szerkeszthet: boolean }) {
   const t = kartya.tartalom;
   const { email, telefon, cim } = t.kapcsolat;
   const vanKapcsolat = Boolean(kartya.honlap || email || telefon || cim);
   return (
     <article className="flex flex-col gap-4">
-      <Morzsa
-        elemek={[
-          { felirat: 'TéT Tudástár', href: tudastarUrl() },
-          { felirat: `${kategoria.szam}. ${kategoria.rovidCim}`, href: tudastarUrl(kategoria.slug) },
-          { felirat: kartya.rovidites ?? kartya.nev },
-        ]}
-      />
       <header className="flex flex-col gap-2">
         <div className="flex flex-wrap items-start gap-3">
           <h2 className="text-xl leading-snug font-semibold">
             {kartya.nev}
-            {kartya.rovidites && <span className="ml-2 text-base font-normal text-muted-foreground">{kartya.rovidites}</span>}
+            {kartya.rovidites && <>{' '}<span className="ml-1 text-base font-normal text-muted-foreground">{kartya.rovidites}</span></>}
           </h2>
           {szerkeszthet && (
             <Link href={kartyaSzerkesztoUrl(kartya)} className={cn('ml-auto', buttonVariants({ variant: 'outline' }))}>
@@ -69,7 +59,7 @@ export function IntezmenyReszlet({
       </header>
 
       {(t.profil || vanKapcsolat) && (
-        <div className={cn('grid items-start gap-4', t.profil && vanKapcsolat && 'md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]')}>
+        <div className={cn('grid items-start gap-4', t.profil && vanKapcsolat && 'xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]')}>
           {t.profil && (
             <Blokk cim="Profil">
               <Szoveg szoveg={t.profil} />
@@ -107,7 +97,7 @@ export function IntezmenyReszlet({
       ))}
       {t.programok.length > 0 && (
         <Blokk cim="Programok">
-          <SorLista sorok={t.programok} />
+          <TetelLista sorok={t.programok} />
         </Blokk>
       )}
       {t.linkek.length > 0 && (

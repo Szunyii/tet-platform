@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { listKartyak } from '../../../../../db/queries/tudastar';
+import { tudastarUrl } from '../../../../../lib/routes';
 import { canEditTudastar } from '../../../../../lib/tudastar-jog';
 import { kategoriaBySlug } from '../../../../../lib/tudastar-szotar';
 import { requireSession } from '../../../../../lib/session';
 import { IntezmenyReszlet } from '../../components/IntezmenyReszlet';
+import { Morzsa } from '../../components/Morzsa';
 import { TudastarElrendezes } from '../../components/TudastarElrendezes';
 
 export const metadata: Metadata = { title: 'TéT Tudástár' };
@@ -23,7 +25,14 @@ export default async function IntezmenyPage({ params }: { params: Promise<{ kate
   if (!kartya || kartya.tipus !== 'intezmeny') notFound();
   return (
     <TudastarElrendezes aktivKategoria={kategoria.slug} kartyak={kartyak} aktivSlug={kartya.slug}>
-      <IntezmenyReszlet kartya={kartya} kategoria={kategoria} szerkeszthet={canEditTudastar(session)} />
+      <Morzsa
+        elemek={[
+          { felirat: 'TéT Tudástár', href: tudastarUrl() },
+          { felirat: `${kategoria.szam}. ${kategoria.rovidCim}`, href: tudastarUrl(kategoria.slug) },
+          { felirat: kartya.rovidites ?? kartya.nev },
+        ]}
+      />
+      <IntezmenyReszlet kartya={kartya} szerkeszthet={canEditTudastar(session)} />
     </TudastarElrendezes>
   );
 }

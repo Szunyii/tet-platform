@@ -23,27 +23,26 @@ export function KartyaLablec({ kartya, mozgatas, children }: { kartya: Kartya; m
   return (
     <CardFooter className="flex-wrap gap-x-4 gap-y-2 text-xs">
       {children}
-      <span className="ml-auto text-muted-foreground">Frissítve: {formatDatum(kartya.updatedAt)}</span>
-      {mozgatas && (
-        <div className="flex items-center gap-1">
-          <Link
-            href={kartyaSzerkesztoUrl(kartya)}
-            className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
-          >
-            Szerkesztés<span className="sr-only">: {kartya.nev}</span>
-          </Link>
-          <form action={mozgatas.fel}>
-            <KuldGomb variant="ghost" size="icon-sm" disabled={!mozgatas.fel} aria-label={`${kartya.nev} feljebb`}>
-              <ArrowUpIcon aria-hidden />
-            </KuldGomb>
-          </form>
-          <form action={mozgatas.le}>
-            <KuldGomb variant="ghost" size="icon-sm" disabled={!mozgatas.le} aria-label={`${kartya.nev} lejjebb`}>
-              <ArrowDownIcon aria-hidden />
-            </KuldGomb>
-          </form>
-        </div>
-      )}
+      <div className="ml-auto flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
+        <span className="text-muted-foreground">Frissítve: {formatDatum(kartya.updatedAt)}</span>
+        {mozgatas && (
+          <div className="flex items-center gap-1">
+            <Link href={kartyaSzerkesztoUrl(kartya)} className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}>
+              Szerkesztés<span className="sr-only">: {kartya.nev}</span>
+            </Link>
+            <form action={mozgatas.fel}>
+              <KuldGomb variant="ghost" size="icon-sm" disabled={!mozgatas.fel} aria-label={`Feljebb: ${kartya.nev}`}>
+                <ArrowUpIcon aria-hidden />
+              </KuldGomb>
+            </form>
+            <form action={mozgatas.le}>
+              <KuldGomb variant="ghost" size="icon-sm" disabled={!mozgatas.le} aria-label={`Lejjebb: ${kartya.nev}`}>
+                <ArrowDownIcon aria-hidden />
+              </KuldGomb>
+            </form>
+          </div>
+        )}
+      </div>
     </CardFooter>
   );
 }

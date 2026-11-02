@@ -5,7 +5,7 @@ import { kartyaHorgony, kartyaUrl } from '../../../../lib/routes';
 import { TIPUS_CIMKE, type Kartya } from '../../../../lib/tudastar-szotar';
 import { megjelenoHoszt } from '../../../../lib/tudastar-szoveg';
 import { KartyaLablec, type Mozgatas } from './KartyaLablec';
-import { KulsoLink, LinkLista, SorLista } from './KulsoLink';
+import { KulsoLink, LinkLista, TetelLista } from './KulsoLink';
 
 /**
  * Egy kártya a kategória-oldalon. Intézmény: összefoglaló, „Részletek →” és honlap. Lista: bevezető, a
@@ -21,7 +21,7 @@ export function TudastarKartya({ kartya, mozgatas }: { kartya: Kartya; mozgatas?
         </Badge>
         <CardTitle role="heading" aria-level={3}>
           {kartya.nev}
-          {kartya.rovidites && <span className="ml-1.5 font-normal text-muted-foreground">{kartya.rovidites}</span>}
+          {kartya.rovidites && <>{' '}<span className="ml-1 font-normal text-muted-foreground">{kartya.rovidites}</span></>}
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
@@ -29,7 +29,7 @@ export function TudastarKartya({ kartya, mozgatas }: { kartya: Kartya; mozgatas?
         {kartya.tipus === 'lista' && (
           <>
             {kartya.tartalom.sorok.length > 0 && (
-              <SorLista sorok={kartya.tartalom.sorok.map((s) => ({ nev: s.nev, url: s.url, leiras: s.megjegyzes }))} />
+              <TetelLista sorok={kartya.tartalom.sorok.map((s) => ({ nev: s.nev, url: s.url, leiras: s.megjegyzes }))} />
             )}
             {kartya.tartalom.linkek.length > 0 && <LinkLista linkek={kartya.tartalom.linkek} />}
           </>
@@ -38,7 +38,8 @@ export function TudastarKartya({ kartya, mozgatas }: { kartya: Kartya; mozgatas?
       <KartyaLablec kartya={kartya} mozgatas={mozgatas}>
         {kartya.tipus === 'intezmeny' && (
           <Link href={kartyaUrl(kartya)} className="font-medium">
-            Részletek →<span className="sr-only">: {kartya.nev}</span>
+            Részletek <span aria-hidden>→</span>
+            <span className="sr-only">: {kartya.nev}</span>
           </Link>
         )}
         {kartya.honlap && <KulsoLink href={kartya.honlap}>{megjelenoHoszt(kartya.honlap)}</KulsoLink>}
