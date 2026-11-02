@@ -12,7 +12,9 @@ CREATE TABLE `tudastar_kartya` (
 	`szerzo_id` text,
 	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
 	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
-	FOREIGN KEY (`szerzo_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE set null
+	FOREIGN KEY (`szerzo_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE set null,
+	CONSTRAINT "tudastar_kartya_tipus_check" CHECK("tudastar_kartya"."tipus" in ('intezmeny', 'lista')),
+	CONSTRAINT "tudastar_kartya_tartalom_check" CHECK(json_valid("tudastar_kartya"."tartalom"))
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `tudastar_kartya_slug_idx` ON `tudastar_kartya` (`slug`);--> statement-breakpoint

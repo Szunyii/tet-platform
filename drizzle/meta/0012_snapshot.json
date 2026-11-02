@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "14414be0-661a-4d6e-ac53-23a796910c8a",
+  "id": "fd537c36-0095-4f74-90d6-fe2f075d002c",
   "prevId": "4b09cfe1-27fe-40d3-a99d-f3826e1f5cb0",
   "tables": {
     "account": {
@@ -1347,7 +1347,16 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {}
+      "checkConstraints": {
+        "tudastar_kartya_tipus_check": {
+          "name": "tudastar_kartya_tipus_check",
+          "value": "\"tudastar_kartya\".\"tipus\" in ('intezmeny', 'lista')"
+        },
+        "tudastar_kartya_tartalom_check": {
+          "name": "tudastar_kartya_tartalom_check",
+          "value": "json_valid(\"tudastar_kartya\".\"tartalom\")"
+        }
+      }
     }
   },
   "views": {},
