@@ -6,9 +6,13 @@
 export const SLUG_MAX = 60;
 export const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-/** Az ékezetjelek (NFD után a kombinált jelek) elhagyása; az „ő”, „ű” kettős ékezete is. */
+/**
+ * Az ékezetjelek elhagyása (NFKD után a kombinált jelek; az „ő”, „ű” kettős ékezete is). Az NFKD a
+ * kompatibilitási alakokat is felbontja: a PDF-ből másolt „ﬁ” ligatúra „fi”, a teljes szélességű betű
+ * közönséges lesz.
+ */
 export function ekezetNelkul(s: string): string {
-  return s.normalize('NFD').replace(/\p{Diacritic}/gu, '');
+  return s.normalize('NFKD').replace(/\p{Diacritic}/gu, '');
 }
 
 /** Slug a szövegből; ha semmi nem marad (pl. csak írásjel), a `tartalek`. */

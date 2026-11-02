@@ -228,10 +228,16 @@ function objektum(v: unknown): Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
 }
 
-/** Objektumok listája; a nem objektum elemet eldobja, a többit a `sor` egészíti ki. */
-function objLista<T>(v: unknown, sor: (r: Record<string, unknown>) => T): T[] {
+/**
+ * Objektumok listája; a nem objektum elemet eldobja, a többit a `sor` egészíti ki. A kiegészítés után
+ * teljesen üres sort is eldobja, mint a validátor (különben üres szakasz, link vagy listasor jelenne meg).
+ */
+function objLista<T extends object>(v: unknown, sor: (r: Record<string, unknown>) => T): T[] {
   return Array.isArray(v)
-    ? v.filter((x) => typeof x === 'object' && x !== null && !Array.isArray(x)).map((x) => sor(x as Record<string, unknown>))
+    ? v
+        .filter((x) => typeof x === 'object' && x !== null && !Array.isArray(x))
+        .map((x) => sor(x as Record<string, unknown>))
+        .filter((s) => Object.values(s).some((m) => m !== ''))
     : [];
 }
 

@@ -1,11 +1,12 @@
 /**
  * A tudástár szövegeinek megjelenítési segédei (tiszta függvények). A szöveges mezők sima szövegek két
- * szabállyal: üres sor = új bekezdés, „- ” (vagy „• ”) kezdetű sor = felsoroláspont. HTML-t nem értelmezünk.
+ * szabállyal: üres sor = új bekezdés, „- ” (vagy a bemásolt szövegekben gyakori „– ”, „• ”) kezdetű sor =
+ * felsoroláspont. HTML-t nem értelmezünk.
  */
 
 export type SzovegBlokk = { tipus: 'bekezdes'; sorok: string[] } | { tipus: 'lista'; elemek: string[] };
 
-const LISTA_SOR = /^\s*[-•]\s+/;
+const LISTA_SOR = /^\s*[-–•]\s+/;
 
 /** A szöveg bekezdésekre és felsorolásokra bontva, a beírás sorrendjében. */
 export function tagolSzoveg(s: string): SzovegBlokk[] {
@@ -18,6 +19,7 @@ export function tagolSzoveg(s: string): SzovegBlokk[] {
     }
     if (LISTA_SOR.test(sor)) {
       const elem = sor.replace(LISTA_SOR, '').trim();
+      if (!elem) continue;
       if (aktualis?.tipus !== 'lista') {
         aktualis = { tipus: 'lista', elemek: [] };
         blokkok.push(aktualis);
@@ -34,10 +36,10 @@ export function tagolSzoveg(s: string): SzovegBlokk[] {
   return blokkok;
 }
 
-/** Az URL megjelenő rövid alakja: a hoszt „www.” nélkül (pl. „nkfih.gov.hu”); érvénytelen URL-re maga a szöveg. */
+/** Az URL megjelenő rövid alakja: a hoszt „www.” nélkül (pl. „nkfih.gov.hu”); érvénytelen vagy hoszt nélküli URL-re maga a szöveg. */
 export function megjelenoHoszt(url: string): string {
   try {
-    return new URL(url).hostname.replace(/^www\./, '');
+    return new URL(url).hostname.replace(/^www\./, '') || url;
   } catch {
     return url;
   }
