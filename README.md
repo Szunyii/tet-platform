@@ -70,7 +70,10 @@ A `data/tet.db` demó-adatbázis a repóban van (felhasználókkal és az attas�
 | `/jelentesek/[id]/szerkesztes` | Bejegyzés szerkesztése |
 | `/uj-jelentes` | Új bejegyzés (több országos attasénál ország-választó; kategória, tárgy, vezetői összefoglaló, fő üzenet, kulcsszavak, rendezvény adatai, csatolmány) |
 | `/kommunikacio` | Ticketek és üzenetszálak: az admin nyit ticketet egy vagy több attasénak (mindenkinek, régiónként vagy egyenként választva – címzettenként külön szál), mindkét fél válaszol; `?t=<id>` a kiválasztott ticket, `?sz=` szűrő (`aktiv`/`magas`/`mind`) |
-| `/tudastar` | Tudástár – Magyarországról ajánlható programok, partnerek, együttműködési formák |
+| `/tudastar` | TéT Tudástár nyitólap: a 9 kategória csempéje és keresés (`?q=`, ékezet- és kisbetű-független) |
+| `/tudastar/[kategoria]` | Kategória-oldal: bevezető és a kártyák (intézmény, lista); admin: új kártya, ↑/↓ sorrend |
+| `/tudastar/[kategoria]/[slug]` | Intézményi részletoldal (profil, kapcsolat, tevékenység, szakaszok, programok, linkek) |
+| `/tudastar/[kategoria]/[slug]/szerkesztes`, `/tudastar/[kategoria]/uj?tipus=` | Kártya szerkesztése / új kártya (csak admin) |
 | `/monitoring` | Hálózati rangsor + 14 szempontos részletes értékelés |
 | `/login` | Bejelentkezés (email + jelszó) |
 | `/felhasznalok` | Felhasználó-kezelés (csak admin) |
@@ -103,7 +106,7 @@ A `data/tet.db` demó-adatbázis a repóban van (felhasználókkal és az attas�
 - A bejegyzés-lista lapozás nélküli: minden találat egy oldalon jelenik meg.
 - A „Megtett intézkedés” jelentésenként egyetlen szöveg: a korábbi változatai nem őrződnek meg,
   és az attasé nem kap értesítést a rögzítéséről.
-- A szabadszavas keresés SQLite `LIKE`, ami ékezetes nagybetűre nem kis-nagybetű-független
+- A jelentések szabadszavas keresése SQLite `LIKE`, ami ékezetes nagybetűre nem kis-nagybetű-független
   (az „Ő" nem találja meg az „ő"-t); ékezet nélküli betűkre igen.
 - A kategória-színek (`KATEGORIAK.szin`) világos módra készültek, nincs `dark:` párjuk.
 - Felhasználó törlésekor a bejegyzései és a csatolmányaik is törlődnek (FK cascade);
@@ -117,6 +120,9 @@ A `data/tet.db` demó-adatbázis a repóban van (felhasználókkal és az attas�
   a törölt nyitó/szerző neve pillanatképként megmarad az üzeneteken.
 - A Kommunikáció menü olvasatlan-számlálója kliens-oldali navigációnál a következő ticket-műveletig
   vagy teljes betöltésig késhet (a /kommunikacio oldal maga szinkronizálja).
+- TéT Tudástár: a kártyák változástörténete nem őrződik meg; a kategória-oldal ↑/↓ gombja után nincs
+  visszajelzés, és a fókusz nem marad a gombon; `xl` (≈ 1280 px) alatt a kategória- és a részletoldalon
+  nincs keresőmező (a nyitólapon van); a lapcím minden tudástár-oldalon azonos.
 - Az attasé országainak vagy relációs vezetőségének admin-módosítása a jogosultság-ellenőrzésben
   azonnal érvényes, de az attasé oldalsávja és a térkép „Saját országprofil"/Szerkesztés gombja
   kliens-oldali navigációnál csak teljes újratöltés (vagy egy saját, layoutot frissítő művelet) után
