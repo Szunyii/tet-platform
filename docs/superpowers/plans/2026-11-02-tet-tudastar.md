@@ -3826,3 +3826,27 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 25. **Sortörés egysoros mezőben:** a validátor szóközre cseréli (a szerkesztő `<input>`-ja szóköz nélkül dobná el; a webcímből a `new URL()` maga veszi ki), a tartalom-futtató (B fázis) hibának veszi; többsoros mező: az összefoglaló/bevezető, a profil, a tevékenység és a szakasz szövege.
 26. **Külső link csak http(s):** a `KulsoLink` (és a rá épülő `LinkLista`/`TetelLista`) csak `http(s)` címből rajzol `<a>`-t, más esetben sima szöveget – a validátor mást nem enged be, de a kézzel módosított DB-sor se adhasson `javascript:` hrefet.
 27. **A futtató védelmei:** a `--sql` csak a napló legutolsó migrációjába ír, és csak ha az még a drizzle-kit üres helykitöltője vagy e futtató írta (lefutott migrációt nem írhat felül); a kártya-id a slugból képzett determinisztikus, UUID-alakú érték (az újragenerálás csak a változott sorokat érinti); egy nem betölthető adatfájl a többi hibáit nem takarja el; a forrás-típus a `tipus` szerinti unió (`ForrasIntezmeny | ForrasLista`); üres listakártya, nem szöveges érték és a migráció-elválasztó jel a szövegben hiba.
+
+---
+
+## Task 13 (utólag, 2026-11-03): felületi javítások a felhasználó döntései szerint
+
+A végső átnézés után a felhasználó három nyitott kérdésben döntött (mindháromban a javasolt változat). A demó DB-hez a task nem nyúl (a vezérlő a böngészős QA után commitolja).
+
+**1. Dinamikus lapcímek.** A gyökér-sablon `'%s · NIÜ · TéT Platform'` (`app/layout.tsx`). A statikus `metadata` helyett `generateMetadata` (async `params`), a page-dzsel azonos keresés a `listKartyak()`-ból (React `cache()`, egy kérésen belül nincs második lekérdezés); ismeretlen kategória/kártya: a mostani `'TéT Tudástár'` (a page úgyis 404-et ad):
+- `/tudastar/[kategoria]`: `'<rovidCim> · TéT Tudástár'`
+- `/tudastar/[kategoria]/[slug]`: `'<rovidites ?? nev> · TéT Tudástár'`
+- `…/[slug]/szerkesztes`: `'Szerkesztés: <rovidites ?? nev> · TéT Tudástár'`
+- `…/uj?tipus=`: `'Új intézmény · TéT Tudástár'` / `'Új lista · TéT Tudástár'` (a `tipus` a `searchParams`-ból, ismeretlennél az alap)
+- `/tudastar` (nyitólap, `?q=` is): marad `'TéT Tudástár'` (a találatszámot a `role="status"` mondja be).
+Cél: kliens-oldali navigációnál a Next útvonal-bemondója (`next-route-announcer`) bemondja az új címet. A régi „Statikus cím…” komment törlendő.
+
+**2. `KategoriaValto`: „Ugrás” gomb.** A select ne navigáljon `onChange`-re (WCAG 3.2.2: billentyűzettel a nyíl már elnavigál). Helyette `<form onSubmit>` (nem `action` – nincs `form.reset()`), benne a címkézett `NativeSelect` (`name`, nem vezérelt, `key={aktiv}` marad) és egy `Button type="submit"` „Ugrás” felirattal (outline), egy sorban; a submit `preventDefault` után `router.push(tudastarUrl(<választott slug>))`. A doboz továbbra is csak `xl` alatt látszik.
+
+**3. Fókusz a kategória-oldal ↑/↓ gombja után.** Ma a fókusz elvész: (a) a `KuldGomb` pending alatt natívan `disabled`, ami a fókuszt eldobja; (b) a mozgatott kártya DOM-ja áthelyeződik (a React a lejjebb kerülő kártyát szúrja át). Elvárt viselkedés a `SorSzerkeszto` mintájára (`mozgat`: ugyanaz az irányú gomb az új helyen, ha az letiltott – a lista szélén –, akkor az ellentétes): a mozgatás befejeztével (az új sorrend megjelenése után) a fókusz a mozgatott kártya megfelelő gombján van; sikertelen mozgatásnál (az action csendben nem csinál semmit) a fókusz a megnyomott gombon marad. A pending-tiltás ne dobja el a fókuszt (a Base UI `Button` `focusableWhenDisabled`-je, ahogy a `CimzettValaszto` „Kijelölés törlése” gombja). Megvalósítás: a ↑/↓ pár kliens-komponensbe (pl. `MozgatoGombok`, `app/(app)/tudastar/components/`), amely a bind-olt actionöket propként kapja (a `KartyaLablec` Server Component maradhat); a gombok `aria-label`-je változatlan. A `KuldGomb` meglévő hívói ne változzanak.
+
+**4. Dokumentáció:** a CLAUDE.md „TéT Tudástár.” bekezdése és „Amire figyelni kell” listája (a statikus `metadata`-ról és a ↑/↓ fókusz „ismert korlát”-járól szóló pont, a `KategoriaValto` és a `KartyaLablec` leírása), a spec (`Tervezéskori pontosítások` 9., a `Hibakezelés` metadata-pontja; a „Megvalósítási eltérések” végére egy pont a három utólagos döntésről, dátummal).
+
+**Ellenőrzés:** `npx tsc --noEmit` üres. (A böngészős QA-t a vezérlő végzi: a bemondó szövege kliens-navigáció után, „Ugrás” egérrel és billentyűzettel, ↑/↓ billentyűzettel a lista közepén és szélén.)
+
+**Commit:** `fix(tudastar): dinamikus lapcímek, „Ugrás” a kategóriaváltón, fókusz a ↑/↓ után` + a Co-Authored-By sor.
