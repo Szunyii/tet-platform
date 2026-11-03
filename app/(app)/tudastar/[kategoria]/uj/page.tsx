@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { tudastarUrl, type SearchParams } from '../../../../../lib/routes';
 import { isKartyaTipus, kategoriaBySlug, tudastarCim, type KartyaTipus } from '../../../../../lib/tudastar-szotar';
-import { getSession, requireAdmin } from '../../../../../lib/session';
+import { requireAdmin } from '../../../../../lib/session';
 import { mentKartyaAction } from '../../actions';
 import { KartyaForm } from '../../components/KartyaForm';
 import { Morzsa } from '../../components/Morzsa';
@@ -12,11 +12,11 @@ type Props = { params: Promise<{ kategoria: string }>; searchParams: Promise<Sea
 const UJ_CIM: Record<KartyaTipus, string> = { intezmeny: 'Új intézmény', lista: 'Új lista' };
 
 /**
- * Lapcím: „Új intézmény” / „Új lista”. Ahol a page 404-et ad – ismeretlen kategória vagy típus, nem admin
- * (`requireAdmin`; a `getSession` React.cache-ben) –, ott az alapcím.
+ * Lapcím: „Új intézmény” / „Új lista”; ismeretlen kategóriánál vagy típusnál az alapcím. Session-ellenőrzés
+ * szándékosan nincs: a metadata streamelve érkezik, és a késve beérkező címet az útvonal-bemondó már nem mondja be
+ * (nem admin a 404-et a page-től kapja).
  */
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
-  if ((await getSession())?.role !== 'admin') return { title: tudastarCim() };
   const { kategoria } = await params;
   const { tipus } = await searchParams;
   return { title: tudastarCim(kategoriaBySlug(kategoria) && isKartyaTipus(tipus) ? UJ_CIM[tipus] : undefined) };

@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { listKartyak } from '../../../../../../db/queries/tudastar';
 import { kartyaUrl, tudastarUrl } from '../../../../../../lib/routes';
 import { kategoriaBySlug, tudastarCim } from '../../../../../../lib/tudastar-szotar';
-import { getSession, requireAdmin } from '../../../../../../lib/session';
+import { requireAdmin } from '../../../../../../lib/session';
 import { deleteKartyaAction, mentKartyaAction } from '../../../actions';
 import { KartyaForm } from '../../../components/KartyaForm';
 import { Morzsa } from '../../../components/Morzsa';
@@ -11,12 +11,11 @@ import { Morzsa } from '../../../components/Morzsa';
 type Props = { params: Promise<{ kategoria: string; slug: string }> };
 
 /**
- * Lapcím: „Szerkesztés: <rövidítés vagy név>”, a page-dzsel azonos keresés (a `listKartyak` és a `getSession`
- * React.cache-ben). Ahol a page 404-et ad – nem admin is (`requireAdmin`) –, ott az alapcím, hogy a cím se árulja
- * el az oldal létét.
+ * Lapcím: „Szerkesztés: <rövidítés vagy név>”, a page-dzsel azonos keresés (a `listKartyak` React.cache-ben);
+ * ismeretlen vagy más kategóriájú kártyánál az alapcím. Session-ellenőrzés szándékosan nincs: a metadata streamelve
+ * érkezik, és a késve beérkező címet az útvonal-bemondó már nem mondja be (nem admin a 404-et a page-től kapja).
  */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  if ((await getSession())?.role !== 'admin') return { title: tudastarCim() };
   const { kategoria, slug } = await params;
   const kartya = listKartyak().find((k) => k.kategoria === kategoria && k.slug === slug);
   return { title: tudastarCim(kartya ? `Szerkesztés: ${kartya.rovidites ?? kartya.nev}` : undefined) };

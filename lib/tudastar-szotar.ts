@@ -122,7 +122,8 @@ export function kategoriaIndex(slug: string): number {
 
 /**
  * A tudástár-oldalak lapcíme (a gyökér-sablon még hozzáfűzi: „ · NIÜ · TéT Platform”); kliens-navigációnál a Next
- * útvonal-bemondója ezt mondja be. Rész nélkül a nyitólapé, és azé az oldalé, amely 404-et ad.
+ * útvonal-bemondója ezt mondja be. Rész nélkül a nyitólapé, és az ismeretlen kategóriájú, kártyájú vagy típusú
+ * (404-es) oldalé.
  */
 export function tudastarCim(resz?: string): string {
   return resz ? `${resz} · TéT Tudástár` : 'TéT Tudástár';

@@ -56,7 +56,10 @@ export async function mentKartyaAction(_prev: MuveletState, formData: FormData):
   redirect(kartyaUrl({ kategoria: parsed.data.kategoria, slug, tipus: parsed.data.tipus }));
 }
 
-/** ↑/↓ a kategória-oldalon (bind-olt `<form action>`): a szomszéddal cserél sorrendet. */
+/**
+ * ↑/↓ a kategória-oldalon (bind-olt, a `MozgatoGombok` hívja `useTransition`-ben): a szomszéddal cserél sorrendet.
+ * Visszajelzés nincs: jog hiányában vagy hibánál csendben nem csinál semmit.
+ */
 export async function mozgatKartyaAction(id: string, irany: 'fel' | 'le'): Promise<void> {
   const session = await requireSession();
   // A bind-olt argumentumok a kliensen át érkeznek vissza: az irányt futásidőben is ellenőrizzük.
