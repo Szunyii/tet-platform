@@ -122,7 +122,8 @@ A `data/tet.db` demó-adatbázis a repóban van (felhasználókkal és az attas�
   vagy teljes betöltésig késhet (a /kommunikacio oldal maga szinkronizálja).
 - TéT Tudástár: a kártyák változástörténete nem őrződik meg; a kategória-oldal ↑/↓ gombja hibánál nem ad
   visszajelzést (a sorrend nem változik); `xl` (≈ 1280 px) alatt a kategória- és a részletoldalon nincs keresőmező
-  (a nyitólapon van).
+  (a nyitólapon van); kliens-oldali navigáció után a képernyőolvasó néha csak „TéT Tudástár”-t mond az új lapcím
+  helyett (a Next a címet külön streameli, és a bemondás nem várja meg; a lap címe helyes).
 - Az attasé országainak vagy relációs vezetőségének admin-módosítása a jogosultság-ellenőrzésben
   azonnal érvényes, de az attasé oldalsávja és a térkép „Saját országprofil"/Szerkesztés gombja
   kliens-oldali navigációnál csak teljes újratöltés (vagy egy saját, layoutot frissítő művelet) után

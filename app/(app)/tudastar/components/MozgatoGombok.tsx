@@ -23,7 +23,8 @@ type Irany = keyof Mozgatas;
  * az async action alatt indított transition-frissítéseket egy sávba köti vele. Az `isPending` ezért ugyanabban a
  * commitban vált `false`-ra, amelyben az új sorrend megjelenik, és a layout-effekt már az új DOM-on állítja a
  * fókuszt. Sikertelen mozgatásnál (az action csendben nem csinál semmit) a sorrend nem változik, a fókusz a
- * megnyomott gombon marad. Ha közben a felhasználó máshová vitte a fókuszt, nem vesszük el.
+ * megnyomott gombon marad. Ha közben a felhasználó másik elemre vitte a fókuszt, nem vesszük el (a `body` és a kártya
+ * saját két gombja nem számít ilyennek, mert a DOM-áthelyezés és a tiltás oda ejti).
  */
 export function MozgatoGombok({ nev, mozgatas }: { nev: string; mozgatas: Mozgatas }) {
   const [pending, startTransition] = useTransition();
