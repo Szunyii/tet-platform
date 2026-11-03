@@ -2,12 +2,14 @@ import type { Metadata } from 'next';
 import { listKartyak } from '../../../db/queries/tudastar';
 import type { SearchParams } from '../../../lib/routes';
 import { KERESES_MAX, keres } from '../../../lib/tudastar-kereses';
+import { tudastarCim } from '../../../lib/tudastar-szotar';
 import { requireSession } from '../../../lib/session';
 import { KategoriaCsempek } from './components/KategoriaCsempek';
 import { KeresesiTalalatok } from './components/KeresesiTalalatok';
 import { KeresoMezo } from './components/KeresoMezo';
 
-export const metadata: Metadata = { title: 'TéT Tudástár' };
+// A `?q=` nem kerül a címbe: a találatszámot a lenti `role="status"` régió mondja be.
+export const metadata: Metadata = { title: tudastarCim() };
 
 /** A tudástár nyitólapja: keresőmező és a 9 kategória csempéje; `?q=` esetén a keresési találatok. */
 export default async function TudastarPage({ searchParams }: { searchParams: Promise<SearchParams> }) {

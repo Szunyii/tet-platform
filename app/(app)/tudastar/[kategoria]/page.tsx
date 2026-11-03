@@ -5,7 +5,7 @@ import { buttonVariants } from '../../../../components/ui/button';
 import { listKartyak } from '../../../../db/queries/tudastar';
 import { tudastarUrl, ujKartyaUrl } from '../../../../lib/routes';
 import { canEditTudastar } from '../../../../lib/tudastar-jog';
-import { kategoriaBySlug } from '../../../../lib/tudastar-szotar';
+import { kategoriaBySlug, tudastarCim } from '../../../../lib/tudastar-szotar';
 import { requireSession } from '../../../../lib/session';
 import { cn } from '../../../../lib/utils';
 import { mozgatKartyaAction } from '../actions';
@@ -14,11 +14,15 @@ import { SzamJelveny } from '../components/SzamJelveny';
 import { TudastarElrendezes } from '../components/TudastarElrendezes';
 import { TudastarKartya } from '../components/TudastarKartya';
 
-// Statikus cím: mindenki mindent olvashat, a dinamikus cím nem védene semmit, és külön lekérdezést kérne.
-export const metadata: Metadata = { title: 'TéT Tudástár' };
+type Props = { params: Promise<{ kategoria: string }> };
+
+/** Lapcím: a kategória rövid címe; ismeretlen kategóriánál az alapcím (a page 404-et ad). */
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  return { title: tudastarCim(kategoriaBySlug((await params).kategoria)?.rovidCim) };
+}
 
 /** Egy kategória: bevezető és a kártyái sorrendben; adminnak új kártya és ↑/↓. Ismeretlen kategória: 404. */
-export default async function KategoriaPage({ params }: { params: Promise<{ kategoria: string }> }) {
+export default async function KategoriaPage({ params }: Props) {
   const session = await requireSession();
   const { kategoria: slug } = await params;
   const kategoria = kategoriaBySlug(slug);

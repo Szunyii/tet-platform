@@ -327,8 +327,12 @@ közben törlődött.”
   (`requireAdmin()`). Egyik sem függ cookie-tól, ezért a 404 nem ragad be.
 - **Form-szintű hiba** az action-ökben: megszűnt jog, elavult verzió, közben törölt kártya – a nyitott
   szerkesztő tartalma megmarad.
-- A `metadata` minden tudástár-oldalon statikus („TéT Tudástár”); szivárgás dinamikus címmel sem lenne,
-  mert mindenki mindent olvashat, de a lapcím így egységes és nem kell hozzá külön lekérdezés.
+- A lapcím dinamikus (`generateMetadata`, 2026-11-03 óta): „<rövid cím> · TéT Tudástár” (kategória-oldal),
+  „<rövidítés vagy név> · TéT Tudástár” (részletoldal), „Szerkesztés: <rövidítés vagy név> · TéT Tudástár”,
+  „Új intézmény · TéT Tudástár” / „Új lista · TéT Tudástár”; a nyitólapé `?q=`-val is „TéT Tudástár”. Így
+  kliens-navigációnál a Next útvonal-bemondója az új címet mondja be. Szivárgás nincs, mert mindenki mindent
+  olvas; a keresés a page-dzsel közös (`listKartyak` React.cache, nincs második lekérdezés). Ahol a page 404-et
+  ad (a fenti esetek, a nem admin is a szerkesztő oldalakon), ott az alapcím „TéT Tudástár”.
 
 ## Ellenőrzés
 
@@ -355,7 +359,7 @@ terület-címkék és -szűrő, a kategóriák DB-ből szerkesztése, angol nyel
 6. **Pótolt korlátok:** e-mail ≤ 200, linkfelirat ≤ 120 karakter (a spec nem nevezte meg).
 7. **Futtató (B fázis):** `--csak <slug,…>` kapcsoló a párhuzamos kutatáshoz; a kategóriák `leiras`/`bevezeto` szövege a kategória-fájlokban készül, és a terv 11. taskja viszi át a szótárba (a `--sql` az egyezést ellenőrzi; terv: `docs/superpowers/plans/2026-11-02-tet-tudastar.md`).
 8. **A tartalom-migráció (B fázis) az átnézés előtt elkészül** és helyben lefut, hogy a tartalom a felületen nézhető legyen; push előtt a terv 12. taskjának eljárásával újraírható és újra alkalmazható (a spec szerint „a B fázis végén” készült volna).
-9. **Ismert korlát:** a kategória-oldal ↑/↓ gombja után a fókusz nem marad a gombon (a kártya DOM-ja áthelyeződik); a szerkesztő sorszerkesztője visszaadja.
+9. **Fókusz a ↑/↓ után** (2026-11-03-ig ismert korlát volt: a fókusz elveszett): a kategória-oldal ↑/↓ gombpárja a `MozgatoGombok` kliens-komponens; mozgatás után a fókusz a mozgatott kártya ugyanolyan irányú gombjára, a lista szélén az ellentétesre kerül (a szerkesztő sorszerkesztőjének szabálya), sikertelen mozgatásnál a megnyomott gombon marad.
 10. **Keresés keskenyebb ablakban:** a kategória- és a részletoldalon a kereső a jobb menüben van; `xl` alatt (≈ 1280 px alatt) ott csak a kategória-választó látszik, a kereséshez a nyitólapra kell lépni (a spec szerint is a menü helyén csak a select áll).
 11. **A találat helye (`hol`/`reszlet`):** nem az első egyező rész, hanem a legtöbb keresőszót tartalmazó (holtversenyben a korábbi), a név és a rövidítés helyett – ezek a találati sorban amúgy is látszanak; ha csak azokban talált, a `hol` üres, a `reszlet` az összefoglaló eleje. A szakasz címe és szövege külön rész: címre találva „Szakasz: <cím>”, szövegre „<cím>: <kivágás>”.
 12. **Felsorolásjel:** a „- ” mellett a bemásolt szövegekben gyakori „– ” és „• ” kezdetű sor is felsoroláspont; az üres felsorolássor kimarad.
@@ -383,3 +387,4 @@ terület-címkék és -szűrő, a kategóriák DB-ből szerkesztése, angol nyel
 4. **Közös szerkesztési szabályok** a spec kutatási szabályain túl: természetes személy neve sehol (intézmény, létesítmény, program vagy díj hivatalos nevében szereplő név maradhat); az NKFIH belső szervezeti egységei név szerint nem szerepelnek (a hatályos SZMSZ a kormányváltás előtti); az NKFI Alap 2026. évi programstratégiájának tervei „tervezett” jelöléssel, tényként csak a meghirdetett vagy megtörtént; lezárult felhívás nem élőként, a határidős adatok mellett „(2026. november 2-i állapot)”.
 5. **Kevés adatú szereplőtípusok összevonva:** a vállalati kockázati tőke a 7. kategória inkubációs befektetőivel, a vállalati és nyílt innovációs programok a 3. kategória startup-szervezeteivel és a 8. kategória kkv-kártyájával közös kártyán; a kutatásbiztonsági kártya jelzi, hogy kijelölt nemzeti kapcsolattartó nem ismert. Forrással nem megerősíthető szereplő kimaradt (pl. Nemzeti Tőkeholding, HEPA, HIPA, MEKH, mérésügyi hatóság, FDI-szűrés).
 6. **Nyitott kérdések:** a kutatók „ELLENŐRIZENDŐ” pontjai (68) a forrásfájlok fejkommentjében maradtak, a felületen nem jelennek meg; a központ ezek alapján gondozza a tartalmat a felületen.
+7. **Utólagos felületi döntések (2026-11-03, a végső átnézés után; terv 13. task):** a felhasználó három nyitott kérdésben a javasolt változatot választotta. (a) **Dinamikus lapcímek** – lásd a Hibakezelés metadata-pontját. (b) **„Ugrás” a `KategoriaValto`-n:** a select nem navigál változáskor (WCAG 3.2.2), hanem a mellette álló „Ugrás” gomb (`<form onSubmit>` + `router.push`); ez felülírja az Útvonalak szakasz „váltáskor `router.push`” leírását. (c) **Fókusz a ↑/↓ után** – lásd a pontosítások 9. pontját; a gombpár a `MozgatoGombok` kliens-komponens (`useTransition`, `focusableWhenDisabled`), ez felülírja a Felület szakasz „`KuldGomb` pendingjével” leírását és a pontosítások 20. (sima `<form action>`) és 21. (nincs külön `MozgatoGombok`) pontját; a `KuldGomb` 4. pont szerinti propjai (`size`, `disabled`, `aria-label`) más hívó híján kikerültek, a meglévő hívók változatlanok.

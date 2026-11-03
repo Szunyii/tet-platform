@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../../components
 import { kartyaHorgony, kartyaUrl } from '../../../../lib/routes';
 import { TIPUS_CIMKE, type Kartya } from '../../../../lib/tudastar-szotar';
 import { megjelenoHoszt } from '../../../../lib/tudastar-szoveg';
-import { KartyaLablec, type Mozgatas } from './KartyaLablec';
+import { KartyaLablec } from './KartyaLablec';
 import { KulsoLink, LinkLista, TetelLista } from './KulsoLink';
+import type { Mozgatas } from './MozgatoGombok';
 
 /**
  * Egy kártya a kategória-oldalon. Intézmény: összefoglaló, „Részletek →” és honlap. Lista: bevezető, a
