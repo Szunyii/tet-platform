@@ -185,8 +185,9 @@ Europe/Budapest naptári napként hasonlítjuk a `hatarido` mezőhöz.
 | Nincs, a határidő még nem múlt el | Nyitott | Nem számít bele |
 
 A „Határidőre teljesítve” aránya: határidőre teljesített / (határidőre teljesített + késett + lejárt, válasz nélkül).
-A besorolás az üzenetek időbélyegén alapul, ezért az arányt nem befolyásolja, hogy az admin mikor zárja le a ticketet
-vagy a félévet.
+A megválaszolt ticket besorolása az üzenetek időbélyegén alapul, ezért nem függ a ticket vagy a félév lezárásának
+idejétől. A válasz nélküli, lejárt ticket addig számít lejártnak, amíg a központ le nem zárja, lezárás után nem számít
+bele.
 
 **A mérés időpontja.** A mutatókat a félév lezárásakor számoljuk ki, majd rögzítjük. A jelentések és a ticketek a
 létrehozásuk, illetve határidejük alapján tartoznak az időszakhoz. A központ intézkedései és az országprofil a
