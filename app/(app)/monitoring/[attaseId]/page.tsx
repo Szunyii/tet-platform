@@ -8,7 +8,9 @@ import { szuroFromSearchParams, szuroUrl } from '../../../../lib/ertekeles-szuro
 import type { SearchParams } from '../../../../lib/routes';
 import { requireAdmin } from '../../../../lib/session';
 import { getValasztottEv } from '../../../../lib/valasztott-ev';
+import { kihagyAttaseAction, mentOsszAction, mentSzempontAction, visszaveszAttaseAction } from '../actions';
 import { AdatlapFejlec } from '../components/AdatlapFejlec';
+import { Munkalap } from '../components/Munkalap';
 import { Osszkep } from '../components/Osszkep';
 import { SzempontSorok } from '../components/SzempontSorok';
 
@@ -64,9 +66,28 @@ export default async function AdatlapOldal({
   return (
     <div className="@container flex flex-col gap-3">
       <AdatlapFejlec attaseId={attaseId} felev={felev} szuro={szuro} visszaUrl={visszaUrl} sor={sor} idoszak={idoszak} />
-      {sor.kimarad ? (
+      {idoszak.statusz === 'nyitott' ? (
+        // A `key` kötelező: az App Router állapot-kulcsa nem tartalmazza a sütiből jövő évet, nélküle az
+        // előző év piszkozata az új évhez kerülne.
+        <Munkalap
+          key={`${felev.ev}/${felev.felev}/${attaseId}`}
+          sor={sor}
+          osszIndoklas={adatlap.osszIndoklas}
+          fejlesztesiCel={adatlap.fejlesztesiCel}
+          osszVerzio={adatlap.osszVerzio}
+          minositesek={adatlap.minositesek}
+          mutatok={adatlap.mutatok}
+          elozmeny={adatlap.elozmeny}
+          letezoJelentesek={adatlap.letezoJelentesek}
+          letezoTicketek={adatlap.letezoTicketek}
+          szempontAction={mentSzempontAction.bind(null, sor.ertekelesId)}
+          osszAction={mentOsszAction.bind(null, sor.ertekelesId)}
+          kihagyasAction={kihagyAttaseAction.bind(null, sor.ertekelesId)}
+          visszavetelAction={visszaveszAttaseAction.bind(null, sor.ertekelesId)}
+        />
+      ) : sor.kimarad ? (
         <Tajekoztato>{kimaradasFelirat(sor.kimaradasOka)}</Tajekoztato>
-      ) : idoszak.statusz === 'lezart' ? (
+      ) : (
         <>
           <Osszkep
             osszIndoklas={adatlap.osszIndoklas}
@@ -83,12 +104,6 @@ export default async function AdatlapOldal({
             letezoTicketek={adatlap.letezoTicketek}
           />
         </>
-      ) : (
-        // Ideiglenes: a nyitott félév munkalapja a következő feladatban készül.
-        <Tajekoztato>
-          <p className="font-medium text-foreground">Minősítés folyamatban</p>
-          <p className="mt-1">A félév még nyitott, az értékelés lezárása után látható az összkép.</p>
-        </Tajekoztato>
       )}
     </div>
   );

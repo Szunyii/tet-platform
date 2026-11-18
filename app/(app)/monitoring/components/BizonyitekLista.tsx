@@ -59,7 +59,7 @@ function elemek(
   return null;
 }
 
-function Elemek({ lista }: { lista: readonly Elem[] }) {
+function Elemek({ lista, ujLapon }: { lista: readonly Elem[]; ujLapon: boolean }) {
   return (
     <ul>
       {lista.map((e) => (
@@ -67,8 +67,14 @@ function Elemek({ lista }: { lista: readonly Elem[] }) {
           {e.url === null ? (
             <span className="font-medium wrap-anywhere">{e.targy}</span>
           ) : (
-            <Link href={e.url} className="font-medium text-foreground wrap-anywhere hover:underline">
+            <Link
+              href={e.url}
+              target={ujLapon ? '_blank' : undefined}
+              rel={ujLapon ? 'noopener' : undefined}
+              className="rounded-sm font-medium text-foreground wrap-anywhere outline-none hover:underline focus-visible:ring-2 focus-visible:ring-[#1f4e9c]"
+            >
               {e.targy}
+              {ujLapon && <span className="sr-only"> (új lapon nyílik)</span>}
             </Link>
           )}
           <div className="text-[11px] text-muted-foreground">{e.reszlet}</div>
@@ -81,18 +87,21 @@ function Elemek({ lista }: { lista: readonly Elem[] }) {
 /**
  * A szempont mutatóihoz tartozó bizonyítékok, legújabb elöl. A jelentés a `/jelentesek/[id]`, a ticket a
  * kommunikáció megfelelő szálára mutat; ha az azonosító nincs a még létezők között (a lezárás óta törölték),
- * a tárgy link nélküli szöveg, mert a rögzített mutatók a törlés után sem változnak.
+ * a tárgy link nélküli szöveg, mert a rögzített mutatók a törlés után sem változnak. `ujLapon`: a munkalapon a
+ * linkek új lapon nyílnak, hogy a be nem mentett szöveg ne vesszen el.
  */
 export function BizonyitekLista({
   szempont,
   mutatok,
   letezoJelentesek,
   letezoTicketek,
+  ujLapon = false,
 }: {
   szempont: SzempontKulcs;
   mutatok: ErtekelesMutatok;
   letezoJelentesek: readonly string[];
   letezoTicketek: readonly string[];
+  ujLapon?: boolean;
 }) {
   const lista = elemek(szempont, mutatok, new Set(letezoJelentesek), new Set(letezoTicketek));
   if (lista === null) {
@@ -104,14 +113,14 @@ export function BizonyitekLista({
   const tobb = lista.slice(LATHATO);
   return (
     <>
-      <Elemek lista={lista.slice(0, LATHATO)} />
+      <Elemek lista={lista.slice(0, LATHATO)} ujLapon={ujLapon} />
       {tobb.length > 0 && (
         <details className="mt-1.5 border-t border-border/60 pt-1.5">
-          <summary className="cursor-pointer text-[11.5px] font-medium text-muted-foreground hover:text-foreground">
+          <summary className="cursor-pointer rounded-sm text-[11.5px] font-medium text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-[#1f4e9c]">
             További {tobb.length} elem
           </summary>
           <div className="mt-1.5">
-            <Elemek lista={tobb} />
+            <Elemek lista={tobb} ujLapon={ujLapon} />
           </div>
         </details>
       )}

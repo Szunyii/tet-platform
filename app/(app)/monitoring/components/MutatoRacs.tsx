@@ -7,7 +7,7 @@ import type { MutatoKartya } from '../../../../lib/ertekeles-megjelenites';
 export function MutatoRacs({ kartyak, korlat }: { kartyak: readonly MutatoKartya[]; korlat?: string | null }) {
   return (
     <>
-      <dl className="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-1.5">
+      <dl className="grid grid-cols-[repeat(auto-fill,minmax(min(8.5rem,100%),1fr))] gap-1.5">
         {kartyak.map((k) => (
           <div key={k.cimke} className="min-w-0 rounded bg-muted/60 px-2 py-1.5">
             <dt className="text-[11px] text-muted-foreground">{k.cimke}</dt>

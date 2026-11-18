@@ -12,7 +12,7 @@ import {
 import type { ErtekelesMutatok } from '../../../../lib/ertekeles-mutatok';
 import { AUTOMATIKUS_ERTEKELO, MEGFELEL, SZEMPONTOK, type Szempont } from '../../../../lib/ertekeles-szotar';
 import { BizonyitekLista } from './BizonyitekLista';
-import { FokozatJelveny } from './FokozatJelveny';
+import { MinositesJelveny } from './FokozatJelveny';
 import { MutatoRacs } from './MutatoRacs';
 
 function Oszlop({ cim, children }: { cim: string; children: ReactNode }) {
@@ -44,7 +44,8 @@ function Indoklas({ minosites }: { minosites: SzempontMinosites | undefined }) {
   );
 }
 
-function Meres({ szempont, mutatok }: { szempont: Szempont; mutatok: ErtekelesMutatok | null }) {
+/** A szempont mutatói; az Eredményeknek nincs rendszeradata, ott a rövid magyarázat áll. */
+export function Meres({ szempont, mutatok }: { szempont: Szempont; mutatok: ErtekelesMutatok | null }) {
   if (mutatok === null) return <p className="text-muted-foreground">Nincs rögzített mutató.</p>;
   const kartyak = mutatoKartyak(szempont.kulcs, mutatok);
   if (kartyak.length === 0) return <p className="text-muted-foreground">{EREDMENYEK_URES}</p>;
@@ -90,11 +91,7 @@ export function SzempontSorok({
                     </span>
                     {/* Keskeny helyen a fokozat a sor alján áll, és tördelhető, hogy ne lógjon ki. */}
                     <span className="col-start-2 mt-0.5 justify-self-start @md:col-start-3 @md:row-span-2 @md:row-start-1 @md:mt-0 @md:justify-self-end @3xl:col-start-4 @3xl:row-span-1 [&>span]:whitespace-normal">
-                      {minosites === undefined ? (
-                        <span className="text-[11.5px] font-normal text-muted-foreground">Nincs minősítve</span>
-                      ) : (
-                        <FokozatJelveny fokozat={minosites.fokozat} />
-                      )}
+                      <MinositesJelveny fokozat={minosites?.fokozat} />
                     </span>
                   </CollapsibleTrigger>
                 </h4>

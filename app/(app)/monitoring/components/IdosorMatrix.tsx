@@ -7,11 +7,11 @@ import { FokozatJelveny } from './FokozatJelveny';
 const KIEMELT_FEJLEC = 'bg-[#e8eefa] text-[#1f4e9c]';
 
 /** A félévben az attasé ki volt hagyva: nincs fokozat, és összminősítés sincs. */
-function nemErtekeltE(f: ElozmenySor): boolean {
+export function nemErtekeltE(f: ElozmenySor): boolean {
   return f.osszFokozat === null && Object.keys(f.fokozatok).length === 0;
 }
 
-function Cella({ fokozat }: { fokozat: Fokozat | undefined }) {
+export function FokozatCella({ fokozat }: { fokozat: Fokozat | undefined }) {
   if (fokozat === undefined) {
     return (
       <span className="text-[11.5px] text-muted-foreground">
@@ -86,7 +86,7 @@ export function IdosorMatrix({ elozmeny, felev }: { elozmeny: readonly ElozmenyS
                 const fokozat = sor.kulcs === 'ossz' ? (f.osszFokozat ?? undefined) : f.fokozatok[sor.kulcs];
                 return (
                   <td key={kulcs} className="p-0 text-center">
-                    <Cella fokozat={fokozat} />
+                    <FokozatCella fokozat={fokozat} />
                   </td>
                 );
               })}

@@ -39,7 +39,8 @@ function Cimkezett({ cimke, children }: { cimke: string; children: ReactNode }) 
 /**
  * Az adatlap fejléce mindkét állapotban: visszalink, az attasé neve és posztja, a félévválasztó, a félév
  * állapota, az összminősítés és a változás. Ha a félévre nincs értékelés (`sor` null), csak a félévválasztó
- * áll, hogy másik félévre lehessen váltani; a kihagyott attasénak nincs összminősítése.
+ * áll, hogy másik félévre lehessen váltani; a kihagyott attasénak nincs összminősítése. Az értékelt attasénál az
+ * összminősítés és a változás mezője akkor is látszik („–”), ha még nincs összminősítés.
  */
 export function AdatlapFejlec({
   attaseId,
@@ -78,13 +79,20 @@ export function AdatlapFejlec({
             </Badge>
           </Cimkezett>
         )}
-        {ertekelt && sor.osszFokozat !== null && (
+        {ertekelt && (
           <>
             <Cimkezett cimke="Összminősítés">
-              {/* Keskeny helyen tördelhető, hogy ne lógjon ki. */}
-              <span className="[&>span]:whitespace-normal">
-                <FokozatJelveny fokozat={sor.osszFokozat} />
-              </span>
+              {sor.osszFokozat === null ? (
+                <span className="flex h-[22px] items-center text-[11.5px] text-muted-foreground">
+                  <span aria-hidden="true">–</span>
+                  <span className="sr-only">Még nincs összminősítés</span>
+                </span>
+              ) : (
+                // Keskeny helyen tördelhető, hogy ne lógjon ki.
+                <span className="[&>span]:whitespace-normal">
+                  <FokozatJelveny fokozat={sor.osszFokozat} />
+                </span>
+              )}
             </Cimkezett>
             <Cimkezett cimke="Az előző lezárt félévhez képest">
               <span className="flex h-[22px] items-center">

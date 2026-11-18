@@ -30,3 +30,16 @@ export function FokozatJelveny({ fokozat, rovid = false }: { fokozat: Fokozat; r
     </span>
   );
 }
+
+/**
+ * A szempont minősítése: a fokozat jelvénye, vagy ha még nincs, a „Nincs minősítve” felirat. Keskeny helyen a
+ * jelvény tördelhető, hogy ne lógjon ki.
+ */
+export function MinositesJelveny({ fokozat }: { fokozat: Fokozat | undefined }) {
+  if (fokozat === undefined) return <span className="text-[11.5px] font-normal text-muted-foreground">Nincs minősítve</span>;
+  return (
+    <span className="inline-block max-w-full [&>span]:whitespace-normal">
+      <FokozatJelveny fokozat={fokozat} />
+    </span>
+  );
+}
