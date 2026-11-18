@@ -17,11 +17,14 @@ import { RiportTorles } from './RiportTorles';
 export function RiportReszlet({
   riport,
   szerkeszthet,
+  tevekenysegRogzites,
   torlesAction,
   intezkedesAction,
 }: {
   riport: RiportDetail;
   szerkeszthet: boolean;
+  /** A jelentésből indítható tevékenység linkje és a már rögzítettek száma; a page csak a szerzőnek adja. */
+  tevekenysegRogzites?: { url: string; darab: number };
   torlesAction: MuveletAction;
   /** A „Megtett intézkedés” mentése; a page csak a központnak (admin) adja. */
   intezkedesAction?: FormAction;
@@ -41,15 +44,27 @@ export function RiportReszlet({
           {riport.szerzoNev} · {orszagNev(riport.orszag)} · beadva {formatDatum(riport.createdAt)}
           {modositva && ` · módosítva ${formatDatum(riport.updatedAt)}`}
         </p>
-        {szerkeszthet && (
-          <div className="flex gap-2">
-            <Link
-              href={`/jelentesek/${riport.id}/szerkesztes`}
-              className={cn(buttonVariants({ variant: 'outline' }))}
-            >
-              Szerkesztés
-            </Link>
-            <RiportTorles targy={riport.targy} action={torlesAction} />
+        {(szerkeszthet || tevekenysegRogzites) && (
+          <div className="flex flex-wrap items-center gap-2">
+            {szerkeszthet && (
+              <>
+                <Link
+                  href={`/jelentesek/${riport.id}/szerkesztes`}
+                  className={cn(buttonVariants({ variant: 'outline' }))}
+                >
+                  Szerkesztés
+                </Link>
+                <RiportTorles targy={riport.targy} action={torlesAction} />
+              </>
+            )}
+            {tevekenysegRogzites && (
+              <Link href={tevekenysegRogzites.url} className={cn(buttonVariants({ variant: 'outline' }))}>
+                Tevékenység rögzítése
+              </Link>
+            )}
+            {tevekenysegRogzites && tevekenysegRogzites.darab > 0 && (
+              <span className="text-xs text-muted-foreground">Már rögzítve: {tevekenysegRogzites.darab} tevékenység</span>
+            )}
           </div>
         )}
       </header>

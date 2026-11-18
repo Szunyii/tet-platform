@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, type ReactNode } from 'react';
+import type { MenuSzamlalo } from '../../lib/navigacio';
 import type { AppSession } from '../../lib/session';
 import { AppContext } from './AppContext';
 import type { ValasztEvAction } from './CiklusValaszto';
@@ -10,13 +11,15 @@ import { Oldalsav } from './Oldalsav';
 
 /** A védett oldalak kerete: oldalsáv, fejléc, tartalom, és a `useApp()` context. */
 export default function AppShell({
-  user, logoutAction, valasztEvAction, olvasatlan: szerverOlvasatlan, ev, evek, oldalsavAlja, children,
+  user, logoutAction, valasztEvAction, olvasatlan: szerverOlvasatlan, menuSzamlalok, ev, evek, oldalsavAlja, children,
 }: {
   user: AppSession;
   logoutAction: LogoutAction;
   valasztEvAction: ValasztEvAction;
   /** Olvasatlan, nem lezárt ticketek száma a layoutból – a menü-számláló kiindulópontja. */
   olvasatlan: number;
+  /** A menüpontok melletti teendő-számlálók a layoutból. */
+  menuSzamlalok: Partial<Record<MenuSzamlalo, number>>;
   /** A választott ciklus (év) a layoutból (cookie); nincs kliens-állapot, a szerver a forrás. */
   ev: number;
   /** A ciklusválasztó évei a layoutból, csökkenő; a layout garantálja, hogy `ev` benne van. */
@@ -42,7 +45,13 @@ export default function AppShell({
   return (
     <AppContext.Provider value={app}>
       <div className="flex min-h-screen">
-        <Oldalsav user={user} olvasatlan={olvasatlan} oldalsavAlja={oldalsavAlja} logoutAction={logoutAction} />
+        <Oldalsav
+          user={user}
+          olvasatlan={olvasatlan}
+          menuSzamlalok={menuSzamlalok}
+          oldalsavAlja={oldalsavAlja}
+          logoutAction={logoutAction}
+        />
         <div className="flex min-w-0 flex-1 flex-col">
           <Fejlec szerep={user.role} ev={ev} evek={evek} valasztEvAction={valasztEvAction} />
           <main className="min-w-0 flex-1 px-[26px] pt-5 pb-11">{children}</main>

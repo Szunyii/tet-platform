@@ -6,6 +6,9 @@
  */
 import type { Szerepkor } from './felhasznalo-validacio';
 
+/** A menüpont melletti teendő-számlálók kulcsai; az értékeket a layout adja. */
+export type MenuSzamlalo = 'tevekenyseg' | 'munkaterv';
+
 export interface Menupont {
   ikon: string;
   felirat: string;
@@ -13,6 +16,8 @@ export interface Menupont {
   alHrefek?: readonly string[];
   /** Az olvasatlan ticketek száma megjelenik a menüpont mellett. */
   olvasatlanSzamlalo?: true;
+  /** A menüpont mellett megjelenő teendők számlálója. */
+  szamlalo?: MenuSzamlalo;
 }
 
 export interface Utvonal {
@@ -54,6 +59,12 @@ export const UTVONALAK: readonly Utvonal[] = [
     cim: 'Kommunikáció',
     alcim: 'Ticket + üzenetszál az adminok és a TéT attasék között',
     menu: { ikon: '✉', felirat: 'Kommunikáció', olvasatlanSzamlalo: true },
+  },
+  {
+    href: '/tevekenysegek',
+    cim: 'Tevékenységek és eredmények',
+    alcim: 'Delegációk, találkozók, partnerközvetítések és az elért eredmények',
+    menu: { ikon: '◇', felirat: 'Tevékenységek és eredmények', szamlalo: 'tevekenyseg' },
   },
   {
     href: '/tudastar',

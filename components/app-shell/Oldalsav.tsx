@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { szekhelyKod } from '../../lib/attase-orszag';
-import { menuAktiv, menupontok } from '../../lib/navigacio';
+import { menuAktiv, menupontok, type MenuSzamlalo } from '../../lib/navigacio';
 import { monogram } from '../../lib/nev';
 import { orszagNev } from '../../lib/orszagok';
 import type { AppSession } from '../../lib/session';
@@ -24,9 +24,10 @@ function szerepFelirat(user: AppSession): string {
  * a felhasználói blokk és a kijelentkezés. `overflow-y-auto`: alacsony ablaknál is elérhető marad a
  * Kijelentkezés. A színek a `--sidebar*` tokenekből jönnek (app/globals.css).
  */
-export function Oldalsav({ user, olvasatlan, oldalsavAlja, logoutAction }: {
+export function Oldalsav({ user, olvasatlan, menuSzamlalok, oldalsavAlja, logoutAction }: {
   user: AppSession;
   olvasatlan: number;
+  menuSzamlalok: Partial<Record<MenuSzamlalo, number>>;
   oldalsavAlja?: ReactNode;
   logoutAction: LogoutAction;
 }) {
@@ -40,6 +41,7 @@ export function Oldalsav({ user, olvasatlan, oldalsavAlja, logoutAction }: {
       <nav className="flex flex-col gap-0.5 px-2.5 py-3">
         {menupontok(user.role).map((u) => {
           const on = menuAktiv(pathname, u);
+          const teendo = u.menu.szamlalo ? (menuSzamlalok[u.menu.szamlalo] ?? 0) : 0;
           return (
             <Link
               key={u.href}
@@ -58,6 +60,14 @@ export function Oldalsav({ user, olvasatlan, oldalsavAlja, logoutAction }: {
                     {olvasatlan}
                   </span>
                   <span className="sr-only">{olvasatlan} olvasatlan ticket</span>
+                </>
+              )}
+              {teendo > 0 && (
+                <>
+                  <span aria-hidden className="ml-auto rounded-[9px] bg-sidebar-szamlalo px-1.5 py-px text-[10px] font-semibold text-white">
+                    {teendo}
+                  </span>
+                  <span className="sr-only">{teendo} teendő</span>
                 </>
               )}
             </Link>
