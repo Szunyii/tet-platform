@@ -147,6 +147,15 @@ const INTEZKEDES_ARANY: Record<Fok4, number> = { 4: 0.4, 3: 0.25, 2: 0.1, 1: 0 }
 const MENTETT_BLOKK: Record<Fok4, number> = { 4: 9, 3: 9, 2: 6, 1: 3 };
 const REND_DB: Record<Fok4, number> = { 4: 8, 3: 6, 2: 3, 1: 1 };
 const VALASZ_MUNKANAP: Record<Fok4, number> = { 4: 0.5, 3: 1.5, 2: 4, 1: 8 };
+/** A határidőre teljesített ticketek száma `n` ticketből: a kerekítés irányával a sáv `n`-től függetlenül tartható. */
+const HATARIDORE_DB: Record<Fok4, (n: number) => number> = {
+  4: (n) => n,
+  3: (n) => Math.ceil(n * 0.875),
+  2: (n) => Math.round(n * 0.6),
+  1: (n) => Math.floor(n * 0.25),
+};
+/** A határidőre teljesítés megengedett aránya fokozatonként (alsó és felső határ): az önellenőrzés ezt nézi. */
+const HATARIDORE_SAV: Record<Fok4, readonly [number, number]> = { 4: [1, 1], 3: [0.85, 1], 2: [0.5, 0.7], 1: [0, 0.3] };
 const TICKET_DB = 8;
 const HATARIDO_NAP = 7;
 const SZORAS = 0.3;
@@ -645,24 +654,42 @@ function ticketek(a: Attase, cella: Cella, ido: Ido): { ticketek: TicketSor[]; u
   const tipusok = Object.keys(TIPUSOK) as TipusKulcs[];
   const ticketSorok: TicketSor[] = [];
   const uzenetSorok: UzenetSor[] = [];
-  napok.forEach((nap, i) => {
+  const tervek = napok.map((nap, i) => {
     const letrehozva = idopont(nap);
-    const tipus = valaszt(tipusok);
-    const prio = sulyozott(['kozepes', 'magas', 'alacsony']);
     const wd = VALASZ_MUNKANAP[e] * (1 + (rnd() * 2 - 1) * SZORAS);
-    const lezarasra = rnd() < (ido.terv.nyitott ? 0.4 : 0.7);
-    const lezarasKesleltetes = egesz(1, 6) * NAP_MS;
     const szamolt = valaszNelkul.has(i) ? null : addMunkanap(letrehozva, wd);
     // A válasz csak akkor létezik, ha a mérés pillanata előtt érkezett.
     const valasz = szamolt !== null && szamolt.getTime() <= ido.hatar.getTime() ? szamolt : null;
+    return { letrehozva, valasz };
+  });
+  // A válaszidő a fokozat táblázatából jön, ezért a teljesítés arányát a határidő adja. Határidőre csak a félévben
+  // érkezett válasz teljesülhet, hogy a ticket határideje ne csússzon át a következő félév kohorszába.
+  const jeloltek = [...tervek.keys()].filter((i) => {
+    const { valasz } = tervek[i];
+    return valasz !== null && naptariNap(valasz) <= ido.utolsoNap;
+  });
+  const hataridore = new Set(kever(jeloltek).slice(0, HATARIDORE_DB[e](n)));
+  tervek.forEach(({ letrehozva, valasz }, i) => {
+    const tipus = valaszt(tipusok);
+    const prio = sulyozott(['kozepes', 'magas', 'alacsony']);
+    const lezarasra = rnd() < (ido.terv.nyitott ? 0.4 : 0.7);
+    const lezarasKesleltetes = egesz(1, 6) * NAP_MS;
     const lezarva = valasz !== null && lezarasra ? kisebb(new Date(valasz.getTime() + lezarasKesleltetes), ido.hatar) : null;
     const id = azonosito();
+    const alapHatarido = plusNap(naptariNap(letrehozva), HATARIDO_NAP);
+    const valaszNap = valasz === null ? null : naptariNap(valasz);
+    let hatarido = alapHatarido;
+    if (valaszNap !== null) {
+      const utolso = plusNap(valaszNap, -1);
+      if (hataridore.has(i)) hatarido = valaszNap > alapHatarido ? valaszNap : alapHatarido;
+      else hatarido = utolso < alapHatarido ? utolso : alapHatarido;
+    }
     ticketSorok.push({
       id,
       targy: `${TIPUSOK[tipus]}: ${valaszt(TICKET_TEMA[tipus])} (kitalált)`,
       tipus,
       prio,
-      hatarido: plusNap(naptariNap(letrehozva), HATARIDO_NAP),
+      hatarido,
       statusz: lezarva !== null ? 'lezart' : valasz !== null ? 'folyamatban' : 'nyitott',
       cimzettId: a.id,
       orszag: a.szekhely,
@@ -1073,6 +1100,11 @@ function mutatokEllenorzese(
     hiba(`${kulcs}: az első válasz mediánja ${median}, kb. ${VALASZ_MUNKANAP[e]} kellene.`);
   }
   if (e === 1 && m.egyuttmukodes.valaszNelkulDb < 1) hiba(`${kulcs}: a 30% válasz nélküli ticket hiányzik.`);
+  const [savAlja, savTeteje] = HATARIDORE_SAV[e];
+  const { hataridoreDb, hataridosDb } = m.egyuttmukodes;
+  if (hataridosDb === 0 || hataridoreDb / hataridosDb < savAlja || hataridoreDb / hataridosDb > savTeteje) {
+    hiba(`${kulcs}: ${hataridoreDb} / ${hataridosDb} ticket teljesült határidőre, a(z) ${e}. fokozat sávja ${savAlja}–${savTeteje}.`);
+  }
   const vezetett = vezetettKodok(a).length;
   if (m.orszagismeret.vezetettDb !== vezetett) hiba(`${kulcs}: ${m.orszagismeret.vezetettDb} vezetett ország, ${vezetett} kellene.`);
   if (vezetett > 0) {
