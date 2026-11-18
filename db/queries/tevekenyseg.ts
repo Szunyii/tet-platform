@@ -884,10 +884,12 @@ export function kifogasolTevekenyseg(id: string, i: MegjegyzesInput, szerzoNev: 
   }, IRAS);
 }
 
-export function visszavonTevekenysegKifogas(id: string): IrasEredmeny {
+/** A kifogás visszavonása a lap verziójával: a közben rögzített újabb kifogást a régi lap nem törölheti. */
+export function visszavonTevekenysegKifogas(id: string, verzio: number): IrasEredmeny {
   return db.transaction((tx): IrasEredmeny => {
     const t = tx.select().from(tevekenyseg).where(eq(tevekenyseg.id, id)).get();
     if (!t) return 'nincs';
+    if (t.updatedAt.getTime() !== verzio) return 'elavult';
     if (t.kifogas === null) return 'ervenytelen';
     tx.update(tevekenyseg)
       .set({

@@ -31,7 +31,7 @@ function KifogasGomb({ t, nyit }: { t: TevekenysegSor; nyit: (keres: MegjegyzesK
         pending={pending}
         variant="outline"
         aria-label={`Kifogás visszavonása: ${t.megnevezes}`}
-        onClick={() => futtat(() => visszavonTevekenysegKifogasAction(t.id), 'A kifogás visszavonva.')}
+        onClick={() => futtat(() => visszavonTevekenysegKifogasAction(t.id, t.verzio), 'A kifogás visszavonva.')}
       >
         Kifogás visszavonása
       </AzonnaliGomb>

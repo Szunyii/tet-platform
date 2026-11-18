@@ -207,12 +207,10 @@ export async function kifogasolTevekenysegAction(id: string, _prev: MuveletState
   return dontesbol(kifogasolTevekenyseg(id, parsed.data, session.name));
 }
 
-export async function visszavonTevekenysegKifogasAction(id: string): Promise<MuveletState> {
+export async function visszavonTevekenysegKifogasAction(id: string, verzio: number): Promise<MuveletState> {
   await requireAdmin();
-  if (!ervenyesId(id)) return HIBAS_KERES;
-  // A visszavonásnak nincs verzió-ellenőrzése: az `ervenytelen` azt jelenti, hogy a kifogást közben már megszüntették.
-  const e = visszavonTevekenysegKifogas(id);
-  return dontesbol(e === 'ervenytelen' ? 'elavult' : e);
+  if (!ervenyesId(id) || !ervenyesVerzio(verzio)) return HIBAS_KERES;
+  return dontesbol(visszavonTevekenysegKifogas(id, verzio));
 }
 
 export async function kifogasolEredmenyAction(id: string, _prev: MuveletState, fd: FormData): Promise<MuveletState> {
