@@ -1,7 +1,7 @@
 /**
  * A szakmai értékelés (monitoring) szótárai. Framework-mentes konstansok: a munkalap, a validáció,
  * a lekérdezések és a hálózati nézet ugyanebből dolgozik. A szempontok kulcsai és a fokozatok
- * értékei kerülnek a DB-be; a szövegek a NIÜ megrendelői szövegei (spec 5.1. és 5.2.).
+ * értékei kerülnek a DB-be; a szövegek a terv (spec) 5.1. és 5.2. pontjából valók.
  * Fokozatot és összminősítést kód nem számol, csak admin ad.
  */
 

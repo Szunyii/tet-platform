@@ -73,7 +73,7 @@ export function megnyithato(f: Felev, ma: string): boolean {
 
 /**
  * Az évhez alapértelmezetten mutatott félév: a legnagyobb lezárt félév (`lezartak`: az év lezárt
- * félévszámai), ennek hiányában az év legutóbbi megkezdett félévéé (a még meg nem kezdett évnél az 1.).
+ * félévszámai), ennek hiányában az év legutóbbi megkezdett féléve (a még meg nem kezdett évnél az 1.).
  */
 export function alapFelev(ev: number, ma: string, lezartak: readonly FelevSzam[]): FelevSzam {
   if (lezartak.length > 0) return Math.max(...lezartak) as FelevSzam;
