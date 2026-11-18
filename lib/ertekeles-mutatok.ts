@@ -8,9 +8,10 @@
  */
 import { kovetkezoNapKezdete, napKezdete, naptariNap } from './datum';
 import { felevNapok, felevOsszevet, type Felev } from './ertekeles-idoszak';
-import type { SzempontKulcs } from './ertekeles-szotar';
+import type { OsszFokozat, SzempontKulcs } from './ertekeles-szotar';
 import type { CelAllapot } from './munkaterv-szotar';
 import { BLOKK_KULCSOK } from './orszagprofil-szotar';
+import { minositesMegoszlas } from './riport-minosites';
 import { KATEGORIAK, isKategoriaKulcs, type KategoriaKulcs } from './riport-szotar';
 import { befejezettE, type UgyAdat } from './tevekenyseg-allapot';
 import type {
@@ -24,6 +25,11 @@ export interface JelentesBemenet {
   createdAt: Date;
   /** A központ rögzített megtett intézkedést a jelentéshez. */
   intezkedes: boolean;
+  /**
+   * A központi minősítés fokozata; `null` vagy hiányzó mező: nincs minősítve. Csak a bővített adatot gyűjtő félév
+   * számolja (`BovitettBemenet`), a pillanatképbe csak a megoszlás kerül, a jelentés bizonyítékába nem.
+   */
+  minosites?: OsszFokozat | null;
 }
 
 export interface TicketBemenet {
@@ -179,7 +185,8 @@ export interface EredmenyMutatok {
 
 /**
  * A rögzített pillanatkép. A `verzio: 2` alak a bővített adatokat gyűjtő félévé; a `verzio: 1` pillanatképeket semmi
- * nem írja át, ezért a `kapcsolatepites.tevekenyseg` és az `eredmenyek` hiánya azt jelenti, hogy nincs tevékenységi adat.
+ * nem írja át, ezért a `kapcsolatepites.tevekenyseg`, az `eredmenyek` és a `tajekoztatas.jelentesMinosites` hiánya azt
+ * jelenti, hogy nincs tevékenységi adat.
  */
 export interface ErtekelesMutatok {
   verzio: 1 | 2;
@@ -198,6 +205,11 @@ export interface ErtekelesMutatok {
     halozatiSzunetMedian: number | null;
     intezkedesDb: number;
     jelentesek: JelentesBizonyitek[];
+    /**
+     * A félév jelentéseinek központi minősítése fokozatonként, a minősítetlenek száma a `nincs`. Hiányzik: a félévhez
+     * nincs bővített adat (nem nulla, hanem „nincs adat”); ha megvan, nulla darabnál is az objektum áll.
+     */
+    jelentesMinosites?: Record<OsszFokozat | 'nincs', number>;
   };
   orszagismeret: {
     vezetettDb: number;
@@ -555,6 +567,7 @@ export function szamolMutatok(b: MutatoBemenet): ErtekelesMutatok {
       halozatiSzunetMedian: b.halozat.szunetMedian,
       intezkedesDb: jelentesek.filter((j) => j.intezkedes).length,
       jelentesek: jelentesek.map(jelentesBizonyitek),
+      ...(b.bovitett ? { jelentesMinosites: minositesMegoszlas(jelentesek.map((j) => j.minosites ?? null)) } : {}),
     },
     orszagismeret: {
       vezetettDb: vezetett.size,

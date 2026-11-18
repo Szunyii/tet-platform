@@ -7,3 +7,4 @@ export * from './tudastar';
 export * from './ertekeles';
 export * from './tevekenyseg';
 export * from './munkaterv';
+export * from './riport-minosites';

@@ -25,6 +25,11 @@
  * véletlenszám nélkül: 2026-ban minden attasénak jóváhagyott terve van, a célállapotok az összminősítést követik, és a
  * tervek a 2026/1 lezárása előtt készülnek el; 2027-ben a tervek állapota vegyes.
  *
+ * A C blokk (a jelentések központi minősítése) szintén a 2025/1 és későbbi félévekre készül, az éles művelettel
+ * (db/queries/riport-minosites.ts), a lezárás előtt, hogy a rögzített pillanatkép tartalmazza: a lezárt félévek
+ * jelentéseinek 90%-a, a nyitott félévé 50%-a kap fokozatot, a Tájékoztatás fokozata körül szórva. Saját
+ * véletlenszám-folyama van, a minősítések ideje a jelentés létrehozása után és a félév lezárása előtt van.
+ *
  * Az attasék olyan országokban dolgoznak, ahol a valós hálózatnak nincs posztja, a nevek és a szövegek
  * kitaláltak, így a minősítés valós személyhez sem a név, sem a poszt alapján nem köthető.
  *
@@ -41,7 +46,8 @@ import { resolve } from 'node:path';
 import type { Db } from '../db';
 import {
   account, attaseErtekeles, attaseOrszag, eredmeny, eredmenyEsemeny, ertekelesiIdoszak, kozpontiCel, munkaterv,
-  munkatervCel, munkatervEv, orszagprofil, riport, session, szempontMinosites, ticket, ticketUzenet, tevekenyseg, user,
+  munkatervCel, munkatervEv, orszagprofil, riport, riportMinosites, session, szempontMinosites, ticket, ticketUzenet,
+  tevekenyseg, user,
 } from '../db/schema';
 import type { AttaseOrszag } from '../lib/attase-orszag';
 import { naptariNap } from '../lib/datum';
@@ -49,7 +55,7 @@ import { felevCimke, felevKulcs, felevNapok, felevOsszevet, type Felev, type Fel
 import type { ErtekelesMutatok } from '../lib/ertekeles-mutatok';
 import { haladas, teljesE } from '../lib/ertekeles-osszesites';
 import {
-  isFokozat, isOsszFokozat, SZEMPONT_KULCSOK, szempontByKulcs,
+  INDOKLAS_MAX, isFokozat, isOsszFokozat, SZEMPONT_KULCSOK, szempontByKulcs,
   type Fokozat, type OsszFokozat, type SzempontKulcs,
 } from '../lib/ertekeles-szotar';
 import {
@@ -60,6 +66,7 @@ import { orszagByKod, orszagNev, orszagRegio } from '../lib/orszagok';
 import {
   BLOKK_KULCSOK, normalizalBlokk, RENDEZVENY_TIPUSOK, type BlokkKulcs, type ProfilBlokkok,
 } from '../lib/orszagprofil-szotar';
+import { minositesMegoszlas } from '../lib/riport-minosites';
 import type { KategoriaKulcs, Kulcsszo } from '../lib/riport-szotar';
 import { TIPUSOK, type TipusKulcs } from '../lib/ticket-szotar';
 import {
@@ -70,6 +77,7 @@ import {
 type Ertekeles = typeof import('../db/queries/ertekeles');
 type Tevekenyseg = typeof import('../db/queries/tevekenyseg');
 type MunkatervLekerdezesek = typeof import('../db/queries/munkaterv');
+type RiportMinositesLekerdezesek = typeof import('../db/queries/riport-minosites');
 
 // ---------------------------------------------------------------------------------------------------------
 // Rögzített adatok
@@ -569,6 +577,7 @@ let db!: Db;
 let ert!: Ertekeles;
 let tq!: Tevekenyseg;
 let mq!: MunkatervLekerdezesek;
+let rmq!: RiportMinositesLekerdezesek;
 
 interface Ido {
   terv: FelevTerv;
@@ -1649,6 +1658,97 @@ function munkaterv2027Letrehoz(attasek: readonly Attase[]): string {
 }
 
 // ---------------------------------------------------------------------------------------------------------
+// C blokk: a jelentések központi minősítése
+// ---------------------------------------------------------------------------------------------------------
+
+/** A C blokk saját véletlenszám-folyama: a korábbi adatok (jelentések, ticketek, minősítések, A és B blokk) ettől függetlenül ugyanazok maradnak. */
+const rndC = mulberry32(MAG + 2);
+const egeszC = (a: number, b: number): number => a + Math.floor(rndC() * (b - a + 1));
+const valasztC = <T>(l: readonly T[]): T => valaszt(l, rndC);
+const keverC = <T>(l: readonly T[]): T[] => kever(l, rndC);
+
+/** A minősítést kapó jelentések aránya: a lezárt (bővített adatú) félévekben 90%, a nyitottban 50%. */
+const MINOSITES_ARANY = { lezart: 0.9, nyitott: 0.5 } as const;
+/**
+ * A minősítés fokozata a Tájékoztatás fokozatához képest: azonos 60%, eggyel gyengébb 25%, eggyel erősebb 15%. Csak
+ * az 1–4 tartományba eső lehetőségek közül, egymáshoz arányosan sorsol (a 4-esnél nincs „erősebb”).
+ */
+const MINOSITES_ELTERES: readonly (readonly [number, number])[] = [[0, 60], [-1, 25], [1, 15]];
+/** A minősített jelentések közül a megjegyzéssel ellátottak aránya. */
+const MINOSITES_MEGJEGYZES_ARANY = 0.2;
+const MINOSITES_MEGJEGYZES_JEL = '(Kitalált tesztmegjegyzés.)';
+const MINOSITES_MEGJEGYZES: Record<Fok4, readonly string[]> = {
+  4: [
+    'Különösen hasznos, azonnal felhasználható összefoglaló.',
+    'Pontos, forrásokkal alátámasztott, a döntéshozóknak is továbbítható.',
+    'Példás részletességű beszámoló, a javaslat megvalósítható.',
+  ],
+  3: [
+    'Megfelelő tájékoztatás, a lényeges pontok szerepelnek benne.',
+    'Érthető, időben érkezett jelentés.',
+    'Használható összefoglaló, a következtetések röviden szerepelnek.',
+  ],
+  2: [
+    'A téma releváns, de a következtetések kidolgozatlanok.',
+    'A forrásmegjelölés hiányos, érdemes kiegészíteni.',
+    'Hasznos kiindulás, de a magyar vonatkozás pontosításra szorul.',
+  ],
+  1: [
+    'Túl általános, a magyar vonatkozás nem derül ki belőle.',
+    'Hiányos beszámoló, érdemi új információt nem tartalmaz.',
+    'A jelentés nem követhető, a forrásai hiányoznak.',
+  ],
+};
+
+/** A fokozat sorsolása a Tájékoztatás fokozata (`alap`) körül, az 1–4 tartományban. */
+function minositesFokozat(alap: Fok4): Fok4 {
+  const lehetosegek = MINOSITES_ELTERES.filter(([elteres]) => alap + elteres >= 1 && alap + elteres <= 4);
+  let x = rndC() * lehetosegek.reduce((osszeg, [, suly]) => osszeg + suly, 0);
+  for (const [elteres, suly] of lehetosegek) {
+    x -= suly;
+    if (x < 0) return (alap + elteres) as Fok4;
+  }
+  return alap;
+}
+
+/**
+ * A minősítés ideje: a jelentés létrehozása után legalább egy órával, legfeljebb tíz nappal, de legkésőbb a félév
+ * lezárása (nyitott félévnél a „mai” pillanat) előtt egy órával, így a minősítés a rögzített pillanatkép előtt készül.
+ */
+function minositesIdoC(letrehozva: Date, hatar: Date): Date {
+  const kesleltetes = egeszC(1, 10 * 24) * 3600_000 + egeszC(0, 59) * 60_000;
+  return kisebb(new Date(letrehozva.getTime() + kesleltetes), new Date(hatar.getTime() - 3600_000));
+}
+
+/**
+ * A félév jelentéseinek minősítése az éles művelettel (`setRiportMinosites`): attasénként a jelentések meghatározott
+ * hányada (a lezárt félévekben 90%, a nyitottban 50%) kap fokozatot, a minősítettek ötöde megjegyzést is. A lezárás
+ * előtt fut, hogy a rögzített pillanatkép tartalmazza. Visszaadja a minősített jelentések számát.
+ */
+function jelentesMinositesek(attasek: readonly Attase[], ido: Ido): number {
+  const arany = ido.terv.nyitott ? MINOSITES_ARANY.nyitott : MINOSITES_ARANY.lezart;
+  let minositett = 0;
+  for (const a of attasek) {
+    const cella = a.cellak[ido.terv.oszlop];
+    if (cella === null || cella === 'kihagyva') continue;
+    const alap = forrasFok(cella.fok.tajekoztatas);
+    const riportok = sajatRiportok(a, ido);
+    const kapnak = keverC(riportok).slice(0, Math.round(riportok.length * arany));
+    const megjegyzest = new Set(
+      keverC(kapnak.map((r) => r.id)).slice(0, Math.round(kapnak.length * MINOSITES_MEGJEGYZES_ARANY)),
+    );
+    for (const r of kapnak) {
+      const fokozat = minositesFokozat(alap);
+      const megjegyzes = megjegyzest.has(r.id) ? `${valasztC(MINOSITES_MEGJEGYZES[fokozat])} ${MINOSITES_MEGJEGYZES_JEL}` : null;
+      const siker = rmq.setRiportMinosites(r.id, { fokozat, megjegyzes }, ERTEKELO, minositesIdoC(r.createdAt, ido.hatar));
+      if (!siker) throw new Error(`${a.nev}, ${felevKulcs(ido.terv.f)}: a(z) ${r.id} jelentés minősítése nem sikerült.`);
+      minositett += 1;
+    }
+  }
+  return minositett;
+}
+
+// ---------------------------------------------------------------------------------------------------------
 // Egy félév feldolgozása
 // ---------------------------------------------------------------------------------------------------------
 
@@ -1659,10 +1759,13 @@ function felevFeldolgoz(attasek: readonly Attase[], terv: FelevTerv): string {
 
   // A bővített adatok jelzője a létrehozáskor csak a 2027/1 félévtől igaz: a tesztfélévekre közvetlenül állítjuk be.
   // A tevékenységek és az eredmények a lezárás előtt készülnek, hogy a rögzített pillanatkép tartalmazza őket.
+  // A jelentések minősítése is a lezárás előtt készül, különben a rögzített pillanatkép nem tartalmazná.
   let aBlokk = { tevekenyseg: 0, ugy: 0 };
+  let minositett = 0;
   if (aBlokkFelev(terv.f)) {
     db.update(ertekelesiIdoszak).set({ bovitettAdatok: true }).where(eq(ertekelesiIdoszak.id, idoszakId)).run();
     aBlokk = aBlokkLetrehoz(attasek, ido);
+    minositett = jelentesMinositesek(attasek, ido);
   }
 
   // Az új posztra érkezett attasénak a korábbi félévekben nincs sora.
@@ -1701,7 +1804,7 @@ function felevFeldolgoz(attasek: readonly Attase[], terv: FelevTerv): string {
 
   const felirat = felevCimke(terv.f);
   const adat = `${forras.jelentes} jelentés, ${forras.ticket} ticket${
-    aBlokkFelev(terv.f) ? `, ${aBlokk.tevekenyseg} tevékenység, ${aBlokk.ugy} eredmény` : ''
+    aBlokkFelev(terv.f) ? `, ${aBlokk.tevekenyseg} tevékenység, ${aBlokk.ugy} eredmény, ${minositett} minősített jelentés` : ''
   }`;
   if (terv.nyitott) return `${felirat}: nyitott, részben minősített (${adat}).`;
   const lezaras = ert.lezarIdoszak(terv.f, ERTEKELO, terv.most);
@@ -1907,6 +2010,7 @@ function onellenorzes(attasek: readonly Attase[]): string[] {
 
   aBlokkEllenorzes(attasek, hiba);
   munkatervEllenorzes(attasek, hiba);
+  jelentesMinositesEllenorzes(attasek, hiba);
   return hibak;
 }
 
@@ -2203,6 +2307,163 @@ function aBlokkEllenorzes(attasek: readonly Attase[], hiba: (uzenet: string) => 
   if (lezartVisszavont < 1) hiba('nincs lezárt félévbe beszámított, később visszavont igazolás.');
 }
 
+/** Egy jelentés és (ha van) a központi minősítése, a C blokk ellenőrzéséhez. */
+interface MinositettJelentes {
+  id: string;
+  szerzoId: string;
+  /** A létrehozás pillanata és budapesti naptári napja, valamint a jelentés módosítási ideje. */
+  createdAt: Date;
+  nap: string;
+  updatedAt: Date;
+  fokozat: OsszFokozat | null;
+  megjegyzes: string | null;
+  szerzoNev: string | null;
+  minositesAt: Date | null;
+}
+
+/**
+ * A C blokk (a jelentések központi minősítése) ellenőrzése az adatbázisból: a minősítések köre és aránya
+ * félévenként, a fokozatok szórása a Tájékoztatás fokozata körül, a megjegyzések aránya, az időrend (a minősítés a
+ * jelentés után és a félév tényleges lezárása előtt készült, a jelentés módosítási dátumát nem érintette), és a
+ * rögzített pillanatképek: a bővített adat nélküli félévé nem tartalmaz megoszlást, a többié igen, és egyezik a
+ * lezárás előtt rögzített minősítésekkel.
+ */
+function jelentesMinositesEllenorzes(attasek: readonly Attase[], hiba: (uzenet: string) => void): void {
+  const attaseById = new Map(attasek.map((a) => [a.id, a]));
+  const jelentesek: MinositettJelentes[] = db
+    .select({
+      id: riport.id,
+      szerzoId: riport.szerzoId,
+      createdAt: riport.createdAt,
+      updatedAt: riport.updatedAt,
+      fokozat: riportMinosites.fokozat,
+      megjegyzes: riportMinosites.megjegyzes,
+      szerzoNev: riportMinosites.szerzoNev,
+      minositesAt: riportMinosites.updatedAt,
+    })
+    .from(riport)
+    .leftJoin(riportMinosites, eq(riportMinosites.riportId, riport.id))
+    .all()
+    .map((r) => ({ ...r, nap: naptariNap(r.createdAt) }));
+  const lezarva = new Map<string, Date | null>(
+    db.select().from(ertekelesiIdoszak).all().map((i) => [`${i.ev}/${i.felev}`, i.lezarvaAt]),
+  );
+
+  const felevek = new Map<string, { ossz: number; minositett: number }>();
+  const megoszlas = { azonos: 0, gyengebb: 0, erosebb: 0, megjegyzes: 0, minositett: 0 };
+  const fokozatok = new Set<number>();
+  for (const r of jelentesek) {
+    const a = attaseById.get(r.szerzoId);
+    const terv = FELEVEK.find((fe) => napBenne(r.nap, fe.f));
+    const kulcs = `jelentés ${r.id}`;
+    if (!a || !terv) {
+      hiba(`${kulcs}: ismeretlen attasé vagy félév.`);
+      continue;
+    }
+    const felev = felevek.get(felevKulcs(terv.f)) ?? { ossz: 0, minositett: 0 };
+    felev.ossz += 1;
+    felevek.set(felevKulcs(terv.f), felev);
+    if (r.fokozat === null) {
+      if (r.megjegyzes !== null || r.szerzoNev !== null || r.minositesAt !== null) hiba(`${kulcs}: a minősítetlen jelentésnek minősítés-adata van.`);
+      continue;
+    }
+    felev.minositett += 1;
+    megoszlas.minositett += 1;
+    fokozatok.add(r.fokozat);
+    if (!aBlokkFelev(terv.f)) hiba(`${kulcs}: a bővített adat nélküli ${felevKulcs(terv.f)} félév jelentése minősített.`);
+    if (r.szerzoNev !== ERTEKELO) hiba(`${kulcs}: a minősítő neve „${r.szerzoNev}”, „${ERTEKELO}” kellene.`);
+    if (r.megjegyzes !== null) {
+      megoszlas.megjegyzes += 1;
+      if (!r.megjegyzes.endsWith(MINOSITES_MEGJEGYZES_JEL)) hiba(`${kulcs}: a megjegyzés nem jelzi, hogy kitalált.`);
+      if (r.megjegyzes.length > INDOKLAS_MAX) hiba(`${kulcs}: a megjegyzés hosszabb ${INDOKLAS_MAX} karakternél.`);
+    }
+    const cella = a.cellak[terv.oszlop];
+    if (cella === null || cella === 'kihagyva') {
+      hiba(`${kulcs}: ${a.nev} a ${felevKulcs(terv.f)} félévben nem dolgozott.`);
+      continue;
+    }
+    const alap = forrasFok(cella.fok.tajekoztatas);
+    const elteres = r.fokozat - alap;
+    if (Math.abs(elteres) > 1) hiba(`${kulcs}: a minősítés (${r.fokozat}) a Tájékoztatás fokozatától (${alap}) kettőnél többel tér el.`);
+    else if (elteres === 0) megoszlas.azonos += 1;
+    else if (elteres < 0) megoszlas.gyengebb += 1;
+    else megoszlas.erosebb += 1;
+
+    // Időrend: a jelentés után, a félév tényleges lezárása (nyitott félévnél a „mai” pillanat) előtt.
+    const hatar = lezarva.get(felevKulcs(terv.f)) ?? MOST_NYITOTT;
+    if (r.minositesAt === null || r.minositesAt.getTime() <= r.createdAt.getTime()) hiba(`${kulcs}: a minősítés nem a jelentés létrehozása után készült.`);
+    if (r.minositesAt !== null && r.minositesAt.getTime() >= hatar.getTime()) hiba(`${kulcs}: a minősítés a ${felevKulcs(terv.f)} félév lezárása (${hatar.toISOString()}) után készült.`);
+    if (r.updatedAt.getTime() !== r.createdAt.getTime()) hiba(`${kulcs}: a minősítés megváltoztatta a jelentés módosítási idejét.`);
+  }
+
+  // Arányok félévenként: a bővített adat nélküli félév jelentései minősítetlenek, a lezárt félévekéi kb. 90%-a, a nyitotté kb. 50%-a minősített.
+  for (const terv of FELEVEK) {
+    const kulcs = felevKulcs(terv.f);
+    const felev = felevek.get(kulcs);
+    if (!felev || felev.ossz === 0) {
+      hiba(`${kulcs}: nincs jelentés.`);
+      continue;
+    }
+    const arany = felev.minositett / felev.ossz;
+    const kell = !aBlokkFelev(terv.f) ? 0 : terv.nyitott ? MINOSITES_ARANY.nyitott : MINOSITES_ARANY.lezart;
+    const tuer = kell === 0 ? 0 : 0.08;
+    if (Math.abs(arany - kell) > tuer) hiba(`${kulcs}: a jelentések ${(arany * 100).toFixed(1)}%-a minősített (${felev.minositett} / ${felev.ossz}), ${kell * 100}% kellene.`);
+    if (kell > 0 && felev.minositett === felev.ossz) hiba(`${kulcs}: minden jelentés minősített, a minősítetlen állapot nem fordul elő.`);
+  }
+
+  // A fokozatok szórása és a megjegyzések aránya az összes minősítésre.
+  if (megoszlas.minositett === 0) hiba('egyetlen jelentés sem minősített.');
+  else {
+    const azonosArany = megoszlas.azonos / megoszlas.minositett;
+    if (azonosArany < 0.45 || azonosArany > 0.75) hiba(`a minősítések ${(azonosArany * 100).toFixed(1)}%-a azonos a Tájékoztatás fokozatával, kb. 60% kellene.`);
+    if (megoszlas.gyengebb === 0 || megoszlas.erosebb === 0) hiba(`a minősítések nem szórnak mindkét irányba (gyengébb ${megoszlas.gyengebb}, erősebb ${megoszlas.erosebb}).`);
+    for (const f of [1, 2, 3, 4]) if (!fokozatok.has(f)) hiba(`a jelentések minősítésénél nem fordul elő a(z) ${f} fokozat.`);
+    const megjegyzesArany = megoszlas.megjegyzes / megoszlas.minositett;
+    if (megjegyzesArany < 0.12 || megjegyzesArany > 0.28) hiba(`a minősítések ${(megjegyzesArany * 100).toFixed(1)}%-a kapott megjegyzést, kb. 20% kellene.`);
+  }
+
+  // Rögzített pillanatképek: a bővített adat nélküli félévé nem tartalmaz megoszlást (nulla sem), a többié a lezárás előtti minősítések szerint.
+  const pillanatkepek = db
+    .select({
+      attaseId: attaseErtekeles.attaseId,
+      mutatok: attaseErtekeles.mutatok,
+      ev: ertekelesiIdoszak.ev,
+      felev: ertekelesiIdoszak.felev,
+    })
+    .from(attaseErtekeles)
+    .innerJoin(ertekelesiIdoszak, eq(attaseErtekeles.idoszakId, ertekelesiIdoszak.id))
+    .where(eq(ertekelesiIdoszak.statusz, 'lezart'))
+    .all();
+  const rogzitett = { 4: 0, 3: 0, 2: 0, 1: 0, nincs: 0 };
+  for (const p of pillanatkepek) {
+    if (p.mutatok === null) continue;
+    const a = attaseById.get(p.attaseId);
+    const f: Felev = { ev: p.ev, felev: p.felev as FelevSzam };
+    const kulcs = `${a?.nev ?? p.attaseId}, ${p.ev}/${p.felev}`;
+    const t = p.mutatok.tajekoztatas;
+    if (!aBlokkFelev(f)) {
+      if ('jelentesMinosites' in t) hiba(`${kulcs}: a bővített adat nélküli félév pillanatképében van jelentésminősítés-megoszlás.`);
+      continue;
+    }
+    if (t.jelentesMinosites === undefined) {
+      hiba(`${kulcs}: a pillanatkép nem tartalmazza a jelentések minősítésének megoszlását.`);
+      continue;
+    }
+    const kell = minositesMegoszlas(
+      jelentesek.filter((r) => r.szerzoId === p.attaseId && napBenne(r.nap, f)).map((r) => r.fokozat),
+    );
+    if (JSON.stringify(t.jelentesMinosites) !== JSON.stringify(kell)) {
+      hiba(`${kulcs}: a pillanatkép minősítés-megoszlása (${JSON.stringify(t.jelentesMinosites)}) nem egyezik a lezárás előtti minősítésekkel (${JSON.stringify(kell)}).`);
+    }
+    const osszeg = t.jelentesMinosites[4] + t.jelentesMinosites[3] + t.jelentesMinosites[2] + t.jelentesMinosites[1] + t.jelentesMinosites.nincs;
+    if (osszeg !== t.jelentesDb) hiba(`${kulcs}: a minősítés-megoszlás összege (${osszeg}) nem egyezik a jelentések számával (${t.jelentesDb}).`);
+    for (const k of [4, 3, 2, 1, 'nincs'] as const) rogzitett[k] += t.jelentesMinosites[k];
+  }
+  for (const k of [4, 3, 2, 1, 'nincs'] as const) {
+    if (rogzitett[k] === 0) hiba(`a rögzített pillanatképekben nincs „${k}” minősítésű jelentés.`);
+  }
+}
+
 /**
  * Az A blokk rögzített mutatói: a bővített adat nélküli félév pillanatképe `verzio: 1`, az új mezők nélkül; a
  * 2025/1 és későbbi lezárt félévek `verzio: 2`, a Kapcsolatépítés fokozata szerinti tevékenységszámmal és az
@@ -2345,6 +2606,7 @@ async function main() {
   ert = await import('../db/queries/ertekeles');
   tq = await import('../db/queries/tevekenyseg');
   mq = await import('../db/queries/munkaterv');
+  rmq = await import('../db/queries/riport-minosites');
   const { setAttaseOrszagok } = await import('../db/queries/attase-orszag');
   if (db.select({ id: ertekelesiIdoszak.id }).from(ertekelesiIdoszak).all().length > 0) {
     kilep(['A másolat már tartalmaz értékelési időszakot; a script üres értékelési táblákból indul.']);

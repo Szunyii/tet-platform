@@ -1,0 +1,2688 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "8a7c13a7-7ee0-4d66-a0e9-66fd7501d5c4",
+  "prevId": "ad4bb5ed-9172-4636-ae94-e239b1727630",
+  "tables": {
+    "account": {
+      "name": "account",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "provider_id": {
+          "name": "provider_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "access_token": {
+          "name": "access_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "refresh_token": {
+          "name": "refresh_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "id_token": {
+          "name": "id_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "access_token_expires_at": {
+          "name": "access_token_expires_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "refresh_token_expires_at": {
+          "name": "refresh_token_expires_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "password": {
+          "name": "password",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "account_userId_idx": {
+          "name": "account_userId_idx",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "account_user_id_user_id_fk": {
+          "name": "account_user_id_user_id_fk",
+          "tableFrom": "account",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "session": {
+      "name": "session",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "token": {
+          "name": "token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ip_address": {
+          "name": "ip_address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "user_agent": {
+          "name": "user_agent",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "impersonated_by": {
+          "name": "impersonated_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "session_token_unique": {
+          "name": "session_token_unique",
+          "columns": [
+            "token"
+          ],
+          "isUnique": true
+        },
+        "session_userId_idx": {
+          "name": "session_userId_idx",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "session_user_id_user_id_fk": {
+          "name": "session_user_id_user_id_fk",
+          "tableFrom": "session",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "user": {
+      "name": "user",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "email_verified": {
+          "name": "email_verified",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "image": {
+          "name": "image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "banned": {
+          "name": "banned",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
+        "ban_reason": {
+          "name": "ban_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ban_expires": {
+          "name": "ban_expires",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "telefon": {
+          "name": "telefon",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "kapcsolat_email": {
+          "name": "kapcsolat_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "user_email_unique": {
+          "name": "user_email_unique",
+          "columns": [
+            "email"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "verification": {
+      "name": "verification",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "identifier": {
+          "name": "identifier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "verification_identifier_idx": {
+          "name": "verification_identifier_idx",
+          "columns": [
+            "identifier"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "riport": {
+      "name": "riport",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "szerzo_id": {
+          "name": "szerzo_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "orszag": {
+          "name": "orszag",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kategoria": {
+          "name": "kategoria",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "targy": {
+          "name": "targy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "leiras": {
+          "name": "leiras",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kulcsszavak": {
+          "name": "kulcsszavak",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "esemeny_datum": {
+          "name": "esemeny_datum",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "esemeny_helyszin": {
+          "name": "esemeny_helyszin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "jo_gyakorlat": {
+          "name": "jo_gyakorlat",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "kapcsolodo_feladat": {
+          "name": "kapcsolodo_feladat",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "intezkedes": {
+          "name": "intezkedes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "intezkedes_szerzo_nev": {
+          "name": "intezkedes_szerzo_nev",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "intezkedes_idopont": {
+          "name": "intezkedes_idopont",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "riport_szerzo_idx": {
+          "name": "riport_szerzo_idx",
+          "columns": [
+            "szerzo_id"
+          ],
+          "isUnique": false
+        },
+        "riport_kategoria_idx": {
+          "name": "riport_kategoria_idx",
+          "columns": [
+            "kategoria"
+          ],
+          "isUnique": false
+        },
+        "riport_created_idx": {
+          "name": "riport_created_idx",
+          "columns": [
+            "created_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "riport_szerzo_id_user_id_fk": {
+          "name": "riport_szerzo_id_user_id_fk",
+          "tableFrom": "riport",
+          "tableTo": "user",
+          "columnsFrom": [
+            "szerzo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "riport_csatolmany": {
+      "name": "riport_csatolmany",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "riport_id": {
+          "name": "riport_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "fajlnev": {
+          "name": "fajlnev",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "mime": {
+          "name": "mime",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "meret": {
+          "name": "meret",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tartalom": {
+          "name": "tartalom",
+          "type": "blob",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "riport_csatolmany_riport_idx": {
+          "name": "riport_csatolmany_riport_idx",
+          "columns": [
+            "riport_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "riport_csatolmany_riport_id_riport_id_fk": {
+          "name": "riport_csatolmany_riport_id_riport_id_fk",
+          "tableFrom": "riport_csatolmany",
+          "tableTo": "riport",
+          "columnsFrom": [
+            "riport_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "ticket": {
+      "name": "ticket",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "targy": {
+          "name": "targy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tipus": {
+          "name": "tipus",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "prio": {
+          "name": "prio",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "hatarido": {
+          "name": "hatarido",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "statusz": {
+          "name": "statusz",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cimzett_id": {
+          "name": "cimzett_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "orszag": {
+          "name": "orszag",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nyito_id": {
+          "name": "nyito_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "lezarva_at": {
+          "name": "lezarva_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "korlevel_id": {
+          "name": "korlevel_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "ticket_cimzett_idx": {
+          "name": "ticket_cimzett_idx",
+          "columns": [
+            "cimzett_id"
+          ],
+          "isUnique": false
+        },
+        "ticket_statusz_idx": {
+          "name": "ticket_statusz_idx",
+          "columns": [
+            "statusz"
+          ],
+          "isUnique": false
+        },
+        "ticket_updated_idx": {
+          "name": "ticket_updated_idx",
+          "columns": [
+            "updated_at"
+          ],
+          "isUnique": false
+        },
+        "ticket_korlevel_idx": {
+          "name": "ticket_korlevel_idx",
+          "columns": [
+            "korlevel_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "ticket_cimzett_id_user_id_fk": {
+          "name": "ticket_cimzett_id_user_id_fk",
+          "tableFrom": "ticket",
+          "tableTo": "user",
+          "columnsFrom": [
+            "cimzett_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "ticket_nyito_id_user_id_fk": {
+          "name": "ticket_nyito_id_user_id_fk",
+          "tableFrom": "ticket",
+          "tableTo": "user",
+          "columnsFrom": [
+            "nyito_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "ticket_olvasas": {
+      "name": "ticket_olvasas",
+      "columns": {
+        "ticket_id": {
+          "name": "ticket_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "latott_at": {
+          "name": "latott_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "ticket_olvasas_ticket_id_ticket_id_fk": {
+          "name": "ticket_olvasas_ticket_id_ticket_id_fk",
+          "tableFrom": "ticket_olvasas",
+          "tableTo": "ticket",
+          "columnsFrom": [
+            "ticket_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "ticket_olvasas_user_id_user_id_fk": {
+          "name": "ticket_olvasas_user_id_user_id_fk",
+          "tableFrom": "ticket_olvasas",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "ticket_olvasas_ticket_id_user_id_pk": {
+          "columns": [
+            "ticket_id",
+            "user_id"
+          ],
+          "name": "ticket_olvasas_ticket_id_user_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "ticket_uzenet": {
+      "name": "ticket_uzenet",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ticket_id": {
+          "name": "ticket_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "szerzo_id": {
+          "name": "szerzo_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "szerzo_nev": {
+          "name": "szerzo_nev",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "szerzo_szerep": {
+          "name": "szerzo_szerep",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "szoveg": {
+          "name": "szoveg",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "ticket_uzenet_ticket_idx": {
+          "name": "ticket_uzenet_ticket_idx",
+          "columns": [
+            "ticket_id",
+            "created_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "ticket_uzenet_ticket_id_ticket_id_fk": {
+          "name": "ticket_uzenet_ticket_id_ticket_id_fk",
+          "tableFrom": "ticket_uzenet",
+          "tableTo": "ticket",
+          "columnsFrom": [
+            "ticket_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "ticket_uzenet_szerzo_id_user_id_fk": {
+          "name": "ticket_uzenet_szerzo_id_user_id_fk",
+          "tableFrom": "ticket_uzenet",
+          "tableTo": "user",
+          "columnsFrom": [
+            "szerzo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "orszagprofil": {
+      "name": "orszagprofil",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "orszag_kod": {
+          "name": "orszag_kod",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ev": {
+          "name": "ev",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "szerzo_id": {
+          "name": "szerzo_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "alapadatok": {
+          "name": "alapadatok",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "kfi_rendszer": {
+          "name": "kfi_rendszer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "intezmenyek": {
+          "name": "intezmenyek",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "vallalati": {
+          "name": "vallalati",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "programok": {
+          "name": "programok",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "rendezvenyek": {
+          "name": "rendezvenyek",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "nemzetkozi_kapcsolatok": {
+          "name": "nemzetkozi_kapcsolatok",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "magyar_kapcsolatok": {
+          "name": "magyar_kapcsolatok",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "magyar_ertekeles": {
+          "name": "magyar_ertekeles",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "orszagprofil_kod_ev_idx": {
+          "name": "orszagprofil_kod_ev_idx",
+          "columns": [
+            "orszag_kod",
+            "ev"
+          ],
+          "isUnique": true
+        },
+        "orszagprofil_ev_idx": {
+          "name": "orszagprofil_ev_idx",
+          "columns": [
+            "ev"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "orszagprofil_szerzo_id_user_id_fk": {
+          "name": "orszagprofil_szerzo_id_user_id_fk",
+          "tableFrom": "orszagprofil",
+          "tableTo": "user",
+          "columnsFrom": [
+            "szerzo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "attase_orszag": {
+      "name": "attase_orszag",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "orszag_kod": {
+          "name": "orszag_kod",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "szekhely": {
+          "name": "szekhely",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "vezeto": {
+          "name": "vezeto",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "varos": {
+          "name": "varos",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "reszterulet": {
+          "name": "reszterulet",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "attase_orszag_vezeto_idx": {
+          "name": "attase_orszag_vezeto_idx",
+          "columns": [
+            "orszag_kod"
+          ],
+          "isUnique": true,
+          "where": "\"attase_orszag\".\"vezeto\" = 1"
+        },
+        "attase_orszag_szekhely_idx": {
+          "name": "attase_orszag_szekhely_idx",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": true,
+          "where": "\"attase_orszag\".\"szekhely\" = 1"
+        },
+        "attase_orszag_orszag_idx": {
+          "name": "attase_orszag_orszag_idx",
+          "columns": [
+            "orszag_kod"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "attase_orszag_user_id_user_id_fk": {
+          "name": "attase_orszag_user_id_user_id_fk",
+          "tableFrom": "attase_orszag",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "attase_orszag_user_id_orszag_kod_pk": {
+          "columns": [
+            "user_id",
+            "orszag_kod"
+          ],
+          "name": "attase_orszag_user_id_orszag_kod_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "tudastar_kartya": {
+      "name": "tudastar_kartya",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kategoria": {
+          "name": "kategoria",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tipus": {
+          "name": "tipus",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nev": {
+          "name": "nev",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "rovidites": {
+          "name": "rovidites",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "osszefoglalo": {
+          "name": "osszefoglalo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "honlap": {
+          "name": "honlap",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "sorrend": {
+          "name": "sorrend",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tartalom": {
+          "name": "tartalom",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "szerzo_id": {
+          "name": "szerzo_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "tudastar_kartya_slug_idx": {
+          "name": "tudastar_kartya_slug_idx",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": true
+        },
+        "tudastar_kartya_kategoria_idx": {
+          "name": "tudastar_kartya_kategoria_idx",
+          "columns": [
+            "kategoria",
+            "sorrend"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "tudastar_kartya_szerzo_id_user_id_fk": {
+          "name": "tudastar_kartya_szerzo_id_user_id_fk",
+          "tableFrom": "tudastar_kartya",
+          "tableTo": "user",
+          "columnsFrom": [
+            "szerzo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "tudastar_kartya_tipus_check": {
+          "name": "tudastar_kartya_tipus_check",
+          "value": "\"tudastar_kartya\".\"tipus\" in ('intezmeny', 'lista')"
+        },
+        "tudastar_kartya_tartalom_check": {
+          "name": "tudastar_kartya_tartalom_check",
+          "value": "json_valid(\"tudastar_kartya\".\"tartalom\")"
+        }
+      }
+    },
+    "attase_ertekeles": {
+      "name": "attase_ertekeles",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "idoszak_id": {
+          "name": "idoszak_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "attase_id": {
+          "name": "attase_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "attase_nev": {
+          "name": "attase_nev",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "szekhely_kod": {
+          "name": "szekhely_kod",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "varos": {
+          "name": "varos",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "orszagok": {
+          "name": "orszagok",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kimarad": {
+          "name": "kimarad",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "kimaradas_oka": {
+          "name": "kimaradas_oka",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ossz_fokozat": {
+          "name": "ossz_fokozat",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ossz_indoklas": {
+          "name": "ossz_indoklas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "fejlesztesi_cel": {
+          "name": "fejlesztesi_cel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ertekelo_nev": {
+          "name": "ertekelo_nev",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "minositve_at": {
+          "name": "minositve_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "mutatok": {
+          "name": "mutatok",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "attase_ertekeles_idoszak_attase_idx": {
+          "name": "attase_ertekeles_idoszak_attase_idx",
+          "columns": [
+            "idoszak_id",
+            "attase_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "attase_ertekeles_idoszak_id_ertekelesi_idoszak_id_fk": {
+          "name": "attase_ertekeles_idoszak_id_ertekelesi_idoszak_id_fk",
+          "tableFrom": "attase_ertekeles",
+          "tableTo": "ertekelesi_idoszak",
+          "columnsFrom": [
+            "idoszak_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "attase_ertekeles_ossz_fokozat_check": {
+          "name": "attase_ertekeles_ossz_fokozat_check",
+          "value": "\"attase_ertekeles\".\"ossz_fokozat\" is null or \"attase_ertekeles\".\"ossz_fokozat\" between 1 and 4"
+        },
+        "attase_ertekeles_orszagok_check": {
+          "name": "attase_ertekeles_orszagok_check",
+          "value": "json_valid(\"attase_ertekeles\".\"orszagok\")"
+        },
+        "attase_ertekeles_mutatok_check": {
+          "name": "attase_ertekeles_mutatok_check",
+          "value": "\"attase_ertekeles\".\"mutatok\" is null or json_valid(\"attase_ertekeles\".\"mutatok\")"
+        }
+      }
+    },
+    "ertekelesi_idoszak": {
+      "name": "ertekelesi_idoszak",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ev": {
+          "name": "ev",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "felev": {
+          "name": "felev",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "statusz": {
+          "name": "statusz",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "lezarva_at": {
+          "name": "lezarva_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "lezarta_nev": {
+          "name": "lezarta_nev",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "bovitett_adatok": {
+          "name": "bovitett_adatok",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "ertekelesi_idoszak_ev_felev_idx": {
+          "name": "ertekelesi_idoszak_ev_felev_idx",
+          "columns": [
+            "ev",
+            "felev"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "ertekelesi_idoszak_felev_check": {
+          "name": "ertekelesi_idoszak_felev_check",
+          "value": "\"ertekelesi_idoszak\".\"felev\" in (1, 2)"
+        },
+        "ertekelesi_idoszak_statusz_check": {
+          "name": "ertekelesi_idoszak_statusz_check",
+          "value": "\"ertekelesi_idoszak\".\"statusz\" in ('nyitott', 'lezart')"
+        }
+      }
+    },
+    "szempont_minosites": {
+      "name": "szempont_minosites",
+      "columns": {
+        "ertekeles_id": {
+          "name": "ertekeles_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "szempont": {
+          "name": "szempont",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "fokozat": {
+          "name": "fokozat",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "indoklas": {
+          "name": "indoklas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ertekelo_nev": {
+          "name": "ertekelo_nev",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "szempont_minosites_ertekeles_id_attase_ertekeles_id_fk": {
+          "name": "szempont_minosites_ertekeles_id_attase_ertekeles_id_fk",
+          "tableFrom": "szempont_minosites",
+          "tableTo": "attase_ertekeles",
+          "columnsFrom": [
+            "ertekeles_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "szempont_minosites_ertekeles_id_szempont_pk": {
+          "columns": [
+            "ertekeles_id",
+            "szempont"
+          ],
+          "name": "szempont_minosites_ertekeles_id_szempont_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "szempont_minosites_fokozat_check": {
+          "name": "szempont_minosites_fokozat_check",
+          "value": "\"szempont_minosites\".\"fokozat\" between 0 and 4"
+        }
+      }
+    },
+    "eredmeny": {
+      "name": "eredmeny",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "attase_id": {
+          "name": "attase_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "megnevezes": {
+          "name": "megnevezes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "orszag_kod": {
+          "name": "orszag_kod",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "partner": {
+          "name": "partner",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "magyar_szereplo": {
+          "name": "magyar_szereplo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "hozzajarulas": {
+          "name": "hozzajarulas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "leiras": {
+          "name": "leiras",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "szakasz": {
+          "name": "szakasz",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kert_szakasz": {
+          "name": "kert_szakasz",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "igazolas": {
+          "name": "igazolas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "allapot": {
+          "name": "allapot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kifogas": {
+          "name": "kifogas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "kifogas_szerzo_nev": {
+          "name": "kifogas_szerzo_nev",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "kifogas_at": {
+          "name": "kifogas_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "eredmeny_attase_idx": {
+          "name": "eredmeny_attase_idx",
+          "columns": [
+            "attase_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "eredmeny_attase_id_user_id_fk": {
+          "name": "eredmeny_attase_id_user_id_fk",
+          "tableFrom": "eredmeny",
+          "tableTo": "user",
+          "columnsFrom": [
+            "attase_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "eredmeny_hozzajarulas_check": {
+          "name": "eredmeny_hozzajarulas_check",
+          "value": "\"eredmeny\".\"hozzajarulas\" in ('kozvetlen', 'kozremukodes')"
+        },
+        "eredmeny_szakasz_check": {
+          "name": "eredmeny_szakasz_check",
+          "value": "\"eredmeny\".\"szakasz\" in ('lehetoseg', 'kapcsolat', 'egyuttmukodes', 'megallapodas')"
+        },
+        "eredmeny_kert_szakasz_check": {
+          "name": "eredmeny_kert_szakasz_check",
+          "value": "\"eredmeny\".\"kert_szakasz\" is null or \"eredmeny\".\"kert_szakasz\" in ('egyuttmukodes', 'megallapodas')"
+        },
+        "eredmeny_igazolas_check": {
+          "name": "eredmeny_igazolas_check",
+          "value": "\"eredmeny\".\"igazolas\" in ('nem_igenyel', 'igazolasra_var', 'igazolt', 'visszakuldott')"
+        },
+        "eredmeny_allapot_check": {
+          "name": "eredmeny_allapot_check",
+          "value": "\"eredmeny\".\"allapot\" in ('aktiv', 'megszakadt')"
+        }
+      }
+    },
+    "eredmeny_esemeny": {
+      "name": "eredmeny_esemeny",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "eredmeny_id": {
+          "name": "eredmeny_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tipus": {
+          "name": "tipus",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "szakasz": {
+          "name": "szakasz",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "szoveg": {
+          "name": "szoveg",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "link": {
+          "name": "link",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "riport_id": {
+          "name": "riport_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "szerzo_nev": {
+          "name": "szerzo_nev",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "szerzo_szerep": {
+          "name": "szerzo_szerep",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "beszamitasi_ev": {
+          "name": "beszamitasi_ev",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "beszamitasi_felev": {
+          "name": "beszamitasi_felev",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "visszavonva": {
+          "name": "visszavonva",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "eredmeny_esemeny_eredmeny_idx": {
+          "name": "eredmeny_esemeny_eredmeny_idx",
+          "columns": [
+            "eredmeny_id",
+            "created_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "eredmeny_esemeny_eredmeny_id_eredmeny_id_fk": {
+          "name": "eredmeny_esemeny_eredmeny_id_eredmeny_id_fk",
+          "tableFrom": "eredmeny_esemeny",
+          "tableTo": "eredmeny",
+          "columnsFrom": [
+            "eredmeny_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "eredmeny_esemeny_riport_id_riport_id_fk": {
+          "name": "eredmeny_esemeny_riport_id_riport_id_fk",
+          "tableFrom": "eredmeny_esemeny",
+          "tableTo": "riport",
+          "columnsFrom": [
+            "riport_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "eredmeny_esemeny_tipus_check": {
+          "name": "eredmeny_esemeny_tipus_check",
+          "value": "\"eredmeny_esemeny\".\"tipus\" in ('letrehozas', 'szakaszvaltas', 'igazolas_keres', 'igazolas', 'visszakuldes', 'igazolas_visszavonas', 'megszakitas', 'ujrainditas')"
+        },
+        "eredmeny_esemeny_szakasz_check": {
+          "name": "eredmeny_esemeny_szakasz_check",
+          "value": "\"eredmeny_esemeny\".\"szakasz\" is null or \"eredmeny_esemeny\".\"szakasz\" in ('lehetoseg', 'kapcsolat', 'egyuttmukodes', 'megallapodas')"
+        },
+        "eredmeny_esemeny_szerzo_szerep_check": {
+          "name": "eredmeny_esemeny_szerzo_szerep_check",
+          "value": "\"eredmeny_esemeny\".\"szerzo_szerep\" in ('admin', 'attase')"
+        },
+        "eredmeny_esemeny_beszamitasi_felev_check": {
+          "name": "eredmeny_esemeny_beszamitasi_felev_check",
+          "value": "\"eredmeny_esemeny\".\"beszamitasi_felev\" is null or \"eredmeny_esemeny\".\"beszamitasi_felev\" in (1, 2)"
+        }
+      }
+    },
+    "tevekenyseg": {
+      "name": "tevekenyseg",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "attase_id": {
+          "name": "attase_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tipus": {
+          "name": "tipus",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "datum": {
+          "name": "datum",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "orszag_kod": {
+          "name": "orszag_kod",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "megnevezes": {
+          "name": "megnevezes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "partner": {
+          "name": "partner",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "magyar_szereplo": {
+          "name": "magyar_szereplo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "leiras": {
+          "name": "leiras",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "riport_id": {
+          "name": "riport_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "eredmeny_id": {
+          "name": "eredmeny_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "kifogas": {
+          "name": "kifogas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "kifogas_szerzo_nev": {
+          "name": "kifogas_szerzo_nev",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "kifogas_at": {
+          "name": "kifogas_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "tevekenyseg_attase_idx": {
+          "name": "tevekenyseg_attase_idx",
+          "columns": [
+            "attase_id"
+          ],
+          "isUnique": false
+        },
+        "tevekenyseg_datum_idx": {
+          "name": "tevekenyseg_datum_idx",
+          "columns": [
+            "datum"
+          ],
+          "isUnique": false
+        },
+        "tevekenyseg_eredmeny_idx": {
+          "name": "tevekenyseg_eredmeny_idx",
+          "columns": [
+            "eredmeny_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "tevekenyseg_attase_id_user_id_fk": {
+          "name": "tevekenyseg_attase_id_user_id_fk",
+          "tableFrom": "tevekenyseg",
+          "tableTo": "user",
+          "columnsFrom": [
+            "attase_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tevekenyseg_riport_id_riport_id_fk": {
+          "name": "tevekenyseg_riport_id_riport_id_fk",
+          "tableFrom": "tevekenyseg",
+          "tableTo": "riport",
+          "columnsFrom": [
+            "riport_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "tevekenyseg_eredmeny_id_eredmeny_id_fk": {
+          "name": "tevekenyseg_eredmeny_id_eredmeny_id_fk",
+          "tableFrom": "tevekenyseg",
+          "tableTo": "eredmeny",
+          "columnsFrom": [
+            "eredmeny_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "tevekenyseg_tipus_check": {
+          "name": "tevekenyseg_tipus_check",
+          "value": "\"tevekenyseg\".\"tipus\" in ('delegacio', 'b2b', 'partnerkozvetites')"
+        }
+      }
+    },
+    "kozponti_cel": {
+      "name": "kozponti_cel",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ev": {
+          "name": "ev",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "megnevezes": {
+          "name": "megnevezes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "szempont": {
+          "name": "szempont",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "merce": {
+          "name": "merce",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "hatokor": {
+          "name": "hatokor",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "kozponti_cel_ev_idx": {
+          "name": "kozponti_cel_ev_idx",
+          "columns": [
+            "ev"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "kozponti_cel_szempont_check": {
+          "name": "kozponti_cel_szempont_check",
+          "value": "\"kozponti_cel\".\"szempont\" in ('tajekoztatas', 'orszagismeret', 'kapcsolatepites', 'eredmenyek', 'egyuttmukodes')"
+        },
+        "kozponti_cel_hatokor_check": {
+          "name": "kozponti_cel_hatokor_check",
+          "value": "\"kozponti_cel\".\"hatokor\" in ('halozat', 'europa', 'azsia', 'kozelKelet', 'afrika', 'amerika')"
+        }
+      }
+    },
+    "munkaterv": {
+      "name": "munkaterv",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "attase_id": {
+          "name": "attase_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ev": {
+          "name": "ev",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "statusz": {
+          "name": "statusz",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "megjegyzes": {
+          "name": "megjegyzes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "modositasi_kerelem": {
+          "name": "modositasi_kerelem",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "jovahagyta_nev": {
+          "name": "jovahagyta_nev",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "jovahagyva_at": {
+          "name": "jovahagyva_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "munkaterv_attase_ev_idx": {
+          "name": "munkaterv_attase_ev_idx",
+          "columns": [
+            "attase_id",
+            "ev"
+          ],
+          "isUnique": true
+        },
+        "munkaterv_ev_idx": {
+          "name": "munkaterv_ev_idx",
+          "columns": [
+            "ev"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "munkaterv_attase_id_user_id_fk": {
+          "name": "munkaterv_attase_id_user_id_fk",
+          "tableFrom": "munkaterv",
+          "tableTo": "user",
+          "columnsFrom": [
+            "attase_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "munkaterv_statusz_check": {
+          "name": "munkaterv_statusz_check",
+          "value": "\"munkaterv\".\"statusz\" in ('piszkozat', 'jovahagyasra_var', 'visszakuldott', 'jovahagyott')"
+        }
+      }
+    },
+    "munkaterv_cel": {
+      "name": "munkaterv_cel",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "terv_id": {
+          "name": "terv_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kozponti_cel_id": {
+          "name": "kozponti_cel_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "sorrend": {
+          "name": "sorrend",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "megnevezes": {
+          "name": "megnevezes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "orszag_kod": {
+          "name": "orszag_kod",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "szempont": {
+          "name": "szempont",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "merce": {
+          "name": "merce",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "allapot": {
+          "name": "allapot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'folyamatban'"
+        },
+        "allapot_megjegyzes": {
+          "name": "allapot_megjegyzes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "allapot_modositotta_nev": {
+          "name": "allapot_modositotta_nev",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "allapot_modositva_at": {
+          "name": "allapot_modositva_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "allapot_felulirva": {
+          "name": "allapot_felulirva",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        }
+      },
+      "indexes": {
+        "munkaterv_cel_terv_sorrend_idx": {
+          "name": "munkaterv_cel_terv_sorrend_idx",
+          "columns": [
+            "terv_id",
+            "sorrend"
+          ],
+          "isUnique": false
+        },
+        "munkaterv_cel_kozponti_cel_idx": {
+          "name": "munkaterv_cel_kozponti_cel_idx",
+          "columns": [
+            "kozponti_cel_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "munkaterv_cel_terv_id_munkaterv_id_fk": {
+          "name": "munkaterv_cel_terv_id_munkaterv_id_fk",
+          "tableFrom": "munkaterv_cel",
+          "tableTo": "munkaterv",
+          "columnsFrom": [
+            "terv_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "munkaterv_cel_kozponti_cel_id_kozponti_cel_id_fk": {
+          "name": "munkaterv_cel_kozponti_cel_id_kozponti_cel_id_fk",
+          "tableFrom": "munkaterv_cel",
+          "tableTo": "kozponti_cel",
+          "columnsFrom": [
+            "kozponti_cel_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "munkaterv_cel_szempont_check": {
+          "name": "munkaterv_cel_szempont_check",
+          "value": "\"munkaterv_cel\".\"szempont\" in ('tajekoztatas', 'orszagismeret', 'kapcsolatepites', 'eredmenyek', 'egyuttmukodes')"
+        },
+        "munkaterv_cel_allapot_check": {
+          "name": "munkaterv_cel_allapot_check",
+          "value": "\"munkaterv_cel\".\"allapot\" in ('folyamatban', 'teljesult', 'reszben', 'elmaradt')"
+        }
+      }
+    },
+    "munkaterv_ev": {
+      "name": "munkaterv_ev",
+      "columns": {
+        "ev": {
+          "name": "ev",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kozzeteve_at": {
+          "name": "kozzeteve_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kozzetette_nev": {
+          "name": "kozzetette_nev",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "riport_minosites": {
+      "name": "riport_minosites",
+      "columns": {
+        "riport_id": {
+          "name": "riport_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "fokozat": {
+          "name": "fokozat",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "megjegyzes": {
+          "name": "megjegyzes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "szerzo_nev": {
+          "name": "szerzo_nev",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "riport_minosites_riport_id_riport_id_fk": {
+          "name": "riport_minosites_riport_id_riport_id_fk",
+          "tableFrom": "riport_minosites",
+          "tableTo": "riport",
+          "columnsFrom": [
+            "riport_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "riport_minosites_fokozat_check": {
+          "name": "riport_minosites_fokozat_check",
+          "value": "\"riport_minosites\".\"fokozat\" between 1 and 4"
+        }
+      }
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}

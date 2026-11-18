@@ -5,6 +5,7 @@ import { attaseErtekeles, eredmeny, ertekelesiIdoszak, riport, szempontMinosites
 import { listOrszagokFelhasznalonkent } from './attase-orszag';
 import { jovahagyottTervek } from './munkaterv';
 import { listProfilMutatok } from './orszagprofil';
+import { riportMinositesek } from './riport-minosites';
 import { bovitettForrasok, countFuggoKeresek } from './tevekenyseg';
 import { listCimzettJeloltek } from './ticket';
 import { naptariNap } from '../../lib/datum';
@@ -363,9 +364,11 @@ type MutatoForras = Pick<MutatoBemenet, 'jelentesek' | 'tickets' | 'elozoFelevJe
 
 /**
  * A mutatók forrásadatai attasénként, két lekérdezéssel: a félév és az előző félév jelentései, valamint a
- * félévben nyitott vagy a félévbe eső határidejű ticketek az első attasé-üzenet idejével.
+ * félévben nyitott vagy a félévbe eső határidejű ticketek az első attasé-üzenet idejével. `bovitett`: a félév gyűjt-e
+ * bővített adatot; csak ekkor olvassa a félév jelentéseinek központi minősítését (külön lekérdezéssel), egyébként a
+ * jelentések `minosites` mezője hiányzik, és a pillanatkép sem kap minősítés-megoszlást.
  */
-function mutatoForrasok(attaseIdk: readonly string[], f: Felev): Map<string, MutatoForras> {
+function mutatoForrasok(attaseIdk: readonly string[], f: Felev, bovitett: boolean): Map<string, MutatoForras> {
   const forrasok = new Map<string, MutatoForras>(
     attaseIdk.map((id) => [id, { jelentesek: [], tickets: [], elozoFelevJelentesDb: 0 }]),
   );
@@ -396,6 +399,11 @@ function mutatoForrasok(attaseIdk: readonly string[], f: Felev): Map<string, Mut
     if (!forras) continue;
     if (j.createdAt < kezdet) forras.elozoFelevJelentesDb += 1;
     else forras.jelentesek.push(j);
+  }
+  if (bovitett) {
+    const felevJelentesek = [...forrasok.values()].flatMap((forras) => forras.jelentesek);
+    const minositesek = riportMinositesek(felevJelentesek.map((j) => j.id));
+    for (const j of felevJelentesek) j.minosites = minositesek.get(j.id)?.fokozat ?? null;
   }
 
   const ticketek = db
@@ -459,7 +467,7 @@ function mutatoSzamolo(
   bovitett: boolean,
 ): (sor: ErtekelesSor) => ErtekelesMutatok {
   const ertekeltek = sorok.filter((s) => !s.kimarad);
-  const forrasok = mutatoForrasok(ertekeltek.map((s) => s.attaseId), f);
+  const forrasok = mutatoForrasok(ertekeltek.map((s) => s.attaseId), f, bovitett);
   const letezok = letezoFelhasznalok([...forrasok.keys()]);
   const halozat = halozatiMedianok(
     [...forrasok].filter(([id]) => letezok.has(id)).map(([, forras]) => forras),

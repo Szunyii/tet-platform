@@ -13,7 +13,7 @@ import type {
   TevekenysegBizonyitek,
   TicketBizonyitek,
 } from './ertekeles-mutatok';
-import type { SzempontKulcs } from './ertekeles-szotar';
+import { FOKOZATOK, isOsszFokozat, type SzempontKulcs } from './ertekeles-szotar';
 import { isKategoriaKulcs, kategoriaByKulcs } from './riport-szotar';
 import { hozzajarulasCimke, IGAZOLAS_CIMKE, szakaszCimke, tipusCimke } from './tevekenyseg-szotar';
 
@@ -48,11 +48,15 @@ function darab(n: number): string {
   return `${n} db`;
 }
 
-/** A szempont mutatói kártyákban; bővített adat nélküli félévben az Eredményeknél üres a lista. */
+/**
+ * A szempont mutatói kártyákban; bővített adat nélküli félévben az Eredményeknél üres a lista, a Tájékoztatásnál
+ * pedig nincs minősítés-kártya.
+ */
 export function mutatoKartyak(szempont: SzempontKulcs, m: ErtekelesMutatok): MutatoKartya[] {
   switch (szempont) {
     case 'tajekoztatas': {
       const t = m.tajekoztatas;
+      const minosites = t.jelentesMinosites;
       return [
         { cimke: 'Beadott jelentés', ertek: `${t.jelentesDb} db`, megjegyzes: `előző félév: ${t.elozoFelevDb}` },
         { cimke: 'Lefedett téma', ertek: `${t.lefedettTema} / ${t.temaOsszes}`, megjegyzes: 'jelentéskategória' },
@@ -62,6 +66,17 @@ export function mutatoKartyak(szempont: SzempontKulcs, m: ErtekelesMutatok): Mut
           megjegyzes: `hálózati medián: ${tizedes(t.halozatiSzunetMedian)}`,
         },
         { cimke: 'Intézkedés nyomán', ertek: `${t.intezkedesDb} jelentés`, megjegyzes: `${t.jelentesDb} jelentésből` },
+        // A bővített adat nélküli félévben nincs `jelentesMinosites`: ott nem nulla kártya áll, hanem nincs kártya.
+        ...(minosites === undefined
+          ? []
+          : [
+              {
+                cimke: 'Jelentések minősítése',
+                ertek: FOKOZATOK.flatMap((f) => (isOsszFokozat(f.ertek) ? [`${minosites[f.ertek]} ${f.rovid}`] : [])).join(' · '),
+                megjegyzes: 'központi minősítés',
+              },
+              { cimke: 'Minősítésre vár', ertek: `${minosites.nincs} jelentés`, megjegyzes: `${t.jelentesDb} jelentésből` },
+            ]),
       ];
     }
     case 'orszagismeret': {

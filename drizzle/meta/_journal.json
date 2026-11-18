@@ -120,6 +120,13 @@
       "when": 1795025735239,
       "tag": "0016_munkaterv",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1795029918891,
+      "tag": "0017_riport_minosites",
+      "breakpoints": true
     }
   ]
 }
