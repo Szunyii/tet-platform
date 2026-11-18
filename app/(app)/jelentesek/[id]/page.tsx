@@ -2,12 +2,13 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { RiportReszlet } from '../components/RiportReszlet';
 import { getRiport } from '../../../../db/queries/riport';
+import { getRiportMinosites } from '../../../../db/queries/riport-minosites';
 import { countRiportTevekenyseg } from '../../../../db/queries/tevekenyseg';
 import { canEditRiport, canIntezkedni, canViewRiport } from '../../../../lib/riport-jog';
 import { requireSession } from '../../../../lib/session';
 import { canRogzit } from '../../../../lib/tevekenyseg-jog';
 import { jelentesbolIndithato, tevekenysegUrl } from '../../../../lib/tevekenyseg-szuro';
-import { deleteRiportAction, mentIntezkedesAction } from '../actions';
+import { deleteRiportAction, mentIntezkedesAction, mentMinositesAction } from '../actions';
 
 export const metadata: Metadata = { title: 'Bejegyzés' };
 
@@ -33,6 +34,12 @@ export default async function RiportOldal({ params }: { params: Promise<{ id: st
       }
       torlesAction={deleteRiportAction.bind(null, id)}
       intezkedesAction={canIntezkedni(session) ? mentIntezkedesAction.bind(null, id) : undefined}
+      // A központi minősítés csak adminé: attasénak be sem töltődik, a komponens nem is kapja meg.
+      kozpontiMinosites={
+        canIntezkedni(session)
+          ? { minosites: getRiportMinosites(id), action: mentMinositesAction.bind(null, id) }
+          : undefined
+      }
     />
   );
 }

@@ -1,6 +1,7 @@
 import { PaperclipIcon } from 'lucide-react';
 import Link from 'next/link';
 import type { RiportListItem } from '../../../../db/queries/riport';
+import type { RiportMinosites } from '../../../../db/queries/riport-minosites';
 import { formatDatum, formatNaptariDatum } from '../../../../lib/datum';
 import { orszagNev } from '../../../../lib/orszagok';
 import { cn } from '../../../../lib/utils';
@@ -10,12 +11,15 @@ import { buttonVariants } from '../../../../components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../components/ui/table';
 import { KategoriaBadge } from '../../../../components/riport/KategoriaBadge';
 import { IntezkedesSzerkeszto } from './IntezkedesSzerkeszto';
+import { MinositesSzerkeszto } from './MinositesSzerkeszto';
 
 export function RiportTabla({
   sorok,
   admin,
   vanSzuro,
   intezkedesAction,
+  minositesek,
+  minositesAction,
 }: {
   sorok: RiportListItem[];
   admin: boolean;
@@ -26,6 +30,13 @@ export function RiportTabla({
    * bind-olt action megy.
    */
   intezkedesAction?: (id: string) => FormAction;
+  /**
+   * A jelentések központi minősítése (jelentés-azonosító szerint) és a mentése soronként. A „Minősítés” oszlop csak
+   * akkor jelenik meg, ha mindkettő megvan; a page csak a központnak (admin) adja, az attasénak egyik sem jut el
+   * (a minősítés nem is töltődik be). A Map nem megy tovább a kliensnek: soronként csak a fokozat és a megjegyzés.
+   */
+  minositesek?: ReadonlyMap<string, RiportMinosites>;
+  minositesAction?: (id: string) => FormAction;
 }) {
   if (sorok.length === 0) {
     return (
@@ -52,6 +63,7 @@ export function RiportTabla({
             <TableHead className="w-44">{admin ? 'Állomáshely · szerző' : 'Állomáshely'}</TableHead>
             <TableHead>Kulcsszavak</TableHead>
             <TableHead>Intézkedés</TableHead>
+            {minositesek && minositesAction && <TableHead className="w-36">Minősítés</TableHead>}
             <TableHead className="w-12 text-right">
               <span className="sr-only">Csatolmány</span>
             </TableHead>
@@ -114,6 +126,17 @@ export function RiportTabla({
                   )}
                 </div>
               </TableCell>
+              {minositesek && minositesAction && (
+                <TableCell>
+                  <MinositesSzerkeszto
+                    targy={r.targy}
+                    fokozat={minositesek.get(r.id)?.fokozat ?? null}
+                    megjegyzes={minositesek.get(r.id)?.megjegyzes ?? null}
+                    action={minositesAction(r.id)}
+                    valtozat="cella"
+                  />
+                </TableCell>
+              )}
               <TableCell className="text-right text-muted-foreground">
                 {r.csatolmanyDb > 0 && (
                   <span

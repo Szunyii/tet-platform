@@ -1,6 +1,7 @@
 import { PaperclipIcon } from 'lucide-react';
 import Link from 'next/link';
 import type { RiportDetail } from '../../../../db/queries/riport';
+import type { RiportMinosites } from '../../../../db/queries/riport-minosites';
 import { formatDatum, formatNaptariDatum } from '../../../../lib/datum';
 import { orszagNev } from '../../../../lib/orszagok';
 import { formatMeret, kategoriaByKulcs, RIPORT_MEZO_CIMKEK } from '../../../../lib/riport-szotar';
@@ -11,7 +12,9 @@ import { KategoriaBadge } from '../../../../components/riport/KategoriaBadge';
 import { Badge } from '../../../../components/ui/badge';
 import { buttonVariants } from '../../../../components/ui/button';
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '../../../../components/ui/card';
+import { FokozatJelveny } from '../../monitoring/components/FokozatJelveny';
 import { IntezkedesSzerkeszto } from './IntezkedesSzerkeszto';
+import { MinositesSzerkeszto } from './MinositesSzerkeszto';
 import { RiportTorles } from './RiportTorles';
 
 export function RiportReszlet({
@@ -20,6 +23,7 @@ export function RiportReszlet({
   tevekenysegRogzites,
   torlesAction,
   intezkedesAction,
+  kozpontiMinosites,
 }: {
   riport: RiportDetail;
   szerkeszthet: boolean;
@@ -28,6 +32,12 @@ export function RiportReszlet({
   torlesAction: MuveletAction;
   /** A „Megtett intézkedés” mentése; a page csak a központnak (admin) adja. */
   intezkedesAction?: FormAction;
+  /**
+   * A központi minősítés kártyája: a mostani minősítés (`null`: még nincs) és a mentése. Egyetlen prop, hogy az
+   * attasénak ne is lehessen részlete: a page csak a központnak (admin) tölti be és adja át, egyébként a kártya
+   * nem jelenik meg.
+   */
+  kozpontiMinosites?: { minosites: RiportMinosites | null; action: FormAction };
 }) {
   const kat = kategoriaByKulcs(riport.kategoria);
   // A formázott dátum a mérvadó, mert azt írjuk ki: napon belüli mentés nem „módosítva”.
@@ -154,6 +164,43 @@ export function RiportReszlet({
               </>
             ) : (
               <p className="text-muted-foreground">Még nincs rögzített intézkedés.</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {kozpontiMinosites && (
+        <Card size="sm" className="border-l-4 border-l-violet-500">
+          <CardHeader>
+            <CardTitle role="heading" aria-level={3}>
+              Központi minősítés
+            </CardTitle>
+            <CardAction>
+              <MinositesSzerkeszto
+                targy={riport.targy}
+                fokozat={kozpontiMinosites.minosites?.fokozat ?? null}
+                megjegyzes={kozpontiMinosites.minosites?.megjegyzes ?? null}
+                action={kozpontiMinosites.action}
+                valtozat="gomb"
+              />
+            </CardAction>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-1.5 text-sm">
+            {kozpontiMinosites.minosites ? (
+              <>
+                <div>
+                  <FokozatJelveny fokozat={kozpontiMinosites.minosites.fokozat} />
+                </div>
+                {kozpontiMinosites.minosites.megjegyzes && (
+                  <p className="break-words whitespace-pre-wrap">{kozpontiMinosites.minosites.megjegyzes}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {kozpontiMinosites.minosites.szerzoNev} · {formatDatum(kozpontiMinosites.minosites.updatedAt)} · Az
+                  attasé nem látja.
+                </p>
+              </>
+            ) : (
+              <p className="text-muted-foreground">Még nincs minősítve. Az attasé a minősítést nem látja.</p>
             )}
           </CardContent>
         </Card>

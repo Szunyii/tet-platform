@@ -3,8 +3,10 @@
 import { revalidatePath } from 'next/cache';
 import { redirect, unstable_rethrow } from 'next/navigation';
 import { deleteRiport, getRiport, getRiportSzerzo, setIntezkedes, updateRiport } from '../../../db/queries/riport';
+import { setRiportMinosites } from '../../../db/queries/riport-minosites';
 import { fajlokCsatolmannya } from '../../../lib/riport-fajl';
 import { canEditRiport, canIntezkedni } from '../../../lib/riport-jog';
+import { parseRiportMinositesForm } from '../../../lib/riport-minosites';
 import { parseIntezkedes, parseRiportForm } from '../../../lib/riport-validacio';
 import { requireSession } from '../../../lib/session';
 import type { MuveletState } from '../../../components/form/useMuveletForm';
@@ -80,5 +82,34 @@ export async function mentIntezkedesAction(
   }
   revalidatePath('/jelentesek');
   revalidatePath(`/jelentesek/${id}`);
+  return { ok: true };
+}
+
+/**
+ * A jelentés központi minősítése (spec 7.): az admin fokozatot és opcionális megjegyzést ad, az üres fokozat törli a
+ * minősítést. Csak a központ (`canIntezkedni`) hívhatja; a jog hiánya form-szintű hiba (nem 404), mint a többi
+ * actionnél. Nem irányít át: a hívó dialógus a `{ ok: true }`-ra zár. A nem létező jelentés hibájánál nincs
+ * revalidálás, különben a lista frissítése a hibaüzenettel együtt eltüntetné a dialógust.
+ */
+export async function mentMinositesAction(
+  id: string,
+  _prev: MuveletState,
+  formData: FormData,
+): Promise<MuveletState> {
+  const session = await requireSession();
+  if (!canIntezkedni(session)) return { errors: { form: NINCS_JOG } };
+  const parsed = parseRiportMinositesForm(formData);
+  if (!parsed.ok) return { errors: parsed.errors };
+  try {
+    if (!setRiportMinosites(id, parsed.data, session.name)) {
+      return { errors: { form: 'A bejegyzés már nem létezik.' } };
+    }
+  } catch (err) {
+    unstable_rethrow(err);
+    console.error('[riport] setRiportMinosites sikertelen:', err);
+    return { errors: { form: 'Mentés sikertelen, próbáld újra.' } };
+  }
+  // A layout-tag lefedi a listát, a jelentés oldalát és a monitoring adatlapját (a mutató a minősítésből számol).
+  revalidatePath('/', 'layout');
   return { ok: true };
 }

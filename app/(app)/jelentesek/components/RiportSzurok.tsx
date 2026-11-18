@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import type { RiportSzerzo } from '../../../../db/queries/riport';
+import { FOKOZATOK, isOsszFokozat } from '../../../../lib/ertekeles-szotar';
 import { orszagNev } from '../../../../lib/orszagok';
 import { KATEGORIAK, KULCSSZAVAK } from '../../../../lib/riport-szotar';
 import type { SzuroErtekek } from '../../../../lib/riport-szuro';
@@ -52,6 +53,11 @@ function SzuroSelect({
 
 const KATEGORIA_OPCIOK: SelectOpcio[] = KATEGORIAK.map((k) => ({ ertek: k.kulcs, cimke: k.rovid }));
 const KULCSSZO_OPCIOK: SelectOpcio[] = KULCSSZAVAK.map((k) => ({ ertek: k, cimke: k }));
+/** A központi minősítés szűrője (csak adminnak): a négy fokozat (4–1) és a „Nincs minősítve” (`nincs`). */
+const MINOSITES_OPCIOK: SelectOpcio[] = [
+  ...FOKOZATOK.filter((f) => isOsszFokozat(f.ertek)).map((f) => ({ ertek: String(f.ertek), cimke: f.nev })),
+  { ertek: 'nincs', cimke: 'Nincs minősítve' },
+];
 
 export function RiportSzurok({
   ertekek,
@@ -167,6 +173,14 @@ export function RiportSzurok({
             opciok={szerzok.map((s) => ({ ertek: s.id, cimke: s.nev }))}
             onChange={(v) => frissit({ attase: v })}
             className="w-56"
+          />
+          <SzuroSelect
+            id="szuro-minosites"
+            cimke="Minősítés"
+            ertek={ertekek.minosites}
+            opciok={MINOSITES_OPCIOK}
+            onChange={(v) => frissit({ minosites: v })}
+            className="w-44"
           />
         </>
       )}

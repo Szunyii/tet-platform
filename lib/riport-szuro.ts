@@ -3,6 +3,7 @@
  * és vissza a kliens szűrő-sávnak való nyers értékekre. Nincs React és nincs DB hívás.
  */
 import { ervenyesNaptariDatum } from './datum';
+import { parseMinositesSzuro, type MinositesSzuro } from './riport-minosites';
 import { isKategoriaKulcs, isKulcsszo, type KategoriaKulcs } from './riport-szotar';
 import type { SearchParams } from './routes';
 
@@ -50,6 +51,16 @@ export function szuroFromSearchParams(sp: SearchParams): RiportFilter {
   return f;
 }
 
+/**
+ * A „Minősítés” szűrő (`?minosites=`) értéke; ismeretlen érték `null`. A központi minősítés csak adminé: a hívó (a
+ * page) csak adminnál hívja, attasénál az URL-ből jövő értéket eldobja (nem szűkít, nem számít aktív szűrőnek). A
+ * `RiportFilter`-be szándékosan nem kerül: a minősítés nem a `riport` táblában van, a szűrés a lista memóriában
+ * történik (`listRiportok` nem lapoz és nem korlátoz).
+ */
+export function minositesFromSearchParams(sp: SearchParams): MinositesSzuro | null {
+  return parseMinositesSzuro(egy(sp.minosites));
+}
+
 /** Az aktív szűrők URL-értékei a kliens komponensnek (üres string = nincs). */
 export interface SzuroErtekek {
   q: string;
@@ -57,6 +68,8 @@ export interface SzuroErtekek {
   kulcsszo: string;
   orszag: string;
   attase: string;
+  /** A „Minősítés” szűrő (`4`–`1` vagy `nincs`); attasénak mindig üres. */
+  minosites: string;
   tol: string;
   ig: string;
 }
@@ -65,13 +78,14 @@ export interface SzuroErtekek {
  * Csak az URL-ből jövő szűrőt add át: a jogosultságból kényszerített szerző-szűrő (az attasé
  * saját bejegyzései) csak a `listRiportok` hívásba kerüljön, különben aktív szűrőnek látszana.
  */
-export function szuroErtekek(f: RiportFilter): SzuroErtekek {
+export function szuroErtekek(f: RiportFilter, minosites: MinositesSzuro | null = null): SzuroErtekek {
   return {
     q: f.q ?? '',
     kategoria: f.kategoria ?? '',
     kulcsszo: f.kulcsszo ?? '',
     orszag: f.orszag ?? '',
     attase: f.szerzoId ?? '',
+    minosites: minosites === null ? '' : String(minosites),
     tol: f.datumTol ?? '',
     ig: f.datumIg ?? '',
   };
