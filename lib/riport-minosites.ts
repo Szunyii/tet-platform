@@ -24,13 +24,17 @@ function fokozatSzam(raw: string): OsszFokozat | null {
 
 /**
  * A minősítés űrlapja. Az üres fokozat a törlést jelenti (`fokozat: null`, a megjegyzés elveszik); a hiányzó vagy
- * fájl típusú fokozat-mező viszont nem „üres”, hanem hibás kérés, mert a törlés visszavonhatatlan. A hibakulcs a
- * mező neve (= a mező DOM id-ja).
+ * fájl típusú fokozat-mező viszont nem „üres”, hanem hibás kérés, mert a törlés visszavonhatatlan; ugyanígy a hiányzó
+ * vagy fájl típusú megjegyzés-mező, ha fokozat is van (a mentés felülírja a tárolt megjegyzést). A hibakulcs a mező
+ * neve (= a mező DOM id-ja).
  */
 export function parseRiportMinositesForm(fd: FormData): ParseResult<RiportMinositesInput> {
   if (typeof fd.get('fokozat') !== 'string') return { ok: false, errors: { form: 'Hibás kérés.' } };
   const raw = mezo(fd, 'fokozat');
   if (raw === '') return { ok: true, data: { fokozat: null, megjegyzes: null } };
+  // A mentés felülírja a tárolt megjegyzést: a hiányzó vagy fájl típusú mező nem „üres megjegyzés”, hanem hibás kérés,
+  // különben egy csak a fokozatot küldő űrlap némán törölné a megjegyzést.
+  if (typeof fd.get('megjegyzes') !== 'string') return { ok: false, errors: { form: 'Hibás kérés.' } };
 
   const errors: Record<string, string> = {};
   const fokozat = fokozatSzam(raw);
