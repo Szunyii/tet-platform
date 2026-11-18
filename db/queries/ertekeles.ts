@@ -7,7 +7,7 @@ import { listProfilMutatok } from './orszagprofil';
 import { listCimzettJeloltek } from './ticket';
 import { naptariNap } from '../../lib/datum';
 import {
-  elozoFelev, felevBefejezodott, felevHatarok, felevNapok, felevOsszevet, megnyithato, type Felev, type FelevSzam,
+  alapFelev, elozoFelev, felevBefejezodott, felevHatarok, felevNapok, felevOsszevet, megnyithato, type Felev, type FelevSzam,
 } from '../../lib/ertekeles-idoszak';
 import {
   halozatiMedianok, szamolMutatok, type ErtekelesMutatok, type MutatoBemenet,
@@ -137,6 +137,14 @@ export function listLezartFelevek(ev: number): FelevSzam[] {
     .orderBy(asc(ertekelesiIdoszak.felev))
     .all()
     .map((r) => r.felev as FelevSzam);
+}
+
+/**
+ * A megjelenített félév: a `?felev=` értéke (`felev`), ennek hiányában az év alapértelmezett féléve – a legutóbbi
+ * lezárt, azzal a legutóbbi megkezdett félév (`ma`: budapesti naptári nap). A hálózati nézet és az adatlap közös szabálya.
+ */
+export function megjelenitettFelev(ev: number, felev: FelevSzam | null, ma: string): Felev {
+  return { ev, felev: felev ?? alapFelev(ev, ma, listLezartFelevek(ev)) };
 }
 
 /** Az attasék sorai az időszakban; a már meglévő sort érintetlenül hagyja. */

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import type { SelectOpcio } from '../../../components/form/CimkesSelect';
-import { listHalozat, listLezartFelevek, type IdoszakSor } from '../../../db/queries/ertekeles';
+import { listHalozat, megjelenitettFelev, type IdoszakSor } from '../../../db/queries/ertekeles';
 import { aktualisEv, maiNaptariNap } from '../../../lib/datum';
-import { alapFelev, felevMegkezdodott, megnyithato, type Felev } from '../../../lib/ertekeles-idoszak';
+import { felevMegkezdodott, megnyithato, type Felev } from '../../../lib/ertekeles-idoszak';
 import { osszesit, regionkent, szurSorok, type ErtekelesSor } from '../../../lib/ertekeles-osszesites';
 import { szuroFromSearchParams, szuroUrl } from '../../../lib/ertekeles-szuro';
 import { orszagNev, orszagRegio, ORSZAG_REGIOK } from '../../../lib/orszagok';
@@ -47,8 +47,8 @@ export default async function MonitoringPage({ searchParams }: { searchParams: P
   const szuro = szuroFromSearchParams(await searchParams);
   const ma = maiNaptariNap();
   const ev = await getValasztottEv(aktualisEv());
-  const felevSzam = szuro.felev ?? alapFelev(ev, ma, listLezartFelevek(ev));
-  const felev: Felev = { ev, felev: felevSzam };
+  const felev: Felev = megjelenitettFelev(ev, szuro.felev, ma);
+  const felevSzam = felev.felev;
   const { idoszak, sorok } = listHalozat(felev);
   // A félév-művelet után is ez a félév látszik: `?felev=` nélkül az alapérték a lezárt félévekből adódik, és a
   // művelet megváltoztathatja. A tisztítás előtti szűrőből készül, mert a még meg nem nyitott félévnek nincsenek
