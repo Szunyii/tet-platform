@@ -15,6 +15,12 @@
  * 6. a nyitott 2026/2 félév a mai napig tartó adatokkal;
  * 7. önellenőrzés: hiba esetén nem nulla kilépési kód.
  *
+ * Az A blokk (tevékenységek és eredmények) a 2025/1 és későbbi félévekre készül, a Kapcsolatépítés és az
+ * Eredmények fokozatával összhangban (a 2024/2 félév bővített adat nélküli marad, `verzio: 1` pillanatképpel).
+ * A tevékenységek közvetlen inserttel jönnek létre, az eredmények és az igazolási életciklusuk az éles
+ * műveletekkel (db/queries/tevekenyseg.ts), történelmi időpontokkal, a lezárás előtt. Ehhez külön
+ * véletlenszám-folyam tartozik, így a korábbi adatok (jelentések, ticketek, minősítések) változatlanok.
+ *
  * Az attasék olyan országokban dolgoznak, ahol a valós hálózatnak nincs posztja, a nevek és a szövegek
  * kitaláltak, így a minősítés valós személyhez sem a név, sem a poszt alapján nem köthető.
  *
@@ -30,12 +36,12 @@ import { existsSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { Db } from '../db';
 import {
-  account, attaseErtekeles, attaseOrszag, ertekelesiIdoszak, orszagprofil, riport, session, szempontMinosites,
-  ticket, ticketUzenet, user,
+  account, attaseErtekeles, attaseOrszag, eredmeny, eredmenyEsemeny, ertekelesiIdoszak, orszagprofil, riport,
+  session, szempontMinosites, ticket, ticketUzenet, tevekenyseg, user,
 } from '../db/schema';
 import type { AttaseOrszag } from '../lib/attase-orszag';
 import { naptariNap } from '../lib/datum';
-import { felevCimke, felevKulcs, felevNapok, type Felev } from '../lib/ertekeles-idoszak';
+import { felevCimke, felevKulcs, felevNapok, felevOsszevet, type Felev, type FelevSzam } from '../lib/ertekeles-idoszak';
 import type { ErtekelesMutatok } from '../lib/ertekeles-mutatok';
 import { haladas, teljesE } from '../lib/ertekeles-osszesites';
 import {
@@ -48,8 +54,13 @@ import {
 } from '../lib/orszagprofil-szotar';
 import type { KategoriaKulcs, Kulcsszo } from '../lib/riport-szotar';
 import { TIPUSOK, type TipusKulcs } from '../lib/ticket-szotar';
+import {
+  ESEMENY_CIMKE, kovetkezoSzakasz, SZAKASZOK, type EsemenyTipus, type Hozzajarulas, type Szakasz,
+  type TevekenysegTipus,
+} from '../lib/tevekenyseg-szotar';
 
 type Ertekeles = typeof import('../db/queries/ertekeles');
+type Tevekenyseg = typeof import('../db/queries/tevekenyseg');
 
 // ---------------------------------------------------------------------------------------------------------
 // Rögzített adatok
@@ -177,12 +188,12 @@ function mulberry32(mag: number): () => number {
 
 const rnd = mulberry32(MAG);
 const egesz = (a: number, b: number): number => a + Math.floor(rnd() * (b - a + 1));
-const valaszt = <T>(l: readonly T[]): T => l[Math.floor(rnd() * l.length)];
+const valaszt = <T>(l: readonly T[], r: () => number = rnd): T => l[Math.floor(r() * l.length)];
 
-function kever<T>(l: readonly T[]): T[] {
+function kever<T>(l: readonly T[], r: () => number = rnd): T[] {
   const ki = [...l];
   for (let i = ki.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(rnd() * (i + 1));
+    const j = Math.floor(r() * (i + 1));
     [ki[i], ki[j]] = [ki[j], ki[i]];
   }
   return ki;
@@ -199,8 +210,8 @@ function sulyozott<T>(l: readonly T[]): T {
 }
 
 /** Determinisztikus, UUID alakú azonosító a rögzített magból. */
-function azonosito(): string {
-  const h = Array.from({ length: 16 }, () => egesz(0, 255).toString(16).padStart(2, '0')).join('');
+function azonosito(egeszFv: (a: number, b: number) => number = egesz): string {
+  const h = Array.from({ length: 16 }, () => egeszFv(0, 255).toString(16).padStart(2, '0')).join('');
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-8${h.slice(17, 20)}-${h.slice(20)}`;
 }
 
@@ -232,8 +243,8 @@ function munkanapok(a: string, b: string): string[] {
 }
 
 /** Egy munkanap időpontja: 07:00–14:59 UTC, így a budapesti naptári nap is ugyanaz. */
-function idopont(nap: string): Date {
-  return new Date(napDate(nap).getTime() + egesz(7, 14) * 3600_000 + egesz(0, 59) * 60_000 + egesz(0, 59) * 1000);
+function idopont(nap: string, egeszFv: (a: number, b: number) => number = egesz): Date {
+  return new Date(napDate(nap).getTime() + egeszFv(7, 14) * 3600_000 + egeszFv(0, 59) * 60_000 + egeszFv(0, 59) * 1000);
 }
 
 /** `tol`-hoz `wd` munkanapot ad (szombat és vasárnap nem számít); hétvégére eső végpont a következő hétfő reggelére kerül. */
@@ -547,6 +558,7 @@ const KIHAGYAS_OKA = 'Az időszak nagy részében tartósan távol volt, ezért 
 
 let db!: Db;
 let ert!: Ertekeles;
+let tq!: Tevekenyseg;
 
 interface Ido {
   terv: FelevTerv;
@@ -863,6 +875,545 @@ function osszMentese(a: Attase, ertekelesId: string, cella: Cella, ido: Ido, sor
 }
 
 // ---------------------------------------------------------------------------------------------------------
+// A blokk: tevékenységek és eredmények
+// ---------------------------------------------------------------------------------------------------------
+
+/** Az első tesztfélév, amely tevékenységi és eredményadatot kap; a korábbi (2024/2) bővített adat nélküli marad. */
+const A_ELSO_FELEV: Felev = { ev: 2025, felev: 1 };
+
+function aBlokkFelev(f: Felev): boolean {
+  return felevOsszevet(f, A_ELSO_FELEV) >= 0;
+}
+
+/** Az A blokk saját véletlenszám-folyama: a jelentések, ticketek és minősítések ettől függetlenül ugyanazok maradnak. */
+const rndA = mulberry32(MAG + 1);
+const egeszA = (a: number, b: number): number => a + Math.floor(rndA() * (b - a + 1));
+const valasztA = <T>(l: readonly T[]): T => valaszt(l, rndA);
+const keverA = <T>(l: readonly T[]): T[] => kever(l, rndA);
+const azonositoA = (): string => azonosito(egeszA);
+const idopontA = (nap: string): Date => idopont(nap, egeszA);
+const esellyelA = (p: number): boolean => rndA() < p;
+
+/** A Kapcsolatépítés fokozata → a lezárt félévben rögzített tevékenységek száma. */
+const TEVEKENYSEG_DB: Record<Fokozat, number> = { 4: 10, 3: 7, 2: 4, 1: 2, 0: 0 };
+/** A tevékenységtípusok aránya, százalékban. */
+const TIPUS_ARANY: readonly (readonly [TevekenysegTipus, number])[] = [
+  ['b2b', 50],
+  ['partnerkozvetites', 30],
+  ['delegacio', 20],
+];
+/** A típusok országos arányától megengedett eltérés, százalékpontban (az önellenőrzés ezt nézi). */
+const TIPUS_ELTERES = 2;
+
+/** A félévben rögzített tevékenységek száma; a nyitott félévben az eltelt idő arányában (legalább egy, ha van). */
+function tevekenysegSzam(k: Fokozat, ido: Ido): number {
+  const alap = TEVEKENYSEG_DB[k];
+  if (!ido.terv.nyitott || alap === 0) return alap;
+  return Math.max(1, Math.round(alap * ido.arany));
+}
+
+/**
+ * `n` tevékenység típusonkénti száma: az arányok egész része biztosan kiosztásra kerül, a maradékot az országosan
+ * addig kiosztottakhoz mért legnagyobb hiányú típus kapja. Így a félévi csoportok is közel arányosak, és az országos
+ * arány a kerekítés ellenére sem csúszik el (a 7 tevékenységes csoportoknál a fix kerekítés a B2B-t felülmúlná).
+ */
+function tipusEloszlas(n: number, futo: Readonly<Record<TevekenysegTipus, number>>): Record<TevekenysegTipus, number> {
+  const osszesen = TIPUS_ARANY.reduce((osszeg, [tipus]) => osszeg + futo[tipus], 0) + n;
+  const db = Object.fromEntries(
+    TIPUS_ARANY.map(([tipus, szazalek]) => [tipus, Math.floor((n * szazalek) / 100)]),
+  ) as Record<TevekenysegTipus, number>;
+  for (let hianyzik = n - TIPUS_ARANY.reduce((osszeg, [tipus]) => osszeg + db[tipus], 0); hianyzik > 0; hianyzik -= 1) {
+    let legjobb = TIPUS_ARANY[0][0];
+    let legnagyobbHiany = -Infinity;
+    for (const [tipus, szazalek] of TIPUS_ARANY) {
+      const hiany = (osszesen * szazalek) / 100 - (futo[tipus] + db[tipus]);
+      if (hiany > legnagyobbHiany + 1e-9) {
+        legnagyobbHiany = hiany;
+        legjobb = tipus;
+      }
+    }
+    db[legjobb] += 1;
+  }
+  return db;
+}
+
+/** Az eddig kiosztott tevékenységek típusonként (a `tipusEloszlas` hiány-számításához). */
+const tipusFuto: Record<TevekenysegTipus, number> = { b2b: 0, partnerkozvetites: 0, delegacio: 0 };
+
+function tipusLista(n: number): TevekenysegTipus[] {
+  const eloszlas = tipusEloszlas(n, tipusFuto);
+  const lista: TevekenysegTipus[] = [];
+  for (const [tipus] of TIPUS_ARANY) {
+    tipusFuto[tipus] += eloszlas[tipus];
+    lista.push(...Array<TevekenysegTipus>(eloszlas[tipus]).fill(tipus));
+  }
+  return lista;
+}
+
+/** Az első elem a listából, amely az előnyben részesítettek között van, különben a lista első eleme (a listából kivéve). */
+function kivesz<T>(lista: T[], elonyben: readonly T[]): T {
+  for (const t of elonyben) {
+    const i = lista.indexOf(t);
+    if (i >= 0) return lista.splice(i, 1)[0];
+  }
+  return lista.splice(0, 1)[0];
+}
+
+/** Az ügyek életútja: a kezdő szakasz és a lépések (a szakaszváltás, az igazolás és a döntések az éles műveletekkel). */
+type Lepes = 'kapcsolat' | 'keres' | 'igazol' | 'visszakuld' | 'kifogasol' | 'megszakit' | 'ujraindit';
+type UgyTipus =
+  | 'lehetoseg'
+  | 'kapcsolat'
+  | 'egyuttmukodes'
+  | 'megallapodas'
+  | 'fuggo_e'
+  | 'fuggo_m'
+  | 'visszakuldott'
+  | 'kifogasolt'
+  | 'megszakadt'
+  | 'megszakadt_k'
+  | 'ujrainditott';
+
+interface UgyMinta {
+  kezdo: 'lehetoseg' | 'kapcsolat';
+  lepesek: readonly Lepes[];
+  /** Az ügy a lépések után is aktív (tevékenység kapcsolhatható hozzá). */
+  aktiv: boolean;
+}
+
+const UGY_MINTA: Record<UgyTipus, UgyMinta> = {
+  lehetoseg: { kezdo: 'lehetoseg', lepesek: [], aktiv: true },
+  kapcsolat: { kezdo: 'lehetoseg', lepesek: ['kapcsolat'], aktiv: true },
+  egyuttmukodes: { kezdo: 'kapcsolat', lepesek: ['keres', 'igazol'], aktiv: true },
+  megallapodas: { kezdo: 'kapcsolat', lepesek: ['keres', 'igazol', 'keres', 'igazol'], aktiv: true },
+  fuggo_e: { kezdo: 'kapcsolat', lepesek: ['keres'], aktiv: true },
+  fuggo_m: { kezdo: 'kapcsolat', lepesek: ['keres', 'igazol', 'keres'], aktiv: true },
+  visszakuldott: { kezdo: 'kapcsolat', lepesek: ['keres', 'visszakuld'], aktiv: true },
+  kifogasolt: { kezdo: 'lehetoseg', lepesek: ['kapcsolat', 'kifogasol'], aktiv: true },
+  megszakadt: { kezdo: 'lehetoseg', lepesek: ['megszakit'], aktiv: false },
+  megszakadt_k: { kezdo: 'kapcsolat', lepesek: ['megszakit'], aktiv: false },
+  ujrainditott: { kezdo: 'lehetoseg', lepesek: ['megszakit', 'ujraindit'], aktiv: true },
+};
+
+/**
+ * Az Eredmények fokozata → a félévben elért eredmények (a feladat táblázata): a 4-es fokozatnál megállapodás és
+ * együttműködés (a láncban a kapcsolat is elért), a 3-asnál együttműködés és kapcsolat, a 2-esnél kapcsolat és
+ * két lehetőség, az 1-esnél egy lehetőség, a 0-nál nincs. Az együttműködés és a megállapodás igazolt szakasz.
+ */
+const EREDMENY_TIPUSOK: Record<Fokozat, readonly UgyTipus[]> = {
+  4: ['megallapodas'],
+  3: ['egyuttmukodes'],
+  2: ['kapcsolat', 'lehetoseg'],
+  1: ['lehetoseg'],
+  0: [],
+};
+
+/** A nyitott 2026/2 félév speciális állapotai: ezek az ügyek a fokozat szerintiek mellett készülnek. */
+const NYITOTT_SPECIALIS: Readonly<Record<string, readonly UgyTipus[]>> = {
+  'Erdei Márk': ['fuggo_e'],
+  'Hegedűs Nóra': ['fuggo_e'],
+  'Lukács Péter': ['fuggo_m'],
+  'Takács Ádám': ['fuggo_e'],
+  'Jakab Tamás': ['visszakuldott'],
+  'Mátyás Dóra': ['visszakuldott'],
+  'Papp Zsófia': ['kifogasolt'],
+  'Novák Gergely': ['megallapodas'],
+  'Kertész Anna': ['megszakadt'],
+  'Vass Réka': ['megszakadt_k'],
+  'Szalai Emese': ['ujrainditott'],
+};
+/** A nyitott félévben kifogásolt tevékenységet kapó attasék (egy-egy bejegyzés). */
+const KIFOGASOLT_TEVEKENYSEG: readonly string[] = ['Bárdos Kata', 'Lukács Péter', 'Takács Ádám'];
+/** Az az attasé, akinek a 2026/1 félévben igazolt szakaszát a központ a 2026/2 félévben visszavonja (a lezárt pillanatkép nem változik). */
+const VISSZAVONAS_ATTASE = 'Fodor Lilla';
+
+/** A speciális állapotok legkisebb darabszáma a nyitott félévben (az önellenőrzés ezt nézi). */
+const NYITOTT_MINIMUM = { fuggo: 3, visszakuldott: 2, tevekenysegKifogas: 2, ugyKifogas: 1, megszakadt: 2, visszavont: 1 } as const;
+
+/** Egy ügy egy minta szerinti lépésekkel elért szakaszai (lehetőség, kapcsolat, együttműködés, megállapodás darabszám). */
+function elertSzakaszok(tipusok: readonly UgyTipus[]): Record<Szakasz, number> {
+  const ki: Record<Szakasz, number> = { lehetoseg: 0, kapcsolat: 0, egyuttmukodes: 0, megallapodas: 0 };
+  for (const tipus of tipusok) {
+    const minta = UGY_MINTA[tipus];
+    let szakasz: Szakasz = minta.kezdo;
+    let kert: Szakasz | null = null;
+    ki[szakasz] += 1;
+    for (const lepes of minta.lepesek) {
+      if (lepes === 'kapcsolat') {
+        szakasz = 'kapcsolat';
+        ki.kapcsolat += 1;
+      } else if (lepes === 'keres') {
+        kert = kovetkezoSzakasz(szakasz);
+      } else if (lepes === 'igazol' && kert !== null) {
+        szakasz = kert;
+        ki[kert] += 1;
+        kert = null;
+      } else if (lepes === 'visszakuld') {
+        kert = null;
+      }
+    }
+  }
+  return ki;
+}
+
+// Kitalált szövegek az A blokkhoz.
+const PARTNER_ELO = ['Aranyfolyó', 'Kékhegyi', 'Szélmalmi', 'Délvirág', 'Északfény', 'Mintavölgyi', 'Holdkerti', 'Ezüstparti'];
+const PARTNER_UTO = [
+  'Innovációs Központ', 'Műszaki Egyetem', 'Technológiai Klaszter', 'Startup Inkubátor', 'Kutatóintézet',
+  'Ipari Szövetség', 'Fejlesztési Ügynökség',
+];
+const MAGYAR_ELO = ['Mintaváros', 'Fehérmezői', 'Kisberki', 'Naplementei', 'Zöldligeti', 'Vadvirági'];
+const MAGYAR_UTO = ['Műszaki Egyetem', 'Innovációs Kft.', 'Technológiai Park', 'Kutatóintézet', 'Startup Közösség', 'Gazdasági Kamara'];
+
+const UGY_TEMA = [
+  'közös kutatási projekt a(z) {p} partnerrel',
+  'magyar beszállítók bevonása a(z) {p} projektjébe',
+  'hallgatócsere-program a(z) {p} intézménnyel',
+  'közös laborfejlesztés a(z) {p} partnerrel',
+  'akcelerációs együttműködés a(z) {p} inkubátorral',
+  'technológiatranszfer a(z) {p} bevonásával',
+];
+const UGY_LEIRAS = [
+  'A helyi partner és a magyar szereplő között a kapcsolatfelvétel megtörtént, a következő lépés a közös projektterv egyeztetése.',
+  'Az ügy a félév során több egyeztetéssel haladt, a partner elköteleződése folyamatosan erősödik.',
+  'A partnerrel a lehetséges együttműködési formákat tisztáztuk, a részletek kidolgozása folyamatban van.',
+];
+const TEV_LEIRAS = [
+  'A találkozón a felek bemutatták az együttműködési lehetőségeiket, és megegyeztek a folytatásról.',
+  'A programon a magyar és a helyi szereplők a közös projektötleteket vitatták meg.',
+  'A találkozó célja a partnerkeresés és az első kapcsolatfelvétel volt.',
+];
+const INDOKLAS_EGYUTTMUKODES = [
+  'A partner írásos együttműködési szándéknyilatkozatot küldött, a közös munka első lépéseit egyeztettük.',
+  'A felek a találkozó után megkezdték a közös projekt előkészítését, a feladatok felosztása megtörtént.',
+  'A partner képviselői kétszer is egyeztettek a magyar féllel, a közös munkacsoport felállt.',
+];
+const INDOKLAS_MEGALLAPODAS = [
+  'A felek aláírták a kétoldalú együttműködési megállapodást, a másolatot a jelentésekhez csatoltuk.',
+  'A megállapodás szövegét a két fél elfogadta, az aláírás megtörtént.',
+];
+const VISSZAKULDES = [
+  'Kérjük, csatolj írásos bizonyítékot a partner szándékáról, majd kérd újra az igazolást.',
+  'A leírásból nem derül ki a partner konkrét vállalása, kérjük pontosítsd.',
+];
+const VISSZAVONAS = [
+  'A partner utólag visszalépett, az együttműködés a jelenlegi tartalommal nem igazolható, ezért az igazolást visszavontuk.',
+];
+const UGY_KIFOGAS = [
+  'A bejegyzés alapján a kapcsolat még nem igazolható, kérjük pontosítsd a partner szerepét és a magyar fél bevonását.',
+];
+const TEV_KIFOGAS = [
+  'A bejegyzésből nem derül ki a találkozó időpontja és a résztvevők köre, kérjük pontosítsd.',
+  'A megnevezés és a partner megadása hiányos, a tevékenység így nem számítható be.',
+];
+const MEGSZAKITAS = [
+  'A partner átszervezés miatt felfüggesztette a projektet, az ügy egyelőre nem folytatható.',
+  'A magyar szereplő kilépett az együttműködésből, új partner nélkül nincs folytatás.',
+];
+
+interface RiportInfo {
+  id: string;
+  targy: string;
+  kategoria: string;
+  orszag: string;
+  esemenyDatum: string | null;
+  /** A beadás budapesti naptári napja. */
+  nap: string;
+}
+
+/** Az attasé jelentései a félévben, létrehozás szerint (azonos időnél az azonosító dönt). */
+function sajatRiportok(a: Attase, ido: Ido): RiportInfo[] {
+  return db
+    .select({
+      id: riport.id,
+      targy: riport.targy,
+      kategoria: riport.kategoria,
+      orszag: riport.orszag,
+      esemenyDatum: riport.esemenyDatum,
+      createdAt: riport.createdAt,
+    })
+    .from(riport)
+    .where(eq(riport.szerzoId, a.id))
+    .all()
+    .sort((x, y) => x.createdAt.getTime() - y.createdAt.getTime() || (x.id < y.id ? -1 : 1))
+    .map(({ createdAt, ...r }) => ({ ...r, nap: naptariNap(createdAt) }))
+    .filter((r) => r.nap >= ido.elsoNap && r.nap <= ido.jelentesVeg);
+}
+
+/** Egy elkészült ügy: a tevékenységek kapcsolásához és az önellenőrzéshez. */
+interface UgyRekord {
+  id: string;
+  felev: string;
+  tipus: UgyTipus;
+  /** A létrehozás budapesti naptári napja. */
+  nap: string;
+  orszag: string;
+  partnerAlap: string;
+  magyarAlap: string | null;
+  aktiv: boolean;
+}
+
+/** Az attasé eddig létrehozott ügyei (az attasé azonosítója szerint). */
+const ugyNaplo = new Map<string, UgyRekord[]>();
+
+function irasOk(eredmenyKod: string, mit: string): void {
+  if (eredmenyKod !== 'ok') throw new Error(`${mit}: az írás eredménye ${eredmenyKod}.`);
+}
+
+/** Az ügy jelenlegi verziója: minden írás előtt frissen olvasva (az írások ugyanezt a verziót ellenőrzik). */
+function ugyVerzio(id: string): number {
+  const u = tq.getEredmeny(id);
+  if (!u) throw new Error(`Az eredmény (${id}) nem található.`);
+  return u.verzio;
+}
+
+const partnerAlapNev = (): string => `${valasztA(PARTNER_ELO)} ${valasztA(PARTNER_UTO)}`;
+const magyarAlapNev = (): string => `${valasztA(MAGYAR_ELO)} ${valasztA(MAGYAR_UTO)}`;
+const kitalalt = (alap: string): string => `${alap} (kitalált)`;
+
+function orszagValasztas(a: Attase): string {
+  return esellyelA(0.7) ? a.szekhely : valasztA([a.szekhely, ...a.regio]);
+}
+
+/** `n` különböző munkanap a listából, időrendben (az ügy létrehozása és minden lépése külön napra esik). */
+function ugyNapok(napok: readonly string[], n: number): string[] {
+  if (napok.length < n) throw new Error(`Nincs elég munkanap (${napok.length}) ${n} lépéshez.`);
+  const sorszamok = keverA([...napok.keys()]).slice(0, n).sort((x, y) => x - y);
+  return sorszamok.map((i) => napok[i]);
+}
+
+/**
+ * Egy ügy létrehozása és életútja az éles műveletekkel, történelmi időpontokkal: minden lépés az előzőnél későbbi
+ * napon, az írás előtt frissen olvasott verzióval. A beszámítási félévet az `igazol` rögzíti: a félév lezárása
+ * előtt készülő ügyeknél a kérés (és az igazolás) féléve.
+ */
+function ugyLefuttat(
+  a: Attase,
+  tipus: UgyTipus,
+  napok: readonly string[],
+  riportok: readonly RiportInfo[],
+  felev: Felev,
+): UgyRekord {
+  const minta = UGY_MINTA[tipus];
+  const orszag = orszagValasztas(a);
+  const partnerAlap = partnerAlapNev();
+  const magyarAlap = esellyelA(0.7) ? magyarAlapNev() : null;
+  const hozzajarulas: Hozzajarulas = esellyelA(0.6) ? 'kozvetlen' : 'kozremukodes';
+  const leiras = esellyelA(0.6) ? `${valasztA(UGY_LEIRAS)} ${KITALALT}` : null;
+  const kontextus = (lepes: string) => `${a.nev}, ${felevKulcs(felev)}, ${tipus}, ${lepes}`;
+
+  const letrehozas = tq.createEredmeny(
+    a.id,
+    {
+      megnevezes: kitalalt(`${orszagNev(orszag)}: ${valasztA(UGY_TEMA).replace('{p}', partnerAlap)}`),
+      orszagKod: orszag,
+      partner: kitalalt(partnerAlap),
+      magyarSzereplo: magyarAlap === null ? null : kitalalt(magyarAlap),
+      hozzajarulas,
+      leiras,
+      kezdoSzakasz: minta.kezdo,
+    },
+    a.nev,
+    idopontA(napok[0]),
+  );
+  if (letrehozas.eredmeny !== 'ok' || letrehozas.id === undefined) throw new Error(`${kontextus('létrehozás')}: ${letrehozas.eredmeny}.`);
+  const id = letrehozas.id;
+
+  let szakasz: Szakasz = minta.kezdo;
+  let kert: Szakasz | null = null;
+  for (let i = 0; i < minta.lepesek.length; i += 1) {
+    const lepes = minta.lepesek[i];
+    const most = idopontA(napok[i + 1]);
+    const mit = kontextus(lepes);
+    switch (lepes) {
+      case 'kapcsolat':
+        irasOk(tq.kapcsolatbaLep(id, a.id, a.nev, ugyVerzio(id), most), mit);
+        szakasz = 'kapcsolat';
+        break;
+      case 'keres': {
+        kert = kovetkezoSzakasz(szakasz);
+        if (kert === null) throw new Error(`${mit}: nincs következő szakasz.`);
+        irasOk(
+          tq.kerIgazolast(
+            id,
+            a.id,
+            {
+              indoklas: `${valasztA(kert === 'megallapodas' ? INDOKLAS_MEGALLAPODAS : INDOKLAS_EGYUTTMUKODES)} ${KITALALT}`,
+              link: esellyelA(0.5) ? `https://pelda.example/kitalalt/${egeszA(1000, 9999)}` : null,
+              riportId: riportok.length > 0 && esellyelA(0.5) ? valasztA(riportok).id : null,
+              verzio: ugyVerzio(id),
+            },
+            a.nev,
+            most,
+          ),
+          mit,
+        );
+        break;
+      }
+      case 'igazol':
+        irasOk(tq.igazol(id, ERTEKELO, ugyVerzio(id), most), mit);
+        if (kert !== null) szakasz = kert;
+        kert = null;
+        break;
+      case 'visszakuld':
+        irasOk(tq.visszakuld(id, { megjegyzes: `${valasztA(VISSZAKULDES)} ${KITALALT}`, verzio: ugyVerzio(id) }, ERTEKELO, most), mit);
+        kert = null;
+        break;
+      case 'kifogasol':
+        irasOk(tq.kifogasolEredmeny(id, { megjegyzes: `${valasztA(UGY_KIFOGAS)} ${KITALALT}`, verzio: ugyVerzio(id) }, ERTEKELO, most), mit);
+        break;
+      case 'megszakit':
+        irasOk(tq.megszakit(id, a.id, { megjegyzes: `${valasztA(MEGSZAKITAS)} ${KITALALT}`, verzio: ugyVerzio(id) }, a.nev, most), mit);
+        break;
+      case 'ujraindit':
+        irasOk(tq.ujraindit(id, a.id, a.nev, ugyVerzio(id), most), mit);
+        break;
+    }
+  }
+  return { id, felev: felevKulcs(felev), tipus, nap: napok[0], orszag, partnerAlap, magyarAlap, aktiv: minta.aktiv };
+}
+
+type TevekenysegSorBe = typeof tevekenyseg.$inferInsert;
+
+function tevekenysegNev(tipus: TevekenysegTipus, partnerAlap: string, magyarAlap: string | null): string {
+  switch (tipus) {
+    case 'delegacio':
+      return kitalalt(`Magyar delegáció a(z) ${partnerAlap} meghívására`);
+    case 'b2b':
+      return kitalalt(`B2B-találkozó a(z) ${partnerAlap} képviselőivel`);
+    case 'partnerkozvetites':
+      return kitalalt(`Partnerközvetítés: ${partnerAlap} és ${magyarAlap ?? 'magyar partner'}`);
+  }
+}
+
+/**
+ * Az attasé tevékenységei a félévben (közvetlen inserttel). A Kapcsolatépítés fokozata adja a darabszámot, a típusok
+ * aránya B2B 50%, partnerközvetítés 30%, delegáció 20%. Ha van rendezvény vagy együttműködés kategóriájú jelentése,
+ * legalább egy tevékenység abból indul (megnevezés a tárgyból, ország a jelentésből, dátum az esemény napjából vagy a
+ * beadás napjából, mint az éles felületen); a többi bejegyzés egy része az attasé korábbi aktív ügyéhez kapcsolódik.
+ */
+function tevekenysegekLetrehoz(
+  a: Attase,
+  cella: Cella,
+  ido: Ido,
+  riportok: readonly RiportInfo[],
+  kezdet: string,
+): TevekenysegSorBe[] {
+  const n = tevekenysegSzam(cella.fok.kapcsolatepites, ido);
+  if (n === 0) return [];
+  const tipusok = keverA(tipusLista(n));
+  const jeloltek = riportok.filter((r) => r.kategoria === 'rendezveny' || r.kategoria === 'egyuttmukodes');
+  const kotes = jeloltek.length === 0 ? 0 : Math.min(n, jeloltek.length, Math.max(1, Math.round(n * 0.4)));
+  const napok = munkanapok(kezdet, ido.jelentesVeg);
+  const ugyek = ugyNaplo.get(a.id) ?? [];
+  const sorok: TevekenysegSorBe[] = [];
+
+  const sor = (
+    tipus: TevekenysegTipus,
+    datum: string,
+    letrehozasNap: string,
+    orszagKod: string,
+    megnevezes: string | null,
+    partnerAlap: string,
+    magyarAlap: string | null,
+    r: RiportInfo | null,
+    ugy: UgyRekord | null,
+  ): TevekenysegSorBe => {
+    const magyar = tipus === 'partnerkozvetites' ? (magyarAlap ?? magyarAlapNev()) : magyarAlap;
+    const letrehozva = idopontA(letrehozasNap);
+    return {
+      id: azonositoA(),
+      attaseId: a.id,
+      tipus,
+      datum,
+      orszagKod,
+      megnevezes: megnevezes ?? tevekenysegNev(tipus, partnerAlap, magyar),
+      partner: kitalalt(partnerAlap),
+      magyarSzereplo: magyar === null ? null : kitalalt(magyar),
+      leiras: esellyelA(0.5) ? `${valasztA(TEV_LEIRAS)} ${KITALALT}` : null,
+      riportId: r?.id ?? null,
+      eredmenyId: ugy?.id ?? null,
+      createdAt: letrehozva,
+      updatedAt: letrehozva,
+    };
+  };
+
+  for (const r of keverA(jeloltek).slice(0, kotes)) {
+    const elonyben: readonly TevekenysegTipus[] =
+      r.kategoria === 'rendezveny' ? ['delegacio', 'b2b'] : ['partnerkozvetites', 'b2b'];
+    const tipus = kivesz(tipusok, elonyben);
+    const datum = r.esemenyDatum !== null && r.esemenyDatum >= kezdet && r.esemenyDatum <= ido.jelentesVeg ? r.esemenyDatum : r.nap;
+    sorok.push(sor(tipus, datum, datum > r.nap ? datum : r.nap, r.orszag, r.targy, partnerAlapNev(), esellyelA(0.5) ? magyarAlapNev() : null, r, null));
+  }
+  for (const tipus of tipusok) {
+    const datum = valasztA(napok);
+    const jeloltUgyek = ugyek.filter((u) => u.aktiv && u.nap <= datum);
+    const ugy = tipus !== 'delegacio' && jeloltUgyek.length > 0 && esellyelA(0.35) ? valasztA(jeloltUgyek) : null;
+    sorok.push(
+      ugy
+        ? sor(tipus, datum, datum, ugy.orszag, null, ugy.partnerAlap, ugy.magyarAlap, null, ugy)
+        : sor(tipus, datum, datum, orszagValasztas(a), null, partnerAlapNev(), esellyelA(0.5) ? magyarAlapNev() : null, null, null),
+    );
+  }
+  return sorok.sort((x, y) => (x.datum < y.datum ? -1 : x.datum > y.datum ? 1 : 0));
+}
+
+/** Egy attasé A blokkja a félévben: az ügyek (fokozat szerintiek és nyitott félévben a speciálisak), majd a tevékenységek. */
+function aBlokkAttase(a: Attase, cella: Cella, ido: Ido): { tevekenyseg: number; ugy: number } {
+  const kezdet = kezdNap(a, ido);
+  const napok = munkanapok(kezdet, ido.jelentesVeg);
+  const riportok = sajatRiportok(a, ido);
+  const tipusok = [
+    ...EREDMENY_TIPUSOK[cella.fok.eredmenyek],
+    ...(ido.terv.nyitott ? (NYITOTT_SPECIALIS[a.nev] ?? []) : []),
+  ];
+  const naplo = ugyNaplo.get(a.id) ?? [];
+  ugyNaplo.set(a.id, naplo);
+  for (const tipus of tipusok) {
+    naplo.push(ugyLefuttat(a, tipus, ugyNapok(napok, 1 + UGY_MINTA[tipus].lepesek.length), riportok, ido.terv.f));
+  }
+
+  const sorok = tevekenysegekLetrehoz(a, cella, ido, riportok, kezdet);
+  db.transaction((tx) => {
+    for (const c of chunk(sorok, 40)) tx.insert(tevekenyseg).values(c).run();
+  });
+
+  if (ido.terv.nyitott) {
+    if (KIFOGASOLT_TEVEKENYSEG.includes(a.nev)) {
+      // A kifogás az attasé bejegyzése utáni napokban érkezik, legkésőbb a mérés előtt egy órával.
+      const jeloltek = sorok.filter((s) => s.datum <= plusNap(MA, -4));
+      if (jeloltek.length === 0) throw new Error(`${a.nev}: nincs kifogásolható tevékenység a nyitott félévben.`);
+      const cel = valasztA(jeloltek);
+      const most = kisebb(idopontA(plusNap(cel.datum, egeszA(1, 6))), new Date(ido.hatar.getTime() - 3600_000));
+      irasOk(tq.kifogasolTevekenyseg(cel.id, `${valasztA(TEV_KIFOGAS)} ${KITALALT}`, ERTEKELO, most), `${a.nev}, kifogásolt tevékenység`);
+    }
+    if (a.nev === VISSZAVONAS_ATTASE) {
+      const cel = naplo.find((u) => (u.tipus === 'egyuttmukodes' || u.tipus === 'megallapodas') && u.felev === '2026/1');
+      if (!cel) throw new Error(`${a.nev}: nincs 2026/1 félévben igazolt szakaszt elért ügye a visszavonáshoz.`);
+      const most = idopontA(valasztA(munkanapok('2026-09-01', '2026-10-30')));
+      irasOk(
+        tq.visszavon(cel.id, { megjegyzes: `${valasztA(VISSZAVONAS)} ${KITALALT}`, verzio: ugyVerzio(cel.id) }, ERTEKELO, most),
+        `${a.nev}, igazolás visszavonása`,
+      );
+    }
+  }
+  return { tevekenyseg: sorok.length, ugy: tipusok.length };
+}
+
+/** A félév A blokkja minden attasénak (a nem dolgozó és a kihagyott attasé kimarad). */
+function aBlokkLetrehoz(attasek: readonly Attase[], ido: Ido): { tevekenyseg: number; ugy: number } {
+  const osszeg = { tevekenyseg: 0, ugy: 0 };
+  for (const a of attasek) {
+    const cella = a.cellak[ido.terv.oszlop];
+    if (cella === null || cella === 'kihagyva') continue;
+    const r = aBlokkAttase(a, cella, ido);
+    osszeg.tevekenyseg += r.tevekenyseg;
+    osszeg.ugy += r.ugy;
+  }
+  return osszeg;
+}
+
+// ---------------------------------------------------------------------------------------------------------
 // Egy félév feldolgozása
 // ---------------------------------------------------------------------------------------------------------
 
@@ -870,6 +1421,14 @@ function felevFeldolgoz(attasek: readonly Attase[], terv: FelevTerv): string {
   const ido = idoOf(terv);
   const forras = forrasadatokLetrehoz(attasek, ido);
   const idoszakId = ert.letrehozIdoszak(terv.f);
+
+  // A bővített adatok jelzője a létrehozáskor csak a 2027/1 félévtől igaz: a tesztfélévekre közvetlenül állítjuk be.
+  // A tevékenységek és az eredmények a lezárás előtt készülnek, hogy a rögzített pillanatkép tartalmazza őket.
+  let aBlokk = { tevekenyseg: 0, ugy: 0 };
+  if (aBlokkFelev(terv.f)) {
+    db.update(ertekelesiIdoszak).set({ bovitettAdatok: true }).where(eq(ertekelesiIdoszak.id, idoszakId)).run();
+    aBlokk = aBlokkLetrehoz(attasek, ido);
+  }
 
   // Az új posztra érkezett attasénak a korábbi félévekben nincs sora.
   const nincsSor = attasek.filter((a) => a.cellak[terv.oszlop] === null && !terv.nyitott);
@@ -906,7 +1465,9 @@ function felevFeldolgoz(attasek: readonly Attase[], terv: FelevTerv): string {
   });
 
   const felirat = felevCimke(terv.f);
-  const adat = `${forras.jelentes} jelentés, ${forras.ticket} ticket`;
+  const adat = `${forras.jelentes} jelentés, ${forras.ticket} ticket${
+    aBlokkFelev(terv.f) ? `, ${aBlokk.tevekenyseg} tevékenység, ${aBlokk.ugy} eredmény` : ''
+  }`;
   if (terv.nyitott) return `${felirat}: nyitott, részben minősített (${adat}).`;
   const lezaras = ert.lezarIdoszak(terv.f, ERTEKELO, terv.most);
   if (lezaras.eredmeny !== 'ok') {
@@ -947,6 +1508,20 @@ function adatokEllenorzese(): string[] {
     if (vezetok !== 1) hibak.push(`${kod}: ${vezetok} kijelölt vezető van, pontosan egy kell.`);
     if (regiok.has(kod)) hibak.push(`${kod}: székhely és regionális ország is.`);
   }
+  // Az A blokk beégetett adatai: minden hivatkozott attasé létezik, és a nyitott félévben dolgozik.
+  const nyitottCella = (a: AttaseAdat) => parseCella(MINTAK[a.mintazat][FELEVEK[FELEVEK.length - 1].oszlop]);
+  const hivatkozottak = [
+    ...Object.keys(NYITOTT_SPECIALIS), ...KIFOGASOLT_TEVEKENYSEG, VISSZAVONAS_ATTASE,
+  ];
+  for (const nev of hivatkozottak) {
+    const a = ATTASEK.find((x) => x.nev === nev);
+    if (!a) hibak.push(`${nev}: az A blokk hivatkozik rá, de nincs ilyen attasé.`);
+    else if (typeof nyitottCella(a) === 'string' || nyitottCella(a) === null) hibak.push(`${nev}: a nyitott félévben nem dolgozik.`);
+  }
+  for (const [nev, tipusok] of Object.entries(NYITOTT_SPECIALIS)) {
+    for (const t of tipusok) if (!(t in UGY_MINTA)) hibak.push(`${nev}: ismeretlen ügytípus: ${t}.`);
+  }
+  if (TIPUS_ARANY.reduce((osszeg, [, szazalek]) => osszeg + szazalek, 0) !== 100) hibak.push('A tevékenységtípusok aránya nem 100%.');
   // Az országprofil évenként egy: ugyanazon év két félévében az országismeret fokozata nem térhet el.
   for (const a of ATTASEK) {
     const cellak = MINTAK[a.mintazat].map(parseCella);
@@ -989,6 +1564,8 @@ function onellenorzes(attasek: readonly Attase[]): string[] {
     ...db.select({ k: attaseOrszag.orszagKod }).from(attaseOrszag).all().map((r) => r.k),
     ...db.select({ k: riport.orszag }).from(riport).all().map((r) => r.k),
     ...db.select({ k: ticket.orszag }).from(ticket).all().map((r) => r.k),
+    ...db.select({ k: tevekenyseg.orszagKod }).from(tevekenyseg).all().map((r) => r.k),
+    ...db.select({ k: eredmeny.orszagKod }).from(eredmeny).all().map((r) => r.k),
     ...db.select({ k: attaseErtekeles.szekhelyKod }).from(attaseErtekeles).all().map((r) => r.k),
     ...db.select({ o: attaseErtekeles.orszagok }).from(attaseErtekeles).all().flatMap((r) => r.o.map((x) => x.kod)),
     ...db
@@ -1007,6 +1584,12 @@ function onellenorzes(attasek: readonly Attase[]): string[] {
   const idoszakok = db.select().from(ertekelesiIdoszak).all();
   if (idoszakok.length !== FELEVEK.length) hiba(`${idoszakok.length} időszak van, ${FELEVEK.length} kellene.`);
   if (idoszakok.filter((i) => i.statusz === 'lezart').length !== FELEVEK.length - 1) hiba('nem pontosan négy lezárt időszak van.');
+  // A bővített adatok jelzője: a 2024/2 félévé hamis, a 2025/1 és későbbi négy félévé igaz.
+  for (const i of idoszakok) {
+    const kell = aBlokkFelev({ ev: i.ev, felev: i.felev as FelevSzam });
+    if (i.bovitettAdatok !== kell) hiba(`${i.ev}/${i.felev}: a bővített adatok jelzője ${i.bovitettAdatok}, ${kell} kellene.`);
+  }
+  if (idoszakok.filter((i) => i.bovitettAdatok).length !== 4) hiba('nem pontosan négy félév kapott bővített adat jelzőt.');
 
   // Szükséges fokozatok.
   const szempontFokozatok = new Set(db.selectDistinct({ f: szempontMinosites.fokozat }).from(szempontMinosites).all().map((r) => r.f));
@@ -1061,7 +1644,10 @@ function onellenorzes(attasek: readonly Attase[]): string[] {
       if (m.fokozat !== kell) hiba(`${kulcs}: a(z) ${m.szempont} fokozata ${m.fokozat}, ${kell} kellene.`);
     }
     if (r.mutatok === null) hiba(`${kulcs}: nincs rögzített mutató.`);
-    else mutatokEllenorzese(a, cella, r.mutatok, kulcs, hiba);
+    else {
+      mutatokEllenorzese(a, cella, r.mutatok, kulcs, hiba);
+      aMutatokEllenorzese(cella, r.mutatok, kulcs, hiba, terv.f);
+    }
   }
 
   // A nyitott félév: 6 teljes, 3 részleges, 6 üres.
@@ -1076,7 +1662,241 @@ function onellenorzes(attasek: readonly Attase[]): string[] {
     if (i < 9 && (kesz < 2 || sor.osszFokozat !== null)) hiba(`${a.nev}: a nyitott félévben nem részleges.`);
     if (i >= 9 && (kesz !== 0 || sor.osszFokozat !== null)) hiba(`${a.nev}: a nyitott félévben nem üres.`);
   });
+
+  aBlokkEllenorzes(attasek, hiba);
   return hibak;
+}
+
+/** Egy félév napjai (`YYYY-MM-DD`) között van-e a nap (zárt intervallum). */
+function napBenne(nap: string, f: Felev): boolean {
+  const { elsoNap, utolsoNap } = felevNapok(f);
+  return nap >= elsoNap && nap <= utolsoNap;
+}
+
+/**
+ * Az A blokk (tevékenységek és eredmények) ellenőrzése az adatbázisból, a rögzített pillanatképektől függetlenül:
+ * hivatkozások és tulajdonosok, félévenkénti darabszámok, jelentésből indított tevékenységek, a típusok aránya, a
+ * kihagyott és a később érkezett attasé adatmentessége, és a nyitott félév speciális állapotai.
+ */
+function aBlokkEllenorzes(attasek: readonly Attase[], hiba: (uzenet: string) => void): void {
+  const attaseById = new Map(attasek.map((a) => [a.id, a]));
+  const tevek = db.select().from(tevekenyseg).all();
+  const ugyek = db.select().from(eredmeny).all();
+  const esemenyek = db.select().from(eredmenyEsemeny).all();
+  const riportok = new Map(
+    db
+      .select({ id: riport.id, szerzoId: riport.szerzoId, kategoria: riport.kategoria, createdAt: riport.createdAt })
+      .from(riport)
+      .all()
+      .map((r) => [r.id, r]),
+  );
+  const ugyById = new Map(ugyek.map((u) => [u.id, u]));
+  const orszagok = (a: Attase) => new Set<string>([a.szekhely, ...a.regio]);
+  const nyitott = FELEVEK[FELEVEK.length - 1];
+
+  // 1. Tevékenységek: tulajdonos, ország, dátum, hivatkozások, kifogás-mezők.
+  for (const t of tevek) {
+    const a = attaseById.get(t.attaseId);
+    const kulcs = `tevékenység „${t.megnevezes}”`;
+    if (!a) {
+      hiba(`${kulcs}: ismeretlen attasé (${t.attaseId}).`);
+      continue;
+    }
+    if (!orszagok(a).has(t.orszagKod)) hiba(`${kulcs} (${a.nev}): a(z) ${t.orszagKod} ország nem az attasé országa.`);
+    if (t.datum > MA) hiba(`${kulcs} (${a.nev}): a dátum (${t.datum}) jövőbeli.`);
+    if (t.datum < felevNapok(A_ELSO_FELEV).elsoNap) hiba(`${kulcs} (${a.nev}): a dátum (${t.datum}) a bővített adatot gyűjtő félévek előtti.`);
+    if (Math.max(t.createdAt.getTime(), t.updatedAt.getTime(), t.kifogasAt?.getTime() ?? 0) > MOST_NYITOTT.getTime()) {
+      hiba(`${kulcs} (${a.nev}): az időbélyeg a „mai” pillanatnál későbbi.`);
+    }
+    if (t.tipus === 'partnerkozvetites' && t.magyarSzereplo === null) hiba(`${kulcs} (${a.nev}): a partnerközvetítésnél hiányzik a magyar szereplő.`);
+    if (!t.megnevezes.includes('(kitalált)') || !t.partner.includes('(kitalált)')) hiba(`${kulcs} (${a.nev}): a szöveg nem jelzi, hogy kitalált.`);
+    if ([t.kifogas, t.kifogasSzerzoNev, t.kifogasAt].filter((v) => v !== null).length % 3 !== 0) hiba(`${kulcs} (${a.nev}): a kifogás mezői nem együtt töltöttek.`);
+    if (t.riportId !== null) {
+      const r = riportok.get(t.riportId);
+      if (!r || r.szerzoId !== t.attaseId) hiba(`${kulcs} (${a.nev}): a kapcsolt jelentés nem az attasé jelentése.`);
+    }
+    if (t.eredmenyId !== null) {
+      const u = ugyById.get(t.eredmenyId);
+      if (!u || u.attaseId !== t.attaseId) hiba(`${kulcs} (${a.nev}): a kapcsolt eredmény nem az attasé eredménye.`);
+    }
+  }
+
+  // 2. Eredmények és előzményeik: tulajdonos, ország, szerzők, időrend.
+  const szerzok = new Set<string>([ERTEKELO, ...ATTASEK.map((a) => a.nev)]);
+  for (const u of ugyek) {
+    const a = attaseById.get(u.attaseId);
+    const kulcs = `eredmény „${u.megnevezes}”`;
+    if (!a) {
+      hiba(`${kulcs}: ismeretlen attasé (${u.attaseId}).`);
+      continue;
+    }
+    if (!orszagok(a).has(u.orszagKod)) hiba(`${kulcs} (${a.nev}): a(z) ${u.orszagKod} ország nem az attasé országa.`);
+    if (Math.max(u.createdAt.getTime(), u.updatedAt.getTime(), u.kifogasAt?.getTime() ?? 0) > MOST_NYITOTT.getTime()) {
+      hiba(`${kulcs} (${a.nev}): az időbélyeg a „mai” pillanatnál későbbi.`);
+    }
+    if (!u.megnevezes.includes('(kitalált)') || !u.partner.includes('(kitalált)')) hiba(`${kulcs} (${a.nev}): a szöveg nem jelzi, hogy kitalált.`);
+    if (u.kertSzakasz !== null && u.igazolas !== 'igazolasra_var') hiba(`${kulcs} (${a.nev}): függő kérés, de az igazolás állapota ${u.igazolas}.`);
+    if (u.kertSzakasz === null && u.igazolas === 'igazolasra_var') hiba(`${kulcs} (${a.nev}): „igazolásra vár”, de nincs függő kérés.`);
+    const sajat = esemenyek.filter((e) => e.eredmenyId === u.id).sort((x, y) => x.createdAt.getTime() - y.createdAt.getTime());
+    if (sajat.length === 0 || sajat[0].tipus !== 'letrehozas') hiba(`${kulcs} (${a.nev}): az első esemény nem a létrehozás.`);
+    sajat.forEach((e, i) => {
+      if (i > 0 && e.createdAt.getTime() <= sajat[i - 1].createdAt.getTime()) hiba(`${kulcs} (${a.nev}): az események nem szigorúan időrendiek.`);
+      if (e.createdAt.getTime() > MOST_NYITOTT.getTime()) hiba(`${kulcs} (${a.nev}): az esemény ideje a „mai” napnál későbbi.`);
+      if (!szerzok.has(e.szerzoNev)) hiba(`${kulcs} (${a.nev}): ismeretlen szerző az előzményekben: ${e.szerzoNev}.`);
+      if (e.riportId !== null && riportok.get(e.riportId)?.szerzoId !== u.attaseId) hiba(`${kulcs} (${a.nev}): a kérés jelentése nem az attasé jelentése.`);
+    });
+  }
+
+  // 3. A kihagyott és a később érkezett attasé nem kap adatot a kimaradt időszakban.
+  for (const a of attasek) {
+    const tilosNapok: ((nap: string) => boolean)[] = [];
+    for (const fe of FELEVEK) {
+      const cella = a.cellak[fe.oszlop];
+      if (!fe.nyitott && (cella === null || cella === 'kihagyva')) tilosNapok.push((nap) => napBenne(nap, fe.f));
+    }
+    if (a.kezdet !== undefined) {
+      const kezdet = a.kezdet;
+      tilosNapok.push((nap) => nap < kezdet);
+    }
+    const tilos = (nap: string) => tilosNapok.some((fv) => fv(nap));
+    for (const t of tevek.filter((x) => x.attaseId === a.id)) {
+      if (tilos(t.datum)) hiba(`${a.nev}: tevékenység a kimaradt időszakban (${t.datum}).`);
+    }
+    for (const u of ugyek.filter((x) => x.attaseId === a.id)) {
+      if (tilos(naptariNap(u.createdAt))) hiba(`${a.nev}: eredmény a kimaradt időszakban (${naptariNap(u.createdAt)}).`);
+      for (const e of esemenyek.filter((x) => x.eredmenyId === u.id)) {
+        if (tilos(naptariNap(e.createdAt))) hiba(`${a.nev}: eredmény-esemény a kimaradt időszakban (${naptariNap(e.createdAt)}).`);
+      }
+    }
+  }
+
+  // 4. Félévenként és attasénként: a tevékenységek száma, és a jelentésből indított tevékenység.
+  for (const fe of FELEVEK.filter((x) => aBlokkFelev(x.f))) {
+    const ido = idoOf(fe);
+    for (const a of attasek) {
+      const cella = a.cellak[fe.oszlop];
+      if (cella === null || cella === 'kihagyva') continue;
+      const kulcs = `${a.nev}, ${felevKulcs(fe.f)}`;
+      const felevben = tevek.filter((t) => t.attaseId === a.id && napBenne(t.datum, fe.f));
+      const varhato = tevekenysegSzam(cella.fok.kapcsolatepites, ido);
+      if (felevben.length !== varhato) hiba(`${kulcs}: ${felevben.length} tevékenység, ${varhato} kellene.`);
+      if (varhato === 0) continue;
+      const kapcsolatiJelentesek = [...riportok.values()].filter(
+        (r) =>
+          r.szerzoId === a.id &&
+          (r.kategoria === 'rendezveny' || r.kategoria === 'egyuttmukodes') &&
+          naptariNap(r.createdAt) >= ido.elsoNap &&
+          naptariNap(r.createdAt) <= ido.jelentesVeg,
+      );
+      const indult = felevben.filter((t) => {
+        const kategoria = t.riportId === null ? null : riportok.get(t.riportId)?.kategoria;
+        return kategoria === 'rendezveny' || kategoria === 'egyuttmukodes';
+      });
+      if (kapcsolatiJelentesek.length > 0 && indult.length === 0) {
+        hiba(`${kulcs}: van rendezvény vagy együttműködés jelentése, de egy tevékenység sem indul jelentésből.`);
+      }
+    }
+  }
+
+  // 5. A típusok országos aránya.
+  for (const [tipus, szazalek] of TIPUS_ARANY) {
+    const tenyleges = (tevek.filter((t) => t.tipus === tipus).length * 100) / Math.max(1, tevek.length);
+    if (Math.abs(tenyleges - szazalek) > TIPUS_ELTERES) hiba(`a(z) ${tipus} tevékenységek aránya ${tenyleges.toFixed(1)}%, ${szazalek}% kellene (±${TIPUS_ELTERES}).`);
+  }
+
+  // 6. Előfordul minden szakasz, igazolási állapot, esemény, kifogás, megszakadt ügy és jelentésből indított tevékenység.
+  for (const { kulcs } of SZAKASZOK) if (!ugyek.some((u) => u.szakasz === kulcs)) hiba(`nincs „${kulcs}” szakaszban lévő ügy.`);
+  for (const allapot of ['nem_igenyel', 'igazolasra_var', 'igazolt', 'visszakuldott'] as const) {
+    if (!ugyek.some((u) => u.igazolas === allapot)) hiba(`nincs „${allapot}” igazolási állapotú ügy.`);
+  }
+  for (const tipus of Object.keys(ESEMENY_CIMKE) as EsemenyTipus[]) {
+    if (!esemenyek.some((e) => e.tipus === tipus)) hiba(`nincs „${tipus}” típusú esemény.`);
+  }
+  if (!tevek.some((t) => t.riportId !== null)) hiba('nincs jelentésből indított tevékenység.');
+  if (!tevek.some((t) => t.eredmenyId !== null)) hiba('nincs eredményhez kapcsolt tevékenység.');
+
+  // 7. A nyitott félév speciális állapotai.
+  const legutolso = (id: string) => esemenyek.filter((e) => e.eredmenyId === id).sort((x, y) => y.createdAt.getTime() - x.createdAt.getTime())[0];
+  const nyitottNapban = (d: Date) => napBenne(naptariNap(d), nyitott.f);
+  const fuggo = ugyek.filter((u) => u.kertSzakasz !== null && u.allapot === 'aktiv' && nyitottNapban(legutolso(u.id)?.createdAt ?? new Date(0))).length;
+  const visszakuldott = ugyek.filter((u) => u.igazolas === 'visszakuldott' && u.kertSzakasz === null && legutolso(u.id)?.tipus === 'visszakuldes').length;
+  const tevekenysegKifogas = tevek.filter((t) => t.kifogas !== null && napBenne(t.datum, nyitott.f)).length;
+  const ugyKifogas = ugyek.filter((u) => u.kifogas !== null && u.allapot === 'aktiv').length;
+  const megszakadt = ugyek.filter((u) => u.allapot === 'megszakadt' && legutolso(u.id)?.tipus === 'megszakitas').length;
+  const visszavont = esemenyek.filter((e) => e.tipus === 'igazolas' && e.visszavonva && ugyek.some((u) => u.id === e.eredmenyId && u.igazolas === 'visszakuldott')).length;
+  const minimum: [string, number, number][] = [
+    ['függő igazoláskérés', fuggo, NYITOTT_MINIMUM.fuggo],
+    ['visszaküldött kérés', visszakuldott, NYITOTT_MINIMUM.visszakuldott],
+    ['kifogásolt tevékenység', tevekenysegKifogas, NYITOTT_MINIMUM.tevekenysegKifogas],
+    ['kifogásolt ügy', ugyKifogas, NYITOTT_MINIMUM.ugyKifogas],
+    ['megszakadt ügy', megszakadt, NYITOTT_MINIMUM.megszakadt],
+    ['visszavont igazolás', visszavont, NYITOTT_MINIMUM.visszavont],
+  ];
+  for (const [nev, darab, kell] of minimum) {
+    if (darab < kell) hiba(`a nyitott ${felevKulcs(nyitott.f)} félévben ${darab} ${nev} van, legalább ${kell} kellene.`);
+  }
+  // A visszavont igazolás egy lezárt félévbe beszámított igazolás: a rögzített pillanatkép ettől nem változik.
+  const lezartVisszavont = esemenyek.filter((e) => {
+    if (e.tipus !== 'igazolas' || !e.visszavonva || e.beszamitasiEv === null || e.beszamitasiFelev === null) return false;
+    return !(e.beszamitasiEv === nyitott.f.ev && e.beszamitasiFelev === nyitott.f.felev);
+  }).length;
+  if (lezartVisszavont < 1) hiba('nincs lezárt félévbe beszámított, később visszavont igazolás.');
+}
+
+/**
+ * Az A blokk rögzített mutatói: a bővített adat nélküli félév pillanatképe `verzio: 1`, az új mezők nélkül; a
+ * 2025/1 és későbbi lezárt félévek `verzio: 2`, a Kapcsolatépítés fokozata szerinti tevékenységszámmal és az
+ * Eredmények fokozata szerinti elért szakaszokkal. A tevékenységszám táblázata és a 4/3/2/1-es fokozat feltételei
+ * szándékosan külön állnak a generálástól; az elért szakaszok pontos darabszámát a generáló mintákból vezeti le.
+ */
+function aMutatokEllenorzese(
+  cella: Cella,
+  m: ErtekelesMutatok,
+  kulcs: string,
+  hiba: (uzenet: string) => void,
+  f: Felev,
+): void {
+  const tev = m.kapcsolatepites.tevekenyseg;
+  const er = m.eredmenyek;
+  if (!aBlokkFelev(f)) {
+    if (m.verzio !== 1) hiba(`${kulcs}: a bővített adat nélküli félév pillanatképe verzio ${m.verzio}, 1 kellene.`);
+    if (tev !== undefined || er !== undefined) hiba(`${kulcs}: a bővített adat nélküli félév pillanatképében tevékenységi vagy eredményadat van.`);
+    return;
+  }
+  if (m.verzio !== 2) hiba(`${kulcs}: a pillanatkép verzio ${m.verzio}, 2 kellene.`);
+  if (tev === undefined || er === undefined) {
+    hiba(`${kulcs}: a pillanatkép nem tartalmazza a tevékenységi és az eredménymutatókat.`);
+    return;
+  }
+
+  const k = cella.fok.kapcsolatepites;
+  const e = cella.fok.eredmenyek;
+  const varhatoTevekenyseg = ({ 4: 10, 3: 7, 2: 4, 1: 2, 0: 0 } as const)[k];
+  const osszTevekenyseg = tev.delegacioDb + tev.b2bDb + tev.partnerkozvetitesDb + tev.kifogasoltDb;
+  if (osszTevekenyseg !== varhatoTevekenyseg || tev.tevekenysegek.length !== varhatoTevekenyseg) {
+    hiba(`${kulcs}: ${osszTevekenyseg} tevékenység (${tev.tevekenysegek.length} bizonyíték), ${varhatoTevekenyseg} kellene a(z) ${k}. kapcsolatépítés-fokozathoz.`);
+  }
+  if (tev.kifogasoltDb !== 0) hiba(`${kulcs}: a lezárt félévben ${tev.kifogasoltDb} kifogásolt tevékenység van, 0 kellene.`);
+  if (er.igazolasraVarDb !== 0 || er.megszakadtDb !== 0) {
+    hiba(`${kulcs}: a lezárt félévben függő kérés (${er.igazolasraVarDb}) vagy megszakadt ügy (${er.megszakadtDb}) van.`);
+  }
+
+  // A feladat táblázata: a 4-es fokozatnál megállapodás, a 3-asnál igazolt együttműködés, a 2-esnél és az 1-esnél nincs igazolt szakasz.
+  if (e === 4 && !(er.megallapodasDb >= 1)) hiba(`${kulcs}: a 4-es Eredmények fokozatnál nincs megállapodás (${er.megallapodasDb}).`);
+  if (e === 3 && !(er.egyuttmukodesDb >= 1)) hiba(`${kulcs}: a 3-as Eredmények fokozatnál nincs igazolt együttműködés (${er.egyuttmukodesDb}).`);
+  if ((e === 2 || e === 1) && (er.egyuttmukodesDb > 0 || er.megallapodasDb > 0)) {
+    hiba(`${kulcs}: a(z) ${e}. Eredmények fokozatnál igazolt szakasz van (együttműködés ${er.egyuttmukodesDb}, megállapodás ${er.megallapodasDb}).`);
+  }
+  const varhato = elertSzakaszok(EREDMENY_TIPUSOK[e]);
+  const tenyleges = {
+    lehetoseg: er.lehetosegDb, kapcsolat: er.kapcsolatDb, egyuttmukodes: er.egyuttmukodesDb, megallapodas: er.megallapodasDb,
+  };
+  for (const { kulcs: szakasz } of SZAKASZOK) {
+    if (tenyleges[szakasz] !== varhato[szakasz]) hiba(`${kulcs}: ${tenyleges[szakasz]} elért „${szakasz}” szakasz, ${varhato[szakasz]} kellene a(z) ${e}. Eredmények fokozathoz.`);
+  }
+  if (er.ugyek.length !== EREDMENY_TIPUSOK[e].length) {
+    hiba(`${kulcs}: ${er.ugyek.length} eredmény-bizonyíték, ${EREDMENY_TIPUSOK[e].length} kellene.`);
+  }
 }
 
 /** A rögzített mutatók egyeznek a generálási szabályokkal (a lezáráskor számolt pillanatképet vetjük össze). */
@@ -1163,6 +1983,7 @@ async function main() {
   ({ db } = await import('../db'));
   if (db.$client.name !== CEL) kilep([`A betöltött adatbázis (${db.$client.name}) nem a tesztadatbázis, a script megáll.`]);
   ert = await import('../db/queries/ertekeles');
+  tq = await import('../db/queries/tevekenyseg');
   const { setAttaseOrszagok } = await import('../db/queries/attase-orszag');
   if (db.select({ id: ertekelesiIdoszak.id }).from(ertekelesiIdoszak).all().length > 0) {
     kilep(['A másolat már tartalmaz értékelési időszakot; a script üres értékelési táblákból indul.']);
@@ -1212,7 +2033,9 @@ async function main() {
   if (hibak.length > 0) kilep([`Az önellenőrzés ${hibak.length} hibát talált:`, ...hibak.map((h) => `  - ${h}`)]);
   console.log('Az önellenőrzés hibátlan.');
 
+  // A kész fájl önálló (nincs -wal/-shm társa), így csak olvasható módban is megnyitható (sqlite3 -readonly).
   db.$client.pragma('wal_checkpoint(TRUNCATE)');
+  db.$client.pragma('journal_mode = DELETE');
   db.$client.close();
   console.log('Kész: data/tet-ertekeles-teszt.db');
 }
