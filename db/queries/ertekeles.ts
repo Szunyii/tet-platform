@@ -1,9 +1,10 @@
 import 'server-only';
 import { and, asc, eq, gte, inArray, isNotNull, lt, lte, min, or } from 'drizzle-orm';
 import { db } from '../index';
-import { attaseErtekeles, ertekelesiIdoszak, riport, szempontMinosites, ticket, ticketUzenet, user } from '../schema';
+import { attaseErtekeles, eredmeny, ertekelesiIdoszak, riport, szempontMinosites, ticket, ticketUzenet, user } from '../schema';
 import { listOrszagokFelhasznalonkent } from './attase-orszag';
 import { listProfilMutatok } from './orszagprofil';
+import { bovitettForrasok, countFuggoKeresek } from './tevekenyseg';
 import { listCimzettJeloltek } from './ticket';
 import { naptariNap } from '../../lib/datum';
 import {
@@ -49,6 +50,8 @@ export interface HalozatNezet {
   sorok: ErtekelesSor[];
   /** Azok az attasék magyar névsorban, akiknek a hiányos, rejtett sora a félév lezárásakor törlődik. */
   torlendoAttasek: string[];
+  /** A félévhez tartozó függő igazoláskérések; bővített adat nélküli félévben 0. A lezárást nem akadályozzák. */
+  fuggoKeresDb: number;
 }
 
 export interface SzempontMinosites {
@@ -83,6 +86,7 @@ export interface AdatlapNezet {
   elozmeny: ElozmenySor[];
   letezoJelentesek: string[];
   letezoTicketek: string[];
+  letezoEredmenyek: string[];
 }
 
 export type MentesEredmeny = 'ok' | 'nincs' | 'lezart' | 'kihagyott' | 'automatikus' | 'elavult' | 'hianyos';
@@ -341,7 +345,7 @@ function potlandoAttasek(idoszak: IdoszakSor, elok: ReadonlyMap<string, EloAttas
 /** A félév hálózati nézete; a hiányzó attasék sorait előbb pótolja (írási zárat csak akkor kér, ha van mit). */
 export function listHalozat(f: Felev): HalozatNezet {
   const idoszak = getIdoszak(f);
-  if (!idoszak) return { idoszak: null, sorok: [], torlendoAttasek: [] };
+  if (!idoszak) return { idoszak: null, sorok: [], torlendoAttasek: [], fuggoKeresDb: 0 };
   const elok = eloAttasek();
   const potlandok = potlandoAttasek(idoszak, elok);
   if (potlandok.length > 0) db.transaction((tx) => beszurSorok(tx, idoszak.id, potlandok), IRAS);
@@ -350,6 +354,7 @@ export function listHalozat(f: Felev): HalozatNezet {
     idoszak,
     sorok: lathato.map((n) => n.sor),
     torlendoAttasek: rejtettek.map((r) => r.nev).sort(huOsszevet),
+    fuggoKeresDb: idoszak.bovitettAdatok ? countFuggoKeresek(f) : 0,
   };
 }
 
@@ -442,8 +447,15 @@ function letezoFelhasznalok(idk: readonly string[]): Set<string> {
  * A félév mutatóinak számolója. A forrásadatokat és a hálózati mediánokat egyszer tölti be. A mediánokba a nem
  * kihagyott attasék számítanak, a törölt felhasználók kivételével: az ő jelentéseik és ticketjeik az FK-kaszkáddal
  * eltűntek, ezért hamis, tevékenység nélküli értéket adnának. A tiltott attasé adatai megvannak, ő beleszámít.
+ * `bovitett`: a félév gyűjt-e tevékenységi és eredményadatot (`IdoszakSor.bovitettAdatok`); ha nem, a pillanatkép
+ * az új mezők nélkül készül, hogy a felület ne nullát, hanem „nincs adat” jelzést mutasson.
  */
-function mutatoSzamolo(sorok: readonly ErtekelesSor[], f: Felev, most: Date): (sor: ErtekelesSor) => ErtekelesMutatok {
+function mutatoSzamolo(
+  sorok: readonly ErtekelesSor[],
+  f: Felev,
+  most: Date,
+  bovitett: boolean,
+): (sor: ErtekelesSor) => ErtekelesMutatok {
   const ertekeltek = sorok.filter((s) => !s.kimarad);
   const forrasok = mutatoForrasok(ertekeltek.map((s) => s.attaseId), f);
   const letezok = letezoFelhasznalok([...forrasok.keys()]);
@@ -453,6 +465,7 @@ function mutatoSzamolo(sorok: readonly ErtekelesSor[], f: Felev, most: Date): (s
     most,
   );
   const profilok = listProfilMutatok([...new Set(ertekeltek.flatMap(vezetettOrszagok))], f.ev);
+  const bovitettek = bovitett ? bovitettForrasok([...letezok], f) : null;
   return (sor) =>
     szamolMutatok({
       felev: f,
@@ -463,6 +476,7 @@ function mutatoSzamolo(sorok: readonly ErtekelesSor[], f: Felev, most: Date): (s
       vezetettOrszagok: vezetettOrszagok(sor),
       profilok,
       halozat,
+      ...(bovitettek ? { bovitett: bovitettek.get(sor.attaseId) ?? { tevekenysegek: [], eredmenyek: [] } } : {}),
     });
 }
 
@@ -493,10 +507,14 @@ function elozmenyek(attaseId: string, f: Felev): ElozmenySor[] {
 }
 
 /** A mutatókban szereplő bizonyítékok közül a még létezők azonosítói. */
-function letezoBizonyitekok(mutatok: ErtekelesMutatok | null): { letezoJelentesek: string[]; letezoTicketek: string[] } {
-  if (mutatok === null) return { letezoJelentesek: [], letezoTicketek: [] };
+function letezoBizonyitekok(
+  mutatok: ErtekelesMutatok | null,
+): Pick<AdatlapNezet, 'letezoJelentesek' | 'letezoTicketek' | 'letezoEredmenyek'> {
+  if (mutatok === null) return { letezoJelentesek: [], letezoTicketek: [], letezoEredmenyek: [] };
   const jelentesIdk = [...new Set([...mutatok.tajekoztatas.jelentesek, ...mutatok.kapcsolatepites.jelentesek].map((j) => j.id))];
   const ticketIdk = mutatok.egyuttmukodes.ticketek.map((t) => t.id);
+  // A régi pillanatképben nincs `eredmenyek` mező.
+  const eredmenyIdk = mutatok.eredmenyek?.ugyek.map((u) => u.id) ?? [];
   const jelentesek = new Set(
     jelentesIdk.length === 0
       ? []
@@ -507,9 +525,15 @@ function letezoBizonyitekok(mutatok: ErtekelesMutatok | null): { letezoJelentese
       ? []
       : db.select({ id: ticket.id }).from(ticket).where(inArray(ticket.id, ticketIdk)).all().map((r) => r.id),
   );
+  const eredmenyek = new Set(
+    eredmenyIdk.length === 0
+      ? []
+      : db.select({ id: eredmeny.id }).from(eredmeny).where(inArray(eredmeny.id, eredmenyIdk)).all().map((r) => r.id),
+  );
   return {
     letezoJelentesek: jelentesIdk.filter((id) => jelentesek.has(id)),
     letezoTicketek: ticketIdk.filter((id) => ticketek.has(id)),
+    letezoEredmenyek: eredmenyIdk.filter((id) => eredmenyek.has(id)),
   };
 }
 
@@ -553,7 +577,7 @@ export function getAdatlap(attaseId: string, f: Felev, most: Date = new Date()):
     .get();
   if (!r) return null;
   const elo = idoszak.statusz === 'nyitott' && !sor.kimarad;
-  const mutatok = r.mutatok ?? (elo ? mutatoSzamolo(sorok, f, most)(sor) : null);
+  const mutatok = r.mutatok ?? (elo ? mutatoSzamolo(sorok, f, most, idoszak.bovitettAdatok)(sor) : null);
   return {
     idoszak,
     sor,
@@ -736,7 +760,7 @@ export function lezarIdoszak(f: Felev, lezaroNev: string, most: Date = new Date(
     }
 
     const kellMutato = lathato.some((n) => !n.rogzitett && !n.sor.kimarad);
-    const szamol = kellMutato ? mutatoSzamolo(sorok, f, most) : null;
+    const szamol = kellMutato ? mutatoSzamolo(sorok, f, most, idoszak.bovitettAdatok) : null;
     const letezok = letezoFelhasznalok(sorok.map((s) => s.attaseId));
     for (const { sor, rogzitett } of lathato) {
       if (!sor.kimarad && automatikusOrszagismeret(sor.orszagok)) {

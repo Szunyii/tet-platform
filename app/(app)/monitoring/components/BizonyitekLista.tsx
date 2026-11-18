@@ -1,5 +1,12 @@
 import Link from 'next/link';
-import { FORRAS_HIANYZIK, jelentesReszlet, ticketReszlet } from '../../../../lib/ertekeles-megjelenites';
+import {
+  eredmenyReszlet,
+  FORRAS_HIANYZIK,
+  jelentesReszlet,
+  NINCS_TEVEKENYSEGI_ADAT,
+  tevekenysegReszlet,
+  ticketReszlet,
+} from '../../../../lib/ertekeles-megjelenites';
 import type { ErtekelesMutatok } from '../../../../lib/ertekeles-mutatok';
 import type { SzempontKulcs } from '../../../../lib/ertekeles-szotar';
 import { listaUrl } from '../../../../lib/ticket-szotar';
@@ -10,19 +17,19 @@ const LATHATO = 8;
 interface Elem {
   id: string;
   targy: string;
-  /** `null`: a jelentés vagy a ticket már nem létezik, a tárgy sima szöveg. */
+  /** `null`: a tárgy sima szöveg, mert a jelentés, a ticket vagy az ügy már nem létezik, vagy a tevékenységnek nincs saját oldala. */
   url: string | null;
   reszlet: string;
 }
 
 const NINCS_LISTA: Partial<Record<SzempontKulcs, string>> = {
   orszagismeret: 'Nincs külön bizonyítéklista: a mutatók az országprofilból jönnek.',
-  eredmenyek: 'Az 1. szakaszban a rendszer még nem rögzít bizonyítékot.',
 };
 
 const URES_LISTA: Partial<Record<SzempontKulcs, string>> = {
   tajekoztatas: 'Az időszakban nem volt beadott jelentés.',
   kapcsolatepites: 'Az időszakban nem volt ide tartozó jelentés.',
+  eredmenyek: 'Az időszakban nem volt ide tartozó ügy.',
   egyuttmukodes: 'Az időszakban nem volt ide tartozó ticket.',
 };
 
@@ -33,15 +40,35 @@ function elemek(
   m: ErtekelesMutatok,
   letezoJelentesek: ReadonlySet<string>,
   letezoTicketek: ReadonlySet<string>,
+  letezoEredmenyek: ReadonlySet<string>,
 ): Elem[] | null {
   if (szempont === 'tajekoztatas' || szempont === 'kapcsolatepites') {
-    return m[szempont].jelentesek.map((j) => {
+    const jelentesek = m[szempont].jelentesek.map((j) => {
       const letezik = letezoJelentesek.has(j.id);
       return {
         id: j.id,
         targy: j.targy,
         url: letezik ? `/jelentesek/${encodeURIComponent(j.id)}` : null,
         reszlet: letezik ? jelentesReszlet(j) : `${jelentesReszlet(j)} · ${TOROLT}`,
+      };
+    });
+    if (szempont === 'tajekoztatas') return jelentesek;
+    const tevekenysegek = (m.kapcsolatepites.tevekenyseg?.tevekenysegek ?? []).map((t) => ({
+      id: `tevekenyseg-${t.id}`,
+      targy: t.megnevezes,
+      url: null,
+      reszlet: tevekenysegReszlet(t),
+    }));
+    return [...tevekenysegek, ...jelentesek];
+  }
+  if (szempont === 'eredmenyek') {
+    return (m.eredmenyek?.ugyek ?? []).map((u) => {
+      const letezik = letezoEredmenyek.has(u.id);
+      return {
+        id: u.id,
+        targy: u.megnevezes,
+        url: letezik ? `/tevekenysegek/eredmeny/${encodeURIComponent(u.id)}` : null,
+        reszlet: letezik ? eredmenyReszlet(u) : `${eredmenyReszlet(u)} · ${TOROLT}`,
       };
     });
   }
@@ -86,35 +113,54 @@ function Elemek({ lista, ujLapon }: { lista: readonly Elem[]; ujLapon: boolean }
 
 /**
  * A szempont mutatóihoz tartozó bizonyítékok, legújabb elöl. A jelentés a `/jelentesek/[id]`, a ticket a
- * kommunikáció megfelelő szálára mutat; ha az azonosító nincs a még létezők között (a lezárás óta törölték),
- * a tárgy link nélküli szöveg, mert a rögzített mutatók a törlés után sem változnak. Törölt fiókú attasénál a
- * lista helyett a `FORRAS_HIANYZIK` szöveg áll. `ujLapon`: a munkalapon a linkek új lapon nyílnak, hogy a be nem
- * mentett szöveg ne vesszen el.
+ * kommunikáció megfelelő szálára, az ügy a `/tevekenysegek/eredmeny/[id]` oldalra mutat; ha az azonosító nincs a még
+ * létezők között (a lezárás óta törölték), a tárgy link nélküli szöveg, mert a rögzített mutatók a törlés után sem
+ * változnak. A Kapcsolatépítés tevékenységei a jelentések előtt állnak, link nélkül. Bővített adat nélküli félévben a
+ * `NINCS_TEVEKENYSEGI_ADAT` szöveg jelzi a hiányt: az Eredményeknél a lista helyett, a Kapcsolatépítésnél a megmaradó
+ * jelentések fölött. Törölt fiókú attasénál a lista helyett a `FORRAS_HIANYZIK` szöveg áll. `ujLapon`: a munkalapon a
+ * linkek új lapon nyílnak, hogy a be nem mentett szöveg ne vesszen el.
  */
 export function BizonyitekLista({
   szempont,
   mutatok,
   letezoJelentesek,
   letezoTicketek,
+  letezoEredmenyek,
   ujLapon = false,
 }: {
   szempont: SzempontKulcs;
   mutatok: ErtekelesMutatok;
   letezoJelentesek: readonly string[];
   letezoTicketek: readonly string[];
+  letezoEredmenyek: readonly string[];
   ujLapon?: boolean;
 }) {
   if (mutatok.forrasHianyzik) return <p className="text-muted-foreground">{FORRAS_HIANYZIK}</p>;
-  const lista = elemek(szempont, mutatok, new Set(letezoJelentesek), new Set(letezoTicketek));
+  if (szempont === 'eredmenyek' && mutatok.eredmenyek === undefined) {
+    return <p className="text-muted-foreground">{NINCS_TEVEKENYSEGI_ADAT}</p>;
+  }
+  const lista = elemek(szempont, mutatok, new Set(letezoJelentesek), new Set(letezoTicketek), new Set(letezoEredmenyek));
   if (lista === null) {
     return <p className="text-muted-foreground">{NINCS_LISTA[szempont] ?? 'Nincs bizonyíték.'}</p>;
   }
+  const tevekenysegNelkul = szempont === 'kapcsolatepites' && mutatok.kapcsolatepites.tevekenyseg === undefined;
+  const jelzes = tevekenysegNelkul && <p className="mb-1.5 text-muted-foreground">{NINCS_TEVEKENYSEGI_ADAT}</p>;
   if (lista.length === 0) {
-    return <p className="text-muted-foreground">{URES_LISTA[szempont] ?? 'Nincs bizonyíték.'}</p>;
+    const ures =
+      szempont === 'kapcsolatepites' && !tevekenysegNelkul
+        ? 'Az időszakban nem volt ide tartozó tevékenység vagy jelentés.'
+        : (URES_LISTA[szempont] ?? 'Nincs bizonyíték.');
+    return (
+      <>
+        {jelzes}
+        <p className="text-muted-foreground">{ures}</p>
+      </>
+    );
   }
   const tobb = lista.slice(LATHATO);
   return (
     <>
+      {jelzes}
       <Elemek lista={lista.slice(0, LATHATO)} ujLapon={ujLapon} />
       {tobb.length > 0 && (
         <details className="mt-1.5 border-t border-border/60 pt-1.5">

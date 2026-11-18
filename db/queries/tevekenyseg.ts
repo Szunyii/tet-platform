@@ -1,10 +1,11 @@
 import 'server-only';
-import { and, asc, count, desc, eq, gte, inArray, isNotNull, lte, or, sql, type SQL } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, inArray, isNotNull, lte, max, or, sql, type SQL } from 'drizzle-orm';
 import { db } from '../index';
 import { attaseOrszag, eredmeny, eredmenyEsemeny, ertekelesiIdoszak, riport, tevekenyseg, user } from '../schema';
 import { listAttaseOrszagok } from './attase-orszag';
 import { naptariNap } from '../../lib/datum';
 import { felevKulcs, felevNapok, futoFelev, type Felev, type FelevSzam } from '../../lib/ertekeles-idoszak';
+import type { BovitettBemenet, EredmenyEsemenyBemenet } from '../../lib/ertekeles-mutatok';
 import { ORSZAGOK, type RegioKulcs } from '../../lib/orszagok';
 import {
   adminMuveletek, attaseMuveletek, befejezettE, beszamitasiFelev, mezokZarolvaE,
@@ -892,6 +893,86 @@ export function visszavonEredmenyKifogas(id: string, verzio: number): IrasEredme
     ugyIr(tx, u, new Date(), { kifogas: null, kifogasSzerzoNev: null, kifogasAt: null });
     return 'ok';
   });
+}
+
+function esemenyBemenet(e: EsemenyFelev): EredmenyEsemenyBemenet {
+  return {
+    tipus: e.tipus,
+    szakasz: e.szakasz,
+    nap: naptariNap(e.createdAt),
+    beszamitasi:
+      e.beszamitasiEv !== null && e.beszamitasiFelev !== null
+        ? { ev: e.beszamitasiEv, felev: e.beszamitasiFelev as FelevSzam }
+        : null,
+    visszavonva: e.visszavonva,
+  };
+}
+
+/**
+ * A félévi mutatók bemenete attasénként, állandó számú lekérdezéssel. A tevékenységekből a félév napjaira esők
+ * kellenek, az ügyekből mind, mert az aktív ügyek és a függő kérések a számítás pillanatának állapotát mutatják.
+ * Bejegyzés nélküli attasénál üres a bemenet.
+ */
+export function bovitettForrasok(attaseIdk: readonly string[], f: Felev): Map<string, BovitettBemenet> {
+  const forrasok = new Map<string, BovitettBemenet>(attaseIdk.map((id) => [id, { tevekenysegek: [], eredmenyek: [] }]));
+  if (attaseIdk.length === 0) return forrasok;
+  const { elsoNap, utolsoNap } = felevNapok(f);
+
+  const tevekenysegek = db
+    .select({
+      attaseId: tevekenyseg.attaseId,
+      id: tevekenyseg.id,
+      tipus: tevekenyseg.tipus,
+      datum: tevekenyseg.datum,
+      megnevezes: tevekenyseg.megnevezes,
+      partner: tevekenyseg.partner,
+      magyarSzereplo: tevekenyseg.magyarSzereplo,
+      kifogasolt: isNotNull(tevekenyseg.kifogas).mapWith(Boolean),
+    })
+    .from(tevekenyseg)
+    .where(
+      and(inArray(tevekenyseg.attaseId, [...attaseIdk]), gte(tevekenyseg.datum, elsoNap), lte(tevekenyseg.datum, utolsoNap)),
+    )
+    .all();
+  for (const { attaseId, ...t } of tevekenysegek) forrasok.get(attaseId)?.tevekenysegek.push(t);
+
+  const ugyek = db
+    .select({
+      attaseId: eredmeny.attaseId,
+      id: eredmeny.id,
+      megnevezes: eredmeny.megnevezes,
+      hozzajarulas: eredmeny.hozzajarulas,
+      szakasz: eredmeny.szakasz,
+      kertSzakasz: eredmeny.kertSzakasz,
+      igazolas: eredmeny.igazolas,
+      allapot: eredmeny.allapot,
+      kifogasolt: isNotNull(eredmeny.kifogas).mapWith(Boolean),
+    })
+    .from(eredmeny)
+    .where(inArray(eredmeny.attaseId, [...attaseIdk]))
+    .orderBy(desc(eredmeny.createdAt), desc(eredmeny.id))
+    .all();
+  const esemenyek = esemenyFelevek(ugyek.map((u) => u.id));
+  for (const { attaseId, ...u } of ugyek) {
+    forrasok.get(attaseId)?.eredmenyek.push({ ...u, esemenyek: (esemenyek.get(u.id) ?? []).map(esemenyBemenet) });
+  }
+  return forrasok;
+}
+
+/** A jelenleg függő igazoláskérések közül azok, amelyeket legkésőbb a félév utolsó napján adtak be. */
+export function countFuggoKeresek(f: Felev): number {
+  const { utolsoNap } = felevNapok(f);
+  return db
+    .select({ utolsoKeres: max(eredmenyEsemeny.createdAt) })
+    .from(eredmeny)
+    .innerJoin(
+      eredmenyEsemeny,
+      and(eq(eredmenyEsemeny.eredmenyId, eredmeny.id), eq(eredmenyEsemeny.tipus, 'igazolas_keres')),
+    )
+    .where(isNotNull(eredmeny.kertSzakasz))
+    .groupBy(eredmeny.id)
+    .all()
+    .filter((r) => r.utolsoKeres !== null && naptariNap(r.utolsoKeres) <= utolsoNap).length;
 }
 
 /**

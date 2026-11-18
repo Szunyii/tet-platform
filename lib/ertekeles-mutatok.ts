@@ -7,9 +7,13 @@
  * Fokozatot és összminősítést kód nem számol, csak admin ad.
  */
 import { kovetkezoNapKezdete, napKezdete, naptariNap } from './datum';
-import { felevNapok, type Felev } from './ertekeles-idoszak';
+import { felevNapok, felevOsszevet, type Felev } from './ertekeles-idoszak';
 import { BLOKK_KULCSOK } from './orszagprofil-szotar';
 import { KATEGORIAK, isKategoriaKulcs, type KategoriaKulcs } from './riport-szotar';
+import { befejezettE, type UgyAdat } from './tevekenyseg-allapot';
+import type {
+  EsemenyTipus, Hozzajarulas, IgazolasAllapot, Szakasz, TevekenysegTipus,
+} from './tevekenyseg-szotar';
 
 export interface JelentesBemenet {
   id: string;
@@ -38,6 +42,43 @@ export interface ProfilBemenet {
   updatedAt: Date;
 }
 
+/** `datum`: a tevékenység naptári napja (`YYYY-MM-DD`). */
+export interface TevekenysegBemenet {
+  id: string;
+  tipus: TevekenysegTipus;
+  datum: string;
+  megnevezes: string;
+  partner: string;
+  magyarSzereplo: string | null;
+  kifogasolt: boolean;
+}
+
+/**
+ * `nap`: az esemény budapesti naptári napja. `beszamitasi`: az igazoláskor rögzült beszámítási félév; a korai
+ * szakaszok (létrehozás, szakaszváltás) a saját napjuk szerint számítanak.
+ */
+export interface EredmenyEsemenyBemenet {
+  tipus: EsemenyTipus;
+  szakasz: Szakasz | null;
+  nap: string;
+  beszamitasi: Felev | null;
+  visszavonva: boolean;
+}
+
+export interface EredmenyBemenet extends UgyAdat {
+  id: string;
+  megnevezes: string;
+  hozzajarulas: Hozzajarulas;
+  kifogasolt: boolean;
+  esemenyek: EredmenyEsemenyBemenet[];
+}
+
+/** A tevékenységnapló és az eredmény-nyilvántartás adatai: csak a bővített adatokat gyűjtő félév kapja meg. */
+export interface BovitettBemenet {
+  tevekenysegek: TevekenysegBemenet[];
+  eredmenyek: EredmenyBemenet[];
+}
+
 export interface MutatoBemenet {
   felev: Felev;
   /** A mérés pillanata: lezáráskor a lezárás ideje, nyitott félévnél a mostani. */
@@ -48,6 +89,8 @@ export interface MutatoBemenet {
   vezetettOrszagok: string[];
   profilok: ProfilBemenet[];
   halozat: { szunetMedian: number | null; valaszMedian: number | null };
+  /** Hiányában a félévben nem volt adatgyűjtés: a pillanatkép `verzio: 1`, az új mezők nélkül. */
+  bovitett?: BovitettBemenet;
 }
 
 export type HataridoBesorolas = 'hataridore' | 'kesett' | 'lejart' | 'nem_szamit';
@@ -73,8 +116,51 @@ export interface TicketBizonyitek {
   elsoValasz: string | null;
 }
 
+export interface TevekenysegBizonyitek {
+  id: string;
+  tipus: TevekenysegTipus;
+  megnevezes: string;
+  datum: string;
+  partner: string;
+  kifogasolt: boolean;
+}
+
+export interface EredmenyBizonyitek {
+  id: string;
+  megnevezes: string;
+  szakasz: Szakasz;
+  igazolas: IgazolasAllapot;
+  hozzajarulas: Hozzajarulas;
+}
+
+/** A Kapcsolatépítés tevékenységi mutatói (spec 5.5.). */
+export interface TevekenysegMutatok {
+  delegacioDb: number;
+  b2bDb: number;
+  partnerkozvetitesDb: number;
+  magyarSzereploDb: number;
+  kifogasoltDb: number;
+  tevekenysegek: TevekenysegBizonyitek[];
+}
+
+/** Az Eredmények szempont mutatói (spec 5.5.). */
+export interface EredmenyMutatok {
+  lehetosegDb: number;
+  kapcsolatDb: number;
+  egyuttmukodesDb: number;
+  megallapodasDb: number;
+  igazolasraVarDb: number;
+  aktivUgyDb: number;
+  megszakadtDb: number;
+  ugyek: EredmenyBizonyitek[];
+}
+
+/**
+ * A rögzített pillanatkép. A `verzio: 2` alak a bővített adatokat gyűjtő félévé; a `verzio: 1` pillanatképeket semmi
+ * nem írja át, ezért a `kapcsolatepites.tevekenyseg` és az `eredmenyek` hiánya azt jelenti, hogy nincs tevékenységi adat.
+ */
 export interface ErtekelesMutatok {
-  verzio: 1;
+  verzio: 1 | 2;
   szamitvaAt: string;
   /**
    * A lezáráskor az attasé fiókja már nem létezett: a jelentései és a ticketjei az FK-kaszkáddal eltűntek, ezért a
@@ -103,7 +189,9 @@ export interface ErtekelesMutatok {
     partnerkeresesDb: number;
     reszveteliLehetosegDb: number;
     jelentesek: JelentesBizonyitek[];
+    tevekenyseg?: TevekenysegMutatok;
   };
+  eredmenyek?: EredmenyMutatok;
   egyuttmukodes: {
     ticketDb: number;
     elsoValaszMedianNap: number | null;
@@ -285,6 +373,90 @@ function legujabbElol<T extends { createdAt: Date; id: string }>(a: T, b: T): nu
 }
 
 /**
+ * A félév tevékenységei (spec 5.5.): a kifogásolt tevékenység a típusonkénti darabszámokba és a magyar szereplők
+ * közé nem számít, a bizonyítéklistában viszont jelölve szerepel. Dátum szerint csökkenő sorrend.
+ */
+function tevekenysegMutatok(tevekenysegek: readonly TevekenysegBemenet[], f: Felev): TevekenysegMutatok {
+  const { elsoNap, utolsoNap } = felevNapok(f);
+  const felevben = tevekenysegek.filter((t) => t.datum >= elsoNap && t.datum <= utolsoNap);
+  const szamito = felevben.filter((t) => !t.kifogasolt);
+  const tipusDb = (tipus: TevekenysegTipus) => szamito.filter((t) => t.tipus === tipus).length;
+  const szereplok = new Set(
+    szamito.map((t) => (t.magyarSzereplo ?? '').trim().toLocaleLowerCase('hu')).filter((n) => n !== ''),
+  );
+  return {
+    delegacioDb: tipusDb('delegacio'),
+    b2bDb: tipusDb('b2b'),
+    partnerkozvetitesDb: tipusDb('partnerkozvetites'),
+    magyarSzereploDb: szereplok.size,
+    kifogasoltDb: felevben.length - szamito.length,
+    tevekenysegek: [...felevben]
+      .sort((a, b) => (a.datum < b.datum ? 1 : a.datum > b.datum ? -1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+      .map(({ id, tipus, megnevezes, datum, partner, kifogasolt }) => ({ id, tipus, megnevezes, datum, partner, kifogasolt })),
+  };
+}
+
+/**
+ * Az esemény által a félévben elért szakasz, ha az esemény számít (spec 5.4.). A korai szakaszok a saját napjuk
+ * szerint, kifogás nélkül; az igazolás a rögzített beszámítási féléve szerint, ha nem vonták vissza.
+ */
+function elertSzakasz(e: EredmenyEsemenyBemenet, kifogasolt: boolean, f: Felev): Szakasz | null {
+  if (e.tipus === 'igazolas') {
+    return !e.visszavonva && e.beszamitasi !== null && felevOsszevet(e.beszamitasi, f) === 0 ? e.szakasz : null;
+  }
+  if (e.tipus !== 'letrehozas' && e.tipus !== 'szakaszvaltas') return null;
+  const { elsoNap, utolsoNap } = felevNapok(f);
+  return !kifogasolt && e.nap >= elsoNap && e.nap <= utolsoNap ? e.szakasz : null;
+}
+
+/** A függő kérés a félévhez tartozik: az utolsó kérés legkésőbb a félév utolsó napján érkezett. */
+function fuggoKeresFelevig(u: EredmenyBemenet, utolsoNap: string): boolean {
+  if (u.kertSzakasz === null) return false;
+  const keresNapok = u.esemenyek.filter((e) => e.tipus === 'igazolas_keres').map((e) => e.nap);
+  return keresNapok.length > 0 && keresNapok.reduce((max, n) => (n > max ? n : max)) <= utolsoNap;
+}
+
+/**
+ * Az attasé ügyeinek mutatói a félévre (spec 5.5.). Az igazolásra váró és az aktív ügyek a számítás pillanatának
+ * állapotát mutatják. A bizonyítéklistába az az ügy kerül, amelynek van a félévben számító eseménye, a félévhez
+ * tartozó függő kérése vagy a félévben történt megszakítása.
+ */
+function eredmenyMutatok(ugyek: readonly EredmenyBemenet[], f: Felev): EredmenyMutatok {
+  const { elsoNap, utolsoNap } = felevNapok(f);
+  const elert: Record<Szakasz, number> = { lehetoseg: 0, kapcsolat: 0, egyuttmukodes: 0, megallapodas: 0 };
+  let igazolasraVarDb = 0;
+  let megszakadtDb = 0;
+  const bizonyitekok: EredmenyBizonyitek[] = [];
+  for (const u of ugyek) {
+    const szakaszok = u.esemenyek.flatMap((e) => elertSzakasz(e, u.kifogasolt, f) ?? []);
+    for (const szakasz of szakaszok) elert[szakasz] += 1;
+    const fuggo = fuggoKeresFelevig(u, utolsoNap);
+    if (fuggo) igazolasraVarDb += 1;
+    const megszakadt = u.esemenyek.some((e) => e.tipus === 'megszakitas' && e.nap >= elsoNap && e.nap <= utolsoNap);
+    if (megszakadt) megszakadtDb += 1;
+    if (szakaszok.length > 0 || fuggo || megszakadt) {
+      bizonyitekok.push({
+        id: u.id,
+        megnevezes: u.megnevezes,
+        szakasz: u.szakasz,
+        igazolas: u.igazolas,
+        hozzajarulas: u.hozzajarulas,
+      });
+    }
+  }
+  return {
+    lehetosegDb: elert.lehetoseg,
+    kapcsolatDb: elert.kapcsolat,
+    egyuttmukodesDb: elert.egyuttmukodes,
+    megallapodasDb: elert.megallapodas,
+    igazolasraVarDb,
+    aktivUgyDb: ugyek.filter((u) => u.allapot === 'aktiv' && !befejezettE(u)).length,
+    megszakadtDb,
+    ugyek: bizonyitekok,
+  };
+}
+
+/**
  * Az attasé automatikus mutatói az időszakra (spec 5.4.). A jelentések és a ticketek az időszakhoz a
  * létrehozásuk napja szerint tartoznak (a bemenetben szereplő, időszakon kívüli jelentést kihagyja),
  * a határidős ticketek a határidejük szerint. A bizonyítéklisták teljesek, a legújabb elöl.
@@ -334,7 +506,7 @@ export function szamolMutatok(b: MutatoBemenet): ErtekelesMutatok {
     }));
 
   return {
-    verzio: 1,
+    verzio: b.bovitett ? 2 : 1,
     szamitvaAt: b.most.toISOString(),
     tajekoztatas: {
       jelentesDb: jelentesek.length,
@@ -358,7 +530,9 @@ export function szamolMutatok(b: MutatoBemenet): ErtekelesMutatok {
       partnerkeresesDb: kategoriaDb(PARTNER),
       reszveteliLehetosegDb: kategoriaDb(RESZVETEL),
       jelentesek: kapcsolat.map(jelentesBizonyitek),
+      ...(b.bovitett ? { tevekenyseg: tevekenysegMutatok(b.bovitett.tevekenysegek, b.felev) } : {}),
     },
+    ...(b.bovitett ? { eredmenyek: eredmenyMutatok(b.bovitett.eredmenyek, b.felev) } : {}),
     egyuttmukodes: {
       ticketDb: nyitott.length,
       elsoValaszMedianNap: kerekitVagyNull(medianErtek(elsoValaszIdok(nyitott)), 1),

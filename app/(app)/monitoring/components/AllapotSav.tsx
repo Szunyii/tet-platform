@@ -41,6 +41,7 @@ export function AllapotSav({
   idoszak,
   sorok,
   torlendoAttasek,
+  fuggoKeresDb,
   ma,
   felevUrl,
 }: {
@@ -50,6 +51,8 @@ export function AllapotSav({
   sorok: readonly ErtekelesSor[];
   /** A lezáráskor törlődő, hiányos sorok attaséi magyar névsorban. */
   torlendoAttasek: readonly string[];
+  /** A félévhez tartozó függő igazoláskérések: tájékoztatás, a lezárást nem akadályozzák. */
+  fuggoKeresDb: number;
   ma: string;
   /** A nézet URL-je a megjelenített félévvel: a művelet után is ez a félév marad látható. */
   felevUrl: string;
@@ -84,6 +87,11 @@ export function AllapotSav({
         )}
         {figyelmeztetes !== undefined && (
           <p className="mt-1 text-[12px] font-medium wrap-anywhere text-amber-800">{figyelmeztetes}</p>
+        )}
+        {fuggoKeresDb > 0 && (
+          <p className="mt-1 text-[12px] font-medium wrap-anywhere text-amber-800">
+            Ehhez a félévhez {fuggoKeresDb} igazolásra váró kérés tartozik.
+          </p>
         )}
       </div>
       {gomb && <FelevMuveletGomb {...gomb} felev={cimke} felevUrl={felevUrl} />}

@@ -6,13 +6,16 @@
  */
 import { formatDatum, formatNaptariDatum } from './datum';
 import type {
+  EredmenyBizonyitek,
   ErtekelesMutatok,
   HataridoBesorolas,
   JelentesBizonyitek,
+  TevekenysegBizonyitek,
   TicketBizonyitek,
 } from './ertekeles-mutatok';
 import type { SzempontKulcs } from './ertekeles-szotar';
 import { isKategoriaKulcs, kategoriaByKulcs } from './riport-szotar';
+import { hozzajarulasCimke, IGAZOLAS_CIMKE, szakaszCimke, tipusCimke } from './tevekenyseg-szotar';
 
 export interface MutatoKartya {
   cimke: string;
@@ -20,9 +23,8 @@ export interface MutatoKartya {
   megjegyzes: string;
 }
 
-/** Az Eredmények szempont üres állapota: az 1. szakaszban a rendszer még nem mér eredményeket. */
-export const EREDMENYEK_URES =
-  'Az 1. szakaszban a rendszer még nem mér eredményeket. Az indoklás nevezi meg a konkrét eredményeket.';
+/** A bővített adat nélküli félév jelzése: ott nem volt adatgyűjtés, ezért nulla helyett ez a szöveg áll. */
+export const NINCS_TEVEKENYSEGI_ADAT = 'Ehhez a félévhez nincs tevékenységi adat.';
 
 /** A törölt fiókú attasé mutatói és bizonyítékai helyett álló szöveg (`ErtekelesMutatok.forrasHianyzik`). */
 export const FORRAS_HIANYZIK = 'A forrásadatok nem érhetők el, mert az attasé fiókja törlődött.';
@@ -42,7 +44,11 @@ function kategoriaRovid(kulcs: 'rendezveny' | 'egyuttmukodes' | 'palyazat'): str
   return kategoriaByKulcs(kulcs).rovid;
 }
 
-/** A szempont mutatói kártyákban; az Eredményeknek nincs rendszeradata, ott üres a lista. */
+function darab(n: number): string {
+  return `${n} db`;
+}
+
+/** A szempont mutatói kártyákban; bővített adat nélküli félévben az Eredményeknél üres a lista. */
 export function mutatoKartyak(szempont: SzempontKulcs, m: ErtekelesMutatok): MutatoKartya[] {
   switch (szempont) {
     case 'tajekoztatas': {
@@ -82,7 +88,17 @@ export function mutatoKartyak(szempont: SzempontKulcs, m: ErtekelesMutatok): Mut
     }
     case 'kapcsolatepites': {
       const k = m.kapcsolatepites;
+      const t = k.tevekenyseg;
       return [
+        ...(t === undefined
+          ? []
+          : [
+              { cimke: 'Delegáció', ertek: darab(t.delegacioDb), megjegyzes: 'a félévben' },
+              { cimke: 'B2B-találkozó', ertek: darab(t.b2bDb), megjegyzes: 'a félévben' },
+              { cimke: 'Partnerközvetítés', ertek: darab(t.partnerkozvetitesDb), megjegyzes: 'a félévben' },
+              { cimke: 'Érintett magyar szereplő', ertek: darab(t.magyarSzereploDb), megjegyzes: 'eltérő szereplő' },
+              { cimke: 'Kifogásolt', ertek: darab(t.kifogasoltDb), megjegyzes: 'nem számít a mutatókba' },
+            ]),
         {
           cimke: 'Rendezvénybeszámoló',
           ertek: `${k.rendezvenyBeszamoloDb} db`,
@@ -100,8 +116,19 @@ export function mutatoKartyak(szempont: SzempontKulcs, m: ErtekelesMutatok): Mut
         },
       ];
     }
-    case 'eredmenyek':
-      return [];
+    case 'eredmenyek': {
+      const e = m.eredmenyek;
+      if (e === undefined) return [];
+      return [
+        { cimke: 'Lehetőség', ertek: darab(e.lehetosegDb), megjegyzes: 'a félévben elért' },
+        { cimke: 'Kapcsolat', ertek: darab(e.kapcsolatDb), megjegyzes: 'a félévben elért' },
+        { cimke: 'Együttműködés', ertek: darab(e.egyuttmukodesDb), megjegyzes: 'a félévbe számított igazolás' },
+        { cimke: 'Megállapodás', ertek: darab(e.megallapodasDb), megjegyzes: 'a félévbe számított igazolás' },
+        { cimke: 'Igazolásra vár', ertek: darab(e.igazolasraVarDb), megjegyzes: 'a félév végéig beadott kérés' },
+        { cimke: 'Aktív ügy', ertek: darab(e.aktivUgyDb), megjegyzes: 'a számítás időpontjában' },
+        { cimke: 'Megszakadt', ertek: darab(e.megszakadtDb), megjegyzes: 'a félévben' },
+      ];
+    }
     case 'egyuttmukodes': {
       const e = m.egyuttmukodes;
       return [
@@ -137,10 +164,16 @@ export function kulcsMutato(szempont: SzempontKulcs, m: ErtekelesMutatok): strin
       return m.orszagismeret.vezetettDb === 0
         ? 'Nincs vezetett ország'
         : `${m.orszagismeret.kitoltottBlokk} / ${m.orszagismeret.osszesBlokk} blokk kitöltve`;
-    case 'kapcsolatepites':
-      return `${m.kapcsolatepites.rendezvenyBeszamoloDb} rendezvénybeszámoló, ${m.kapcsolatepites.partnerkeresesDb} partnerkeresés`;
+    case 'kapcsolatepites': {
+      const t = m.kapcsolatepites.tevekenyseg;
+      return t === undefined
+        ? `${m.kapcsolatepites.rendezvenyBeszamoloDb} rendezvénybeszámoló, ${m.kapcsolatepites.partnerkeresesDb} partnerkeresés`
+        : `${t.delegacioDb} delegáció, ${t.b2bDb} B2B-találkozó, ${t.partnerkozvetitesDb} partnerközvetítés`;
+    }
     case 'eredmenyek':
-      return 'Az 1. szakaszban nincs rendszeradat';
+      return m.eredmenyek === undefined
+        ? 'Nincs tevékenységi adat'
+        : `${m.eredmenyek.egyuttmukodesDb} együttműködés, ${m.eredmenyek.megallapodasDb} megállapodás`;
     case 'egyuttmukodes':
       return m.egyuttmukodes.hataridosDb === 0
         ? 'Nincs határidős ticket'
@@ -187,6 +220,24 @@ export function ticketReszlet(t: TicketBizonyitek): string {
     t.hatarido === null ? 'Nincs határidő' : `Határidő: ${formatNaptariDatum(t.hatarido)}`,
     t.elsoValasz === null ? 'még nincs válasz' : `első válasz: ${formatNaptariDatum(t.elsoValasz)}`,
     t.besorolas === null ? null : BESOROLAS_FELIRAT[t.besorolas],
+  ]
+    .filter((r) => r !== null)
+    .join(' · ');
+}
+
+/** A tevékenység-bizonyíték részlete: típus, dátum, partner, és hogy kifogásolták-e. */
+export function tevekenysegReszlet(t: TevekenysegBizonyitek): string {
+  return [tipusCimke(t.tipus), formatNaptariDatum(t.datum), t.partner, t.kifogasolt ? 'kifogásolt' : null]
+    .filter((r) => r !== null)
+    .join(' · ');
+}
+
+/** Az ügy-bizonyíték részlete: szakasz, az igazolás állapota (ha igényel igazolást) és a hozzájárulás módja. */
+export function eredmenyReszlet(e: EredmenyBizonyitek): string {
+  return [
+    szakaszCimke(e.szakasz),
+    e.igazolas === 'nem_igenyel' ? null : IGAZOLAS_CIMKE[e.igazolas],
+    hozzajarulasCimke(e.hozzajarulas),
   ]
     .filter((r) => r !== null)
     .join(' · ');

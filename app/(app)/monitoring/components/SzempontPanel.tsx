@@ -55,13 +55,17 @@ export function SzempontPanel({
   elozmeny,
   letezoJelentesek,
   letezoTicketek,
+  letezoEredmenyek,
   piszkozat,
   verzio,
   onValtozas,
   action,
   onFolyamatban,
   cimRef,
-}: PanelProps & { szempont: Szempont } & Pick<AdatlapNezet, 'mutatok' | 'elozmeny' | 'letezoJelentesek' | 'letezoTicketek'>) {
+}: PanelProps & { szempont: Szempont } & Pick<
+  AdatlapNezet,
+  'mutatok' | 'elozmeny' | 'letezoJelentesek' | 'letezoTicketek' | 'letezoEredmenyek'
+>) {
   const [state, formAction, pending] = useMuveletForm(action, 'Minősítés mentve.');
   const errors = state.errors ?? {};
   useEffect(() => onFolyamatban(pending), [pending, onFolyamatban]);
@@ -84,6 +88,7 @@ export function SzempontPanel({
               mutatok={mutatok}
               letezoJelentesek={letezoJelentesek}
               letezoTicketek={letezoTicketek}
+              letezoEredmenyek={letezoEredmenyek}
               ujLapon
             />
           )}

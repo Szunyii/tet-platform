@@ -41,6 +41,7 @@ type MunkalapProps = Pick<
   | 'elozmeny'
   | 'letezoJelentesek'
   | 'letezoTicketek'
+  | 'letezoEredmenyek'
 > & {
   szempontAction: MentesAction;
   osszAction: MentesAction;
@@ -113,7 +114,7 @@ function Ful({
 
 /** A nyitott félév munkalapja: bal oldalt a fülek, középen a bizonyítékok, jobbra a minősítés űrlapja. */
 function MunkalapTorzs({ fokuszKell, ...props }: MunkalapProps & { fokuszKell: RefObject<boolean> }) {
-  const { sor, minositesek, mutatok, elozmeny, letezoJelentesek, letezoTicketek } = props;
+  const { sor, minositesek, mutatok, elozmeny, letezoJelentesek, letezoTicketek, letezoEredmenyek } = props;
   const [aktiv, setAktiv] = useState<MunkalapFul>('tajekoztatas');
   const [piszkozatok, setPiszkozatok] = useState(() => kezdoPiszkozatok(props));
   const [verziok, setVerziok] = useState(() => kezdoVerziok(props));
@@ -237,6 +238,7 @@ function MunkalapTorzs({ fokuszKell, ...props }: MunkalapProps & { fokuszKell: R
           elozmeny={elozmeny}
           letezoJelentesek={letezoJelentesek}
           letezoTicketek={letezoTicketek}
+          letezoEredmenyek={letezoEredmenyek}
         />
       )}
 

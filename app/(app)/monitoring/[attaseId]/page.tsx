@@ -80,6 +80,7 @@ export default async function AdatlapOldal({
           elozmeny={adatlap.elozmeny}
           letezoJelentesek={adatlap.letezoJelentesek}
           letezoTicketek={adatlap.letezoTicketek}
+          letezoEredmenyek={adatlap.letezoEredmenyek}
           szempontAction={mentSzempontAction.bind(null, sor.ertekelesId)}
           osszAction={mentOsszAction.bind(null, sor.ertekelesId)}
           kihagyasAction={kihagyAttaseAction.bind(null, sor.ertekelesId)}
@@ -102,6 +103,7 @@ export default async function AdatlapOldal({
             minositesek={adatlap.minositesek}
             letezoJelentesek={adatlap.letezoJelentesek}
             letezoTicketek={adatlap.letezoTicketek}
+            letezoEredmenyek={adatlap.letezoEredmenyek}
           />
         </>
       )}

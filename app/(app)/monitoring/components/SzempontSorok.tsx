@@ -4,11 +4,11 @@ import type { AdatlapNezet, SzempontMinosites } from '../../../../db/queries/ert
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../../../../components/ui/collapsible';
 import { formatDatumIdo } from '../../../../lib/datum';
 import {
-  EREDMENYEK_URES,
   FORRAS_HIANYZIK,
   kulcsMutato,
   mutatoKartyak,
   mutatoKorlat,
+  NINCS_TEVEKENYSEGI_ADAT,
 } from '../../../../lib/ertekeles-megjelenites';
 import type { ErtekelesMutatok } from '../../../../lib/ertekeles-mutatok';
 import { AUTOMATIKUS_ERTEKELO, MEGFELEL, SZEMPONTOK, type Szempont } from '../../../../lib/ertekeles-szotar';
@@ -46,14 +46,14 @@ function Indoklas({ minosites }: { minosites: SzempontMinosites | undefined }) {
 }
 
 /**
- * A szempont mutatói; az Eredményeknek nincs rendszeradata, ott a rövid magyarázat áll. Törölt fiókú attasénál a
- * számok nem valósak, ezért helyettük a `FORRAS_HIANYZIK` szöveg látszik.
+ * A szempont mutatói; bővített adat nélküli félévben az Eredményeknél nulla helyett a `NINCS_TEVEKENYSEGI_ADAT` áll.
+ * Törölt fiókú attasénál a számok nem valósak, ezért helyettük a `FORRAS_HIANYZIK` szöveg látszik.
  */
 export function Meres({ szempont, mutatok }: { szempont: Szempont; mutatok: ErtekelesMutatok | null }) {
   if (mutatok === null) return <p className="text-muted-foreground">Nincs rögzített mutató.</p>;
   if (mutatok.forrasHianyzik) return <p className="text-muted-foreground">{FORRAS_HIANYZIK}</p>;
   const kartyak = mutatoKartyak(szempont.kulcs, mutatok);
-  if (kartyak.length === 0) return <p className="text-muted-foreground">{EREDMENYEK_URES}</p>;
+  if (kartyak.length === 0) return <p className="text-muted-foreground">{NINCS_TEVEKENYSEGI_ADAT}</p>;
   return <MutatoRacs kartyak={kartyak} korlat={mutatoKorlat(szempont.kulcs, mutatok)} />;
 }
 
@@ -67,7 +67,8 @@ export function SzempontSorok({
   minositesek,
   letezoJelentesek,
   letezoTicketek,
-}: Pick<AdatlapNezet, 'mutatok' | 'minositesek' | 'letezoJelentesek' | 'letezoTicketek'>) {
+  letezoEredmenyek,
+}: Pick<AdatlapNezet, 'mutatok' | 'minositesek' | 'letezoJelentesek' | 'letezoTicketek' | 'letezoEredmenyek'>) {
   return (
     <section className="@container">
       <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
@@ -114,6 +115,7 @@ export function SzempontSorok({
                           mutatok={mutatok}
                           letezoJelentesek={letezoJelentesek}
                           letezoTicketek={letezoTicketek}
+                          letezoEredmenyek={letezoEredmenyek}
                         />
                       )}
                     </Oszlop>
