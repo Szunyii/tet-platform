@@ -33,6 +33,8 @@ export interface CelSor extends CelInput {
   allapot: CelAllapot;
   allapotMegjegyzes: string | null;
   allapotModositottaNev: string | null;
+  /** A központ felülírta az állapotot: az attasé már nem módosíthatja. */
+  allapotFelulirva: boolean;
   sorrend: number;
 }
 
@@ -179,6 +181,7 @@ export function getTerv(attaseId: string, ev: number): TervNezet | null {
       allapot: munkatervCel.allapot,
       allapotMegjegyzes: munkatervCel.allapotMegjegyzes,
       allapotModositottaNev: munkatervCel.allapotModositottaNev,
+      allapotFelulirva: munkatervCel.allapotFelulirva,
       sorrend: munkatervCel.sorrend,
     })
     .from(munkatervCel)
@@ -372,33 +375,42 @@ export function visszanyit(tervId: string, megjegyzes: string, verzio: number): 
 }
 
 /**
- * A jóváhagyott terv egy céljának állapota. `tulajdonos` megadásával csak az ő terve írható. A terv verziója
- * szándékosan nem lép: a célállapot nem a terv tartalma, és nem avulhat el miatta a nyitott lap döntése.
+ * A jóváhagyott terv egy céljának állapota. `tulajdonos` megadásával az attasé ír: csak a saját tervébe, és csak
+ * addig, amíg a központ felül nem írta a célt; `tulajdonos` nélkül a központ ír, és ezzel zárolja a célt az attasé
+ * elől. A terv verziója szándékosan nem lép: a célállapot nem a terv tartalma, és nem avulhat el miatta a nyitott
+ * lap döntése.
  */
 function celAllapotIr(celId: string, i: CelAllapotInput, nev: string, most: Date, tulajdonos?: string): TervEredmeny {
   return db.transaction((tx): TervEredmeny => {
     const sor = tx
-      .select({ attaseId: munkaterv.attaseId, statusz: munkaterv.statusz })
+      .select({ attaseId: munkaterv.attaseId, statusz: munkaterv.statusz, felulirva: munkatervCel.allapotFelulirva })
       .from(munkatervCel)
       .innerJoin(munkaterv, eq(munkaterv.id, munkatervCel.tervId))
       .where(eq(munkatervCel.id, celId))
       .get();
     if (!sor || (tulajdonos !== undefined && sor.attaseId !== tulajdonos)) return 'nincs';
     if (sor.statusz !== 'jovahagyott') return 'ervenytelen';
+    if (tulajdonos !== undefined && sor.felulirva) return 'ervenytelen';
     tx.update(munkatervCel)
-      .set({ allapot: i.allapot, allapotMegjegyzes: i.megjegyzes, allapotModositottaNev: nev, allapotModositvaAt: most })
+      .set({
+        allapot: i.allapot,
+        allapotMegjegyzes: i.megjegyzes,
+        allapotModositottaNev: nev,
+        allapotModositvaAt: most,
+        allapotFelulirva: tulajdonos === undefined,
+      })
       .where(eq(munkatervCel.id, celId))
       .run();
     return 'ok';
   }, IRAS);
 }
 
-/** Az attasé a saját jóváhagyott tervének célállapotát állítja. */
+/** Az attasé a saját jóváhagyott tervének célállapotát állítja; a központ által felülírt célét nem (`ervenytelen`). */
 export function allitCelAllapot(celId: string, attaseId: string, i: CelAllapotInput, nev: string, most: Date = new Date()): TervEredmeny {
   return celAllapotIr(celId, i, nev, most, attaseId);
 }
 
-/** A központ felülírja a célállapotot; a felülíró neve megmarad. */
+/** A központ felülírja a célállapotot: a felülíró neve megmarad, a célt ezután csak a központ állíthatja. */
 export function feluliCelAllapot(celId: string, i: CelAllapotInput, nev: string, most: Date = new Date()): TervEredmeny {
   return celAllapotIr(celId, i, nev, most);
 }

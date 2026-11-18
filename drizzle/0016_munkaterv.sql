@@ -42,6 +42,7 @@ CREATE TABLE `munkaterv_cel` (
 	`allapot_megjegyzes` text,
 	`allapot_modositotta_nev` text,
 	`allapot_modositva_at` integer,
+	`allapot_felulirva` integer DEFAULT false NOT NULL,
 	FOREIGN KEY (`terv_id`) REFERENCES `munkaterv`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`kozponti_cel_id`) REFERENCES `kozponti_cel`(`id`) ON UPDATE no action ON DELETE restrict,
 	CONSTRAINT "munkaterv_cel_szempont_check" CHECK("munkaterv_cel"."szempont" in ('tajekoztatas', 'orszagismeret', 'kapcsolatepites', 'eredmenyek', 'egyuttmukodes')),

@@ -97,6 +97,8 @@ export const munkatervCel = sqliteTable(
     allapotMegjegyzes: text('allapot_megjegyzes'),
     allapotModositottaNev: text('allapot_modositotta_nev'),
     allapotModositvaAt: integer('allapot_modositva_at', { mode: 'timestamp_ms' }),
+    // A központ felülírta az állapotot: ettől kezdve az attasé nem állíthatja, csak a központ írhatja felül újra.
+    allapotFelulirva: integer('allapot_felulirva', { mode: 'boolean' }).notNull().default(false),
   },
   (table) => [
     index('munkaterv_cel_terv_sorrend_idx').on(table.tervId, table.sorrend),

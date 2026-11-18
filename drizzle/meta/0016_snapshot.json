@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "6c6c2671-49cc-46d4-995c-1cb09af8682d",
+  "id": "ad4bb5ed-9172-4636-ae94-e239b1727630",
   "prevId": "dbc65c6c-40cf-4031-82ec-66f9ab5f2d93",
   "tables": {
     "account": {
@@ -2510,6 +2510,14 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "allapot_felulirva": {
+          "name": "allapot_felulirva",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
         }
       },
       "indexes": {
