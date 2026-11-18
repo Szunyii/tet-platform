@@ -69,10 +69,15 @@ export function attaseMuveletek(u: UgyAdat, torolheto: boolean): AttaseMuvelet[]
 /**
  * A központ engedett műveletei. Függő kérésnél csak a döntés (igazolás vagy visszaküldés); igazolt
  * együttműködés vagy megállapodás szakaszban az igazolás visszavonása; a korai szakaszokban a kifogásolás
- * (`kifogasolt`: van-e már kifogás az ügyön, akkor annak visszavonása). A megszakadt ügyön nincs művelet.
+ * (`kifogasolt`: van-e már kifogás az ügyön, akkor annak visszavonása). A megszakadt ügyön új döntés (igazolás,
+ * visszaküldés, kifogásolás) nincs, de a korrekciók igen: a korábbi igazolás visszavonása (különben a téves
+ * igazolás tovább számítana a mutatókba) és a meglévő kifogás visszavonása.
  */
 export function adminMuveletek(u: UgyAdat, kifogasolt: boolean): AdminMuvelet[] {
-  if (u.allapot === 'megszakadt') return [];
+  if (u.allapot === 'megszakadt') {
+    if (igazolastKer(u.szakasz)) return ['visszavon'];
+    return kifogasolt ? ['kifogast_visszavon'] : [];
+  }
   if (u.kertSzakasz !== null) return ['igazol', 'visszakuld'];
   if (igazolastKer(u.szakasz)) return ['visszavon'];
   return [kifogasolt ? 'kifogast_visszavon' : 'kifogasol'];
