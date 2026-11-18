@@ -64,8 +64,9 @@ export const UTVONALAK: readonly Utvonal[] = [
   {
     href: '/monitoring',
     cim: 'Monitoring és értékelés',
-    alcim: '3 kategória, 14 szempont, rögzített adatforrás-metaadatokkal',
-    menu: { ikon: '◈', felirat: 'Monitoring és értékelés ??' },
+    alcim: 'A TéT attasék félévi szakmai értékelése',
+    adminOnly: true,
+    menu: { ikon: '◈', felirat: 'Monitoring és értékelés' },
   },
   {
     href: '/felhasznalok',
