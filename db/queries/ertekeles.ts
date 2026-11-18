@@ -622,12 +622,16 @@ export function mentOssz(
     const elavult = input.verzio === null ? a.osszFokozat !== null : input.verzio !== a.updatedAt.getTime();
     if (elavult) return { eredmeny: 'elavult' };
 
-    const fokozatok = hatekonyFokozatok(mentettFokozatok([ertekelesId]).get(ertekelesId) ?? {}, ervenyesOrszagok(a));
+    const orszagok = ervenyesOrszagok(a);
+    const fokozatok = hatekonyFokozatok(mentettFokozatok([ertekelesId]).get(ertekelesId) ?? {}, orszagok);
     if (SZEMPONT_KULCSOK.some((k) => fokozatok[k] === undefined)) return { eredmeny: 'hianyos' };
 
     const updatedAt = kovetkezoVerzio(a.updatedAt, most);
     tx.update(attaseErtekeles)
       .set({
+        // A hozzárendelés, amely mellett a sor teljessé vált: ha az attasé később megszűnik aktívnak lenni,
+        // a sor ebből marad teljes, és a lezárás nem törli a kész értékelést.
+        orszagok,
         osszFokozat: input.fokozat,
         osszIndoklas: input.indoklas,
         fejlesztesiCel: input.fejlesztesiCel,
