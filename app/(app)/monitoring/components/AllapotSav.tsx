@@ -88,7 +88,7 @@ export function AllapotSav({
         {figyelmeztetes !== undefined && (
           <p className="mt-1 text-[12px] font-medium wrap-anywhere text-amber-800">{figyelmeztetes}</p>
         )}
-        {fuggoKeresDb > 0 && (
+        {fuggoKeresDb > 0 && idoszak?.lezarvaAt === null && (
           <p className="mt-1 text-[12px] font-medium wrap-anywhere text-amber-800">
             Ehhez a félévhez {fuggoKeresDb} igazolásra váró kérés tartozik.
           </p>

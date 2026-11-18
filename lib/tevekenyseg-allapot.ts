@@ -4,7 +4,7 @@
  * lekérdezések és a felületek is ebből döntenek, hogy ugyanazt a szabályt ne írják le kétszer.
  * A szabályok forrása a terv (spec) 5.3. és 5.4. pontja.
  */
-import { futoFelev, type Felev } from './ertekeles-idoszak';
+import { bovitettAdatokFelev, futoFelev, megnyithato, type Felev } from './ertekeles-idoszak';
 import {
   igazolastKer,
   kovetkezoSzakasz,
@@ -83,11 +83,25 @@ export function adminMuveletek(u: UgyAdat, kifogasolt: boolean): AdminMuvelet[] 
   return [kifogasolt ? 'kifogast_visszavon' : 'kifogasol'];
 }
 
+/** A kérés félévének időszak-sora, amennyit a beszámítás tudni akar belőle. */
+export interface KertFelevIdoszak {
+  /** A sor tárolt `bovitett_adatok` jelzője. */
+  bovitettAdatok: boolean;
+  /** A félévet legalább egyszer lezárták (az újranyitott félév is ilyen). */
+  lezartVolt: boolean;
+}
+
 /**
- * Az igazolt szakasz beszámítási féléve (spec 5.4.): a kérés napjának féléve, ha azt a félévet még soha nem
- * zárták le; különben az igazolás napjának féléve, hogy a lezárt félév rögzített mutatói ne változzanak.
- * A napok `YYYY-MM-DD` stringek (Europe/Budapest szerint).
+ * Az igazolt szakasz beszámítási féléve (spec 5.4.). A kérés napjának féléve, ha az a félév bővített adatot gyűjt,
+ * még soha nem zárták le, és van időszak-sora, vagy az igazolás napján még megnyitható; különben az igazolás napjának
+ * féléve. Így az igazolás sem lezárt félév rögzített mutatóit nem érinti, sem olyan félévbe nem kerül, amelynek
+ * pillanatképe sosem tartalmazná. Ha van sor, a tárolt jelző dönt, sor nélkül a `bovitettAdatokFelev`.
+ * A napok `YYYY-MM-DD` stringek (Europe/Budapest szerint); `idoszak`: a kérés félévének sora, ha van.
  */
-export function beszamitasiFelev(kertNap: string, igazolasNap: string, kertFelevLezartVolt: boolean): Felev {
-  return futoFelev(kertFelevLezartVolt ? igazolasNap : kertNap);
+export function beszamitasiFelev(kertNap: string, igazolasNap: string, idoszak: KertFelevIdoszak | null): Felev {
+  const kertFelev = futoFelev(kertNap);
+  const beszamithato = idoszak
+    ? idoszak.bovitettAdatok && !idoszak.lezartVolt
+    : bovitettAdatokFelev(kertFelev) && megnyithato(kertFelev, igazolasNap);
+  return beszamithato ? kertFelev : futoFelev(igazolasNap);
 }

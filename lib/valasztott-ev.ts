@@ -14,9 +14,13 @@ export function parseEv(raw: string | undefined): number {
   return raw && /^\d{4}$/.test(raw) ? Number(raw) : NaN;
 }
 
-/** Érvényes-e a választott év: egész EV_MIN és `most` között; a négyjegyűséget a parseEv biztosítja. */
-export function ervenyesValasztottEv(ev: number, most: number): boolean {
-  return Number.isInteger(ev) && ev >= EV_MIN && ev <= most;
+/**
+ * Érvényes-e a választott év: egész EV_MIN és `most` között; a négyjegyűséget a parseEv biztosítja. `evek`: a
+ * felhasználó választható évei (`ciklusEvek`), az évváltás ezen a halmazon belül maradhat; a cookie olvasása ezek
+ * nélkül, csak a tartományt nézi.
+ */
+export function ervenyesValasztottEv(ev: number, most: number, evek?: readonly number[]): boolean {
+  return Number.isInteger(ev) && ev >= EV_MIN && ev <= most && (evek === undefined || evek.includes(ev));
 }
 
 /**
@@ -30,12 +34,20 @@ export const getValasztottEv = cache(async (most: number): Promise<number> => {
 
 /**
  * A fejléc ciklusválasztójának évei, csökkenő sorrendben. Admin: minden év EV_MIN-től az aktuálisig (új év
- * profilját is létre kell tudnia hozni, a szerkesztőnek nincs saját évválasztója). Attasé: a DB-ben létező
- * profil-évek + az aktuális év, az EV_MIN..most tartományra szűrve, hogy csak olyan évet ajánljunk fel, amit a
- * valasztEvAction is elfogadna. A választott év mindig benne van (ev már validált, most mindig szerepel), hogy
- * a select konzisztens legyen. A profil-éveket (`profilEvek`) csak attasénál kéri le.
+ * profilját is létre kell tudnia hozni, a szerkesztőnek nincs saját évválasztója). Attasé: az aktuális és az előző
+ * év, a DB-ben létező profil-évek és azok az évek, amelyekben saját tevékenysége vagy ügye van (`sajatEvek`), az
+ * EV_MIN..most tartományra szűrve, hogy csak olyan évet ajánljunk fel, amit a valasztEvAction is elfogadna. A választott
+ * év mindig benne van (ev már validált, most mindig szerepel), hogy a select konzisztens legyen. A forrásokat
+ * (`profilEvek`, `sajatEvek`) csak attasénál kéri le.
  */
-export function ciklusEvek(szerep: Szerepkor, most: number, ev: number, profilEvek: () => readonly number[]): number[] {
+export function ciklusEvek(
+  szerep: Szerepkor,
+  most: number,
+  ev: number,
+  profilEvek: () => readonly number[],
+  sajatEvek: () => readonly number[],
+): number[] {
   if (szerep === 'admin') return Array.from({ length: Math.max(0, most - EV_MIN + 1) }, (_, i) => most - i);
-  return [...new Set([most, ev, ...profilEvek().filter((e) => e >= EV_MIN && e <= most)])].sort((a, b) => b - a);
+  const tartomanyban = [most - 1, ...profilEvek(), ...sajatEvek()].filter((e) => e >= EV_MIN && e <= most);
+  return [...new Set([most, ev, ...tartomanyban])].sort((a, b) => b - a);
 }

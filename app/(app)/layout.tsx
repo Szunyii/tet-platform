@@ -1,7 +1,7 @@
 import AppShell from '../../components/app-shell/AppShell';
 import { countTervTeendo } from '../../db/queries/munkaterv';
 import { listProfilEvek } from '../../db/queries/orszagprofil';
-import { countTevekenysegTeendo } from '../../db/queries/tevekenyseg';
+import { countTevekenysegTeendo, listSajatEvek } from '../../db/queries/tevekenyseg';
 import { countOlvasatlan } from '../../db/queries/ticket';
 import { aktualisEv } from '../../lib/datum';
 import { requireSession } from '../../lib/session';
@@ -26,7 +26,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const olvasatlan = countOlvasatlan(session);
   const most = aktualisEv();
   const ev = await getValasztottEv(most);
-  const evek = ciklusEvek(session.role, most, ev, listProfilEvek);
+  const evek = ciklusEvek(session.role, most, ev, listProfilEvek, () => listSajatEvek(session.userId));
   return (
     <AppShell
       user={session}

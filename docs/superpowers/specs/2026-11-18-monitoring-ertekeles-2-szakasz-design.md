@@ -85,7 +85,7 @@ Szövegkorlátok: megnevezés, partner és magyar szereplő 200 karakter, leír�
 | Mező | Szabály |
 | --- | --- |
 | Típus | Kötelező |
-| Dátum | Kötelező, legkésőbb a mai nap |
+| Dátum | Kötelező, legkésőbb a mai nap, legkorábban az előző naptári év január 1-je (Europe/Budapest). Módosításnál a változatlan régi dátum akkor is érvényes marad, ha már korábbi ennél. |
 | Ország | Kötelező, az attasé egyik országa, alapértéke a székhely |
 | Megnevezés | Kötelező |
 | Partner | Kötelező |
@@ -96,6 +96,7 @@ Szövegkorlátok: megnevezés, partner és magyar szereplő 200 karakter, leír�
 
 - **Jelentésből indítás:** a saját „Rendezvény, találkozó, delegáció” vagy „Együttműködési lehetőségek” kategóriájú jelentés oldalán a szerző „Tevékenység rögzítése” gombot lát. Az űrlap előre kitöltve nyílik: megnevezés a tárgyból, dátum az esemény dátumából vagy a beadás napjából, ország a jelentésből. A jelentés oldala kiírja, ha már készült belőle tevékenység.
 - **Módosítás és törlés:** az attasé a saját tevékenységét módosíthatja és törölheti, kivéve, ha a dátuma olyan félévbe esik, amelyet már legalább egyszer lezártak. Ilyen félévre új tevékenység sem rögzíthető.
+- **Elérhetőség:** az attasé fejlécében az aktuális és az előző év, az országprofilok évei, valamint minden olyan év választható, amelyben saját tevékenysége vagy ügye van, és a szerveroldali évellenőrzés ugyanezt a halmazt fogadja el. Így nem keletkezhet olyan bejegyzés, amelyet a tulajdonosa nem ér el. Ha a mentett tevékenység éve eltér a fejlécben látott évtől, a visszajelzés: „Tevékenység mentve. A(z) <év>. évnél találod, az évet a fejlécben választhatod ki.”
 - **Kifogás:** az admin megjegyzéssel kifogásolhat egy tevékenységet. A kifogásolt tevékenység nem számít a mutatókba, az attasé látja a megjegyzést. A kifogás megszűnik, ha az attasé módosítja a bejegyzést, vagy az admin visszavonja.
 
 ### 5.3. Eredmény
@@ -142,7 +143,9 @@ Szövegkorlátok: megnevezés, partner és magyar szereplő 200 karakter, leír�
 | --- | --- |
 | Tevékenység | A tevékenység dátumának féléve |
 | Lehetőség és Kapcsolat elérése | Az esemény dátumának féléve |
-| Igazolt szakasz | A kérés dátumának féléve, ha azt a félévet még soha nem zárták le. Különben az igazolás dátumának féléve. |
+| Igazolt szakasz | A kérés dátumának féléve, ha az a félév bővített adatot gyűjt, még soha nem zárták le, és van időszak-sora, vagy az igazolás napján még megnyitható. Különben az igazolás dátumának féléve. |
+
+Ha a kérés félévének van időszak-sora, a tárolt `bovitett_adatok` jelző dönt, sor nélkül a `bovitettAdatokFelev`. A feltételek azért kellenek, hogy az igazolás ne kerüljön olyan félévbe, amelynek pillanatképe nem tartalmazná.
 
 A beszámítási félév az igazoláskor rögzül az eseményen. Visszavont igazolás nem számít a még nem rögzített mutatókba.
 

@@ -17,6 +17,7 @@ import {
   SZOVEG_MAX,
   TEVEKENYSEG_TIPUSOK,
 } from '../../../../lib/tevekenyseg-szotar';
+import { tevekenysegMentesUzenet } from '../../../../lib/tevekenyseg-validacio';
 import { mentTevekenysegAction } from '../actions';
 
 export interface RiportOpcio {
@@ -45,6 +46,8 @@ export interface TevekenysegUrlapAdat {
   riportOpciok: readonly RiportOpcio[];
   /** A mai naptári nap (`YYYY-MM-DD`). */
   ma: string;
+  /** A fejlécben választott év: a lista erre szűkül. */
+  ev: number;
 }
 
 /** A már hozzákapcsolt, de a listából kikerült érték is választható marad, hogy a mentés ne dobja el csendben. */
@@ -66,17 +69,17 @@ export function TevekenysegDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [state, formAction, pending] = useMuveletForm(
-    mentTevekenysegAction.bind(null, tevekenyseg?.id ?? null),
-    tevekenyseg ? 'Tevékenység módosítva.' : 'Tevékenység rögzítve.',
-    () => onOpenChange(false),
-  );
-  const errors = state.errors ?? {};
-
   // A verzió a megnyitáskor rögzül: a közben frissülő lap nem fedheti el a más által végzett módosítást.
   const [verzio] = useState(tevekenyseg?.verzio);
   const [tipus, setTipus] = useState<string>(tevekenyseg?.tipus ?? '');
   const [datum, setDatum] = useState(tevekenyseg?.datum ?? elotoltes?.datum ?? adat.ma);
+  const [state, formAction, pending] = useMuveletForm(
+    mentTevekenysegAction.bind(null, tevekenyseg?.id ?? null),
+    tevekenysegMentesUzenet(datum, adat.ev, tevekenyseg !== undefined),
+    () => onOpenChange(false),
+  );
+  const errors = state.errors ?? {};
+
   const [orszag, setOrszag] = useState(tevekenyseg?.orszagKod ?? elotoltes?.orszagKod ?? adat.orszagok[0] ?? '');
   const [megnevezes, setMegnevezes] = useState(tevekenyseg?.megnevezes ?? elotoltes?.megnevezes ?? '');
   const [partner, setPartner] = useState(tevekenyseg?.partner ?? '');

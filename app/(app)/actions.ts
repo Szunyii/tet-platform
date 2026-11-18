@@ -3,13 +3,15 @@
 import { revalidatePath } from 'next/cache';
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { listProfilEvek } from '../../db/queries/orszagprofil';
+import { listSajatEvek } from '../../db/queries/tevekenyseg';
 import { auth } from '../../lib/auth';
 import { aktualisEv } from '../../lib/datum';
 import { orszagByKod } from '../../lib/orszagok';
 import { LOGIN_ROUTE } from '../../lib/routes';
 import { requireSession } from '../../lib/session';
 import { mezo } from '../../lib/urlap';
-import { ervenyesValasztottEv, EV_COOKIE, parseEv } from '../../lib/valasztott-ev';
+import { ciklusEvek, ervenyesValasztottEv, EV_COOKIE, parseEv } from '../../lib/valasztott-ev';
 
 export interface LogoutState {
   error?: string;
@@ -33,16 +35,19 @@ export async function logoutAction(_prev: LogoutState): Promise<LogoutState> {
 /**
  * A fejléc ciklusválasztója: a választott évet httpOnly cookie-ba írja, és a layoutot
  * revalidálja, így a térkép, a profil és a szerkesztő oldal az új évre renderelődik.
- * Érvénytelen év (nem négyjegyű, EV_MIN alatt vagy az aktuális év felett) → nem ír semmit.
+ * Érvénytelen év (nem négyjegyű, EV_MIN alatt, az aktuális év felett, vagy a felhasználó fejlécében nem
+ * választható) → nem ír semmit.
  * Opcionális `kod` mezővel az ország szerkesztőjére irányít (a „Szerkesztés (2026)" gomb:
  * attasé múltbeli évnézetből egy lépésben az aktuális évre vált és szerkeszt).
  * A redirect() kivétellel működik: a try/catch-en kívül hívjuk.
  */
 export async function valasztEvAction(formData: FormData): Promise<void> {
-  await requireSession();
+  const session = await requireSession();
   const most = aktualisEv();
   const ev = parseEv(mezo(formData, 'ev'));
-  if (!ervenyesValasztottEv(ev, most)) return;
+  // A fejléc halmaza a jelenleg választott év nélkül: az nem tágíthatja az elfogadott évek körét.
+  const evek = ciklusEvek(session.role, most, most, listProfilEvek, () => listSajatEvek(session.userId));
+  if (!ervenyesValasztottEv(ev, most, evek)) return;
   (await cookies()).set(EV_COOKIE, String(ev), {
     httpOnly: true,
     sameSite: 'lax',

@@ -69,6 +69,7 @@ export default async function TevekenysegekPage({ searchParams }: { searchParams
     eredmenyOpciok: listSajatAktivEredmenyek(session.userId),
     riportOpciok: listSajatRiportok(session.userId, RIPORT_OPCIO_LIMIT).sorok.map((r) => ({ id: r.id, targy: r.targy })),
     ma: maiNaptariNap(),
+    ev,
   };
 
   // A visszaküldött ügyek kártyáján a központ megjegyzése is látszik.

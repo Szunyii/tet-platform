@@ -94,11 +94,23 @@ function azonosito(fd: FormData, kulcs: string): string | null {
   return mezo(fd, kulcs) || null;
 }
 
+/** A legkorábbi rögzíthető dátum: a `ma` napot megelőző naptári év első napja. */
+function legkorabbiDatum(ma: string): string {
+  return `${Number(ma.slice(0, 4)) - 1}-01-01`;
+}
+
 /**
- * Egy tevékenység. `ma` a mai naptári nap (`YYYY-MM-DD`, Europe/Budapest): a dátum nem lehet későbbi.
- * `orszagok` az attasé aktuális országainak kódjai. A magyar szereplő partnerközvetítésnél kötelező.
+ * Egy tevékenység. `ma` a mai naptári nap (`YYYY-MM-DD`, Europe/Budapest): a dátum nem lehet későbbi, és nem lehet
+ * korábbi az előző naptári év első napjánál, hogy a bejegyzés a fejléc éveiből elérhető maradjon. `meglevoDatum`
+ * módosításkor a tárolt dátum: változatlanul a határ előtt is érvényes, hogy a nyitott félév régi bejegyzése javítható
+ * legyen. `orszagok` az attasé aktuális országainak kódjai. A magyar szereplő partnerközvetítésnél kötelező.
  */
-export function parseTevekenysegForm(fd: FormData, ma: string, orszagok: readonly string[]): ParseResult<TevekenysegInput> {
+export function parseTevekenysegForm(
+  fd: FormData,
+  ma: string,
+  orszagok: readonly string[],
+  meglevoDatum: string | null = null,
+): ParseResult<TevekenysegInput> {
   const errors: MezoHibak = {};
 
   const tipusRaw = mezo(fd, 'tipus');
@@ -108,6 +120,9 @@ export function parseTevekenysegForm(fd: FormData, ma: string, orszagok: readonl
   const datum = mezo(fd, 'datum');
   if (!ervenyesNaptariDatum(datum)) errors.datum = 'Adj meg érvényes dátumot.';
   else if (datum > ma) errors.datum = 'A dátum nem lehet jövőbeli.';
+  else if (datum < legkorabbiDatum(ma) && datum !== meglevoDatum) {
+    errors.datum = 'A dátum nem lehet korábbi az előző naptári év első napjánál.';
+  }
 
   const orszag = orszagKod(fd, orszagok, errors);
   const megnevezes = kotelezo(fd, 'megnevezes', MEGNEVEZES_MAX, 'A megnevezés kötelező.', `A megnevezés legfeljebb ${MEGNEVEZES_MAX} karakter lehet.`, errors);
@@ -135,6 +150,16 @@ export function parseTevekenysegForm(fd: FormData, ma: string, orszagok: readonl
       eredmenyId: azonosito(fd, 'eredmenyId'),
     },
   };
+}
+
+/**
+ * A tevékenység mentésének visszajelzése. Ha a dátum éve nem a fejlécben látott év (`ev`), a bejegyzés a mentés után
+ * eltűnik a listából, ezért az üzenet megmondja, hol található.
+ */
+export function tevekenysegMentesUzenet(datum: string, ev: number, modositas: boolean): string {
+  const mentettEv = datum.slice(0, 4);
+  if (mentettEv !== String(ev)) return `Tevékenység mentve. A(z) ${mentettEv}. évnél találod, az évet a fejlécben választhatod ki.`;
+  return modositas ? 'Tevékenység módosítva.' : 'Tevékenység rögzítve.';
 }
 
 /**

@@ -232,6 +232,39 @@ export function listTevekenysegek(s: TevekenysegSzuro): TevekenysegSor[] {
   );
 }
 
+/** A saját tevékenység tárolt dátuma; idegen vagy nem létező bejegyzésre `null`. */
+export function getTevekenysegDatum(id: string, attaseId: string): string | null {
+  return (
+    db
+      .select({ datum: tevekenyseg.datum })
+      .from(tevekenyseg)
+      .where(and(eq(tevekenyseg.id, id), eq(tevekenyseg.attaseId, attaseId)))
+      .get()?.datum ?? null
+  );
+}
+
+/**
+ * Az évek, amelyekben az attasénak saját bejegyzése van: a tevékenységek dátuma és az ügyek eseményeinek beszámítási
+ * éve (a létrehozás és a megállapodás éve is ilyen). A fejlécből ezek az évek mindig elérhetők, mert a tevékenységek
+ * listája és a Megállapodás oszlop a választott évre szűkül.
+ */
+export function listSajatEvek(attaseId: string): number[] {
+  const tevekenysegEvek = db
+    .selectDistinct({ ev: sql<string>`substr(${tevekenyseg.datum}, 1, 4)` })
+    .from(tevekenyseg)
+    .where(eq(tevekenyseg.attaseId, attaseId))
+    .all()
+    .map((r) => Number(r.ev));
+  const ugyEvek = db
+    .selectDistinct({ ev: eredmenyEsemeny.beszamitasiEv })
+    .from(eredmenyEsemeny)
+    .innerJoin(eredmeny, eq(eredmeny.id, eredmenyEsemeny.eredmenyId))
+    .where(and(eq(eredmeny.attaseId, attaseId), isNotNull(eredmenyEsemeny.beszamitasiEv)))
+    .all()
+    .flatMap((r) => (r.ev === null ? [] : [r.ev]));
+  return [...new Set([...tevekenysegEvek, ...ugyEvek])];
+}
+
 /** Az ügy eseményeinek a félévszámításhoz szükséges része. */
 interface EsemenyFelev {
   tipus: EsemenyTipus;
@@ -738,8 +771,9 @@ export function kerIgazolast(
 }
 
 /**
- * A függő kérés igazolása. A beszámítási félév itt rögzül (spec 5.4.): a kérés féléve, ha azt még soha nem zárták
- * le, különben az igazolásé. Az ügy kifogása megszűnik, mert igazolt szakaszban már nem volna visszavonható.
+ * A függő kérés igazolása. A beszámítási félév itt rögzül (spec 5.4., `beszamitasiFelev`): a kérés féléve, ha az
+ * bővített adatot gyűjt, még soha nem zárták le, és van időszak-sora vagy még megnyitható; különben az igazolásé.
+ * Az ügy kifogása megszűnik, mert igazolt szakaszban már nem volna visszavonható.
  */
 export function igazol(id: string, szerzoNev: string, verzio: number, most: Date = new Date()): IrasEredmeny {
   return adminIras(id, verzio, 'igazol', (tx, u) => {
@@ -753,6 +787,12 @@ export function igazol(id: string, szerzoNev: string, verzio: number, most: Date
       .get();
     if (kert === null || !keres) return 'ervenytelen';
     const kertNap = naptariNap(keres.createdAt);
+    const kertFelev = futoFelev(kertNap);
+    const idoszak = tx
+      .select({ bovitettAdatok: ertekelesiIdoszak.bovitettAdatok, lezarvaAt: ertekelesiIdoszak.lezarvaAt })
+      .from(ertekelesiIdoszak)
+      .where(and(eq(ertekelesiIdoszak.ev, kertFelev.ev), eq(ertekelesiIdoszak.felev, kertFelev.felev)))
+      .get();
     lepes(
       tx,
       u,
@@ -763,7 +803,11 @@ export function igazol(id: string, szerzoNev: string, verzio: number, most: Date
         szakasz: kert,
         szerzoNev,
         szerzoSzerep: 'admin',
-        beszamitasi: beszamitasiFelev(kertNap, naptariNap(most), napLezart(kertNap, lezartFelevek())),
+        beszamitasi: beszamitasiFelev(
+          kertNap,
+          naptariNap(most),
+          idoszak ? { bovitettAdatok: idoszak.bovitettAdatok, lezartVolt: idoszak.lezarvaAt !== null } : null,
+        ),
       },
     );
     return 'ok';
@@ -1000,7 +1044,8 @@ export function countFuggoKeresek(f: Felev): number {
 
 /**
  * A menüpont számlálója. Admin: a függő igazoláskérések. Attasé: a visszaküldött vagy kifogásolt saját ügyek
- * (a kettő egyszerre is igaz lehet, az ügy egyszer számít) és a kifogásolt saját tevékenységek.
+ * (a kettő egyszerre is igaz lehet, az ügy egyszer számít) és a kifogásolt saját tevékenységek, kivéve a lezárt
+ * félévbe esőket: azokat az attasé már nem módosíthatja, így a kifogást sem tudja rendezni.
  */
 export function countTevekenysegTeendo(session: { userId: string; role: 'admin' | 'attase' }): number {
   if (session.role === 'admin') {
@@ -1016,10 +1061,12 @@ export function countTevekenysegTeendo(session: { userId: string; role: 'admin' 
       ),
     )
     .get()?.darab ?? 0;
+  const lezartak = lezartFelevek();
   const tevekenysegek = db
-    .select({ darab: count() })
+    .select({ datum: tevekenyseg.datum })
     .from(tevekenyseg)
     .where(and(eq(tevekenyseg.attaseId, session.userId), isNotNull(tevekenyseg.kifogas)))
-    .get()?.darab ?? 0;
+    .all()
+    .filter((t) => !napLezart(t.datum, lezartak)).length;
   return ugyek + tevekenysegek;
 }
