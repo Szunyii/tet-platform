@@ -1117,7 +1117,8 @@ interface RiportInfo {
   kategoria: string;
   orszag: string;
   esemenyDatum: string | null;
-  /** A beadás budapesti naptári napja. */
+  /** A beadás pillanata és budapesti naptári napja. */
+  createdAt: Date;
   nap: string;
 }
 
@@ -1136,7 +1137,7 @@ function sajatRiportok(a: Attase, ido: Ido): RiportInfo[] {
     .where(eq(riport.szerzoId, a.id))
     .all()
     .sort((x, y) => x.createdAt.getTime() - y.createdAt.getTime() || (x.id < y.id ? -1 : 1))
-    .map(({ createdAt, ...r }) => ({ ...r, nap: naptariNap(createdAt) }))
+    .map((r) => ({ ...r, nap: naptariNap(r.createdAt) }))
     .filter((r) => r.nap >= ido.elsoNap && r.nap <= ido.jelentesVeg);
 }
 
@@ -1145,8 +1146,9 @@ interface UgyRekord {
   id: string;
   felev: string;
   tipus: UgyTipus;
-  /** A létrehozás budapesti naptári napja. */
+  /** A létrehozás budapesti naptári napja és pillanata. */
   nap: string;
+  letrehozva: Date;
   orszag: string;
   partnerAlap: string;
   magyarAlap: string | null;
@@ -1202,6 +1204,7 @@ function ugyLefuttat(
   const leiras = esellyelA(0.6) ? `${valasztA(UGY_LEIRAS)} ${KITALALT}` : null;
   const kontextus = (lepes: string) => `${a.nev}, ${felevKulcs(felev)}, ${tipus}, ${lepes}`;
 
+  const letrehozva = idopontA(napok[0]);
   const letrehozas = tq.createEredmeny(
     a.id,
     {
@@ -1214,7 +1217,7 @@ function ugyLefuttat(
       kezdoSzakasz: minta.kezdo,
     },
     a.nev,
-    idopontA(napok[0]),
+    letrehozva,
   );
   if (letrehozas.eredmeny !== 'ok' || letrehozas.id === undefined) throw new Error(`${kontextus('létrehozás')}: ${letrehozas.eredmeny}.`);
   const id = letrehozas.id;
@@ -1231,6 +1234,8 @@ function ugyLefuttat(
         szakasz = 'kapcsolat';
         break;
       case 'keres': {
+        // Bizonyítékul csak a kérés pillanatánál korábban beadott jelentés hivatkozható.
+        const bizonyitekok = riportok.filter((r) => r.createdAt.getTime() < most.getTime());
         kert = kovetkezoSzakasz(szakasz);
         if (kert === null) throw new Error(`${mit}: nincs következő szakasz.`);
         irasOk(
@@ -1240,7 +1245,7 @@ function ugyLefuttat(
             {
               indoklas: `${valasztA(kert === 'megallapodas' ? INDOKLAS_MEGALLAPODAS : INDOKLAS_EGYUTTMUKODES)} ${KITALALT}`,
               link: esellyelA(0.5) ? `https://pelda.example/kitalalt/${egeszA(1000, 9999)}` : null,
-              riportId: riportok.length > 0 && esellyelA(0.5) ? valasztA(riportok).id : null,
+              riportId: bizonyitekok.length > 0 && esellyelA(0.5) ? valasztA(bizonyitekok).id : null,
               verzio: ugyVerzio(id),
             },
             a.nev,
@@ -1270,10 +1275,10 @@ function ugyLefuttat(
         break;
     }
   }
-  return { id, felev: felevKulcs(felev), tipus, nap: napok[0], orszag, partnerAlap, magyarAlap, aktiv: minta.aktiv };
+  return { id, felev: felevKulcs(felev), tipus, nap: napok[0], letrehozva, orszag, partnerAlap, magyarAlap, aktiv: minta.aktiv };
 }
 
-type TevekenysegSorBe = typeof tevekenyseg.$inferInsert;
+type TevekenysegSorBe = typeof tevekenyseg.$inferInsert & { createdAt: Date };
 
 function tevekenysegNev(tipus: TevekenysegTipus, partnerAlap: string, magyarAlap: string | null): string {
   switch (tipus) {
@@ -1320,7 +1325,10 @@ function tevekenysegekLetrehoz(
     ugy: UgyRekord | null,
   ): TevekenysegSorBe => {
     const magyar = tipus === 'partnerkozvetites' ? (magyarAlap ?? magyarAlapNev()) : magyarAlap;
-    const letrehozva = idopontA(letrehozasNap);
+    // A bejegyzés nem előzheti meg a kapcsolt jelentést és ügyet (azonos napon a későbbi időpont után készül).
+    const alap = idopontA(letrehozasNap);
+    const legkorabban = Math.max(r?.createdAt.getTime() ?? 0, ugy?.letrehozva.getTime() ?? 0);
+    const letrehozva = alap.getTime() > legkorabban ? alap : new Date(legkorabban + egeszA(1, 60) * 60_000);
     return {
       id: azonositoA(),
       attaseId: a.id,
@@ -1380,11 +1388,12 @@ function aBlokkAttase(a: Attase, cella: Cella, ido: Ido): { tevekenyseg: number;
 
   if (ido.terv.nyitott) {
     if (KIFOGASOLT_TEVEKENYSEG.includes(a.nev)) {
-      // A kifogás az attasé bejegyzése utáni napokban érkezik, legkésőbb a mérés előtt egy órával.
-      const jeloltek = sorok.filter((s) => s.datum <= plusNap(MA, -4));
+      // A kifogás a bejegyzés rögzítése utáni napokban érkezik (a jelentésből indított tevékenységet a jelentés
+      // beadásának napján rögzítik, ami a dátumánál későbbi lehet), legkésőbb a mérés előtt egy órával.
+      const jeloltek = sorok.filter((s) => naptariNap(s.createdAt) <= plusNap(MA, -4));
       if (jeloltek.length === 0) throw new Error(`${a.nev}: nincs kifogásolható tevékenység a nyitott félévben.`);
       const cel = valasztA(jeloltek);
-      const most = kisebb(idopontA(plusNap(cel.datum, egeszA(1, 6))), new Date(ido.hatar.getTime() - 3600_000));
+      const most = kisebb(idopontA(plusNap(naptariNap(cel.createdAt), egeszA(1, 6))), new Date(ido.hatar.getTime() - 3600_000));
       irasOk(tq.kifogasolTevekenyseg(cel.id, `${valasztA(TEV_KIFOGAS)} ${KITALALT}`, ERTEKELO, most), `${a.nev}, kifogásolt tevékenység`);
     }
     if (a.nev === VISSZAVONAS_ATTASE) {
@@ -1711,13 +1720,18 @@ function aBlokkEllenorzes(attasek: readonly Attase[], hiba: (uzenet: string) => 
     if (t.tipus === 'partnerkozvetites' && t.magyarSzereplo === null) hiba(`${kulcs} (${a.nev}): a partnerközvetítésnél hiányzik a magyar szereplő.`);
     if (!t.megnevezes.includes('(kitalált)') || !t.partner.includes('(kitalált)')) hiba(`${kulcs} (${a.nev}): a szöveg nem jelzi, hogy kitalált.`);
     if ([t.kifogas, t.kifogasSzerzoNev, t.kifogasAt].filter((v) => v !== null).length % 3 !== 0) hiba(`${kulcs} (${a.nev}): a kifogás mezői nem együtt töltöttek.`);
+    if (t.updatedAt.getTime() < t.createdAt.getTime()) hiba(`${kulcs} (${a.nev}): a módosítás ideje a rögzítésnél korábbi.`);
+    if (t.kifogasAt !== null && t.kifogasAt.getTime() < t.createdAt.getTime()) hiba(`${kulcs} (${a.nev}): a kifogás a rögzítésnél korábbi.`);
+    if (t.kifogasAt !== null && t.kifogasAt.getTime() > t.updatedAt.getTime()) hiba(`${kulcs} (${a.nev}): a kifogás a módosítás idejénél későbbi.`);
     if (t.riportId !== null) {
       const r = riportok.get(t.riportId);
       if (!r || r.szerzoId !== t.attaseId) hiba(`${kulcs} (${a.nev}): a kapcsolt jelentés nem az attasé jelentése.`);
+      else if (r.createdAt.getTime() > t.createdAt.getTime()) hiba(`${kulcs} (${a.nev}): a kapcsolt jelentés a tevékenységnél később készült.`);
     }
     if (t.eredmenyId !== null) {
       const u = ugyById.get(t.eredmenyId);
       if (!u || u.attaseId !== t.attaseId) hiba(`${kulcs} (${a.nev}): a kapcsolt eredmény nem az attasé eredménye.`);
+      else if (u.createdAt.getTime() > t.createdAt.getTime()) hiba(`${kulcs} (${a.nev}): a kapcsolt eredmény a tevékenységnél később készült.`);
     }
   }
 
@@ -1735,15 +1749,23 @@ function aBlokkEllenorzes(attasek: readonly Attase[], hiba: (uzenet: string) => 
       hiba(`${kulcs} (${a.nev}): az időbélyeg a „mai” pillanatnál későbbi.`);
     }
     if (!u.megnevezes.includes('(kitalált)') || !u.partner.includes('(kitalált)')) hiba(`${kulcs} (${a.nev}): a szöveg nem jelzi, hogy kitalált.`);
+    if (u.updatedAt.getTime() < u.createdAt.getTime()) hiba(`${kulcs} (${a.nev}): a módosítás ideje a létrehozásnál korábbi.`);
+    if (u.kifogasAt !== null && u.kifogasAt.getTime() < u.createdAt.getTime()) hiba(`${kulcs} (${a.nev}): a kifogás a létrehozásnál korábbi.`);
+    if (u.kifogasAt !== null && u.kifogasAt.getTime() > u.updatedAt.getTime()) hiba(`${kulcs} (${a.nev}): a kifogás a módosítás idejénél későbbi.`);
     if (u.kertSzakasz !== null && u.igazolas !== 'igazolasra_var') hiba(`${kulcs} (${a.nev}): függő kérés, de az igazolás állapota ${u.igazolas}.`);
     if (u.kertSzakasz === null && u.igazolas === 'igazolasra_var') hiba(`${kulcs} (${a.nev}): „igazolásra vár”, de nincs függő kérés.`);
     const sajat = esemenyek.filter((e) => e.eredmenyId === u.id).sort((x, y) => x.createdAt.getTime() - y.createdAt.getTime());
     if (sajat.length === 0 || sajat[0].tipus !== 'letrehozas') hiba(`${kulcs} (${a.nev}): az első esemény nem a létrehozás.`);
+    if (sajat.length > 0 && sajat[0].createdAt.getTime() < u.createdAt.getTime()) hiba(`${kulcs} (${a.nev}): az első esemény a létrehozásnál korábbi.`);
     sajat.forEach((e, i) => {
       if (i > 0 && e.createdAt.getTime() <= sajat[i - 1].createdAt.getTime()) hiba(`${kulcs} (${a.nev}): az események nem szigorúan időrendiek.`);
       if (e.createdAt.getTime() > MOST_NYITOTT.getTime()) hiba(`${kulcs} (${a.nev}): az esemény ideje a „mai” napnál későbbi.`);
       if (!szerzok.has(e.szerzoNev)) hiba(`${kulcs} (${a.nev}): ismeretlen szerző az előzményekben: ${e.szerzoNev}.`);
-      if (e.riportId !== null && riportok.get(e.riportId)?.szerzoId !== u.attaseId) hiba(`${kulcs} (${a.nev}): a kérés jelentése nem az attasé jelentése.`);
+      if (e.riportId !== null) {
+        const r = riportok.get(e.riportId);
+        if (r?.szerzoId !== u.attaseId) hiba(`${kulcs} (${a.nev}): a kérés jelentése nem az attasé jelentése.`);
+        else if (r.createdAt.getTime() > e.createdAt.getTime()) hiba(`${kulcs} (${a.nev}): a kérés olyan jelentésre hivatkozik, amely a kérésnél később készült.`);
+      }
     });
   }
 
