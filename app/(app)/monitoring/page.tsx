@@ -4,7 +4,7 @@ import { listHalozat, listLezartFelevek, type IdoszakSor } from '../../../db/que
 import { aktualisEv, maiNaptariNap } from '../../../lib/datum';
 import { alapFelev, felevMegkezdodott, megnyithato, type Felev } from '../../../lib/ertekeles-idoszak';
 import { osszesit, regionkent, szurSorok, type ErtekelesSor } from '../../../lib/ertekeles-osszesites';
-import { szuroFromSearchParams } from '../../../lib/ertekeles-szuro';
+import { szuroFromSearchParams, szuroUrl } from '../../../lib/ertekeles-szuro';
 import { orszagNev, orszagRegio, ORSZAG_REGIOK } from '../../../lib/orszagok';
 import { huOsszevet } from '../../../lib/rendezes';
 import type { SearchParams } from '../../../lib/routes';
@@ -50,6 +50,10 @@ export default async function MonitoringPage({ searchParams }: { searchParams: P
   const felevSzam = szuro.felev ?? alapFelev(ev, ma, listLezartFelevek(ev));
   const felev: Felev = { ev, felev: felevSzam };
   const { idoszak, sorok } = listHalozat(felev);
+  // A félév-művelet után is ez a félév látszik: `?felev=` nélkül az alapérték a lezárt félévekből adódik, és a
+  // művelet megváltoztathatja. A tisztítás előtti szűrőből készül, mert a még meg nem nyitott félévnek nincsenek
+  // opciói, és a megnyitás után a régió- vagy országszűrő újra érvényes.
+  const felevUrl = szuroUrl({ ...szuro, felev: felevSzam });
 
   // Elavult vagy kézzel írt érték: szűrő nélkül, hogy a legördülőben ne nyers kód vagy azonosító álljon.
   const opciok = szuroOpciok(sorok);
@@ -61,7 +65,7 @@ export default async function MonitoringPage({ searchParams }: { searchParams: P
 
   return (
     <div className="@container flex flex-col gap-3">
-      <AllapotSav felev={felev} idoszak={idoszak} sorok={sorok} ma={ma} />
+      <AllapotSav felev={felev} idoszak={idoszak} sorok={sorok} ma={ma} felevUrl={felevUrl} />
       <ErtekelesSzurok szuro={szuro} felev={felevSzam} {...opciok} />
       {sorok.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground">

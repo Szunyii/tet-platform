@@ -7,7 +7,7 @@ import { hianyzoAttasek, osszesit, type ErtekelesSor } from '../../../../lib/ert
 import { lezarFelevAction, megnyitFelevAction, ujranyitFelevAction } from '../actions';
 import { FelevMuveletGomb } from './FelevMuveletGomb';
 
-type GombAdat = Omit<ComponentProps<typeof FelevMuveletGomb>, 'felev'>;
+type GombAdat = Omit<ComponentProps<typeof FelevMuveletGomb>, 'felev' | 'felevUrl'>;
 
 /** A félév állapotához tartozó művelet; `null`, ha a félév nem nyitható meg. */
 function felevGomb(f: Felev, idoszak: IdoszakSor | null, sorok: readonly ErtekelesSor[], ma: string): GombAdat | null {
@@ -35,12 +35,15 @@ export function AllapotSav({
   idoszak,
   sorok,
   ma,
+  felevUrl,
 }: {
   felev: Felev;
   idoszak: IdoszakSor | null;
   /** A félév összes sora, szűrés nélkül: a lezárhatóság a teljes félévre vonatkozik. */
   sorok: readonly ErtekelesSor[];
   ma: string;
+  /** A nézet URL-je a megjelenített félévvel: a művelet után is ez a félév marad látható. */
+  felevUrl: string;
 }) {
   const { kesz, osszes } = osszesit(sorok);
   const gomb = felevGomb(felev, idoszak, sorok, ma);
@@ -69,7 +72,7 @@ export function AllapotSav({
           </p>
         )}
       </div>
-      {gomb && <FelevMuveletGomb {...gomb} felev={cimke} />}
+      {gomb && <FelevMuveletGomb {...gomb} felev={cimke} felevUrl={felevUrl} />}
     </section>
   );
 }

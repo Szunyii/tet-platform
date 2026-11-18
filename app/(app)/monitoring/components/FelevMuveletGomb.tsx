@@ -1,6 +1,6 @@
 'use client';
 
-import { unstable_rethrow } from 'next/navigation';
+import { unstable_rethrow, useRouter } from 'next/navigation';
 import { useId, useState, useTransition } from 'react';
 import { toast } from 'sonner';
 import type { MuveletAction } from '../../../../components/form/useMuveletForm';
@@ -66,14 +66,18 @@ export function FelevMuveletGomb({
   muvelet,
   action,
   felev,
+  felevUrl,
   tiltasOka,
 }: {
   muvelet: FelevMuvelet;
   action: MuveletAction;
   /** A félév felirata a megerősítő szöveghez. */
   felev: string;
+  /** A nézet URL-je a megjelenített félévvel. */
+  felevUrl: string;
   tiltasOka?: string;
 }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const okId = useId();
@@ -82,6 +86,9 @@ export function FelevMuveletGomb({
 
   function futtat() {
     startTransition(async () => {
+      // A művelet előtt rögzítjük a félévet az URL-ben: `?felev=` nélkül az alapértelmezett félév a lezárt
+      // félévekből adódik, így az újranyitás után a nézet másik félévre váltana.
+      router.replace(felevUrl, { scroll: false });
       try {
         const res = await action();
         if (res.ok) toast.success(szoveg.siker);
