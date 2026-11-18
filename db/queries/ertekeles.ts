@@ -7,7 +7,8 @@ import { listProfilMutatok } from './orszagprofil';
 import { listCimzettJeloltek } from './ticket';
 import { naptariNap } from '../../lib/datum';
 import {
-  alapFelev, elozoFelev, felevBefejezodott, felevHatarok, felevNapok, felevOsszevet, megnyithato, type Felev, type FelevSzam,
+  alapFelev, bovitettAdatokFelev, elozoFelev, felevBefejezodott, felevHatarok, felevNapok, felevOsszevet, megnyithato,
+  type Felev, type FelevSzam,
 } from '../../lib/ertekeles-idoszak';
 import {
   halozatiMedianok, szamolMutatok, type ErtekelesMutatok, type MutatoBemenet,
@@ -39,6 +40,8 @@ export interface IdoszakSor {
   statusz: 'nyitott' | 'lezart';
   lezarvaAt: Date | null;
   lezartaNev: string | null;
+  /** A félév kap-e tevékenységi és eredményadatot a mutatóiba (létrehozáskor rögzül). */
+  bovitettAdatok: boolean;
 }
 
 export interface HalozatNezet {
@@ -121,6 +124,7 @@ function idoszakbol(r: typeof ertekelesiIdoszak.$inferSelect): IdoszakSor {
     statusz: r.statusz as IdoszakSor['statusz'],
     lezarvaAt: r.lezarvaAt,
     lezartaNev: r.lezartaNev,
+    bovitettAdatok: r.bovitettAdatok,
   };
 }
 
@@ -174,7 +178,9 @@ function beszurSorok(tx: Tx, idoszakId: string, attasek: readonly (readonly [str
 /** Új időszak az aktív attasék soraival. */
 function ujIdoszak(tx: Tx, f: Felev): string {
   const id = crypto.randomUUID();
-  tx.insert(ertekelesiIdoszak).values({ id, ev: f.ev, felev: f.felev, statusz: 'nyitott' }).run();
+  tx.insert(ertekelesiIdoszak)
+    .values({ id, ev: f.ev, felev: f.felev, statusz: 'nyitott', bovitettAdatok: bovitettAdatokFelev(f) })
+    .run();
   beszurSorok(tx, id, [...eloAttasek()]);
   return id;
 }

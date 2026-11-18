@@ -13,6 +13,14 @@ export interface Felev {
   felev: FelevSzam;
 }
 
+/** Az első félév, amely tevékenységi és eredményadatot kap a mutatóiba. */
+export const BOVITETT_ADATOK_ELSO_FELEV: Felev = { ev: 2027, felev: 1 };
+
+/** A félév kap-e bővített adatot: a korábbi félévekben nem volt adatgyűjtés, ezért ott „nincs adat” látszik, nem nulla. */
+export function bovitettAdatokFelev(f: Felev): boolean {
+  return felevOsszevet(f, BOVITETT_ADATOK_ELSO_FELEV) >= 0;
+}
+
 /** A félév azonosítója az URL-hez és a kulcsokhoz, pl. `2026/1`. */
 export function felevKulcs(f: Felev): string {
   return `${f.ev}/${f.felev}`;

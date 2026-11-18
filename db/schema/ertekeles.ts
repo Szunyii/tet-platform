@@ -17,6 +17,9 @@ export const ertekelesiIdoszak = sqliteTable(
     // Az utolsó lezárás ideje és a lezáró nevének pillanatképe (nincs FK: a név a felhasználó törlése után is marad).
     lezarvaAt: integer('lezarva_at', { mode: 'timestamp_ms' }),
     lezartaNev: text('lezarta_nev'),
+    // A félév kap-e tevékenységi és eredményadatot a mutatókba: létrehozáskor áll be (bovitettAdatokFelev),
+    // így a korábbi, adatgyűjtés nélküli félévek „nincs adat” jelzést mutatnak, nem nullát.
+    bovitettAdatok: integer('bovitett_adatok', { mode: 'boolean' }).notNull().default(false),
     createdAt: integer('created_at', { mode: 'timestamp_ms' })
       .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
       .notNull(),
