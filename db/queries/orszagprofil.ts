@@ -1,12 +1,13 @@
 import 'server-only';
 import { cache } from 'react';
-import { and, desc, eq, lte, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, lte, sql } from 'drizzle-orm';
 import { db } from '../index';
 import { orszagprofil, user } from '../schema';
 import { orszagByKod } from '../../lib/orszagok';
 import { huOsszevet } from '../../lib/rendezes';
 import { listAttasekOrszagonkent } from './attase-orszag';
 import type { OrszagAttase } from '../../lib/attase-orszag';
+import type { ProfilBemenet } from '../../lib/ertekeles-mutatok';
 import {
   BLOKK_KULCSOK, normalizalBlokk, profilAllapot,
   type Agazat, type Alapadatok, type Allapot, type BlokkKulcs, type KfiPrioritas, type ProfilBlokkok,
@@ -99,6 +100,30 @@ const MENTETT_DB = sql<number>`${sql.join(
   BLOKK_KULCSOK.map((k) => sql`(${orszagprofil[k]} is not null and ${orszagprofil[k]} <> 'null')`),
   sql` + `,
 )}`;
+
+/**
+ * Az országok adott évi profiljainak adatai az értékelés Országismeret-mutatóihoz: a mentett blokkok és a
+ * rendezvények száma, valamint az utolsó mentés ideje. Profil nélküli országhoz nincs sor.
+ */
+export function listProfilMutatok(kodok: readonly string[], ev: number): ProfilBemenet[] {
+  if (kodok.length === 0) return [];
+  return db
+    .select({
+      orszagKod: orszagprofil.orszagKod,
+      mentettBlokk: MENTETT_DB,
+      rendezvenyek: orszagprofil.rendezvenyek,
+      updatedAt: orszagprofil.updatedAt,
+    })
+    .from(orszagprofil)
+    .where(and(eq(orszagprofil.ev, ev), inArray(orszagprofil.orszagKod, [...kodok])))
+    .all()
+    .map((p) => ({
+      orszagKod: p.orszagKod,
+      mentettBlokk: p.mentettBlokk,
+      rendezvenyDb: p.rendezvenyek != null ? normalizalBlokk('rendezvenyek', p.rendezvenyek).lista.length : 0,
+      updatedAt: p.updatedAt,
+    }));
+}
 
 export interface TerkepOrszag {
   kod: string;
