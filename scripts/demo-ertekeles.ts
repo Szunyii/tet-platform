@@ -21,6 +21,10 @@
  * műveletekkel (db/queries/tevekenyseg.ts), történelmi időpontokkal, a lezárás előtt. Ehhez külön
  * véletlenszám-folyam tartozik, így a korábbi adatok (jelentések, ticketek, minősítések) változatlanok.
  *
+ * A B blokk (éves munkaterv) a 2026-os és a 2027-es évre készül, az éles műveletekkel (db/queries/munkaterv.ts) és
+ * véletlenszám nélkül: 2026-ban minden attasénak jóváhagyott terve van, a célállapotok az összminősítést követik, és a
+ * tervek a 2026/1 lezárása előtt készülnek el; 2027-ben a tervek állapota vegyes.
+ *
  * Az attasék olyan országokban dolgoznak, ahol a valós hálózatnak nincs posztja, a nevek és a szövegek
  * kitaláltak, így a minősítés valós személyhez sem a név, sem a poszt alapján nem köthető.
  *
@@ -36,8 +40,8 @@ import { existsSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { Db } from '../db';
 import {
-  account, attaseErtekeles, attaseOrszag, eredmeny, eredmenyEsemeny, ertekelesiIdoszak, orszagprofil, riport,
-  session, szempontMinosites, ticket, ticketUzenet, tevekenyseg, user,
+  account, attaseErtekeles, attaseOrszag, eredmeny, eredmenyEsemeny, ertekelesiIdoszak, kozpontiCel, munkaterv,
+  munkatervCel, munkatervEv, orszagprofil, riport, session, szempontMinosites, ticket, ticketUzenet, tevekenyseg, user,
 } from '../db/schema';
 import type { AttaseOrszag } from '../lib/attase-orszag';
 import { naptariNap } from '../lib/datum';
@@ -48,7 +52,11 @@ import {
   isFokozat, isOsszFokozat, SZEMPONT_KULCSOK, szempontByKulcs,
   type Fokozat, type OsszFokozat, type SzempontKulcs,
 } from '../lib/ertekeles-szotar';
-import { orszagByKod, orszagNev } from '../lib/orszagok';
+import {
+  CEL_MAX, CEL_MIN, kozzetetelHibak, vonatkozoCelok, type CelAllapot, type TervStatusz,
+} from '../lib/munkaterv-szotar';
+import type { CelInput, KozpontiCelInput } from '../lib/munkaterv-validacio';
+import { orszagByKod, orszagNev, orszagRegio } from '../lib/orszagok';
 import {
   BLOKK_KULCSOK, normalizalBlokk, RENDEZVENY_TIPUSOK, type BlokkKulcs, type ProfilBlokkok,
 } from '../lib/orszagprofil-szotar';
@@ -61,6 +69,7 @@ import {
 
 type Ertekeles = typeof import('../db/queries/ertekeles');
 type Tevekenyseg = typeof import('../db/queries/tevekenyseg');
+type MunkatervLekerdezesek = typeof import('../db/queries/munkaterv');
 
 // ---------------------------------------------------------------------------------------------------------
 // Rögzített adatok
@@ -559,6 +568,7 @@ const KIHAGYAS_OKA = 'Az időszak nagy részében tartósan távol volt, ezért 
 let db!: Db;
 let ert!: Ertekeles;
 let tq!: Tevekenyseg;
+let mq!: MunkatervLekerdezesek;
 
 interface Ido {
   terv: FelevTerv;
@@ -1433,6 +1443,212 @@ function aBlokkLetrehoz(attasek: readonly Attase[], ido: Ido): { tevekenyseg: nu
 }
 
 // ---------------------------------------------------------------------------------------------------------
+// B blokk: éves munkaterv
+// ---------------------------------------------------------------------------------------------------------
+
+/** A 2026-os tervek ennek a félévnek a lezárása előtt készülnek el, hogy a rögzített pillanatképbe bekerüljenek. */
+const TERV_FELEV = '2026/1';
+
+/** A 2026-os terv céljainak állapota az összminősítés szerint; a lista hossza a terv célszáma. */
+const TERV_CELALLAPOTOK: Record<OsszFokozat, readonly CelAllapot[]> = {
+  4: ['teljesult', 'teljesult', 'teljesult', 'teljesult'],
+  3: ['teljesult', 'teljesult', 'teljesult', 'folyamatban'],
+  2: ['teljesult', 'reszben', 'elmaradt'],
+  1: ['reszben', 'elmaradt', 'elmaradt'],
+};
+
+/** A 2027-es tervek állapota (`nincs`: még nem készült terv), az attasék sorrendjében kiosztva. */
+type Terv2027 = TervStatusz | 'nincs';
+const TERV_2027_DB: Readonly<Record<Terv2027, number>> = {
+  jovahagyott: 6,
+  jovahagyasra_var: 3,
+  visszakuldott: 2,
+  piszkozat: 2,
+  nincs: 2,
+};
+const TERV_2027_SOROK = (Object.entries(TERV_2027_DB) as [Terv2027, number][]).flatMap(([allapot, darab]) =>
+  Array<Terv2027>(darab).fill(allapot),
+);
+const TERV_2027_CEL_DB = 4;
+/** Az az attasé, akinek a jóváhagyott 2027-es tervénél nyitott módosítási kérés van. */
+const MODOSITAST_KERO = 'Bárdos Kata';
+
+/** Az év tervezésének naptára; a terv lépései a `kezdes` (vagy az attasé érkezése) után ennyi nappal követik egymást. */
+const TERV_NAPTAR: Readonly<Record<number, { felvetel: string; kozzetetel: string; kezdes: string }>> = {
+  2026: { felvetel: '2026-01-05', kozzetetel: '2026-01-12', kezdes: '2026-01-19' },
+  2027: { felvetel: '2026-10-05', kozzetetel: '2026-10-12', kezdes: '2026-10-19' },
+};
+const BEKULDES_NAP = 7;
+const DONTES_NAP = 10;
+const MODOSITAS_NAP = 14;
+/** A 2026-os célállapotok rögzítésének napja: a félév vége előtt, a lezárás előtt. */
+const CELALLAPOT_NAP = '2026-06-15';
+
+// Minden attaséra a hálózati cél és legfeljebb egy regionális cél vonatkozik, így mindenkinek 1–2 központi célja van.
+const KOZPONTI_CELOK: Readonly<Record<number, readonly KozpontiCelInput[]>> = {
+  2026: [
+    {
+      megnevezes: kitalalt('Magyar innovációs szereplők bemutatása a fogadó országban'),
+      szempont: 'kapcsolatepites',
+      merce: `Legalább egy bemutatkozó szakmai program az év végéig. ${KITALALT}`,
+      hatokor: 'halozat',
+    },
+    {
+      megnevezes: kitalalt('Európai kutatási együttműködések előkészítése'),
+      szempont: 'eredmenyek',
+      merce: `Legalább egy magyar partner bevonása közös pályázat előkészítésébe. ${KITALALT}`,
+      hatokor: 'europa',
+    },
+  ],
+  2027: [
+    {
+      megnevezes: kitalalt('Magyar startupok külpiaci kapcsolatainak erősítése'),
+      szempont: 'kapcsolatepites',
+      merce: `Legalább két célzott partnerközvetítés magyar startupoknak az év végéig. ${KITALALT}`,
+      hatokor: 'halozat',
+    },
+    {
+      megnevezes: kitalalt('Ázsiai technológiai partnerségek feltérképezése'),
+      szempont: 'tajekoztatas',
+      merce: `Félévente egy összefoglaló a térség partnerségi lehetőségeiről. ${KITALALT}`,
+      hatokor: 'azsia',
+    },
+  ],
+};
+
+const SAJAT_CELOK: readonly Omit<CelInput, 'orszagKod'>[] = [
+  {
+    megnevezes: kitalalt('Új magyar–helyi partnerkapcsolatok kiépítése'),
+    szempont: 'kapcsolatepites',
+    merce: `Legalább két új, dokumentált partnerkapcsolat az év végéig. ${KITALALT}`,
+  },
+  {
+    megnevezes: kitalalt('Rendszeres tájékoztatás a helyi innovációs környezetről'),
+    szempont: 'tajekoztatas',
+    merce: `Negyedévenként legalább egy elemző jelentés. ${KITALALT}`,
+  },
+  {
+    megnevezes: kitalalt('Igazolt együttműködés elérése magyar partnerrel'),
+    szempont: 'eredmenyek',
+    merce: `Legalább egy igazolt együttműködés az év végéig. ${KITALALT}`,
+  },
+];
+
+const CEL_MEGJEGYZES: Readonly<Record<Exclude<CelAllapot, 'folyamatban'>, string>> = {
+  teljesult: `A cél a mérce szerint teljesült. ${KITALALT}`,
+  reszben: `A cél egy része megvalósult, a többi a következő időszakra marad. ${KITALALT}`,
+  elmaradt: `A cél a partner visszalépése miatt nem valósult meg. ${KITALALT}`,
+};
+const TERV_VISSZAKULDES = `Kérjük, pontosítsd a saját célok mércéjét, majd küldd be újra a tervet. ${KITALALT}`;
+const TERV_MODOSITAS = `A partner átszervezése miatt az egyik saját cél módosítását kérem. ${KITALALT}`;
+
+/** A terv lépésének ideje: 09:00 UTC, attasénként percekkel eltolva. */
+function tervIdo(nap: string, sorszam: number): Date {
+  return new Date(napDate(nap).getTime() + 9 * 3600_000 + sorszam * 60_000);
+}
+
+/** Az attasé terve az aktuális állapotában: minden írás előtt frissen olvasva (az írások ennek a verzióját ellenőrzik). */
+function sajatTerv(a: Attase, ev: number) {
+  const t = mq.getTerv(a.id, ev);
+  if (!t) throw new Error(`${a.nev}: nincs ${ev}. évi terve.`);
+  return t;
+}
+
+/**
+ * Az év központi céljainak felvétele és közzététele. A felvétel eltérő időbélyege rögzíti a célok sorrendjét: azonos
+ * ezredmásodpercben a véletlen azonosító döntene, és a tervekbe másolt célok sorrendje futásonként változna.
+ */
+function kozpontiCelokKozzetesz(ev: number): void {
+  const naptar = TERV_NAPTAR[ev];
+  KOZPONTI_CELOK[ev].forEach((cel, i) => {
+    irasOk(mq.mentKozpontiCel(ev, cel).eredmeny, `${ev}, központi cél: ${cel.megnevezes}`);
+    const ido = tervIdo(naptar.felvetel, i);
+    db.update(kozpontiCel)
+      .set({ createdAt: ido, updatedAt: ido })
+      .where(and(eq(kozpontiCel.ev, ev), eq(kozpontiCel.megnevezes, cel.megnevezes)))
+      .run();
+  });
+  irasOk(mq.kozzetesz(ev, ERTEKELO, tervIdo(naptar.kozzetetel, 0)).eredmeny, `${ev}, közzététel`);
+}
+
+/** A terv létrehozása: a rá vonatkozó központi célok a létrehozáskor kerülnek bele, a többi az attasé saját célja. */
+function tervKeszit(a: Attase, ev: number, celDb: number, most: Date): string {
+  const k = mq.kezdTerv(a.id, ev, most);
+  if (k.eredmeny !== 'ok' || k.id === undefined) throw new Error(`${a.nev}, ${ev}: a terv létrehozása ${k.eredmeny}.`);
+  const tervId = k.id;
+  SAJAT_CELOK.slice(0, celDb - sajatTerv(a, ev).celok.length).forEach((cel, i) => {
+    const orszagKod = i === 1 && a.regio.length > 0 ? a.regio[0] : a.szekhely;
+    irasOk(mq.mentCel(tervId, a.id, { ...cel, orszagKod }, sajatTerv(a, ev).verzio), `${a.nev}, ${ev}, saját cél`);
+  });
+  return tervId;
+}
+
+/**
+ * A terv utolsó lépésének ideje. A cél- és a beküldési műveletek a valós időt írják a verzióba, ezért az életút végén
+ * ez állítja vissza a történeti időpontra; a generált adat így nem függ a futtatás idejétől.
+ */
+function tervIdoRogzit(tervId: string, ido: Date): void {
+  db.update(munkaterv).set({ updatedAt: ido }).where(eq(munkaterv.id, tervId)).run();
+}
+
+/** A 2026-os tervek: mind jóváhagyott, a célállapotok az attasé 2026/1 összminősítését követik. */
+function munkaterv2026Letrehoz(attasek: readonly Attase[]): string {
+  const ev = 2026;
+  kozpontiCelokKozzetesz(ev);
+  const oszlop = FELEVEK.find((fe) => felevKulcs(fe.f) === TERV_FELEV)?.oszlop ?? -1;
+  attasek.forEach((a, i) => {
+    const cella = a.cellak[oszlop];
+    if (!cella || cella === 'kihagyva') throw new Error(`${a.nev}: a(z) ${TERV_FELEV} félévben nincs összminősítése.`);
+    const allapotok = TERV_CELALLAPOTOK[cella.ossz];
+    const { kezdes: tervezes } = TERV_NAPTAR[ev];
+    const kezdes = a.kezdet !== undefined && a.kezdet > tervezes ? a.kezdet : tervezes;
+    const tervId = tervKeszit(a, ev, allapotok.length, tervIdo(kezdes, i));
+    irasOk(mq.bekuld(tervId, a.id, sajatTerv(a, ev).verzio), `${a.nev}, ${ev}, beküldés`);
+    const jovahagyva = tervIdo(plusNap(kezdes, DONTES_NAP), i);
+    irasOk(mq.jovahagy(tervId, ERTEKELO, sajatTerv(a, ev).verzio, jovahagyva), `${a.nev}, ${ev}, jóváhagyás`);
+    sajatTerv(a, ev).celok.forEach((cel, j) => {
+      const allapot = allapotok[j];
+      if (allapot === 'folyamatban') return;
+      const most = tervIdo(CELALLAPOT_NAP, i * 5 + j);
+      irasOk(mq.allitCelAllapot(cel.id, a.id, { allapot, megjegyzes: CEL_MEGJEGYZES[allapot] }, a.nev, most), `${a.nev}, ${ev}, célállapot`);
+    });
+    tervIdoRogzit(tervId, jovahagyva);
+  });
+  return `${ev}: ${attasek.length} jóváhagyott munkaterv.`;
+}
+
+/** A 2027-es tervek vegyes állapotban: az életút annyi lépésig tart, amennyit az attasé állapota kíván. */
+function munkaterv2027Letrehoz(attasek: readonly Attase[]): string {
+  const ev = 2027;
+  kozpontiCelokKozzetesz(ev);
+  const { kezdes } = TERV_NAPTAR[ev];
+  attasek.forEach((a, i) => {
+    const allapot = TERV_2027_SOROK[i];
+    if (allapot === 'nincs') return;
+    const tervId = tervKeszit(a, ev, TERV_2027_CEL_DB, tervIdo(kezdes, i));
+    let utolso = tervIdo(kezdes, i);
+    if (allapot !== 'piszkozat') {
+      irasOk(mq.bekuld(tervId, a.id, sajatTerv(a, ev).verzio), `${a.nev}, ${ev}, beküldés`);
+      utolso = tervIdo(plusNap(kezdes, BEKULDES_NAP), i);
+    }
+    if (allapot === 'visszakuldott') {
+      irasOk(mq.visszakuldTerv(tervId, TERV_VISSZAKULDES, sajatTerv(a, ev).verzio), `${a.nev}, ${ev}, visszaküldés`);
+      utolso = tervIdo(plusNap(kezdes, DONTES_NAP), i);
+    }
+    if (allapot === 'jovahagyott') {
+      utolso = tervIdo(plusNap(kezdes, DONTES_NAP), i);
+      irasOk(mq.jovahagy(tervId, ERTEKELO, sajatTerv(a, ev).verzio, utolso), `${a.nev}, ${ev}, jóváhagyás`);
+      if (a.nev === MODOSITAST_KERO) {
+        irasOk(mq.kerModositast(tervId, a.id, TERV_MODOSITAS, sajatTerv(a, ev).verzio), `${a.nev}, ${ev}, módosítási kérés`);
+        utolso = tervIdo(plusNap(kezdes, MODOSITAS_NAP), i);
+      }
+    }
+    tervIdoRogzit(tervId, utolso);
+  });
+  return `${ev}: ${attasek.length - TERV_2027_DB.nincs} munkaterv vegyes állapotban, ${TERV_2027_DB.nincs} attasénál még nincs terv.`;
+}
+
+// ---------------------------------------------------------------------------------------------------------
 // Egy félév feldolgozása
 // ---------------------------------------------------------------------------------------------------------
 
@@ -1541,6 +1757,11 @@ function adatokEllenorzese(): string[] {
     for (const t of tipusok) if (!(t in UGY_MINTA)) hibak.push(`${nev}: ismeretlen ügytípus: ${t}.`);
   }
   if (TIPUS_ARANY.reduce((osszeg, [, szazalek]) => osszeg + szazalek, 0) !== 100) hibak.push('A tevékenységtípusok aránya nem 100%.');
+  // A B blokk beégetett adatai: minden attasének van 2027-es állapota, és a módosítást kérő terve jóváhagyott.
+  if (TERV_2027_SOROK.length !== ATTASEK.length) hibak.push(`${TERV_2027_SOROK.length} tervállapot van 2027-re, ${ATTASEK.length} kellene.`);
+  if (TERV_2027_SOROK[ATTASEK.findIndex((a) => a.nev === MODOSITAST_KERO)] !== 'jovahagyott') {
+    hibak.push(`${MODOSITAST_KERO}: a módosítási kéréshez jóváhagyott 2027-es terv kell.`);
+  }
   // Az országprofil évenként egy: ugyanazon év két félévében az országismeret fokozata nem térhet el.
   for (const a of ATTASEK) {
     const cellak = MINTAK[a.mintazat].map(parseCella);
@@ -1585,6 +1806,7 @@ function onellenorzes(attasek: readonly Attase[]): string[] {
     ...db.select({ k: ticket.orszag }).from(ticket).all().map((r) => r.k),
     ...db.select({ k: tevekenyseg.orszagKod }).from(tevekenyseg).all().map((r) => r.k),
     ...db.select({ k: eredmeny.orszagKod }).from(eredmeny).all().map((r) => r.k),
+    ...db.select({ k: munkatervCel.orszagKod }).from(munkatervCel).all().map((r) => r.k),
     ...db.select({ k: attaseErtekeles.szekhelyKod }).from(attaseErtekeles).all().map((r) => r.k),
     ...db.select({ o: attaseErtekeles.orszagok }).from(attaseErtekeles).all().flatMap((r) => r.o.map((x) => x.kod)),
     ...db
@@ -1666,6 +1888,7 @@ function onellenorzes(attasek: readonly Attase[]): string[] {
     else {
       mutatokEllenorzese(a, cella, r.mutatok, kulcs, hiba);
       aMutatokEllenorzese(cella, r.mutatok, kulcs, hiba, terv.f);
+      munkatervMutatoEllenorzese(cella, r.mutatok, kulcs, hiba, terv.f);
     }
   }
 
@@ -1683,7 +1906,112 @@ function onellenorzes(attasek: readonly Attase[]): string[] {
   });
 
   aBlokkEllenorzes(attasek, hiba);
+  munkatervEllenorzes(attasek, hiba);
   return hibak;
+}
+
+/**
+ * A B blokk ellenőrzése az adatbázisból: a közzétett központi célok, a tervek státuszainak darabszáma, a nyitott
+ * módosítási kérés, tervenként a célok és az időrend. A várt darabszámok szándékosan külön állnak a generálástól.
+ */
+function munkatervEllenorzes(attasek: readonly Attase[], hiba: (uzenet: string) => void): void {
+  const tervek = db.select().from(munkaterv).all();
+  const celok = db.select().from(munkatervCel).all();
+  const kozpontiak = db.select().from(kozpontiCel).all();
+  const kozzetetelek = new Map(db.select().from(munkatervEv).all().map((e) => [e.ev, e.kozzeteveAt]));
+  const lezaras = FELEVEK.find((fe) => felevKulcs(fe.f) === TERV_FELEV)?.most ?? new Date(0);
+  const regiok = attasek.map((a) => ({ nev: a.nev, regio: orszagRegio(a.szekhely) }));
+
+  const kellDb: Readonly<Record<number, Readonly<Record<TervStatusz, number>>>> = {
+    2026: { jovahagyott: 15, jovahagyasra_var: 0, visszakuldott: 0, piszkozat: 0 },
+    2027: { jovahagyott: 6, jovahagyasra_var: 3, visszakuldott: 2, piszkozat: 2 },
+  };
+  for (const [evSzoveg, statuszok] of Object.entries(kellDb)) {
+    const ev = Number(evSzoveg);
+    if (!kozzetetelek.has(ev)) hiba(`a(z) ${ev}. év központi céljai nincsenek közzétéve.`);
+    const { tulSok, nincsCel } = kozzetetelHibak(kozpontiak.filter((c) => c.ev === ev), regiok);
+    for (const nev of [...tulSok, ...nincsCel]) hiba(`${nev}: ${ev}-ben nem 1–2 központi cél vonatkozik rá.`);
+    for (const [statusz, kell] of Object.entries(statuszok)) {
+      const darab = tervek.filter((t) => t.ev === ev && t.statusz === statusz).length;
+      if (darab !== kell) hiba(`${ev}: ${darab} „${statusz}” állapotú terv van, ${kell} kellene.`);
+    }
+  }
+  const nincsTerv = attasek.filter((a) => !tervek.some((t) => t.ev === 2027 && t.attaseId === a.id)).length;
+  if (nincsTerv !== 2) hiba(`2027: ${nincsTerv} attasénak nincs terve, 2 kellene.`);
+  const kerelmek = tervek.filter((t) => t.modositasiKerelem !== null);
+  if (kerelmek.length !== 1 || kerelmek[0].ev !== 2027 || kerelmek[0].statusz !== 'jovahagyott') {
+    hiba(`${kerelmek.length} nyitott módosítási kérés van, egy kellene, egy jóváhagyott 2027-es terven.`);
+  }
+
+  for (const c of kozpontiak) {
+    const kulcs = `központi cél „${c.megnevezes}”`;
+    if (!c.megnevezes.includes('(kitalált)') || !c.merce.includes(KITALALT)) hiba(`${kulcs}: a szöveg nem jelzi, hogy kitalált.`);
+    const kozzeteve = kozzetetelek.get(c.ev);
+    if (kozzeteve !== undefined && c.createdAt.getTime() >= kozzeteve.getTime()) hiba(`${kulcs}: a felvétele nem előzi meg a közzétételt.`);
+  }
+
+  for (const t of tervek) {
+    const a = attasek.find((x) => x.id === t.attaseId);
+    const kulcs = `${a?.nev ?? t.attaseId}, ${t.ev}. évi terv`;
+    if (!a) {
+      hiba(`${kulcs}: ismeretlen attasé.`);
+      continue;
+    }
+    const sajat = celok.filter((c) => c.tervId === t.id);
+    if (sajat.length < CEL_MIN || sajat.length > CEL_MAX) hiba(`${kulcs}: ${sajat.length} cél van, ${CEL_MIN}–${CEL_MAX} kellene.`);
+    const vonatkozo = vonatkozoCelok(kozpontiak.filter((c) => c.ev === t.ev), orszagRegio(a.szekhely)).map((c) => c.id).sort();
+    const masolt = sajat.flatMap((c) => c.kozpontiCelId ?? []).sort();
+    if (vonatkozo.join() !== masolt.join()) hiba(`${kulcs}: a tervben lévő központi célok nem egyeznek a rá vonatkozókkal.`);
+    const orszagai = new Set([a.szekhely, ...a.regio]);
+    for (const c of sajat) {
+      if (!orszagai.has(c.orszagKod)) hiba(`${kulcs}: a(z) ${c.orszagKod} ország nem az attasé országa.`);
+      if (!c.megnevezes.includes('(kitalált)') || !c.merce.includes(KITALALT)) hiba(`${kulcs}: a cél szövege nem jelzi, hogy kitalált.`);
+      if (c.allapot !== 'folyamatban' && t.statusz !== 'jovahagyott') hiba(`${kulcs}: nem jóváhagyott tervben „${c.allapot}” állapotú cél van.`);
+    }
+    if ((t.statusz === 'jovahagyott') !== (t.jovahagyvaAt !== null && t.jovahagytaNev !== null)) hiba(`${kulcs}: a jóváhagyás adatai nem egyeznek a státusszal.`);
+
+    const kozzeteve = kozzetetelek.get(t.ev);
+    if (kozzeteve !== undefined && t.createdAt.getTime() <= kozzeteve.getTime()) hiba(`${kulcs}: a terv a közzététel előtt indult.`);
+    if (a.kezdet !== undefined && naptariNap(t.createdAt) < a.kezdet) hiba(`${kulcs}: a terv az attasé érkezése előtt indult.`);
+    if (t.updatedAt.getTime() < t.createdAt.getTime()) hiba(`${kulcs}: a módosítás ideje a létrehozásnál korábbi.`);
+    const idok = [t.createdAt, t.updatedAt, t.jovahagyvaAt, ...sajat.map((c) => c.allapotModositvaAt)].flatMap((d) => d?.getTime() ?? []);
+    if (Math.max(...idok) > MOST_NYITOTT.getTime()) hiba(`${kulcs}: az időbélyeg a „mai” pillanatnál későbbi.`);
+    if (t.ev === 2026 && Math.max(...idok) >= lezaras.getTime()) hiba(`${kulcs}: a terv a(z) ${TERV_FELEV} lezárása után készült el.`);
+  }
+}
+
+/**
+ * A munkaterv a rögzített pillanatképben: a bővített adat nélküli félévnél a mező hiányzik, a 2025-ös féléveknél
+ * `null` (arra az évre nincs terv), a 2026/1 félévnél az összminősítéshez tartozó célállapotok szerepelnek.
+ */
+function munkatervMutatoEllenorzese(
+  cella: Cella,
+  m: ErtekelesMutatok,
+  kulcs: string,
+  hiba: (uzenet: string) => void,
+  f: Felev,
+): void {
+  if (!aBlokkFelev(f)) {
+    if ('munkaterv' in m) hiba(`${kulcs}: a bővített adat nélküli félév pillanatképében munkaterv-mező van.`);
+    return;
+  }
+  if (felevKulcs(f) !== TERV_FELEV) {
+    if (m.munkaterv !== null) hiba(`${kulcs}: a pillanatkép munkaterv-mezője nem null, pedig az évre nincs jóváhagyott terv.`);
+    return;
+  }
+  const t = m.munkaterv;
+  if (!t) {
+    hiba(`${kulcs}: a pillanatképből hiányzik a jóváhagyott munkaterv.`);
+    return;
+  }
+  if (t.ev !== 2026) hiba(`${kulcs}: a pillanatkép munkaterve a(z) ${t.ev}. évé, 2026 kellene.`);
+  if (t.celDb < CEL_MIN || t.celDb > CEL_MAX || t.celok.length !== t.celDb) hiba(`${kulcs}: a terv célszáma ${t.celDb} (${t.celok.length} cél a listában).`);
+  // Teljesült, folyamatban, részben, elmaradt; a 4-es összminősítésnél minden cél teljesült.
+  const kell = { 4: [t.celDb, 0, 0, 0], 3: [3, 1, 0, 0], 2: [1, 0, 1, 1], 1: [0, 0, 1, 2] }[cella.ossz];
+  const darabok = [t.teljesultDb, t.folyamatbanDb, t.reszbenDb, t.elmaradtDb];
+  if (darabok.join() !== kell.join()) hiba(`${kulcs}: a célállapotok ${darabok.join('/')}, ${kell.join('/')} kellene a(z) ${cella.ossz}-es összminősítéshez.`);
+  const listabol = (['teljesult', 'folyamatban', 'reszben', 'elmaradt'] as const).map((a) => t.celok.filter((c) => c.allapot === a).length);
+  if (listabol.join() !== darabok.join()) hiba(`${kulcs}: a céllista állapotai (${listabol.join('/')}) nem egyeznek a darabszámokkal.`);
 }
 
 /** Egy félév napjai (`YYYY-MM-DD`) között van-e a nap (zárt intervallum). */
@@ -2016,6 +2344,7 @@ async function main() {
   if (db.$client.name !== CEL) kilep([`A betöltött adatbázis (${db.$client.name}) nem a tesztadatbázis, a script megáll.`]);
   ert = await import('../db/queries/ertekeles');
   tq = await import('../db/queries/tevekenyseg');
+  mq = await import('../db/queries/munkaterv');
   const { setAttaseOrszagok } = await import('../db/queries/attase-orszag');
   if (db.select({ id: ertekelesiIdoszak.id }).from(ertekelesiIdoszak).all().length > 0) {
     kilep(['A másolat már tartalmaz értékelési időszakot; a script üres értékelési táblákból indul.']);
@@ -2057,8 +2386,10 @@ async function main() {
   // 7–8. Félévenként: forrásadatok, időszak, minősítések, kihagyás, lezárás; végül a nyitott félév.
   for (const terv of FELEVEK) {
     profilokLetrehoz(attasek, terv.f.ev);
+    if (felevKulcs(terv.f) === TERV_FELEV) console.log(munkaterv2026Letrehoz(attasek));
     console.log(felevFeldolgoz(attasek, terv));
   }
+  console.log(munkaterv2027Letrehoz(attasek));
 
   // 9. Önellenőrzés.
   const hibak = onellenorzes(attasek);

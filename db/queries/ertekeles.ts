@@ -3,6 +3,7 @@ import { and, asc, eq, gte, inArray, isNotNull, lt, lte, min, or } from 'drizzle
 import { db } from '../index';
 import { attaseErtekeles, eredmeny, ertekelesiIdoszak, riport, szempontMinosites, ticket, ticketUzenet, user } from '../schema';
 import { listOrszagokFelhasznalonkent } from './attase-orszag';
+import { jovahagyottTervek } from './munkaterv';
 import { listProfilMutatok } from './orszagprofil';
 import { bovitettForrasok, countFuggoKeresek } from './tevekenyseg';
 import { listCimzettJeloltek } from './ticket';
@@ -448,7 +449,8 @@ function letezoFelhasznalok(idk: readonly string[]): Set<string> {
  * kihagyott attasék számítanak, a törölt felhasználók kivételével: az ő jelentéseik és ticketjeik az FK-kaszkáddal
  * eltűntek, ezért hamis, tevékenység nélküli értéket adnának. A tiltott attasé adatai megvannak, ő beleszámít.
  * `bovitett`: a félév gyűjt-e tevékenységi és eredményadatot (`IdoszakSor.bovitettAdatok`); ha nem, a pillanatkép
- * az új mezők nélkül készül, hogy a felület ne nullát, hanem „nincs adat” jelzést mutasson.
+ * az új mezők nélkül készül, hogy a felület ne nullát, hanem „nincs adat” jelzést mutasson. A munkaterv a félév
+ * évének jóváhagyott terve.
  */
 function mutatoSzamolo(
   sorok: readonly ErtekelesSor[],
@@ -466,6 +468,7 @@ function mutatoSzamolo(
   );
   const profilok = listProfilMutatok([...new Set(ertekeltek.flatMap(vezetettOrszagok))], f.ev);
   const bovitettek = bovitett ? bovitettForrasok([...letezok], f) : null;
+  const tervek = bovitett ? jovahagyottTervek([...letezok], f.ev) : null;
   return (sor) =>
     szamolMutatok({
       felev: f,
@@ -476,7 +479,14 @@ function mutatoSzamolo(
       vezetettOrszagok: vezetettOrszagok(sor),
       profilok,
       halozat,
-      ...(bovitettek ? { bovitett: bovitettek.get(sor.attaseId) ?? { tevekenysegek: [], eredmenyek: [] } } : {}),
+      ...(bovitettek
+        ? {
+            bovitett: {
+              ...(bovitettek.get(sor.attaseId) ?? { tevekenysegek: [], eredmenyek: [] }),
+              munkaterv: tervek?.get(sor.attaseId) ?? null,
+            },
+          }
+        : {}),
     });
 }
 

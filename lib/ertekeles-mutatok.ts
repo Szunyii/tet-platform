@@ -8,6 +8,8 @@
  */
 import { kovetkezoNapKezdete, napKezdete, naptariNap } from './datum';
 import { felevNapok, felevOsszevet, type Felev } from './ertekeles-idoszak';
+import type { SzempontKulcs } from './ertekeles-szotar';
+import type { CelAllapot } from './munkaterv-szotar';
 import { BLOKK_KULCSOK } from './orszagprofil-szotar';
 import { KATEGORIAK, isKategoriaKulcs, type KategoriaKulcs } from './riport-szotar';
 import { befejezettE, type UgyAdat } from './tevekenyseg-allapot';
@@ -73,10 +75,30 @@ export interface EredmenyBemenet extends UgyAdat {
   esemenyek: EredmenyEsemenyBemenet[];
 }
 
-/** A tevékenységnapló és az eredmény-nyilvántartás adatai: csak a bővített adatokat gyűjtő félév kapja meg. */
+/** A jóváhagyott éves munkaterv egy célja. */
+export interface MunkatervCelBemenet {
+  megnevezes: string;
+  szempont: SzempontKulcs;
+  allapot: CelAllapot;
+}
+
+/** A félév évének jóváhagyott munkaterve (spec 6.4.): tájékoztató adat, fokozat nem számolódik belőle. */
+export interface MunkatervMutato {
+  ev: number;
+  celDb: number;
+  folyamatbanDb: number;
+  teljesultDb: number;
+  reszbenDb: number;
+  elmaradtDb: number;
+  celok: MunkatervCelBemenet[];
+}
+
+/** A tevékenységnapló, az eredmény-nyilvántartás és a munkaterv adatai: csak a bővített adatokat gyűjtő félév kapja meg. */
 export interface BovitettBemenet {
   tevekenysegek: TevekenysegBemenet[];
   eredmenyek: EredmenyBemenet[];
+  /** A félév évének jóváhagyott terve; `null` vagy hiányzó mező: nincs jóváhagyott terv. */
+  munkaterv?: MunkatervMutato | null;
 }
 
 export interface MutatoBemenet {
@@ -192,6 +214,8 @@ export interface ErtekelesMutatok {
     tevekenyseg?: TevekenysegMutatok;
   };
   eredmenyek?: EredmenyMutatok;
+  /** Hiányzik: a félévhez nincs bővített adat. `null`: a félév évére nincs jóváhagyott terv. */
+  munkaterv?: MunkatervMutato | null;
   egyuttmukodes: {
     ticketDb: number;
     elsoValaszMedianNap: number | null;
@@ -456,6 +480,20 @@ function eredmenyMutatok(ugyek: readonly EredmenyBemenet[], f: Felev): EredmenyM
   };
 }
 
+/** A jóváhagyott terv összegzése állapotonkénti darabszámokkal. Fokozatot nem számol. */
+export function munkatervOsszegzes(ev: number, celok: readonly MunkatervCelBemenet[]): MunkatervMutato {
+  const darab = (allapot: CelAllapot) => celok.filter((c) => c.allapot === allapot).length;
+  return {
+    ev,
+    celDb: celok.length,
+    folyamatbanDb: darab('folyamatban'),
+    teljesultDb: darab('teljesult'),
+    reszbenDb: darab('reszben'),
+    elmaradtDb: darab('elmaradt'),
+    celok: celok.map(({ megnevezes, szempont, allapot }) => ({ megnevezes, szempont, allapot })),
+  };
+}
+
 /**
  * Az attasé automatikus mutatói az időszakra (spec 5.4.). A jelentések és a ticketek az időszakhoz a
  * létrehozásuk napja szerint tartoznak (a bemenetben szereplő, időszakon kívüli jelentést kihagyja),
@@ -532,7 +570,9 @@ export function szamolMutatok(b: MutatoBemenet): ErtekelesMutatok {
       jelentesek: kapcsolat.map(jelentesBizonyitek),
       ...(b.bovitett ? { tevekenyseg: tevekenysegMutatok(b.bovitett.tevekenysegek, b.felev) } : {}),
     },
-    ...(b.bovitett ? { eredmenyek: eredmenyMutatok(b.bovitett.eredmenyek, b.felev) } : {}),
+    ...(b.bovitett
+      ? { eredmenyek: eredmenyMutatok(b.bovitett.eredmenyek, b.felev), munkaterv: b.bovitett.munkaterv ?? null }
+      : {}),
     egyuttmukodes: {
       ticketDb: nyitott.length,
       elsoValaszMedianNap: kerekitVagyNull(medianErtek(elsoValaszIdok(nyitott)), 1),

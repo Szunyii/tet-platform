@@ -1,10 +1,11 @@
 import 'server-only';
-import { and, asc, count, eq, isNotNull, max, or, sql } from 'drizzle-orm';
+import { and, asc, count, eq, inArray, isNotNull, max, or, sql } from 'drizzle-orm';
 import { db } from '../index';
 import { kozpontiCel, munkaterv, munkatervCel, munkatervEv, user } from '../schema';
 import { listAttaseOrszagok } from './attase-orszag';
 import { listCimzettJeloltek } from './ticket';
 import { naptariNap } from '../../lib/datum';
+import { munkatervOsszegzes, type MunkatervCelBemenet, type MunkatervMutato } from '../../lib/ertekeles-mutatok';
 import {
   CEL_MAX, CEL_MIN, kozzetetelHibak, szerkeszthetoTerv, tervEvek, vonatkozoCelok,
   type CelAllapot, type TervStatusz,
@@ -452,6 +453,30 @@ export function listTervAttekintes(ev: number): TervAttekintesSor[] {
       modositasKerve: (t?.kerelem ?? null) !== null,
     };
   });
+}
+
+/**
+ * A megadott attasék jóváhagyott tervei az évre, összegezve (a félévi értékelés mutatójához). Más státuszú terv nem
+ * számít, ezért az ilyen attasé nem szerepel az eredményben.
+ */
+export function jovahagyottTervek(attaseIdk: readonly string[], ev: number): Map<string, MunkatervMutato> {
+  const celok = new Map<string, MunkatervCelBemenet[]>();
+  if (attaseIdk.length > 0) {
+    const sorok = db
+      .select({
+        attaseId: munkaterv.attaseId,
+        megnevezes: munkatervCel.megnevezes,
+        szempont: munkatervCel.szempont,
+        allapot: munkatervCel.allapot,
+      })
+      .from(munkatervCel)
+      .innerJoin(munkaterv, eq(munkaterv.id, munkatervCel.tervId))
+      .where(and(inArray(munkaterv.attaseId, [...attaseIdk]), eq(munkaterv.ev, ev), eq(munkaterv.statusz, 'jovahagyott')))
+      .orderBy(asc(munkatervCel.sorrend), asc(munkatervCel.id))
+      .all();
+    for (const { attaseId, ...cel } of sorok) celok.set(attaseId, [...(celok.get(attaseId) ?? []), cel]);
+  }
+  return new Map([...celok].map(([attaseId, lista]) => [attaseId, munkatervOsszegzes(ev, lista)]));
 }
 
 /** A menüpont számlálója. Admin: a jóváhagyásra váró tervek és a nyitott módosítási kérések. Attasé: a saját visszaküldött tervei. */

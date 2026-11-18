@@ -11,6 +11,7 @@ import { getValasztottEv } from '../../../../lib/valasztott-ev';
 import { kihagyAttaseAction, mentOsszAction, mentSzempontAction, visszaveszAttaseAction } from '../actions';
 import { AdatlapFejlec } from '../components/AdatlapFejlec';
 import { Munkalap } from '../components/Munkalap';
+import { MunkatervKartya } from '../components/MunkatervKartya';
 import { Osszkep } from '../components/Osszkep';
 import { SzempontSorok } from '../components/SzempontSorok';
 
@@ -97,6 +98,11 @@ export default async function AdatlapOldal({
             minositveAt={adatlap.minositveAt}
             elozmeny={adatlap.elozmeny}
             felev={felev}
+          />
+          {/* A törölt fiókú attasé forrásadatai eltűntek: a rögzített `null` nem azt jelenti, hogy nem volt terve. */}
+          <MunkatervKartya
+            munkaterv={adatlap.mutatok?.forrasHianyzik ? undefined : adatlap.mutatok?.munkaterv}
+            attaseId={attaseId}
           />
           <SzempontSorok
             mutatok={adatlap.mutatok}

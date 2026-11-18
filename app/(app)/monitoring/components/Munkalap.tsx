@@ -18,6 +18,7 @@ import { cn } from '../../../../lib/utils';
 import type { MentesState } from '../actions';
 import { MinositesJelveny } from './FokozatJelveny';
 import { KihagyasDialog } from './KihagyasDialog';
+import { MunkatervKartya } from './MunkatervKartya';
 import { OsszPanel } from './OsszPanel';
 import { FOKUSZ_OSZTALY, PANEL_CIM_OSZTALY, SzempontPanel } from './SzempontPanel';
 
@@ -207,6 +208,12 @@ function MunkalapTorzs({ fokuszKell, ...props }: MunkalapProps & { fokuszKell: R
             </li>
           </ul>
         </nav>
+        {/* A törölt fiókú attasé forrásadatai eltűntek: a rögzített `null` nem azt jelenti, hogy nem volt terve. */}
+        <MunkatervKartya
+          munkaterv={mutatok?.forrasHianyzik ? undefined : mutatok?.munkaterv}
+          attaseId={sor.attaseId}
+          ujLapon
+        />
         <Button
           type="button"
           variant="outline"
