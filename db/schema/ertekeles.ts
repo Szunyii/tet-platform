@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { check, integer, primaryKey, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import type { ErtekelesMutatok } from '../../lib/ertekeles-mutatok';
 import type { RogzitettOrszag } from '../../lib/ertekeles-szotar';
 
 // Szakmai értékelés (monitoring): félévenként egy időszak, időszakonként és attasénként egy értékelés,
@@ -54,8 +55,7 @@ export const attaseErtekeles = sqliteTable(
     fejlesztesiCel: text('fejlesztesi_cel'),
     ertekeloNev: text('ertekelo_nev'),
     minositveAt: integer('minositve_at', { mode: 'timestamp_ms' }),
-    // Az ErtekelesMutatok típust a lib/ertekeles-mutatok.ts adja majd (2. feladat); addig unknown.
-    mutatok: text('mutatok', { mode: 'json' }).$type<unknown>(),
+    mutatok: text('mutatok', { mode: 'json' }).$type<ErtekelesMutatok>(),
     createdAt: integer('created_at', { mode: 'timestamp_ms' })
       .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
       .notNull(),
