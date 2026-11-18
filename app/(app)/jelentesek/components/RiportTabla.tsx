@@ -11,16 +11,10 @@ import { buttonVariants } from '../../../../components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../components/ui/table';
 import { KategoriaBadge } from '../../../../components/riport/KategoriaBadge';
 import { IntezkedesSzerkeszto } from './IntezkedesSzerkeszto';
+import { MinositesFokusz } from './MinositesFokusz';
 import { MinositesSzerkeszto } from './MinositesSzerkeszto';
 
-export function RiportTabla({
-  sorok,
-  admin,
-  vanSzuro,
-  intezkedesAction,
-  minositesek,
-  minositesAction,
-}: {
+interface RiportTablaProps {
   sorok: RiportListItem[];
   admin: boolean;
   vanSzuro: boolean;
@@ -37,10 +31,35 @@ export function RiportTabla({
    */
   minositesek?: ReadonlyMap<string, RiportMinosites>;
   minositesAction?: (id: string) => FormAction;
-}) {
+}
+
+/**
+ * A lista. A „Minősítés” oszlop mellett (csak a központnak) a táblát a `MinositesFokusz` kliens-burok fogja közre,
+ * amely a minősítés után a listából kieső sor helyett a szomszédos sorra viszi a fókuszt. A burok nem kap
+ * minősítés-adatot, csak a (szerver-renderelt) tartalmat.
+ */
+export function RiportTabla(props: RiportTablaProps) {
+  const tartalom = <RiportTartalom {...props} />;
+  return props.minositesek && props.minositesAction ? <MinositesFokusz>{tartalom}</MinositesFokusz> : tartalom;
+}
+
+function RiportTartalom({
+  sorok,
+  admin,
+  vanSzuro,
+  intezkedesAction,
+  minositesek,
+  minositesAction,
+}: RiportTablaProps) {
   if (sorok.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border p-10 text-center">
+      // A `tabIndex={-1}` és a `data-fokusz-cel` a MinositesFokusz végső célpontja: ha a minősítés után az utolsó sor is
+      // kikerül a szűrt listából, a fókusz ide kerül (a táblázat helyén ez az üres állapot áll).
+      <div
+        tabIndex={-1}
+        data-fokusz-cel=""
+        className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border p-10 text-center outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      >
         <p className="text-sm text-muted-foreground">
           {vanSzuro ? 'Nincs a szűrőknek megfelelő bejegyzés.' : 'Még nincs bejegyzés.'}
         </p>

@@ -38,6 +38,8 @@ export function MinositesSzerkeszto({
       <button
         type="button"
         aria-haspopup="dialog"
+        // A lista soronkénti gombja: a MinositesFokusz ebből találja meg a szomszédos sort (a részletoldalén nincs).
+        data-minosites-cella={valtozat === 'cella' ? '' : undefined}
         onClick={nyit}
         title={jelveny ? 'Minősítés módosítása' : undefined}
         // A listában soronként van ilyen gomb: a név a tárggyal együtt egyedi (a látható szöveget tartalmazza). A
