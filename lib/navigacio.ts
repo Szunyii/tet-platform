@@ -67,6 +67,12 @@ export const UTVONALAK: readonly Utvonal[] = [
     menu: { ikon: '◇', felirat: 'Tevékenységek és eredmények', szamlalo: 'tevekenyseg' },
   },
   {
+    href: '/munkaterv',
+    cim: 'Éves munkaterv',
+    alcim: 'Az attasék éves céljai és azok teljesülése',
+    menu: { ikon: '▤', felirat: 'Éves munkaterv', szamlalo: 'munkaterv' },
+  },
+  {
     href: '/tudastar',
     cim: 'TéT Tudástár',
     alcim: 'A magyar innovációs ökoszisztéma szereplői és kapcsolódó programok',

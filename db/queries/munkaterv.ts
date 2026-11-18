@@ -230,6 +230,36 @@ export function kezdTerv(attaseId: string, ev: number, most: Date = new Date()):
   }, IRAS);
 }
 
+/** Az évek növekvő sorrendben, amelyekhez terv tartozik; `attaseId` megadásával csak az ő tervei számítanak. */
+export function listTervesEvek(attaseId?: string): number[] {
+  return db
+    .selectDistinct({ ev: munkaterv.ev })
+    .from(munkaterv)
+    .where(attaseId === undefined ? undefined : eq(munkaterv.attaseId, attaseId))
+    .orderBy(asc(munkaterv.ev))
+    .all()
+    .map((t) => t.ev);
+}
+
+/** A terv éve; ismeretlen tervnél `null`. */
+export function tervEve(tervId: string): number | null {
+  return db.select({ ev: munkaterv.ev }).from(munkaterv).where(eq(munkaterv.id, tervId)).get()?.ev ?? null;
+}
+
+/** A munkaterv-oldalon megnyitható attasé: aktív, vagy már nem aktív, de van terve. Más azonosítóra `null`. */
+export function tervAttase(attaseId: string): { nev: string; varos: string | null } | null {
+  const aktiv = listCimzettJeloltek().find((j) => j.id === attaseId);
+  if (aktiv) return { nev: aktiv.nev, varos: aktiv.varos };
+  const korabbi = db
+    .select({ nev: user.name })
+    .from(munkaterv)
+    .innerJoin(user, eq(user.id, munkaterv.attaseId))
+    .where(eq(munkaterv.attaseId, attaseId))
+    .limit(1)
+    .get();
+  return korabbi ? { nev: korabbi.nev, varos: null } : null;
+}
+
 /** A terv mentése a következő verzióval. */
 function tervIr(tx: Tx, t: Terv, most: Date, adat: Partial<typeof munkaterv.$inferInsert>): void {
   tx.update(munkaterv).set({ ...adat, updatedAt: kovetkezoVerzio(t.updatedAt, most) }).where(eq(munkaterv.id, t.id)).run();

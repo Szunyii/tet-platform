@@ -1,4 +1,5 @@
 import AppShell from '../../components/app-shell/AppShell';
+import { countTervTeendo } from '../../db/queries/munkaterv';
 import { listProfilEvek } from '../../db/queries/orszagprofil';
 import { countTevekenysegTeendo } from '../../db/queries/tevekenyseg';
 import { countOlvasatlan } from '../../db/queries/ticket';
@@ -32,7 +33,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       logoutAction={logoutAction}
       valasztEvAction={valasztEvAction}
       olvasatlan={olvasatlan}
-      menuSzamlalok={{ tevekenyseg: countTevekenysegTeendo(session) }}
+      menuSzamlalok={{ tevekenyseg: countTevekenysegTeendo(session), munkaterv: countTervTeendo(session) }}
       ev={ev}
       evek={evek}
       oldalsavAlja={<OldalsavAllapot session={session} ev={ev} most={most} />}
