@@ -110,11 +110,16 @@ const ISO_NAP = new Intl.DateTimeFormat('en-US', {
   day: '2-digit',
 });
 
+/** Egy pillanat naptári napja `YYYY-MM-DD` alakban, Europe/Budapest szerint (nem UTC szerint). */
+export function naptariNap(d: Date): string {
+  const p: Record<string, string> = {};
+  for (const x of ISO_NAP.formatToParts(d)) p[x.type] = x.value;
+  return `${p.year}-${p.month}-${p.day}`;
+}
+
 /** A mai naptári nap `YYYY-MM-DD` alakban, Europe/Budapest szerint (határidő-összevetéshez). */
 export function maiNaptariNap(): string {
-  const p: Record<string, string> = {};
-  for (const x of ISO_NAP.formatToParts(new Date())) p[x.type] = x.value;
-  return `${p.year}-${p.month}-${p.day}`;
+  return naptariNap(new Date());
 }
 
 /** Az aktuális naptári év Europe/Budapest szerint (a profil beadási éve). */

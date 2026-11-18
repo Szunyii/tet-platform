@@ -9,6 +9,8 @@ next-env.d.ts
 # a WAL/SHM segédfájlok nem, a commit előtt `sqlite3 data/tet.db "PRAGMA wal_checkpoint(TRUNCATE);"`.
 *.db-wal
 *.db-shm
+# a monitoring-értékelés böngészős ellenőrzéséhez használt eldobható adatbázis
+data/tet-ertekeles-teszt.db
 # titkok
 .env*.local
 
