@@ -509,11 +509,18 @@ export function jovahagyottTervek(attaseIdk: readonly string[], ev: number): Map
   return new Map([...celok].map(([attaseId, lista]) => [attaseId, munkatervOsszegzes(ev, lista)]));
 }
 
-/** A menüpont számlálója. Admin: a jóváhagyásra váró tervek és a nyitott módosítási kérések. Attasé: a saját visszaküldött tervei. */
-export function countTervTeendo(session: { userId: string; role: 'admin' | 'attase' }): number {
+/**
+ * A menüpont számlálója. Admin: a jóváhagyásra váró tervek és a nyitott módosítási kérések. Attasé: a saját visszaküldött
+ * tervei a folyó és a következő évből: a múltbeli terv már nem javítható, ezért a jelzése soha nem szűnne meg.
+ */
+export function countTervTeendo(session: { userId: string; role: 'admin' | 'attase' }, aktualisEv: number): number {
   const feltetel =
     session.role === 'admin'
       ? or(eq(munkaterv.statusz, 'jovahagyasra_var'), isNotNull(munkaterv.modositasiKerelem))
-      : and(eq(munkaterv.attaseId, session.userId), eq(munkaterv.statusz, 'visszakuldott'));
+      : and(
+          eq(munkaterv.attaseId, session.userId),
+          eq(munkaterv.statusz, 'visszakuldott'),
+          inArray(munkaterv.ev, tervEvek(aktualisEv)),
+        );
   return db.select({ darab: count() }).from(munkaterv).where(feltetel).get()?.darab ?? 0;
 }

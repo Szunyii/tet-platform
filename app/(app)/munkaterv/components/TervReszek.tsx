@@ -4,7 +4,10 @@ import { formatDatum } from '../../../../lib/datum';
 import { CEL_ALLAPOTOK, TERV_STATUSZ_CIMKE, type CelAllapot, type TervStatusz } from '../../../../lib/munkaterv-szotar';
 import { cn } from '../../../../lib/utils';
 
-const JELVENY = 'inline-flex max-w-full items-center gap-1 rounded-[10px] px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap';
+const JELVENY = 'inline-flex max-w-full items-center gap-1 rounded-[10px] px-2 py-0.5 text-[11px] font-semibold wrap-anywhere';
+
+/** A lap szintű gomb keskeny ablakban több sorba törik, hogy ne szélesítse a lapot. */
+export const TORDELHETO_GOMB = 'h-auto min-h-7 max-w-full py-1 wrap-anywhere whitespace-normal';
 
 const STATUSZ_OSZTALY: Record<TervStatusz, string> = {
   piszkozat: 'bg-muted text-muted-foreground',
@@ -90,7 +93,7 @@ function Kiemeles({ cim, tipus, children }: { cim: string; tipus: 'vissza' | 'fi
         tipus === 'vissza' ? 'border-red-300 bg-red-50 text-red-950' : 'border-amber-300 bg-amber-50 text-amber-950',
       )}
     >
-      <p className="font-semibold">{cim}</p>
+      <p className="font-semibold wrap-anywhere">{cim}</p>
       <p className="mt-0.5 wrap-anywhere whitespace-pre-line">{children}</p>
     </div>
   );
@@ -137,18 +140,18 @@ export function TervFejlec({
         <h2
           id="terv-cim"
           tabIndex={-1}
-          className="w-fit rounded-sm text-base leading-snug font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="w-fit max-w-full rounded-sm text-base leading-snug font-semibold wrap-anywhere outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           {cim}
         </h2>
-        <p className="text-xs text-muted-foreground">{alcim}</p>
+        <p className="text-xs wrap-anywhere text-muted-foreground">{alcim}</p>
         {terv?.jovahagytaNev && terv.jovahagyvaAt && (
           <p className="text-xs text-muted-foreground">
             Jóváhagyta: {terv.jovahagytaNev}, {formatDatum(terv.jovahagyvaAt)}
           </p>
         )}
       </div>
-      <div className="ml-auto flex flex-wrap items-center gap-2">
+      <div className="ml-auto flex max-w-full min-w-0 flex-wrap items-center gap-2">
         {terv && <TervStatuszJelveny statusz={terv.statusz} />}
         {jobbra}
       </div>

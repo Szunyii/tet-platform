@@ -28,12 +28,12 @@ function KozpontNezet({ ev, most }: { ev: number; most: number }) {
     <div className="flex min-w-0 flex-col gap-3">
       <div className="flex flex-wrap items-start gap-x-4 gap-y-2">
         <div className="min-w-0">
-          <h2 className="text-base leading-snug font-semibold">Munkatervek · {ev}</h2>
+          <h2 className="text-base leading-snug font-semibold wrap-anywhere">Munkatervek · {ev}</h2>
           <p className="text-xs text-muted-foreground">
             {sorok.length} attasé · {jovahagyva} jóváhagyva
           </p>
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto max-w-full">
           <EvValaszto ev={ev} evek={tervEvOpciok(listTervesEvek(), ev, most)} />
         </div>
       </div>

@@ -20,6 +20,7 @@ import { formatDatum } from '../../../../lib/datum';
 import { szempontByKulcs } from '../../../../lib/ertekeles-szotar';
 import { kozzeteszAction, torolKozpontiCelAction } from '../actions';
 import { HATOKOR_OPCIOK, KozpontiCelDialog } from './KozpontiCelDialog';
+import { TORDELHETO_GOMB } from './TervReszek';
 
 const hatokorCimke = (h: KozpontiCelSor['hatokor']) => HATOKOR_OPCIOK.find((o) => o.kulcs === h)?.cimke ?? h;
 
@@ -66,10 +67,10 @@ function CelSorElem({
       </div>
       {szerkesztheto && (
         <div className="flex flex-wrap gap-1">
-          <Button type="button" variant="outline" size="sm" onClick={modositas.nyit} aria-label={`Módosítás: ${cel.megnevezes}`}>
+          <Button type="button" variant="outline" size="sm" className={TORDELHETO_GOMB} onClick={modositas.nyit} aria-label={`Módosítás: ${cel.megnevezes}`}>
             Módosítás
           </Button>
-          <Button type="button" variant="outline" size="sm" onClick={() => setTorlesNyitva(true)} aria-label={`Törlés: ${cel.megnevezes}`}>
+          <Button type="button" variant="outline" size="sm" className={TORDELHETO_GOMB} onClick={() => setTorlesNyitva(true)} aria-label={`Törlés: ${cel.megnevezes}`}>
             Törlés
           </Button>
         </div>
@@ -148,12 +149,12 @@ export function KozpontiCelok({
 
   return (
     <section aria-labelledby="kozponti-celok-cim" className="min-w-0 rounded-lg border border-border bg-card">
-      <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2.5">
-        <h3 id="kozponti-celok-cim" ref={cim} tabIndex={-1} className="rounded-sm text-sm font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2.5">
+        <h3 id="kozponti-celok-cim" ref={cim} tabIndex={-1} className="max-w-full rounded-sm text-sm font-semibold wrap-anywhere outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
           Központi célok
         </h3>
         {szerkesztheto && (
-          <Button type="button" variant="outline" size="sm" onClick={uj.nyit}>
+          <Button type="button" variant="outline" size="sm" className={TORDELHETO_GOMB} onClick={uj.nyit}>
             + Új cél
           </Button>
         )}
@@ -180,7 +181,7 @@ export function KozpontiCelok({
           <>
             <p>Közzététel után az attasék elkezdhetik a tervüket, a célok pedig már nem módosíthatók.</p>
             <div>
-              <Button type="button" size="sm" disabled={pending} onClick={() => setMegerositesNyitva(true)}>
+              <Button type="button" size="sm" className={TORDELHETO_GOMB} disabled={pending} onClick={() => setMegerositesNyitva(true)}>
                 Közzététel
               </Button>
             </div>

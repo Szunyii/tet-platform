@@ -33,7 +33,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       logoutAction={logoutAction}
       valasztEvAction={valasztEvAction}
       olvasatlan={olvasatlan}
-      menuSzamlalok={{ tevekenyseg: countTevekenysegTeendo(session), munkaterv: countTervTeendo(session) }}
+      menuSzamlalok={{ tevekenyseg: countTevekenysegTeendo(session), munkaterv: countTervTeendo(session, most) }}
       ev={ev}
       evek={evek}
       oldalsavAlja={<OldalsavAllapot session={session} ev={ev} most={most} />}

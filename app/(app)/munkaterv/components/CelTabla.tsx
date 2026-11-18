@@ -22,7 +22,7 @@ import { orszagNev } from '../../../../lib/orszagok';
 import { torolCelAction } from '../actions';
 import { CelAllapotDialog } from './CelAllapotDialog';
 import { CelDialog } from './CelDialog';
-import { CelAllapotJelveny, TablaDoboz } from './TervReszek';
+import { CelAllapotJelveny, TablaDoboz, TORDELHETO_GOMB } from './TervReszek';
 
 /**
  * A táblázat üzemmódja: `szerkeszt` a szerkeszthető terv, `allapot` az attasé jóváhagyott terve, `felulir` a központ
@@ -176,7 +176,7 @@ export function CelTabla({
           Célok
         </h3>
         {mod === 'szerkeszt' && (
-          <Button type="button" variant="outline" size="sm" onClick={uj.nyit}>
+          <Button type="button" variant="outline" size="sm" className={TORDELHETO_GOMB} onClick={uj.nyit}>
             + Új cél
           </Button>
         )}

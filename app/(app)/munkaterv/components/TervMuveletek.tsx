@@ -8,6 +8,7 @@ import { useNyitas } from '../../../../components/form/useNyitas';
 import { Button } from '../../../../components/ui/button';
 import type { TervNezet } from '../../../../db/queries/munkaterv';
 import { CEL_MAX, CEL_MIN, szerkeszthetoTerv } from '../../../../lib/munkaterv-szotar';
+import { cn } from '../../../../lib/utils';
 import {
   bekuldAction,
   elutasitModositastAction,
@@ -18,6 +19,7 @@ import {
   visszanyitAction,
 } from '../actions';
 import { TervMegjegyzesDialog } from './TervMegjegyzesDialog';
+import { TORDELHETO_GOMB } from './TervReszek';
 
 /** A párbeszédablak záró animációja: ennyi idő után dől el, hogy a fókusz visszatalált-e a helyére. */
 const ZARO_ANIMACIO_MS = 250;
@@ -26,7 +28,7 @@ const ZARO_ANIMACIO_MS = 250;
  * Az azonnali művelet gombja futás közben is fókuszban marad, hogy sikertelen műveletnél a billentyűzetes felhasználó
  * ne veszítse el a helyét. Ilyenkor nincs natív `disabled`, ezért kell az `aria-disabled:` stílus.
  */
-const AZONNALI_GOMB = 'aria-disabled:pointer-events-none aria-disabled:opacity-50';
+const AZONNALI_GOMB = cn(TORDELHETO_GOMB, 'aria-disabled:pointer-events-none aria-disabled:opacity-50');
 
 /** Az azonnali művelet futtatása: a hiba a gombok alatt marad, amíg a felhasználó újat nem indít. */
 function useAzonnali() {
@@ -75,7 +77,7 @@ function MuveletSzakasz({ verzio, hiba, children }: { verzio: number; hiba: stri
         id="terv-muveletek-cim"
         ref={cim}
         tabIndex={-1}
-        className="w-fit rounded-sm text-sm font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="w-fit max-w-full rounded-sm text-sm font-semibold wrap-anywhere outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       >
         Műveletek
       </h3>
@@ -116,7 +118,7 @@ export function TervKezdesGomb({ ev }: { ev: number }) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex max-w-full flex-col items-center gap-2">
       <Button
         type="button"
         disabled={pending}
@@ -166,7 +168,7 @@ export function AttaseTervMuveletek({ terv, tartalomNyitva }: { terv: TervNezet;
       )}
       {kerheto && (
         <div>
-          <Button type="button" variant="outline" onClick={modositas.nyit}>
+          <Button type="button" variant="outline" className={TORDELHETO_GOMB} onClick={modositas.nyit}>
             Módosítás kérése
           </Button>
         </div>
@@ -251,17 +253,17 @@ export function AdminTervMuveletek({ terv, tartalomNyitva }: { terv: TervNezet; 
             </Button>
           )}
           {varJovahagyasra && tartalomNyitva && (
-            <Button type="button" variant="outline" disabled={pending} onClick={() => nyit('visszakuld')}>
+            <Button type="button" variant="outline" className={TORDELHETO_GOMB} disabled={pending} onClick={() => nyit('visszakuld')}>
               Visszaküldés
             </Button>
           )}
           {vanKerelem && (
-            <Button type="button" variant="outline" onClick={() => nyit('elutasit')}>
+            <Button type="button" variant="outline" className={TORDELHETO_GOMB} onClick={() => nyit('elutasit')}>
               Módosítási kérés elutasítása
             </Button>
           )}
           {vanKerelem && tartalomNyitva && (
-            <Button type="button" onClick={() => nyit('visszanyit')}>
+            <Button type="button" className={TORDELHETO_GOMB} onClick={() => nyit('visszanyit')}>
               Visszanyitás szerkesztésre
             </Button>
           )}

@@ -29,7 +29,7 @@ export function TervReszlet({
   const hely = [nev, varos].filter(Boolean).join(' · ');
   return (
     <div className="flex min-w-0 flex-col gap-3">
-      <Link href={munkatervUrl(ev)} className="w-fit text-[12.5px]">
+      <Link href={munkatervUrl(ev)} className="w-fit max-w-full text-[12.5px] wrap-anywhere">
         <span aria-hidden="true">← </span>Munkatervek
       </Link>
       <TervFejlec
