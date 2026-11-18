@@ -1,7 +1,7 @@
 import 'server-only';
 import { and, asc, eq, gte, inArray, isNotNull, lt, lte, min, or } from 'drizzle-orm';
 import { db } from '../index';
-import { attaseErtekeles, ertekelesiIdoszak, riport, szempontMinosites, ticket, ticketUzenet } from '../schema';
+import { attaseErtekeles, ertekelesiIdoszak, riport, szempontMinosites, ticket, ticketUzenet, user } from '../schema';
 import { listOrszagokFelhasznalonkent } from './attase-orszag';
 import { listProfilMutatok } from './orszagprofil';
 import { listCimzettJeloltek } from './ticket';
@@ -389,14 +389,26 @@ function vezetettOrszagok(sor: ErtekelesSor): string[] {
   return sor.orszagok.filter((o) => o.vezeto).map((o) => o.kod);
 }
 
+/** A megadott azonosítók közül azok, amelyekhez még létezik felhasználó. */
+function letezoFelhasznalok(idk: readonly string[]): Set<string> {
+  if (idk.length === 0) return new Set();
+  return new Set(db.select({ id: user.id }).from(user).where(inArray(user.id, [...idk])).all().map((r) => r.id));
+}
+
 /**
- * A félév mutatóinak számolója. A forrásadatokat és a hálózati mediánokat egyszer tölti be: a mediánokba
- * csak a nem kihagyott attasék számítanak.
+ * A félév mutatóinak számolója. A forrásadatokat és a hálózati mediánokat egyszer tölti be. A mediánokba a nem
+ * kihagyott attasék számítanak, a törölt felhasználók kivételével: az ő jelentéseik és ticketjeik az FK-kaszkáddal
+ * eltűntek, ezért hamis, tevékenység nélküli értéket adnának. A tiltott attasé adatai megvannak, ő beleszámít.
  */
 function mutatoSzamolo(sorok: readonly ErtekelesSor[], f: Felev, most: Date): (sor: ErtekelesSor) => ErtekelesMutatok {
   const ertekeltek = sorok.filter((s) => !s.kimarad);
   const forrasok = mutatoForrasok(ertekeltek.map((s) => s.attaseId), f);
-  const halozat = halozatiMedianok([...forrasok.values()], f, most);
+  const letezok = letezoFelhasznalok([...forrasok.keys()]);
+  const halozat = halozatiMedianok(
+    [...forrasok].filter(([id]) => letezok.has(id)).map(([, forras]) => forras),
+    f,
+    most,
+  );
   const profilok = listProfilMutatok([...new Set(ertekeltek.flatMap(vezetettOrszagok))], f.ev);
   return (sor) =>
     szamolMutatok({
