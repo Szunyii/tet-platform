@@ -1,7 +1,7 @@
 # NIÜ · TéT Platform – Next.js dummy demó
 
 Egyszerű Next.js (App Router, TypeScript) demóprojekt a „TéT Platform" design-doksi alapján.
-A monitoring képernyő még statikus dummy adatokból dolgozik (`lib/data.ts`); az auth, a felhasználó-kezelés, az országprofil (és a térkép), a jelentések (információs bejegyzések), a kommunikáció (ticketek) és a TéT Tudástár már valódi adatbázisból (lásd lent).
+Az auth, a felhasználó-kezelés, az országprofil (és a térkép), a jelentések (információs bejegyzések), a kommunikáció (ticketek), a TéT Tudástár és a monitoring (az attasék félévi szakmai értékelése) valódi adatbázisból dolgozik (lásd lent).
 
 ## Indítás
 
@@ -74,20 +74,22 @@ A `data/tet.db` demó-adatbázis a repóban van (felhasználókkal és az attas�
 | `/tudastar/[kategoria]` | Kategória-oldal: bevezető és a kártyák (intézmény, lista); admin: új kártya, ↑/↓ sorrend |
 | `/tudastar/[kategoria]/[slug]` | Intézményi részletoldal (profil, kapcsolat, tevékenység, szakaszok, programok, linkek) |
 | `/tudastar/[kategoria]/[slug]/szerkesztes`, `/tudastar/[kategoria]/uj?tipus=` | Kártya szerkesztése / új kártya (csak admin) |
-| `/monitoring` | Hálózati rangsor + 14 szempontos részletes értékelés |
+| `/monitoring` | Az attasék félévi szakmai értékelésének hálózati nézete (csak admin): hőtérkép szűrőkkel (félév, régió, ország, attasé, szempont, minősítés), összesítő kártyák, a félév megnyitása, lezárása és újranyitása; az év a fejlécben választott ciklus, rangsor nincs |
+| `/monitoring/[attaseId]` | Az attasé adatlapja a félévben (`?felev=`; csak admin): nyitott félévben minősítő munkalap (öt szempont és összminősítés, indoklással; attasé kihagyása a félévből), lezárt félévben összkép, idősor és szempontonkénti mutatók, bizonyítékok |
 | `/login` | Bejelentkezés (email + jelszó) |
 | `/felhasznalok` | Felhasználó-kezelés (csak admin) |
 
 ## Felépítés
 
-- `lib/data.ts` – demóadatok a monitoringhoz: 14 poszt, 3 kategória, 14 értékelési szempont
 - `lib/orszagok.ts` – országszótár (ISO-kód, magyar név, world-atlas térképnév, főváros koordinátája, régió)
 - `lib/attase-orszag.ts` – attasé–ország hozzárendelés: típusok, vezető-szabályok tiszta segédei (a DB-oldal `db/queries/attase-orszag.ts`)
 - `lib/orszagprofil-szotar.ts` – az országprofil blokkjai, opciólistái, címkéi és korlátai
 - `components/orszagprofil/` – az országprofil jelvényei (`AllapotBadge`, `AgazatBadge`, közös színstílusuk a `SzinesBadge`) és a `SzerkesztesGomb` – a profil oldal és a térkép is használja
 - `app/(app)/orszagprofil/components/` – a profil olvasó nézete (`BlokkNezet`, `AttaseLista`) és a szerkesztő blokkonkénti űrlapjai (`BlokkForm`, `mezok/`, `RendezvenySorok`; nem szerkeszthető évre a `NemSzerkeszthetoEv` kártya)
 - `lib/tudastar-szotar.ts` – a TéT Tudástár 9 kategóriája, kártyatípusai, korlátai, közös felirat- és sorszabály-táblái és a normalizáló; a kártyák a `tudastar_kartya` táblában (`db/queries/tudastar.ts`), az oldalak és a szerkesztő az `app/(app)/tudastar/` alatt
-- `lib/score.ts` – determinisztikus dummy pontszámok a monitoringhoz (a doksi logikája szerint)
+- `lib/ertekeles-szotar.ts`, `lib/ertekeles-idoszak.ts`, `lib/ertekeles-mutatok.ts`, `lib/ertekeles-osszesites.ts`, `lib/ertekeles-szuro.ts`, `lib/ertekeles-validacio.ts`, `lib/ertekeles-megjelenites.ts` – a monitoring szótárai (szempontok, fokozatok és leírásuk), félév-logikája, automatikus mutatói, összesítői, URL-szűrői, validátorai és megjelenítő segédei; a táblák (`ertekelesi_idoszak`, `attase_ertekeles`, `szempont_minosites`) lekérdezései a `db/queries/ertekeles.ts`-ben vannak
+- `app/(app)/monitoring/components/` – a hálózati nézet (hőtérkép, szűrők, összesítő kártyák, félév-műveletek) és az adatlap (munkalap, összkép, idősor) komponensei
+- `scripts/demo-ertekeles.ts` – a monitoring kitalált tesztadatbázisa (`data/tet-ertekeles-teszt.db`, gitignore-olt; 15 kitalált attasé a valós hálózatnak nem posztot adó országokban, négy lezárt és egy nyitott félév): `NODE_OPTIONS="--conditions=react-server" npx tsx scripts/demo-ertekeles.ts`, majd `DATABASE_URL=./data/tet-ertekeles-teszt.db npm run dev` (másik futó dev szerver nélkül, a Next lockfile miatt); lásd a CLAUDE.md „Monitoring és értékelés” bekezdését
 - `lib/riport-szotar.ts` – kategóriák, kulcsszavak, csatolmány-limit
 - `lib/ticket-szotar.ts` – ticket típusok, prioritások, státuszok, szűrők, a lista szűrős URL-je (`listaUrl`)
 - `lib/ticket-cimzettek.ts` – a címzett-jelöltek régió-csoportjai az új ticket dialógushoz (`regioCsoportok`)
@@ -124,6 +126,7 @@ A `data/tet.db` demó-adatbázis a repóban van (felhasználókkal és az attas�
   visszajelzést (a sorrend nem változik); `xl` (≈ 1280 px) alatt a kategória- és a részletoldalon nincs keresőmező
   (a nyitólapon van); kliens-oldali navigáció után a képernyőolvasó néha csak „TéT Tudástár”-t mond az új lapcím
   helyett (a Next a címet külön streameli, és a bemondás nem várja meg; a lap címe helyes).
+- Monitoring és értékelés (az 1. szakasz): az attasé az értékelését nem látja, önértékelés, megjegyzés, export, nyomtatási nézet és értesítés nincs (3. szakasz); tevékenységnapló és eredmény-nyilvántartás sincs (2. szakasz), ezért az Eredmények szempontnak nincs rendszeradata, az admin az indoklásban nevezi meg az eredményeket. A munkanap-számítás nem veszi figyelembe az ünnepnapokat. Fokozatot és összminősítést csak admin ad, rangsor nincs. Technikai zár nincs: valós attasékat csak akkor szabad értékelni, ha a 3. szakasz elkészült, az attasék tájékoztatást kaptak, megtörtént az adatvédelmi és munkajogi egyeztetés, és tisztázott a NIÜ hatásköre (terv: `docs/superpowers/specs/2026-11-18-monitoring-ertekeles-design.md`, 2. pont).
 - Az attasé országainak vagy relációs vezetőségének admin-módosítása a jogosultság-ellenőrzésben
   azonnal érvényes, de az attasé oldalsávja és a térkép „Saját országprofil"/Szerkesztés gombja
   kliens-oldali navigációnál csak teljes újratöltés (vagy egy saját, layoutot frissítő művelet) után
