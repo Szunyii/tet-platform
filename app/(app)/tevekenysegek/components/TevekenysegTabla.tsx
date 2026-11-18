@@ -167,8 +167,8 @@ export function TevekenysegTabla({
               {t.kifogas && (
                 <TableRow>
                   <TableCell colSpan={OSZLOP_DB} className="bg-red-50 text-xs break-words whitespace-normal text-red-950">
-                    <span className="font-semibold">Kifogásolva{t.kifogasSzerzoNev && ` (${t.kifogasSzerzoNev})`}:</span> {t.kifogas}{' '}
-                    A kifogás megszűnik, ha módosítod a bejegyzést.
+                    <span className="font-semibold">Kifogásolva{t.kifogasSzerzoNev && ` (${t.kifogasSzerzoNev})`}:</span> {t.kifogas}
+                    {!t.zarolt && ' A kifogás megszűnik, ha módosítod a bejegyzést.'}
                   </TableCell>
                 </TableRow>
               )}

@@ -6,7 +6,7 @@ import { listAttaseOrszagok } from './attase-orszag';
 import { naptariNap } from '../../lib/datum';
 import { felevKulcs, felevNapok, futoFelev, type Felev, type FelevSzam } from '../../lib/ertekeles-idoszak';
 import type { BovitettBemenet, EredmenyEsemenyBemenet } from '../../lib/ertekeles-mutatok';
-import { ORSZAGOK, type RegioKulcs } from '../../lib/orszagok';
+import { ORSZAGOK, orszagNev, type RegioKulcs } from '../../lib/orszagok';
 import {
   adminMuveletek, attaseMuveletek, befejezettE, beszamitasiFelev, mezokZarolvaE,
   type AdminMuvelet, type AttaseMuvelet, type UgyAdat,
@@ -353,6 +353,28 @@ export function listEredmenyek(s: EredmenySzuro): EredmenySor[] {
       s.allapot !== undefined ? eq(eredmeny.allapot, s.allapot) : undefined,
     ),
   );
+}
+
+/** Az admin szűrőinek opciói: a bejegyzéssel rendelkező attasék és a bejegyzésekben előforduló országok, névsorban. */
+export function listAdminSzuroOpciok(): { attasek: { id: string; nev: string }[]; orszagok: string[] } {
+  const sorok = [
+    ...db
+      .selectDistinct({ id: user.id, nev: user.name, kod: eredmeny.orszagKod })
+      .from(eredmeny)
+      .innerJoin(user, eq(user.id, eredmeny.attaseId))
+      .all(),
+    ...db
+      .selectDistinct({ id: user.id, nev: user.name, kod: tevekenyseg.orszagKod })
+      .from(tevekenyseg)
+      .innerJoin(user, eq(user.id, tevekenyseg.attaseId))
+      .all(),
+  ];
+  return {
+    attasek: [...new Map(sorok.map((s) => [s.id, s.nev]))]
+      .map(([id, nev]) => ({ id, nev }))
+      .sort((a, b) => huOsszevet(a.nev, b.nev)),
+    orszagok: [...new Set(sorok.map((s) => s.kod))].sort((a, b) => huOsszevet(orszagNev(a), orszagNev(b))),
+  };
 }
 
 /** Az események időrendben, a hivatkozott jelentés tárgyával. */

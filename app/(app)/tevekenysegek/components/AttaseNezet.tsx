@@ -11,7 +11,7 @@ import { cn } from '../../../../lib/utils';
 import { EredmenyDialog } from './EredmenyDialog';
 import { TevekenysegDialog, type TevekenysegElotoltes, type TevekenysegUrlapAdat } from './TevekenysegDialog';
 
-function SzuroLink({ href, aktiv, children }: { href: string; aktiv: boolean; children: ReactNode }) {
+export function SzuroLink({ href, aktiv, children }: { href: string; aktiv: boolean; children: ReactNode }) {
   return (
     <Link
       href={href}
@@ -26,7 +26,7 @@ function SzuroLink({ href, aktiv, children }: { href: string; aktiv: boolean; ch
   );
 }
 
-function FulLink({ href, aktiv, darab, children }: { href: string; aktiv: boolean; darab: number; children: ReactNode }) {
+export function FulLink({ href, aktiv, darab, children }: { href: string; aktiv: boolean; darab: number; children: ReactNode }) {
   return (
     <Link
       href={href}

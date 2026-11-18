@@ -26,6 +26,12 @@ import { MegjegyzesDialog } from './MegjegyzesDialog';
 import type { RiportOpcio } from './TevekenysegDialog';
 
 /**
+ * Az azonnali művelet gombja futás közben is fókuszban marad (`focusableWhenDisabled`), hogy sikertelen műveletnél a
+ * billentyűzetes felhasználó ne veszítse el a helyét. Ilyenkor nincs natív `disabled`, ezért kell az `aria-disabled:` stílus.
+ */
+const AZONNALI_GOMB = 'aria-disabled:pointer-events-none aria-disabled:opacity-50';
+
+/**
  * Az attasé műveletei az ügy adatlapján, az állapotgép szerint. Egy lépés után a kiváltó gomb eltűnhet, ezért a
  * fókusz a szakasz címére kerül, hogy billentyűzettel ne vesszen el.
  */
@@ -105,6 +111,8 @@ export function UgyMuveletek({
           <Button
             type="button"
             disabled={pending}
+            focusableWhenDisabled
+            className={AZONNALI_GOMB}
             onClick={() => futtat(() => kapcsolatbaLepAction(ugy.id, ugy.verzio), 'Az ügy a Kapcsolat szakaszba lépett.')}
           >
             Továbblépés: Kapcsolat
@@ -119,6 +127,8 @@ export function UgyMuveletek({
           <Button
             type="button"
             disabled={pending}
+            focusableWhenDisabled
+            className={AZONNALI_GOMB}
             onClick={() => futtat(() => ujrainditAction(ugy.id, ugy.verzio), 'Az ügy újraindult.')}
           >
             Újraindítás

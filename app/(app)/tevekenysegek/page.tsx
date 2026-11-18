@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { listOrszagAttasek } from '../../../db/queries/attase-orszag';
 import { getRiport, listSajatRiportok } from '../../../db/queries/riport';
 import {
@@ -16,6 +15,7 @@ import type { SearchParams } from '../../../lib/routes';
 import { requireSession, type AppSession } from '../../../lib/session';
 import { jelentesbolIndithato, tevekenysegSzuroFromSearchParams } from '../../../lib/tevekenyseg-szuro';
 import { getValasztottEv } from '../../../lib/valasztott-ev';
+import { AdminNezet } from './components/AdminNezet';
 import { AttaseNezet } from './components/AttaseNezet';
 import { EredmenyKartya } from './components/EredmenyKartya';
 import { EredmenyTabla, tablanLatszik } from './components/EredmenyTabla';
@@ -53,23 +53,10 @@ export default async function TevekenysegekPage({ searchParams }: { searchParams
   const session = await requireSession();
   const szuro = tevekenysegSzuroFromSearchParams(await searchParams);
 
-  // Az admin nézete a következő lépésben készül el.
-  if (session.role === 'admin') {
-    return (
-      <Card className="max-w-xl">
-        <CardHeader>
-          <CardTitle role="heading" aria-level={2}>
-            Hamarosan
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          Az igazolásra váró kérések és a hálózat bejegyzései itt jelennek meg.
-        </CardContent>
-      </Card>
-    );
-  }
-
   const ev = await getValasztottEv(aktualisEv());
+
+  if (session.role === 'admin') return <AdminNezet szuro={szuro} ev={ev} />;
+
   const ful = szuro.ful === 'tevekenysegek' ? 'tevekenysegek' : 'eredmenyek';
 
   const eredmenyek = listEredmenyek({ attaseId: session.userId });

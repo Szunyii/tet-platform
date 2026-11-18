@@ -9,16 +9,23 @@ import {
   deleteEredmeny,
   deleteTevekenyseg,
   getEredmeny,
+  igazol,
   kapcsolatbaLep,
   kerIgazolast,
+  kifogasolEredmeny,
+  kifogasolTevekenyseg,
   megszakit,
   ujraindit,
   updateEredmeny,
   updateTevekenyseg,
+  visszakuld,
+  visszavon,
+  visszavonEredmenyKifogas,
+  visszavonTevekenysegKifogas,
   type IrasEredmeny,
 } from '../../../db/queries/tevekenyseg';
 import { maiNaptariNap } from '../../../lib/datum';
-import { requireSession, type AppSession } from '../../../lib/session';
+import { requireAdmin, requireSession, type AppSession } from '../../../lib/session';
 import { mezokZarolvaE } from '../../../lib/tevekenyseg-allapot';
 import { canModosit, canRogzit } from '../../../lib/tevekenyseg-jog';
 import { tevekenysegUrl } from '../../../lib/tevekenyseg-szuro';
@@ -159,4 +166,68 @@ export async function ujrainditAction(id: string, verzio: number): Promise<Muvel
   if (!canRogzit(session)) return hiba('ervenytelen');
   if (!ervenyesId(id) || !ervenyesVerzio(verzio)) return HIBAS_KERES;
   return eredmenybol(ujraindit(id, session.userId, session.name, verzio));
+}
+
+const ELAVULT_DONTES = 'Ezt a kérést közben más már elbírálta. Töltsd újra az oldalt.';
+
+/** A központ döntésének eredménye: az elavult verzió azt jelenti, hogy egy másik admin már döntött. */
+function dontesbol(e: IrasEredmeny): MuveletState {
+  revalidatePath('/', 'layout');
+  if (e === 'ok') return { ok: true };
+  return { errors: { form: e === 'elavult' ? ELAVULT_DONTES : HIBAK[e] } };
+}
+
+/** A tevékenységnek nincs verzió-ellenőrzése: az `ervenytelen` itt azt jelenti, hogy a kifogásról közben más döntött. */
+function tevekenysegDontesbol(e: IrasEredmeny): MuveletState {
+  return dontesbol(e === 'ervenytelen' ? 'elavult' : e);
+}
+
+export async function igazolAction(id: string, verzio: number): Promise<MuveletState> {
+  const session = await requireAdmin();
+  if (!ervenyesId(id) || !ervenyesVerzio(verzio)) return HIBAS_KERES;
+  return dontesbol(igazol(id, session.name, verzio));
+}
+
+export async function visszakuldAction(id: string, _prev: MuveletState, fd: FormData): Promise<MuveletState> {
+  const session = await requireAdmin();
+  if (!ervenyesId(id)) return HIBAS_KERES;
+  const parsed = parseMegjegyzesForm(fd);
+  if (!parsed.ok) return { errors: parsed.errors };
+  return dontesbol(visszakuld(id, parsed.data, session.name));
+}
+
+export async function visszavonAction(id: string, _prev: MuveletState, fd: FormData): Promise<MuveletState> {
+  const session = await requireAdmin();
+  if (!ervenyesId(id)) return HIBAS_KERES;
+  const parsed = parseMegjegyzesForm(fd);
+  if (!parsed.ok) return { errors: parsed.errors };
+  return dontesbol(visszavon(id, parsed.data, session.name));
+}
+
+export async function kifogasolTevekenysegAction(id: string, _prev: MuveletState, fd: FormData): Promise<MuveletState> {
+  const session = await requireAdmin();
+  if (!ervenyesId(id)) return HIBAS_KERES;
+  const parsed = parseMegjegyzesForm(fd);
+  if (!parsed.ok) return { errors: parsed.errors };
+  return tevekenysegDontesbol(kifogasolTevekenyseg(id, parsed.data.megjegyzes, session.name));
+}
+
+export async function visszavonTevekenysegKifogasAction(id: string): Promise<MuveletState> {
+  await requireAdmin();
+  if (!ervenyesId(id)) return HIBAS_KERES;
+  return tevekenysegDontesbol(visszavonTevekenysegKifogas(id));
+}
+
+export async function kifogasolEredmenyAction(id: string, _prev: MuveletState, fd: FormData): Promise<MuveletState> {
+  const session = await requireAdmin();
+  if (!ervenyesId(id)) return HIBAS_KERES;
+  const parsed = parseMegjegyzesForm(fd);
+  if (!parsed.ok) return { errors: parsed.errors };
+  return dontesbol(kifogasolEredmeny(id, parsed.data, session.name));
+}
+
+export async function visszavonEredmenyKifogasAction(id: string, verzio: number): Promise<MuveletState> {
+  await requireAdmin();
+  if (!ervenyesId(id) || !ervenyesVerzio(verzio)) return HIBAS_KERES;
+  return dontesbol(visszavonEredmenyKifogas(id, verzio));
 }

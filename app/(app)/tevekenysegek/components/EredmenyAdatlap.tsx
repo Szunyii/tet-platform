@@ -27,14 +27,32 @@ function kapcsolodoJelentesek(ugy: EredmenyReszlet): { id: string; targy: string
   return [...m].map(([id, targy]) => ({ id, targy }));
 }
 
-/** Az eredmény adatlapja. A `muveletek` az attasé saját ügyénél kap tartalmat. */
-export function EredmenyAdatlap({ ugy, muveletek }: { ugy: EredmenyReszlet; muveletek?: ReactNode }) {
+/**
+ * Az eredmény adatlapja. A `muveletek` a nézőnek megfelelő műveleteket hozza. `admin`: a visszalépés az admin füleire
+ * mutat. `kifogasModosithato`: a gazda attasé módosíthatja az ügyet, ezért az útmutató neki szól.
+ */
+export function EredmenyAdatlap({
+  ugy,
+  muveletek,
+  admin = false,
+  kifogasModosithato = false,
+}: {
+  ugy: EredmenyReszlet;
+  muveletek?: ReactNode;
+  admin?: boolean;
+  kifogasModosithato?: boolean;
+}) {
   const megjegyzes = ugy.igazolas === 'visszakuldott' ? visszakuldesMegjegyzes(ugy.esemenyek) : null;
   const jelentesek = kapcsolodoJelentesek(ugy);
+  // Az admin alapértelmezett füle az igazolási sor: ide csak a függő kérés adatlapjáról lép vissza.
+  const sorba = admin && ugy.kertSzakasz !== null;
   return (
     <article className="flex max-w-4xl flex-col gap-4">
-      <Link href={tevekenysegUrl({})} className="w-fit text-xs underline underline-offset-2">
-        Vissza az eredményekhez
+      <Link
+        href={admin && !sorba ? tevekenysegUrl({ ful: 'eredmenyek' }) : tevekenysegUrl({})}
+        className="w-fit text-xs underline underline-offset-2"
+      >
+        {sorba ? 'Vissza az igazolási sorhoz' : 'Vissza az eredményekhez'}
       </Link>
       <header className="flex flex-col gap-2">
         <h2 className="text-xl leading-snug font-semibold break-words">{ugy.megnevezes}</h2>
@@ -60,7 +78,7 @@ export function EredmenyAdatlap({ ugy, muveletek }: { ugy: EredmenyReszlet; muve
         <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-950">
           <p className="font-medium">A központ kifogása{ugy.kifogasSzerzoNev && ` (${ugy.kifogasSzerzoNev})`}</p>
           <p className="break-words whitespace-pre-wrap">{ugy.kifogas}</p>
-          <p className="mt-1 text-xs">A kifogás megszűnik, ha módosítod az ügyet.</p>
+          {kifogasModosithato && <p className="mt-1 text-xs">A kifogás megszűnik, ha módosítod az ügyet.</p>}
         </div>
       )}
 
