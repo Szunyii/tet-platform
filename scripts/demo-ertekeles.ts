@@ -1169,6 +1169,13 @@ function ugyVerzio(id: string): number {
   return u.verzio;
 }
 
+/** A tevékenység jelenlegi verziója, ugyanúgy frissen olvasva. */
+function tevekenysegVerzio(id: string): number {
+  const t = db.select({ updatedAt: tevekenyseg.updatedAt }).from(tevekenyseg).where(eq(tevekenyseg.id, id)).get();
+  if (!t) throw new Error(`A tevékenység (${id}) nem található.`);
+  return t.updatedAt.getTime();
+}
+
 const partnerAlapNev = (): string => `${valasztA(PARTNER_ELO)} ${valasztA(PARTNER_UTO)}`;
 const magyarAlapNev = (): string => `${valasztA(MAGYAR_ELO)} ${valasztA(MAGYAR_UTO)}`;
 const kitalalt = (alap: string): string => `${alap} (kitalált)`;
@@ -1394,7 +1401,10 @@ function aBlokkAttase(a: Attase, cella: Cella, ido: Ido): { tevekenyseg: number;
       if (jeloltek.length === 0) throw new Error(`${a.nev}: nincs kifogásolható tevékenység a nyitott félévben.`);
       const cel = valasztA(jeloltek);
       const most = kisebb(idopontA(plusNap(naptariNap(cel.createdAt), egeszA(1, 6))), new Date(ido.hatar.getTime() - 3600_000));
-      irasOk(tq.kifogasolTevekenyseg(cel.id, `${valasztA(TEV_KIFOGAS)} ${KITALALT}`, ERTEKELO, most), `${a.nev}, kifogásolt tevékenység`);
+      irasOk(
+        tq.kifogasolTevekenyseg(cel.id, { megjegyzes: `${valasztA(TEV_KIFOGAS)} ${KITALALT}`, verzio: tevekenysegVerzio(cel.id) }, ERTEKELO, most),
+        `${a.nev}, kifogásolt tevékenység`,
+      );
     }
     if (a.nev === VISSZAVONAS_ATTASE) {
       const cel = naplo.find((u) => (u.tipus === 'egyuttmukodes' || u.tipus === 'megallapodas') && u.felev === '2026/1');

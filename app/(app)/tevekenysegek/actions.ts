@@ -177,11 +177,6 @@ function dontesbol(e: IrasEredmeny): MuveletState {
   return { errors: { form: e === 'elavult' ? ELAVULT_DONTES : HIBAK[e] } };
 }
 
-/** A tevékenységnek nincs verzió-ellenőrzése: az `ervenytelen` itt azt jelenti, hogy a kifogásról közben más döntött. */
-function tevekenysegDontesbol(e: IrasEredmeny): MuveletState {
-  return dontesbol(e === 'ervenytelen' ? 'elavult' : e);
-}
-
 export async function igazolAction(id: string, verzio: number): Promise<MuveletState> {
   const session = await requireAdmin();
   if (!ervenyesId(id) || !ervenyesVerzio(verzio)) return HIBAS_KERES;
@@ -209,13 +204,15 @@ export async function kifogasolTevekenysegAction(id: string, _prev: MuveletState
   if (!ervenyesId(id)) return HIBAS_KERES;
   const parsed = parseMegjegyzesForm(fd);
   if (!parsed.ok) return { errors: parsed.errors };
-  return tevekenysegDontesbol(kifogasolTevekenyseg(id, parsed.data.megjegyzes, session.name));
+  return dontesbol(kifogasolTevekenyseg(id, parsed.data, session.name));
 }
 
 export async function visszavonTevekenysegKifogasAction(id: string): Promise<MuveletState> {
   await requireAdmin();
   if (!ervenyesId(id)) return HIBAS_KERES;
-  return tevekenysegDontesbol(visszavonTevekenysegKifogas(id));
+  // A visszavonásnak nincs verzió-ellenőrzése: az `ervenytelen` azt jelenti, hogy a kifogást közben már megszüntették.
+  const e = visszavonTevekenysegKifogas(id);
+  return dontesbol(e === 'ervenytelen' ? 'elavult' : e);
 }
 
 export async function kifogasolEredmenyAction(id: string, _prev: MuveletState, fd: FormData): Promise<MuveletState> {

@@ -861,20 +861,19 @@ export function ujraindit(
   });
 }
 
-/** A tevékenység kifogásolása. A meglévő kifogást nem írja felül: két admin esetén az első megjegyzése marad. */
-export function kifogasolTevekenyseg(
-  id: string,
-  megjegyzes: string,
-  szerzoNev: string,
-  most: Date = new Date(),
-): IrasEredmeny {
+/**
+ * A tevékenység kifogásolása a megnyitáskori verzióval: a közben módosított bejegyzésre nem kerülhet olyan kifogás,
+ * amelyet az admin a korábbi tartalom alapján írt. A meglévő kifogást nem írja felül.
+ */
+export function kifogasolTevekenyseg(id: string, i: MegjegyzesInput, szerzoNev: string, most: Date = new Date()): IrasEredmeny {
   return db.transaction((tx): IrasEredmeny => {
     const t = tx.select().from(tevekenyseg).where(eq(tevekenyseg.id, id)).get();
     if (!t) return 'nincs';
+    if (t.updatedAt.getTime() !== i.verzio) return 'elavult';
     if (t.kifogas !== null) return 'ervenytelen';
     tx.update(tevekenyseg)
       .set({
-        kifogas: megjegyzes,
+        kifogas: i.megjegyzes,
         kifogasSzerzoNev: szerzoNev,
         kifogasAt: most,
         updatedAt: kovetkezoVerzio(t.updatedAt, most),
