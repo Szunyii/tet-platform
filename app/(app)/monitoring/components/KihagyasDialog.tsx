@@ -39,6 +39,7 @@ export function KihagyasDialog({
       cim="Attasé kihagyása a félévből"
       leiras={`${nev} nem kap fokozatot ebben a félévben, és nem számít bele az összesítésekbe. A már rögzített minősítések megmaradnak, a nem mentett szöveg elvész. A kihagyás visszavonható.`}
       gomb="Kihagyás"
+      gombFolyamatban="Kihagyás…"
       formAction={formAction}
       errors={errors}
     >

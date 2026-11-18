@@ -71,7 +71,7 @@ function Elemek({ lista, ujLapon }: { lista: readonly Elem[]; ujLapon: boolean }
               href={e.url}
               target={ujLapon ? '_blank' : undefined}
               rel={ujLapon ? 'noopener' : undefined}
-              className="rounded-sm font-medium text-foreground wrap-anywhere outline-none hover:underline focus-visible:ring-2 focus-visible:ring-[#1f4e9c]"
+              className="rounded-sm font-medium wrap-anywhere text-[#1f4e9c] underline underline-offset-2 outline-none hover:text-[#16376e] focus-visible:ring-2 focus-visible:ring-[#1f4e9c]"
             >
               {e.targy}
               {ujLapon && <span className="sr-only"> (új lapon nyílik)</span>}

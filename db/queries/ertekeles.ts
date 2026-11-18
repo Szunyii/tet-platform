@@ -72,7 +72,10 @@ export interface AdatlapNezet {
   /** Az értékelési sor verziója (`updatedAt`, ms): az összminősítés mentése ehhez hasonlít. */
   osszVerzio: number;
   minositesek: Partial<Record<SzempontKulcs, SzempontMinosites>>;
-  /** A rögzített pillanatkép, nyitott félévben az élő számítás; a kihagyott sornál `null`. */
+  /**
+   * A rögzített pillanatkép, ha van: a rögzítés után kihagyott sornál is ez látszik. Pillanatkép nélkül nyitott
+   * félévben a nem kihagyott sor élő számítása, a kihagyott sornál és lezárt félévben `null`.
+   */
   mutatok: ErtekelesMutatok | null;
   elozmeny: ElozmenySor[];
   letezoJelentesek: string[];
