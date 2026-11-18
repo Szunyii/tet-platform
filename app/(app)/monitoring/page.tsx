@@ -49,7 +49,7 @@ export default async function MonitoringPage({ searchParams }: { searchParams: P
   const ev = await getValasztottEv(aktualisEv());
   const felev: Felev = megjelenitettFelev(ev, szuro.felev, ma);
   const felevSzam = felev.felev;
-  const { idoszak, sorok } = listHalozat(felev);
+  const { idoszak, sorok, torlendoAttasek } = listHalozat(felev);
   // A félév-művelet után is ez a félév látszik: `?felev=` nélkül az alapérték a lezárt félévekből adódik, és a
   // művelet megváltoztathatja. A tisztítás előtti szűrőből készül, mert a még meg nem nyitott félévnek nincsenek
   // opciói, és a megnyitás után a régió- vagy országszűrő újra érvényes.
@@ -65,7 +65,14 @@ export default async function MonitoringPage({ searchParams }: { searchParams: P
 
   return (
     <div className="@container flex flex-col gap-3">
-      <AllapotSav felev={felev} idoszak={idoszak} sorok={sorok} ma={ma} felevUrl={felevUrl} />
+      <AllapotSav
+        felev={felev}
+        idoszak={idoszak}
+        sorok={sorok}
+        torlendoAttasek={torlendoAttasek}
+        ma={ma}
+        felevUrl={felevUrl}
+      />
       <ErtekelesSzurok szuro={szuro} felev={felevSzam} {...opciok} />
       {sorok.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground">

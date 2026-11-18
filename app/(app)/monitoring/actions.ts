@@ -111,6 +111,7 @@ export async function mentOsszAction(ertekelesId: string, _prev: MentesState, fd
 function kihagyasEredmeny(eredmeny: ReturnType<typeof kihagyAttase>): MuveletState {
   if (eredmeny === 'nincs') return hiba(NINCS_ERTEKELES);
   if (eredmeny === 'lezart') return hiba(LEZART_FELEV);
+  if (eredmeny === 'inaktiv') return hiba('Az attasé már nem aktív, ezért nem vehető vissza az értékelésbe.');
   revalidatePath('/', 'layout');
   return { ok: true };
 }

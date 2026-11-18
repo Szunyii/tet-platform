@@ -852,7 +852,7 @@ function felevFeldolgoz(attasek: readonly Attase[], terv: FelevTerv): string {
       .run();
   }
 
-  const sorok = new Map(ert.listHalozat(terv.f, terv.most).sorok.map((s) => [s.attaseId, s]));
+  const sorok = new Map(ert.listHalozat(terv.f).sorok.map((s) => [s.attaseId, s]));
   let kihagyott = 0;
   attasek.forEach((a, i) => {
     const sor = sorok.get(a.id);
@@ -989,7 +989,7 @@ function onellenorzes(attasek: readonly Attase[]): string[] {
 
   // A 2026/1 félév változásai.
   const valtozasok = new Set(
-    ert.listHalozat({ ev: 2026, felev: 1 }, FELEVEK[3].most).sorok.map((s) => s.valtozas),
+    ert.listHalozat({ ev: 2026, felev: 1 }).sorok.map((s) => s.valtozas),
   );
   for (const v of ['javult', 'romlott', 'azonos', 'uj'] as const) {
     if (!valtozasok.has(v)) hiba(`a 2026/1 félévben nincs „${v}” változás.`);
@@ -1038,7 +1038,7 @@ function onellenorzes(attasek: readonly Attase[]): string[] {
   }
 
   // A nyitott félév: 6 teljes, 3 részleges, 6 üres.
-  const nyitottSorok = ert.listHalozat(FELEVEK[4].f, FELEVEK[4].most).sorok;
+  const nyitottSorok = ert.listHalozat(FELEVEK[4].f).sorok;
   const teljesek = nyitottSorok.filter(teljesE).length;
   if (nyitottSorok.length !== attasek.length) hiba(`a nyitott félévben ${nyitottSorok.length} sor van, ${attasek.length} kellene.`);
   if (teljesek !== 6) hiba(`a nyitott félévben ${teljesek} teljes sor van, 6 kellene.`);

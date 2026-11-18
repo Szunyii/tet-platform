@@ -5,6 +5,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../../../..
 import { formatDatumIdo } from '../../../../lib/datum';
 import {
   EREDMENYEK_URES,
+  FORRAS_HIANYZIK,
   kulcsMutato,
   mutatoKartyak,
   mutatoKorlat,
@@ -44,9 +45,13 @@ function Indoklas({ minosites }: { minosites: SzempontMinosites | undefined }) {
   );
 }
 
-/** A szempont mutatói; az Eredményeknek nincs rendszeradata, ott a rövid magyarázat áll. */
+/**
+ * A szempont mutatói; az Eredményeknek nincs rendszeradata, ott a rövid magyarázat áll. Törölt fiókú attasénál a
+ * számok nem valósak, ezért helyettük a `FORRAS_HIANYZIK` szöveg látszik.
+ */
 export function Meres({ szempont, mutatok }: { szempont: Szempont; mutatok: ErtekelesMutatok | null }) {
   if (mutatok === null) return <p className="text-muted-foreground">Nincs rögzített mutató.</p>;
+  if (mutatok.forrasHianyzik) return <p className="text-muted-foreground">{FORRAS_HIANYZIK}</p>;
   const kartyak = mutatoKartyak(szempont.kulcs, mutatok);
   if (kartyak.length === 0) return <p className="text-muted-foreground">{EREDMENYEK_URES}</p>;
   return <MutatoRacs kartyak={kartyak} korlat={mutatoKorlat(szempont.kulcs, mutatok)} />;
@@ -67,7 +72,7 @@ export function SzempontSorok({
     <section className="@container">
       <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
         <h3 className="text-[13px] font-semibold">Szempontok</h3>
-        {mutatok !== null && (
+        {mutatok !== null && !mutatok.forrasHianyzik && (
           <p className="text-[11px] text-muted-foreground">
             A mutatók a lezáráskori állapotot mutatják (rögzítve: {formatDatumIdo(new Date(mutatok.szamitvaAt))}).
           </p>

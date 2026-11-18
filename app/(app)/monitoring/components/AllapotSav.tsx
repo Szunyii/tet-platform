@@ -10,7 +10,13 @@ import { FelevMuveletGomb } from './FelevMuveletGomb';
 type GombAdat = Omit<ComponentProps<typeof FelevMuveletGomb>, 'felev' | 'felevUrl'>;
 
 /** A félév állapotához tartozó művelet; `null`, ha a félév nem nyitható meg. */
-function felevGomb(f: Felev, idoszak: IdoszakSor | null, sorok: readonly ErtekelesSor[], ma: string): GombAdat | null {
+function felevGomb(
+  f: Felev,
+  idoszak: IdoszakSor | null,
+  sorok: readonly ErtekelesSor[],
+  ma: string,
+  figyelmeztetes: string | undefined,
+): GombAdat | null {
   if (idoszak === null) {
     return megnyithato(f, ma) ? { muvelet: 'megnyitas', action: megnyitFelevAction.bind(null, f.ev, f.felev) } : null;
   }
@@ -21,7 +27,7 @@ function felevGomb(f: Felev, idoszak: IdoszakSor | null, sorok: readonly Ertekel
   let tiltasOka: string | undefined;
   if (!felevBefejezodott(f, ma)) tiltasOka = 'A félév még nem ért véget.';
   else if (hianyzok.length > 0) tiltasOka = `Hiányzó minősítés: ${hianyzok.join(', ')}.`;
-  return { muvelet: 'lezaras', action: lezarFelevAction.bind(null, f.ev, f.felev), tiltasOka };
+  return { muvelet: 'lezaras', action: lezarFelevAction.bind(null, f.ev, f.felev), tiltasOka, figyelmeztetes };
 }
 
 function allapotFelirat(idoszak: IdoszakSor | null): string {
@@ -34,6 +40,7 @@ export function AllapotSav({
   felev,
   idoszak,
   sorok,
+  torlendoAttasek,
   ma,
   felevUrl,
 }: {
@@ -41,12 +48,16 @@ export function AllapotSav({
   idoszak: IdoszakSor | null;
   /** A félév összes sora, szűrés nélkül: a lezárhatóság a teljes félévre vonatkozik. */
   sorok: readonly ErtekelesSor[];
+  /** A lezáráskor törlődő, hiányos sorok attaséi magyar névsorban. */
+  torlendoAttasek: readonly string[];
   ma: string;
   /** A nézet URL-je a megjelenített félévvel: a művelet után is ez a félév marad látható. */
   felevUrl: string;
 }) {
   const { kesz, osszes } = osszesit(sorok);
-  const gomb = felevGomb(felev, idoszak, sorok, ma);
+  const figyelmeztetes =
+    torlendoAttasek.length > 0 ? `Lezáráskor törlődik a hiányos értékelése: ${torlendoAttasek.join(', ')}.` : undefined;
+  const gomb = felevGomb(felev, idoszak, sorok, ma, figyelmeztetes);
   const cimke = felevCimke(felev);
   return (
     <section
@@ -70,6 +81,9 @@ export function AllapotSav({
               </>
             )}
           </p>
+        )}
+        {figyelmeztetes !== undefined && (
+          <p className="mt-1 text-[12px] font-medium wrap-anywhere text-amber-800">{figyelmeztetes}</p>
         )}
       </div>
       {gomb && <FelevMuveletGomb {...gomb} felev={cimke} felevUrl={felevUrl} />}

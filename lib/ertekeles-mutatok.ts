@@ -76,6 +76,11 @@ export interface TicketBizonyitek {
 export interface ErtekelesMutatok {
   verzio: 1;
   szamitvaAt: string;
+  /**
+   * A lezáráskor az attasé fiókja már nem létezett: a jelentései és a ticketjei az FK-kaszkáddal eltűntek, ezért a
+   * számok nem valós tevékenységet mutatnak, a felület nem jeleníti meg őket.
+   */
+  forrasHianyzik?: true;
   tajekoztatas: {
     jelentesDb: number;
     elozoFelevDb: number;

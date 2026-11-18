@@ -24,6 +24,9 @@ export interface MutatoKartya {
 export const EREDMENYEK_URES =
   'Az 1. szakaszban a rendszer még nem mér eredményeket. Az indoklás nevezi meg a konkrét eredményeket.';
 
+/** A törölt fiókú attasé mutatói és bizonyítékai helyett álló szöveg (`ErtekelesMutatok.forrasHianyzik`). */
+export const FORRAS_HIANYZIK = 'A forrásadatok nem érhetők el, mert az attasé fiókja törlődött.';
+
 const SZAM = new Intl.NumberFormat('hu-HU', { maximumFractionDigits: 1 });
 
 /** Szám legfeljebb egy tizedesre, magyar tizedesvesszővel; hiányzó vagy nem véges érték: „–”. */
@@ -126,6 +129,7 @@ export function mutatoKartyak(szempont: SzempontKulcs, m: ErtekelesMutatok): Mut
 
 /** A szempont egysoros kulcsmutatója a lenyitható sor fejlécében. */
 export function kulcsMutato(szempont: SzempontKulcs, m: ErtekelesMutatok): string {
+  if (m.forrasHianyzik) return 'A forrásadatok nem érhetők el';
   switch (szempont) {
     case 'tajekoztatas':
       return `${m.tajekoztatas.jelentesDb} jelentés, ${m.tajekoztatas.lefedettTema} / ${m.tajekoztatas.temaOsszes} téma`;

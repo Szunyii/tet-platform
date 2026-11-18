@@ -44,6 +44,8 @@ export interface IdoszakSor {
 export interface HalozatNezet {
   idoszak: IdoszakSor | null;
   sorok: ErtekelesSor[];
+  /** Azok az attasék magyar névsorban, akiknek a hiányos, rejtett sora a félév lezárásakor törlődik. */
+  torlendoAttasek: string[];
 }
 
 export interface SzempontMinosites {
@@ -239,12 +241,18 @@ interface NezetSor {
   rogzitett: boolean;
 }
 
+/** A lezáráskor törlődő sor: a már nem aktív attasé hiányos, nem kihagyott értékelése. */
+interface RejtettSor {
+  id: string;
+  nev: string;
+}
+
 /**
  * Az időszak sorai a nézethez. Nyitott félévben a még nem rögzített sor az aktív attasé élő hozzárendelését
  * mutatja, minden más a pillanatképet. A már nem aktív attasé hiányos, nem kihagyott sora nem látszik
- * (`rejtettIdk`), így a felület hiánylistája és a lezárás ugyanazt látja; lezáráskor ezek törlődnek.
+ * (`rejtettek`), így a felület hiánylistája és a lezárás ugyanazt látja; lezáráskor ezek törlődnek.
  */
-function idoszakNezete(idoszak: IdoszakSor, elok: ReadonlyMap<string, EloAttase>): { lathato: NezetSor[]; rejtettIdk: string[] } {
+function idoszakNezete(idoszak: IdoszakSor, elok: ReadonlyMap<string, EloAttase>): { lathato: NezetSor[]; rejtettek: RejtettSor[] } {
   const nyitott = idoszak.statusz === 'nyitott';
   const nyers = db
     .select({
@@ -266,7 +274,7 @@ function idoszakNezete(idoszak: IdoszakSor, elok: ReadonlyMap<string, EloAttase>
   const elozok = elozoOsszFokozatok({ ev: idoszak.ev, felev: idoszak.felev });
 
   const lathato: NezetSor[] = [];
-  const rejtettIdk: string[] = [];
+  const rejtettek: RejtettSor[] = [];
   for (const r of nyers) {
     const elo = nyitott && !r.rogzitett ? elok.get(r.attaseId) : undefined;
     const orszagok = elo?.orszagok ?? r.orszagok;
@@ -285,37 +293,55 @@ function idoszakNezete(idoszak: IdoszakSor, elok: ReadonlyMap<string, EloAttase>
       osszFokozat,
       valtozas: r.kimarad ? null : valtozasSzamol(osszFokozat, elozok.get(r.attaseId) ?? null),
     };
-    if (nyitott && !r.kimarad && !elok.has(r.attaseId) && !teljesE(sor)) rejtettIdk.push(r.id);
+    if (nyitott && !r.kimarad && !elok.has(r.attaseId) && !teljesE(sor)) rejtettek.push({ id: r.id, nev: sor.nev });
     else lathato.push({ sor, rogzitett: r.rogzitett });
   }
   lathato.sort((a, b) => huOsszevet(a.sor.nev, b.sor.nev));
-  return { lathato, rejtettIdk };
+  return { lathato, rejtettek };
 }
 
-/** A félév vége előtt aktívvá vált attasék hiányzó sorai; írási zárat csak akkor kér, ha van mit pótolni. */
-function potolSorok(idoszakId: string, elok: ReadonlyMap<string, EloAttase>): void {
+/**
+ * A soha le nem zárt, nyitott félévből hiányzó attasék: az aktívak, akiknek a fiókja a félév vége előtt jött létre,
+ * a megtekintés napjától függetlenül (az értékelés többnyire a félév vége után történik). A félév vége után
+ * létrehozott attasé nem kerül a félévbe, és az újranyitott félévbe (`lezarvaAt` nem `null`) sem kerül új sor.
+ */
+function potlandoAttasek(idoszak: IdoszakSor, elok: ReadonlyMap<string, EloAttase>): [string, EloAttase][] {
+  if (idoszak.statusz !== 'nyitott' || idoszak.lezarvaAt !== null) return [];
   const meglevok = new Set(
     db
       .select({ attaseId: attaseErtekeles.attaseId })
       .from(attaseErtekeles)
-      .where(eq(attaseErtekeles.idoszakId, idoszakId))
+      .where(eq(attaseErtekeles.idoszakId, idoszak.id))
       .all()
       .map((r) => r.attaseId),
   );
   const hianyzok = [...elok].filter(([id]) => !meglevok.has(id));
-  if (hianyzok.length > 0) db.transaction((tx) => beszurSorok(tx, idoszakId, hianyzok), IRAS);
+  if (hianyzok.length === 0) return [];
+  const { vegeKizaro } = felevHatarok({ ev: idoszak.ev, felev: idoszak.felev });
+  const felevben = new Set(
+    db
+      .select({ id: user.id })
+      .from(user)
+      .where(and(inArray(user.id, hianyzok.map(([id]) => id)), lt(user.createdAt, vegeKizaro)))
+      .all()
+      .map((r) => r.id),
+  );
+  return hianyzok.filter(([id]) => felevben.has(id));
 }
 
-/**
- * A félév hálózati nézete. Nyitott félévben, a félév végéig előbb pótolja az újonnan aktívvá vált attasék
- * sorait; lezárni csak a félév vége után lehet, ezért újranyitott félévbe új sor nem kerül.
- */
-export function listHalozat(f: Felev, most: Date = new Date()): HalozatNezet {
+/** A félév hálózati nézete; a hiányzó attasék sorait előbb pótolja (írási zárat csak akkor kér, ha van mit). */
+export function listHalozat(f: Felev): HalozatNezet {
   const idoszak = getIdoszak(f);
-  if (!idoszak) return { idoszak: null, sorok: [] };
+  if (!idoszak) return { idoszak: null, sorok: [], torlendoAttasek: [] };
   const elok = eloAttasek();
-  if (idoszak.statusz === 'nyitott' && naptariNap(most) <= felevNapok(f).utolsoNap) potolSorok(idoszak.id, elok);
-  return { idoszak, sorok: idoszakNezete(idoszak, elok).lathato.map((n) => n.sor) };
+  const potlandok = potlandoAttasek(idoszak, elok);
+  if (potlandok.length > 0) db.transaction((tx) => beszurSorok(tx, idoszak.id, potlandok), IRAS);
+  const { lathato, rejtettek } = idoszakNezete(idoszak, elok);
+  return {
+    idoszak,
+    sorok: lathato.map((n) => n.sor),
+    torlendoAttasek: rejtettek.map((r) => r.nev).sort(huOsszevet),
+  };
 }
 
 type MutatoForras = Pick<MutatoBemenet, 'jelentesek' | 'tickets' | 'elozoFelevJelentesDb'>;
@@ -653,12 +679,20 @@ export function mentOssz(
   }, IRAS);
 }
 
-/** Az attasé kihagyása a félévből (`ok`: az indoklás), `null`-lal a visszavétele. A minősítései megmaradnak. */
-export function kihagyAttase(ertekelesId: string, ok: string | null): 'ok' | 'nincs' | 'lezart' {
+/**
+ * Az attasé kihagyása a félévből (`ok`: az indoklás), `null`-lal a visszavétele. A minősítései megmaradnak. A már
+ * nem aktív attasé hiányos sora nem vehető vissza (`inaktiv`): a visszavétel után rejtett lenne, és a lezárás törölné.
+ */
+export function kihagyAttase(ertekelesId: string, ok: string | null): 'ok' | 'nincs' | 'lezart' | 'inaktiv' {
   return db.transaction((tx) => {
     const a = mentesiAllapot(ertekelesId);
     if (!a) return 'nincs';
     if (a.statusz === 'lezart') return 'lezart';
+    if (ok === null && a.kimarad && !eloAttasek().has(a.attaseId)) {
+      const fokozatok = hatekonyFokozatok(mentettFokozatok([ertekelesId]).get(ertekelesId) ?? {}, a.orszagok);
+      const teljes = osszFokozatbol(a.osszFokozat) !== null && SZEMPONT_KULCSOK.every((k) => fokozatok[k] !== undefined);
+      if (!teljes) return 'inaktiv';
+    }
     tx.update(attaseErtekeles)
       .set({ kimarad: ok !== null, kimaradasOka: ok })
       .where(eq(attaseErtekeles.id, ertekelesId))
@@ -668,9 +702,11 @@ export function kihagyAttase(ertekelesId: string, ok: string | null): 'ok' | 'ni
 }
 
 /**
- * A félév lezárása egy tranzakcióban: törli a már nem aktív attasék hiányos sorait, frissíti a pillanatképeket,
- * rögzíti az automatikus Országismeretet és a még hiányzó mutatókat. A már rögzített sorhoz nem nyúl, és a
- * kihagyott sor pillanatképe csak a félév első lezárásakor frissül, így az újralezárás nem ír át lezárt adatot.
+ * A félév lezárása egy tranzakcióban: pótolja a hiányzó attasék sorait (így a nézet megnyitása nélkül sem marad ki
+ * senki), törli a már nem aktív attasék hiányos sorait, frissíti a pillanatképeket, rögzíti az automatikus
+ * Országismeretet és a még hiányzó mutatókat. A törölt felhasználó mutatói `forrasHianyzik` jelzést kapnak, mert a
+ * forrásadatai az FK-kaszkáddal eltűntek. A már rögzített sorhoz nem nyúl, és a kihagyott sor pillanatképe csak a
+ * félév első lezárásakor frissül, így az újralezárás nem ír át lezárt adatot.
  */
 export function lezarIdoszak(f: Felev, lezaroNev: string, most: Date = new Date()): LezarasEredmeny {
   return db.transaction((tx): LezarasEredmeny => {
@@ -680,15 +716,19 @@ export function lezarIdoszak(f: Felev, lezaroNev: string, most: Date = new Date(
     if (!felevBefejezodott(f, naptariNap(most))) return { eredmeny: 'nem_ert_veget' };
 
     const elok = eloAttasek();
-    const { lathato, rejtettIdk } = idoszakNezete(idoszak, elok);
+    beszurSorok(tx, idoszak.id, potlandoAttasek(idoszak, elok));
+    const { lathato, rejtettek } = idoszakNezete(idoszak, elok);
     const sorok = lathato.map((n) => n.sor);
     const hianyzok = hianyzoAttasek(sorok);
     if (hianyzok.length > 0) return { eredmeny: 'hianyos', hianyzok };
 
-    if (rejtettIdk.length > 0) tx.delete(attaseErtekeles).where(inArray(attaseErtekeles.id, rejtettIdk)).run();
+    if (rejtettek.length > 0) {
+      tx.delete(attaseErtekeles).where(inArray(attaseErtekeles.id, rejtettek.map((r) => r.id))).run();
+    }
 
     const kellMutato = lathato.some((n) => !n.rogzitett && !n.sor.kimarad);
     const szamol = kellMutato ? mutatoSzamolo(sorok, f, most) : null;
+    const letezok = letezoFelhasznalok(sorok.map((s) => s.attaseId));
     for (const { sor, rogzitett } of lathato) {
       if (!sor.kimarad && automatikusOrszagismeret(sor.orszagok)) {
         tx.insert(szempontMinosites)
@@ -699,10 +739,11 @@ export function lezarIdoszak(f: Felev, lezaroNev: string, most: Date = new Date(
       if (rogzitett) continue;
       const frissit = elok.has(sor.attaseId) && (!sor.kimarad || idoszak.lezarvaAt === null);
       if (sor.kimarad && !frissit) continue;
+      const mutatok = sor.kimarad ? undefined : szamol?.(sor);
       tx.update(attaseErtekeles)
         .set({
           ...(frissit ? { attaseNev: sor.nev, szekhelyKod: sor.szekhelyKod, varos: sor.varos, orszagok: sor.orszagok } : {}),
-          ...(sor.kimarad ? {} : { mutatok: szamol?.(sor) }),
+          ...(mutatok ? { mutatok: letezok.has(sor.attaseId) ? mutatok : { ...mutatok, forrasHianyzik: true as const } } : {}),
         })
         .where(eq(attaseErtekeles.id, sor.ertekelesId))
         .run();

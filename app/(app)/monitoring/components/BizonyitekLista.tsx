@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { jelentesReszlet, ticketReszlet } from '../../../../lib/ertekeles-megjelenites';
+import { FORRAS_HIANYZIK, jelentesReszlet, ticketReszlet } from '../../../../lib/ertekeles-megjelenites';
 import type { ErtekelesMutatok } from '../../../../lib/ertekeles-mutatok';
 import type { SzempontKulcs } from '../../../../lib/ertekeles-szotar';
 import { listaUrl } from '../../../../lib/ticket-szotar';
@@ -87,8 +87,9 @@ function Elemek({ lista, ujLapon }: { lista: readonly Elem[]; ujLapon: boolean }
 /**
  * A szempont mutatóihoz tartozó bizonyítékok, legújabb elöl. A jelentés a `/jelentesek/[id]`, a ticket a
  * kommunikáció megfelelő szálára mutat; ha az azonosító nincs a még létezők között (a lezárás óta törölték),
- * a tárgy link nélküli szöveg, mert a rögzített mutatók a törlés után sem változnak. `ujLapon`: a munkalapon a
- * linkek új lapon nyílnak, hogy a be nem mentett szöveg ne vesszen el.
+ * a tárgy link nélküli szöveg, mert a rögzített mutatók a törlés után sem változnak. Törölt fiókú attasénál a
+ * lista helyett a `FORRAS_HIANYZIK` szöveg áll. `ujLapon`: a munkalapon a linkek új lapon nyílnak, hogy a be nem
+ * mentett szöveg ne vesszen el.
  */
 export function BizonyitekLista({
   szempont,
@@ -103,6 +104,7 @@ export function BizonyitekLista({
   letezoTicketek: readonly string[];
   ujLapon?: boolean;
 }) {
+  if (mutatok.forrasHianyzik) return <p className="text-muted-foreground">{FORRAS_HIANYZIK}</p>;
   const lista = elemek(szempont, mutatok, new Set(letezoJelentesek), new Set(letezoTicketek));
   if (lista === null) {
     return <p className="text-muted-foreground">{NINCS_LISTA[szempont] ?? 'Nincs bizonyíték.'}</p>;

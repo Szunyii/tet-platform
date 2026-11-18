@@ -60,7 +60,7 @@ const SZOVEGEK: Record<FelevMuvelet, MuveletSzoveg> = {
 
 /**
  * A félév életciklus-gombja. Lezárás és újranyitás előtt megerősítést kér, megnyitás előtt nem. A `tiltasOka`
- * letiltja a gombot, és szövegként mellette áll.
+ * letiltja a gombot, és szövegként mellette áll. A `figyelmeztetes` a megerősítő szöveg után áll.
  */
 export function FelevMuveletGomb({
   muvelet,
@@ -68,6 +68,7 @@ export function FelevMuveletGomb({
   felev,
   felevUrl,
   tiltasOka,
+  figyelmeztetes,
 }: {
   muvelet: FelevMuvelet;
   action: MuveletAction;
@@ -76,6 +77,8 @@ export function FelevMuveletGomb({
   /** A nézet URL-je a megjelenített félévvel. */
   felevUrl: string;
   tiltasOka?: string;
+  /** A művelet nem nyilvánvaló következménye, a megerősítő párbeszédablakban jelenik meg. */
+  figyelmeztetes?: string;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -137,7 +140,12 @@ export function FelevMuveletGomb({
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>{megerosites.cim}</AlertDialogTitle>
-              <AlertDialogDescription>{megerosites.leiras(felev)}</AlertDialogDescription>
+              <AlertDialogDescription>
+                {megerosites.leiras(felev)}{' '}
+                {figyelmeztetes !== undefined && (
+                  <span className="mt-2 block font-medium wrap-anywhere text-amber-800">{figyelmeztetes}</span>
+                )}
+              </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={pending}>Mégse</AlertDialogCancel>
